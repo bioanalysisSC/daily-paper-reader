@@ -1,0 +1,454 @@
+Title: Human-Guided Causal Knowledge Injection for Virtual Cells
+
+URL Source: https://arxiv.org/pdf/2608.08430v1
+
+Published Time: Tue, 11 Aug 2026 01:17:31 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Human-Guided Causal Knowledge Injection for Virtual Cells 
+
+Pengcheng Wang, Changjian Chen, Zhuo Tang, You Wu, Long Wang, Feng Yu and Kenli Li (c) Human-Guided Causal Injection 
+
+Unclear mechanism Causal graph 
+
+## (b) Automatic Causal Injection 
+
+Iterative trial-and-error correction 
+
+## (a) Virtual Cell 
+
+Effective and efficient                                     
+
+> Causal View Refresh Causal Path View
+> #1 photosynthesis Saliency 100%
+> photosynthesis mixed concept carbohydrate catabolism chromatin photosynthesis
+> #2 carbohydrate catabolism Saliency 75%
+> photosynthesis mixed concept carbohydrate catabolism
+> #3 mixed concept Saliency 66%
+> photosynthesis mixed concept
+> #4 oxidative stress Saliency 27%
+> photosynthesis mixed concept carbohydrate catabolism chromatin oxidative stress
+> Counterfacutal Clustering View
+> photosynthesis ✎
+> mixed concept ✎
+> carbohydrate catabolism ✎
+> chromatin ✎
+> photosynthesis ✎
+> PATH
+> mixed concept ✎
+> oxidative stress ✎
+> storage ✎
+> lipid hydrolysis ✎
+> enzyme binding ✎Link Separate
+> photosynthesis mixed concept mixed concept storage photosynthesis oxidative stress chromatin carbohydrate catabolism lipid hydrolysis mixed concept lipid metabolism mixed concept enzyme binding mixed concept mixed concept
+> Mean Expr Δ
+
+Gene expression Genes Cells Model Simulated gene expression Environment Cell type ... 
+
+Increased expression 
+
+Cell condition Seed cell Leaf cell Cold weather Warm weather Gene Concept 
+
+Labor-intensive and time-consuming 
+
+Fig. 1: Overview of virtual cells and the comparison between the automatic and the human-guided causal injection. (a) A virtual cell simulates cellular behaviors under cell condition changes, such as changes in cell type and environment, and predicts the corresponding gene expression changes. (b) In automatic causal injection, auto-mined concepts and causal relationships can be unclear or inaccurate, leading to labor-intensive and time-consuming trial-and-error correction before obtaining a reliable causal graph. (c) CELLens supports human-guided causal injection by providing an interactive visual interface for effectively and efficiently explore, validate, and refine the causal relationships. 
+
+Abstract —Virtual cells employ machine learning models to simulate and predict cellular behaviors, serving as a critical computational framework for investigating health and disease. Injecting causal graphs into virtual cells can improve the interpretability, but such graphs are usually not available in real-world applications. Recently, many methods have been proposed to construct causal graphs from data, which group genes based on their similarities to form concepts and extract their causal relationships. However, since this automatic process is unsupervised, the causal graphs usually contain errors. In this paper, we propose a human-guided causal knowledge injection method for virtual cells. We developed a gene-similarity-aware causal graph visualization supported by a hybrid optimization algorithm to help explore both the causal relationships between concepts and the similarities between genes. Based on the exploration, we further developed a counterfactual analysis strategy supported by a counterfactual visualization and a causal path visualization to help validate and refine causal graphs. The effectiveness of our method is demonstrated through two real-world case studies, the extraction of scientifically meaningful causal insights, and positive feedback from domain experts. 
+
+Index Terms —Virtual cell, causal knowledge injection, projection 
+
+1 INTRODUCTION 
+
+The cell is the basic structural and functional unit of all known forms of life or organisms [36]. Understanding cellular behaviors and functions is therefore essential for investigations into health and disease [40, 41]. However, understanding cells is non-trivial because each cell is a dynamic and adaptive system whose complex behaviors arise from numerous molecular interactions [8]. To this end, the concept virtual cell is consequently proposed. A virtual cell refers to a machine learning model that simulates cellular behaviors upon cell condition changes, such as cell types and environments. Such a computational model offers a powerful and efficient alternative to traditional experimental methods for decoding cellular complexity [8, 51]. For example, in Fig. 1(a), after changing the cell type and environment, the virtual cell simulates the cellular behaviors and shows increased expression of certain genes, 
+
+• All the authors are with Hunan University. P. Wang, C. Chen and K. Li are also with Yuelushan Laboratory. E-mail: {wangpengcheng, changjianchen, ztang, wuyouray, wanglong8591, feng_yu, lkl}@hnu.edu.cn. P. Wang and C. Chen are joint first authors. Z. Tang is the corresponding author. Manuscript received xx xxx. 201x; accepted xx xxx. 201x. Date of Publication xx xxx. 201x; date of current version xx xxx. 201x. For information on obtaining reprints of this article, please send e-mail to: reprints@ieee.org. Digital Object Identifier: xx.xxxx/TVCG.201x.xxxxxxx 
+
+suggesting their potential association with such cell conditions without time-consuming experiments. Although virtual cells largely enhance the understanding of cells, re-cent studies reveal that they often overlook causal relationships between biological factors, which may oversimplify complex biological interac-tions and thus limit cellular mechanistic understanding [19]. Therefore, many causal-driven virtual cell methods have been proposed recently, such as GEARS [42] and CausCell [19]. These methods incorporate causal graphs to guide the virtual cell modeling. A causal graph refers to a directed acyclic graph whose nodes represent high-level biological concepts (cell type, batch effects of cells, etc.), and whose edges rep-resent causal influences between these concepts. By encouraging the virtual cells to be consistent with the causal relationships defined in the graph, these methods effectively improve the interpretability. However, such methods assume that causal graphs are accurate and complete. In real-world scenarios, causal graphs are usually provided by experts or mined from data automatically, while the former are often incomplete and the latter are often inaccurate, which severely restricts their broader practical application in virtual cells. Despite these limitations, we observed that the accuracy of expert-provided and the completeness of auto-mining methods complement each other [43], motivating us to inject expert knowledge into auto-mined causal graphs. However, such a combination is non-trivial due arXiv:2608.08430v1 [cs.HC] 9 Aug 2026 to two main technical challenges: 1) Causal graph exploration and analysis . To obtain causal graphs for virtual cells, auto-mined meth-ods typically group similar genes based on their similarities to form concepts and extract their causal relationships using causal discovery methods ( e.g ., SCENIC [1] and CWGCNA [29]). However, due to noisy expression patterns and the uncertainty of causal discovery, the grouped concepts may contain semantically inconsistent genes, and their causal relationships may include incorrect links or miss important ones. Therefore, it is necessary to help experts explore the similarities between genes to understand how they form concepts and explore the causal relationships to verify their correctness. 2) Causal relationship validation and refinement . Once potential incorrect or missing con-cept causal relationships are identified, experts need to validate their impact on virtual cells and refine them if necessary. However, this process is based on trial and error and heavily depends on the expertise of experts [22], which makes it labor-intensive and time-consuming (Fig. 1(b)). Therefore, a visual tool that facilitates efficient causal validation and refinement is desirable. To address these challenges, we develop CELLens (Fig. 1(c)), a vi-sual analysis tool to help 1) efficiently explore causal relationships and 2) validate and refine them to ensure biological reliability, following an expert-centered design-study process that grounds the biological requirements, design decisions, and evaluation in realistic analysis sce-narios. Given a set of cells with their gene expression data, a causal graph is constructed by grouping genes into concepts and extracting causal relationships between these concepts. Compared to normal causal graphs that only contain concept-concept causal relationships, this causal graph additionally includes the gene-concept correspon-dences and similarities between genes. While many causal graph visualization methods ( e.g ., CausalVis [21]) have been proposed in the literature, they primarily focus on preserving concept-concept causal relationships and fail to preserve concept-gene correspondences and gene-gene similarities. To this end, we propose a gene-similarity-aware causal graph visualization supported by a hybrid optimization algo-rithm, to present concept-level causal relationships along the horizontal direction while preserving gene similarities within each associated concept. With this visualization, experts explore the causal graph and identify the potential incorrect or missing causal relationships. To val-idate these potential incorrect or missing ones, we further propose a counterfactual analysis strategy supported by a causal path visualization and a counterfactual clustering visualization. Specifically, after experts intervene on a concept, the causal path visualization helps reveal the induced causal effects, and the counterfactual clustering visualization helps shows which concepts or genes are affected. The effectiveness of our proposed tool is demonstrated through the two real-world case studies, the extraction of scientifically meaningful causal insights, and positive feedback from domain experts. The source code is available at: https://github.com/hnu-vis/CELLens. In summary, the contributions of this work include: • A gene-similarity-aware causal graph visualization that pre-serves both the causal relationships between concepts and the similarities between genes. • A counterfactual analysis strategy that helps validate and refine causal graphs. • Case studies with real-world biological data to demonstrate the effectiveness of the proposed tool. 
+
+2 RELATED WORK 
+
+This research focuses on utilizing interactive causal analysis to guide and refine virtual cells. Accordingly, this section reviews the most perti-nent literature across two primary domains: virtual cells and interactive causal analysis. 
+
+2.1 Virtual Cells 
+
+Virtual cell methods leverage machine learning models to decode cellu-lar mechanisms from gene expression. While early black-box genera-tive models ( e.g ., scVI [30], scGen [33], CellLM [66], and scGPT [13]) achieve state-of-the-art predictive performance, their lack of biolog-ical interpretability hinders rigorous mechanistic inference. To ad-dress this limitation, recent research focuses on two main paradigms: interpretability-enhanced models and causal-driven models. 
+
+Interpretability-enhanced models improve interpretability by learning latent representations that separate cellular states according to distinct biological factors. Early efforts focused on separating basal states from intervention-induced states. CPA [32] addresses this sepa-ration by combining a basal representation with intervention changes to model intervention-induced states. sVAE [31] further assumes that each intervention changes only a small subset of latent variables, while SAMS-VAE [6] accounts for sample-specific variation in intervention-induced states. Beyond these, biolord [39] separates cellular states by more attributes such as spatial, temporal, and disease states and scDisInFact [65] further considers technical batch states. However, these methods mainly focus on capture correlations, but not causal relationships for mechanistic analysis. 
+
+Causal-driven models integrate predefined causal relationships into virtual cells to guide representation learning, response prediction, or counterfactual generation. GEARS [42] and GeneCompass [62] both use gene-gene relationships to model how interventions affect related genes. CausCell [19] further uses conditional diffusion models with causal relationships between biological concepts, enabling interpretable and controllable counterfactual generation of cellular states. However, their performance is highly dependent on the quality of these predefined causal relationships. In practice, expert-provided causal graphs are often incomplete, whereas auto-mined graphs are often inaccurate, severely limiting their reliability and applicability. In summary, these limitations suggest that causal relationships re-quires careful inspection before they are used to guide virtual cells. We therefore propose a human-in-the-loop visual analysis tool that supports expert-guided validation and refinement of causal relationships. 
+
+2.2 Interactive Causal Analysis 
+
+Interactive causal analysis incorporates domain experts into causal analysis workflows through visual interfaces, enabling them to explore, validate, and refine causal graphs. According to their analytical focus, existing works fall into two main categories: causal graph exploration and analysis, and causal relationship validation and refinement. 
+
+Causal graph exploration and analysis aims to help users interpret inferred causal graphs. Most existing tools present causal graphs as node-link diagrams, where nodes represent variables or concepts and directed edges encode causal links [16, 21, 61]. Based on this, one group of work focuses on optimizing graph representations to reduce cognitive load, examining how visual encodings and layout algorithms affect user understanding [5, 53]. Another group enriches causal graphs with additional analytical context. For example, Xie et al . [59] use edge thickness to present causal-link uncertainty, Fan et al . [15] use compar-ative layouts to show differences across multiple outcome graphs, and Li et al . [28] use a map-like metaphor to present hierarchical causal flows among topics. However, these methods primarily support the interpretation of concept-level causal graphs. When applied to vir-tual cells, they are not sufficient to reveal the underlying concept-gene correspondences and gene-gene similarities. 
+
+Causal relationship validation and refinement focuses on evaluat-ing and correcting inferred causal relationships. Although data-driven algorithms are computationally powerful, they can produce incorrect or missing causal links that conflict with prior knowledge. To sup-port validation, interactive counterfactual analysis has been widely used to let users virtually intervene in variables and observe how other changes [7, 25]. Interactive systems such as Outcome-Explorer [23] and VISPUR [50] leverage counterfactual reasoning to help analysts identify spurious associations and explain opaque algorithmic deci-sions. Beyond counterfactual inspection, tools such as D-BIAS [20] and Causalchat [64], further integrate human-in-the-loop workflows, enabling domain experts to revise causal graphs by adding missing links or removing invalid connections. However, when applied to vir-tual cells, current tools fail to sufficiently support joint validation the correctness of the high-level concept relationships and the underlying concept-gene correspondences. In summary, existing interactive causal analysis methods mainly Genes Reconstruction Cells Concepts Causal graph Counterfactual Diffusion (a) (b) (c) Increased expression Fig. 2: Causal-driven virtual cells training and analysis consists of three main steps: (a) causal graph construction, (b) virtual cell training, and (c) counterfactual generation. focus on concept-level causal relationships, without incorporating the concept-gene correspondences and gene-gene similarities into causal exploration, validation, and refinement. To fill this gap, we propose CELLens, a visual analysis system that combines gene-similarity-aware graph visualization with counterfactual analysis to support interactive causal relationship analysis for causal-driven virtual cells. 
+
+3 BACKGROUND 
+
+Causal-driven virtual cells utilize gene expression data and underlying causal graphs to simulate cellular behaviors and support mechanis-tic exploration. The computational pipeline of such models involves three key steps: causal graph construction, virtual cell training, and counterfactual generation. 
+
+Causal graph construction. This step processes gene expression data to extract concepts and construct a concept-level causal graph for the virtual cell (Fig. 2(a)). The gene expression data is represented as a gene expression matrix, where rows correspond to cells and columns to genes. Each element in the matrix represents the expression level of a specific gene in a corresponding cell. Following common practices [27], we use WGCNA to cluster genes into groups, treating each group as a high-level concept . Then, we construct a concept matrix that quantifies the cellular expression level corresponding to each concept. To obtain the expression level for each concept, we extract rows of its member genes from the gene matrix to form a sub-matrix and utilize PCA to get the primary component as the expression level [27]. Based on this derived concept matrix, we apply the PC algorithm [47] to infer the initial causal graph. This algorithm first constructs a fully connected graph of variables and then systematically removes edges based on conditional independence tests. 
+
+Virtual cell training. After constructing the initial causal graph, we then subsequently train a causal-driven virtual cell. The virtual cell training follows a standard reconstruction paradigm: given the original gene expression matrix and the causal graph, the model reconstructs the corresponding gene expression matrix in an encoder-decoder manner. In this work, we employ CausCell [19], a diffusion-based generative model, to train the virtual cell (Fig. 2(b)). Rather than treating the extracted concept matrix as independent conditional inputs, CausCell utilizes a Structural Causal Model (SCM) to further integrate the causal graph. SCM explicitly embeds the causal graph into the condition vectors, ensuring that the downstream generative process adheres to the concept-level causal relationships. 
+
+Counterfactual generation. Counterfactual generation predicts how gene expression would change if a specific concept were intervened (Fig. 2(c)). To support this, continuous concept expression levels are first discretized into categorical states ( e.g ., low, medium, high). When simulating an intervention, such as increasing the expression level of a specific concept, users alter its value in the concept matrix to con-struct an intervened one. Guided by the embedded SCM, this localized intervention automatically propagates along the causal graph to up-date the expression of all downstream concepts. Conditioned on this intervened concept matrix, the generative model simulates the corre-sponding counterfactual gene expression matrix. By comparing the generated gene expression matrix against the original gene expression matrix, experts can quantify the downstream response patterns of the intervention across affected genes. 
+
+4 REQUIREMENT ANALYSIS 
+
+This work was developed in close collaboration with three domain ex-perts (B1–B3). B1 and B2 are biology researchers with over ten years of experience in interpreting gene regulatory relationships from gene expression data. Their analyses often involve causal graphs that repre-sent candidate regulatory mechanisms mined from gene expression data. However, these auto-mined graphs can be complex and inaccurate, mak-ing it difficult to understand and validate. B3 is a principal investigator specializing in causal inference for bioinformatics. B3 has long fo-cused on improving causal discovery models, but still faces challenges caused by implausible causal relationships produced by auto-mining algorithms. Therefore, they are exploring ways to better inject human biological expertise to improve the accuracy and completeness of these causal graphs. Over a 12-month collaboration, we conducted interviews every 2–4 weeks to collect requirements and gather feedback on our prototypes. Before this process, we obtained informed consent from all participants, and we did not collect any private or sensitive personal information from the experts. According to our university’s IRB policy, this research is exempt from ethics review. Based on this iterative process, we summarize the following key analytical requirements. 
+
+R1: Exploring the causal relationships at different levels . All experts stated that an initial step in virtual cell modeling is to com-prehensively explore the auto-mined causal graphs. “Understanding how genes are grouped into concepts and how these concepts causally interact is crucial before we can trust any downstream simulation,” B1 emphasized. Because the graph contains gene-gene similarities, gene-concept correspondences, and concept-concept causal relation-ships, experts require to explore them at different levels to help them assess whether the generated concepts are biologically meaningful and whether the inferred causal relationships are plausible. 
+
+R2: Validating and refining causal relationships . While data-driven algorithms are computationally powerful, the auto-mined causal graphs inevitably contain inaccuracies. “An algorithm might construct a causal link or group certain genes together in ways that violate established biological mechanisms,” B3 noted. Therefore, domain experts need mechanisms to validate the generated concepts and causal relationships, and to refine them with biological expertise, thereby improving the biological reliability of virtual cells. 
+
+R2.1: Identifying biologically implausible causal relationships . Cur-rently, validating auto-mined causal graphs is labor-intensive, as experts must repeatedly inspect gene-concept correspondences, causal links, and downstream responses across separate analysis steps. Although counterfactual analysis tools can estimate the effects after interven-ing in a concept, their outputs are often not directly connected to the corresponding parts of the graph. Therefore, experts need support for connecting counterfactual results back to the corresponding parts to check if the changes are biologically plausible. “I need to intervene in a specific concept and immediately observe which downstream con-cepts or genes are affected,” B1 mentioned. This helps them determine whether the observed changes follow biologically plausible paths and identify implausible concept or causal relationships. 
+
+R2.2: Refining the causal relationships effectively and efficiently .After identifying implausible gene-concept correspondences or causal relationships, experts need to correct these errors to ensure the graph accurately reflects biological mechanisms. Since such refinements can involve both concept-concept causal links and gene-concept correspon-dences, experts require effective and efficient mechanisms to directly update the auto-mined causal graph. “I need an intuitive way to re-move an incorrect link, add a missing link, or correct an inappropriate gene grouping,” B2 stated. Therefore, experts need support for directly updating the auto-mined causal graph according to their biological judgments, thereby reducing the effort required for refinement while improve both the accuracy and completeness of the causal graphs. 
+
+5 CELL ENS VISUALIZATION 
+
+Based on the identified requirements, we developed CELLens to sup-port interactive causal graph exploration and refinement for virtual cells. Fig. 3 provides an overview of the developed method. Given a collec-tion of cells, their corresponding gene expression data (Fig. 3(a)), and an initial causal graph (Fig. 3(b)), these inputs are fed into the causal graph visualization to facilitate the exploration of causal relationships among concepts and similarities across genes ( R1 , Fig. 3(c)). Based on the exploration, experts perform virtual interventions on a specific concept. They then use the causal path visualization to examine candi-date causal paths associated with the intervention-induced responses (Fig. 3(d)), and the counterfactual clustering visualization to inspect the internal composition of affected concepts, helping identify implausible causal relationships ( R2.1 , Fig. 3(e)). Finally, experts explicitly ad-just the concept-gene correspondences in the counterfactual clustering visualization and concept-concept causal relationships in the causal visualization to inject their domain knowledge into the auto-mined causal graph ( R2.2 , Fig. 3(e)). Upon these visual modifications, the underlying model is dynamically updated to align with the corrected causal relationships. This process iterates until the causal graph is sufficiently refined for virtual cell training. 
+
+5.1 Gene-similarity-aware Causal Graph Visualization 
+
+To facilitate the causal graph exploration for virtual cells, it is essential to explore both the causal relationships between concepts and the simi-larities between genes simultaneously ( R1 ). However, traditional causal graph visualizations typically rely on node-link diagrams that represent concepts as nodes [54, 57, 59]. Recent advanced causal graph visualiza-tions utilize maps to better convey causal paths, such as CausalMap [28]. However, these methods focus primarily on concept-level analysis and thus fail to preserve fine-grained gene-gene similarities. According to the survey by Dennig et al . [14], one of the most effective ways to reveal similarities is to employ projection methods ( e.g ., t-SNE [52] and PCA [58]) to create 2D scatterplots [10, 11, 38, 49]. Therefore, this motivates us to combine the causal graph visualizations with scatter-plots to present both the causal relationships between concepts and the similarities between genes. A straight way is to use a node-link diagram with circular nodes for concepts and place gene scatterplots inside each concept. However, it will lead to overlap between neighboring projections when the edges are short, or waste screen space and reduce the effective area available for inspecting gene-gene similarities. Therefore, map-based causal graph visualization is used due to its large spaces for each concept to locate the scatterplots while enabling the tracing of causal directions. In line with the above motivation, we developed a gene-similarity-aware causal graph visualization. As shown in Fig. 4(a), biological concepts are visualized as polygonal regions. Within each region, genes are embedded as a scatterplot to preserve fine-grained gene-gene similarities. The causal relationships between these concepts are encoded via spatial border and directional ordering. Specifically, bordering concept regions represent a causal link, with the left one acting as the source and the right one as the target. To satisfy such encodings, it is required to: 1) preserve causal relationships between concepts along the horizontal direction, 2) preserve the similarities between genes in each associated concept. To achieve this, we propose a gene-similarity-aware causal graph layout algorithm. 
+
+5.1.1 Gene-similarity-aware causal graph layout 
+
+Problem setting. Given a gene expression matrix A ∈ Rn×m, each column ai ∈ Rn represents the expression values of the i-th gene across 
+
+n cells. Each column ai also serves as the feature of the i-th gene for concept grouping. Specifically, m genes are grouped into p biolog-ical concepts C = {c1, . . . , cp}, governed by a directed causal graph 
+
+G = ( C, E). Each edge (ci, c j) ∈ E denotes a causal link from a source concept ci to a target concept c j. Our goal is to compute a 2D pro-jection D ∈ Rm×2 that preserves both local gene-gene similarities and the global causal relationships. Each row di = [ d(x)
+
+i , d(y)
+
+i ] of D is the position of i-th gene in the 2D plane. D is expected to satisfy three constraints: 1) maintaining similarities between genes within each polygonal region; 2) placing genes of the same concept within their associated polygonal region; and 3) ensuring that each causal link is represented by two concept bordering regions, with the source concept placed to the left of its target concept. Moreover, to guarantee aesthetic and visual correctness, the layout is expected to be compact, and the polygonal regions of concepts should not overlap. These jointly define an optimization problem, where gene positions, polygonal regions, and left-to-right causal direction need to be optimized simultaneously. 
+
+Optimization. Directly optimizing the above problem is highly non-trivial. This is primarily because the constraint of concept polygonal regions is associated with the convex hulls of their member genes, while the computation of convex hulls is nested within the overall minimiza-tion process. Any changes to the projected gene positions will alter the convex hulls of the corresponding gene concepts. Combining the layout minimization with dynamic convex hulls computation within a single-stage optimization problem leads to a substantial increase in computational complexity and numerical instability. To address this issue, we propose a global-to-local optimization strategy that decouples the layout minimization from convex-hull-related computations. The global placement step determines the coarse spatial arrangement of concepts and their genes by using the genes of a concept to represent its convex hull. The local placement step refines the positions of individual genes within each concept to ensure the convex-hull-related constraints. 
+
+Step 1: global placement . In this step, we use the genes of a concept to represent its convex hull. Specifically, we utilize the center of the Counterfactual clustering visualization R2.2: Causal refinement (c) (d) (e) Causal path visualization R2.1: Causal validation Genes Cells Causal graph (b) (a) Causal graph visualization R1: Causal exploration Gene-similarity-aware causal graph layout                             
+
+> #1 photosynthesis Confidence 100%
+> photosynthesis mixed concept carbohydrate catabolism chromatin photosynthesis
+> #2 carbohydrate catabolism Confidence 75%
+> photosynthesis mixed concept carbohydrate catabolism
+> #3 mixed concept Confidence 66%
+> photosynthesis mixed concept
+> #4 oxidative stress Confidence 27%
+> photosynthesis mixed concept carbohydrate catabolism chromatin oxidative stress
+> photosynthesis ✎
+> mixed concept ✎
+> response to water
+> thiamine biosynthetic process
+> microtubule associated complex
+> catalytic activity
+> oxidation-reduction process
+> carbohydrate catabolism ✎
+> chromatin ✎
+> photosynthesis ✎
+> photosynthesis mixed concept mixed concept storage photosynthesis oxidative stress chromatin carbohydrate catabolism lipid hydrolysis mixed concept lipid metabolism mixed concept enzyme binding mixed concept mixed concept
+
+Fig. 3: Method overview: (a-b) given a gene expression data, a group of concepts and their causal graph is constructed; (c)-(e) three visualizations to help explore the causal relationships and refine the causal relationships interactively. genes of a concept to represent the center of its convex hull, and the hard constraints are converted into minimization objectives. Moreover, moti-vated by the ability of t-SNE to preserve cluster separation, we compute the similarity based on the difference in similarity distributions between the high-dimensional and low-dimensional spaces. Accordingly, the problem can be formulated as the following constrained optimization: 
+
+ℓ = KL (P|| Q) + KL (Pc|| Qc)+ λ1 ∑
+
+(ci,c j )∈E
+
+max 
+
+
+
+0, μ(x)(ci) − μ(x)(c j) − δx
+
+
+
++ λ2 ∑
+
+(ci,c j )∈E
+
+μ(ci) − μ(c j) 2
+
++ λ3 ∑
+
+(ci,c j )∈Sco 
+
+−
+
+
+
+μ(y)(ci) − μ(y)(c j)
+
+2
+
+(1) The first two terms represent the preservation of gene-gene similari-ties and gene-concept correspondence, formulated as Kullback-Leibler (KL) divergence [37]. Here, P and Q describe pairwise gene-gene similarities indexed by two genes (i, j). Following t-SNE, the high-dimensional gene-gene similarity probability pi j ∈ P is computed using symmetric Gaussian distributions over the original features ai [52]. Its low-dimensional similarity probability qi j ∈ Q is modeled via a Stu-dent’s t-distribution with one degree of freedom over the 2D projected position di:
+
+qi j = (1 + ∥di − d j∥2)−1
+
+∑k̸ =l (1 + ∥dk − dl ∥2)−1 . (2) 
+
+Pc and Qc describe gene-concept correspondence indexed by a gene 
+
+i and a concept k. The high-dimensional probability pcik ∈ Pc is defined as a fixed binary prior based on the initial clustering, formulated as an indicator function pcik = 1(ai ∈ ck). To dynamically pull genes toward their corresponding concept centers in the 2D plane, the low-dimensional probability qcik ∈ Qc is calculated using the Student’s t-distribution between the projected gene di and the concept center μ(ck):
+
+qcik = (1 + ∥di − μ(ck)∥2)−1
+
+∑ j,l (1 + ∥d j − μ(cl )∥2)−1 . (3) Minimizing this divergence can update the spatial positions of both the genes and the concept centers, effectively aggregating member genes into cohesive visual clusters. The remaining three terms impose geometric penalties on the concept centers to ensure causal consistency and layout compactness: 1) The third term acts as a directional penalty to enforce a strict left-to-right spacing between causally connected concepts, where δx is a target horizontal margin. μ(ci) is the center of the genes of i-th concept. 
+
+μ(x)(ci) and μ(y)(ci) represent the position along the x-axis and y-axis, respectively. 2) The fourth term minimizes the spatial distance between causally connected concepts, encouraging linked concept regions to remain visually close and making the layout more compact. 3) The fifth term introduces a vertical repulsive penalty specifically for Sco ,which denotes the set of concept pairs sharing a common target concept in the causal graph. This maximizes the vertical separation in Sco to avoid overlapping. λ1, λ2, and λ3 are determined by a grid search to balance the magnitude difference among these terms. Similar to t-SNE, Eq. (1) is optimized with gradient descent. The optimization details are provided in Appendix A. 
+
+Step 2: local placement . While the first step successfully positions the concepts in a causal layout, the non-overlapping constraint between convex hulls may be violated. In such cases, genes near the boundaries of adjacent concepts may still overlap. To address this, this step applies a force-directed fine-tuning to the position of genes in the 2D plane to separate boundary genes without disrupting the global causal topology established in the first step. To separate these overlapping genes, we introduce a center-attractive loss. For any two genes ai ∈ ck and a j ∈ cl belonging to different concepts ( ck̸ = cl ), if their Euclidean distance is less than a margin ε,they are penalized to pull back toward their respective concept centers, 
+
+μ(ck) and μ(cl ). The formulation is as follows: 
+
+ℓpull = ∑
+
+ck̸ =cl
+
+# ∑
+
+ai∈ck ,a j ∈cl
+
+1  ∥di − d j∥ ≤ ε
+
+·
+
+
+
+∥di − μ(ck)∥2 + ∥d j − μ(cl )∥2
+
+.
+
+(4) Minimizing ℓpull ensures that boundary genes violating the margin 
+
+ε are dynamically drawn toward their own concept’s center. Conse-quently, this two-step optimization produces distinct, non-overlapping 滚滚长江东逝水                                 
+
+> Causal View Refresh Causal Path View
+> #1 photosynthesis Saliency 100%
+> photosynthesis mixed concept carbohydrate catabolism chromatin photosynthesis
+> #2 carbohydrate catabolism Saliency 75%
+> photosynthesis mixed concept carbohydrate catabolism
+> #3 mixed concept Saliency 66%
+> photosynthesis mixed concept
+> #4 oxidative stress Saliency 27%
+> photosynthesis mixed concept carbohydrate catabolism chromatin oxidative stress
+> Counterfacutal Clustering View
+> photosynthesis ✎
+> Link Separate
+> Mean Expr Δ
+> photosynthesis ✎
+> mixed concept ✎
+> response to water
+> thiamine biosynthetic process
+> microtubule-based process
+> Os03g0331700 · N/A
+> Os02g0269200 · microtubule-based process; microtubule associated complex
+> Os01g0110200 · N/A
+> Os10g0453900 · N/A
+> Os03g0199100 · N/A
+> catalytic activity
+> oxidation-reduction process
+> carbohydrate catabolism ✎
+> chromatin ✎
+
+(a) (b) (c) 
+
+Outlier cluster h1 
+
+> Intervene
+> photosynthesis mixed concept mixed concept storage photosynthesis oxidative stress chromatin carbohydrate catabolism lipid hydrolysis mixed concept lipid metabolism mixed concept enzyme binding mixed concept mixed concept
+
+d
+
+g
+
+j
+
+i
+
+f1 h2 
+
+f2 
+
+eGap Gap 
+
+Fig. 4: CELLens: (a) a causal graph visualization facilitates the exploration of the concept-concept causal relationships, the gene-concept correspondences and the gene-gene similarities; (b) a causal path visualization helps validate the causal relationships; (c) a counterfactual clustering visualization helps explore and adjust the gene-concept correspondences thereby refining the causal relationships. convex hulls, providing a clear and mathematically rigorous layout for subsequent visual analysis. Once the optimization is complete, we calculate the polygonal re-gions of each concept based on the GMap algorithm [18]. Standard GMap computes a Voronoi diagram and introduces invisible random points around the given points to generate finite outer borders [4]. Voronoi cells sharing the same attribute ( i.e ., concept) are then merged to form contiguous polygonal regions. However, standard GMap forces all polygonal regions to be bordering, failing to well represent the causal relationships in causal graphs. To accurately represent the causal graphs, we introduce a margin-injection method. Initially, we apply the standard Voronoi partitioning to generate a continuous map and identify the shared boundaries be-tween all spatially bordering regions. Subsequently, for concept polyg-onal regions without direct causal links, we add invisible virtual points along their shared boundaries. By recomputing the Voronoi diagram with these virtual points, the algorithm generates spatial margins that explicitly separate the causally independent concepts. The details of region construction are provided in Appendix B. Furthermore, this margin-injection method inherently supports in-teractive causal editing. By dynamically inserting or removing these points, the underlying Voronoi partitioning updates efficiently, provid-ing real-time visual feedback when experts link or separate concepts. 
+
+5.1.2 Interaction 
+
+We provide several interactions to help better explore and refine the causal graphs in the causal graph visualization. 
+
+Semantic annotation . It is crucial for users to intuitively understand the biological semantics of the concepts ( R1 ). To achieve this, for each concept, we input all its member genes into Gene Ontology (GO) enrichment analysis, a standard technique for deriving representative biological semantics from a group of genes [3]. This analysis maps these genes against the GO database [26, 44], identifying semantic terms ( e.g ., “growth” or “metabolism”) that appear more frequently than expected by chance. However, because these raw terms are often redundant and highly granular, they are not intuitive for visual explo-ration. Therefore, we use an LLM to summarize these GO terms into single concise concept names as initial semantic summaries. Users further examine whether each name is biologically meaningful and revise it when necessary. The specific LLM and prompt used in our implementation are provided in Appendix C. 
+
+Causal editing. It is essential for users to directly refine concept-concept causal relationships in the Causal Graph Visualization (R2.2 ). To achieve this, we support region-based causal editing. By clicking and dragging a concept region, users can adjust its horizontal position to revise the direction of related causal links, or reposition regions to fine-tune the global layout. Additionally, users can add or remove causal links by multi-selecting two regions and clicking the “link” or “separate” buttons (Fig. 4(j)). These direct interactions update the un-derlying causal graph, allowing domain experts to correct biologically implausible concept-concept causal relationships. 
+
+Counterfactual generation . To validate causal relationships, it is cru-cial for experts to understand how a change in one concept affects the others ( R2.1 ). Counterfactual generation allows users to initialize an intervention on a concept as the starting point for this process. Users first select a concept region and adjust the legend slider to specify a target expression change, where moving the slider to the right increases expression and moving it to the left decreases it (Fig. 4(d)). Upon clicking the “intervene” button, the system generates the counterfactual result and quantifies the response of each gene ai as its expression change ∆(ai). Subsequently, to capture the dominant expression re-sponse of each concept, we compute the aggregate change ∆(ci) of each concept by averaging the expression changes of its top 5% member genes ranked by absolute expression change [48]. The fill color of each concept region reflects this aggregate change, with red indicat-ing an increase, blue a decrease, and intensity showing the magnitude. Meanwhile, individual gene points use the same color scale, providing gene-level responses for downstream visualizations. 
+
+5.2 Causal Path Visualization 
+
+We provide a way to identify biologically implausible causal relation-ships ( R2.1 ) by allowing users to examine paths at the concept level. A causal path is defined as a sequence of concepts connected by causal links, indicating a possible route from the intervened concept to an affected concept. In this section, we describe how these paths are extracted and visually encoded to facilitate expert validation. 
+
+Causal path extraction. Based on the counterfactual generation, we extract candidate causal paths from the intervened concept cs to all affected concepts ct in the causal graph and prioritize them. To avoid missing potentially relevant paths, we traverse an augmented causal graph G′ = ( C, E′) that includes both constructed directed causal links and statistically associated links. These statistically associated links are undirected edges inferred from the data using the PC algorithm. For each affected concept ct , we employ breadth-first search to extract the shortest path from cs, with its length denoted as h. Subsequently, these extracted paths are ranked using a saliency score formulation: Saliency (ct ) = |∆(ct )|
+
+h . (5) Dividing by h penalizes longer paths, reflecting the biological principle that signals naturally weaken as they pass through multiple steps [12]. This approach helps highlight the most plausible causal paths while filtering out implausible ones. 
+
+Visual encoding. Based on the calculated scores, the Causal Path Visu-alization presents the candidate paths in descending order of saliency (Fig. 4(b)). The view presents these paths as a sorted list of cards. Inside each card, the path is displayed as a left-to-right sequence of concepts. The last concept in each path represents the concept affected by the intervention and is therefore color-coded to indicate its expres-sion change ∆(ct ), following the same color scale as the Causal Graph Visualization . A bar on the right side visualizes the path’s saliency score. When users click a path card, the corresponding causal path is highlighted in the Causal Graph Visualization by changing the bor-der colors of the involved concept regions. By examining these cards, experts can they can filter out implausible causal paths and discover potential paths for further validation and refinement. 
+
+5.3 Counterfactual Clustering Visualization 
+
+In addition to causal path validation, users need to inspect gene-level responses within each concept ( R2.1 ) and refine concept-gene corre-spondences ( R2.2 ). This section describes the counterfactual-aware clustering approach used to support these inspections and refinements. 
+
+Counterfactual-aware clustering. Since a single concept often con-tains numerous genes, individual inspection is cognitively demand-ing. To facilitate analysis, we perform counterfactual-aware clustering within each concept to organize genes into interpretable groups. This clustering should capture how genes respond to the intervention while preserving the biological meanings needed for interpretation. In particu-lar, we characterize each gene ai using both its counterfactual response 
+
+∆(ai) and its semantic representation gi. Specifically, gi is constructed in two steps: we first collect all unique GO terms within the concept to form a unified semantic feature space, and then encode the GO-derived representation of each gene in this space as a multi-hot binary vector. The combined feature vector is then formulated by concatenating the semantic representation and the counterfactual response: 
+
+fi = gi, ∆(ai). (6) To balance the numerical scales of the two distinct features, we subse-quently L2-normalize this vector to ˜ fi = fi/∥ fi∥2. Within each concept, genes are then grouped using the K-means algorithm [34], where K is automatically selected as the elbow point of the within-cluster sum of squares curve [45]. This dual-feature representation encourages clus-tered genes to share similar response patterns and biological semantics. Finally, we name each cluster using the same GO enrichment and LLM summarization as in the Causal Graph Visualization .mixed concept 
+
+> response to water
+> thiamine biosynthetic process
+> microtubule associated complex
+> catalytic activity
+> oxidation-reduction process
+> microtubule-based process
+
+(a) (b) 
+
+> mixed concept
+> microtubule-based process
+> mixed concept photosynthesis
+> photosynthesis
+> photosynthesis
+> oxidation-reduction process
+> lipid transport
+> photosynthesis, light harvesting
+> photosynthesis
+> zinc ion binding
+> photosynthesis
+> photosynthesis
+> photosynthesis, light harvesting
+> electron carrier activity
+> integral to membrane
+> photosynthesis, light harvesting
+
+Split 
+
+Move 
+
+c1 
+
+c2 Fig. 5: Drag and drop for adjusting the gene-concept correspondences. 
+
+Visual encoding. Based on the clustering results, the Counterfac-tual Clustering Visualization employs a nested “concept–cluster–gene” visual structure (Fig. 4(c)). Each row begins with a colored square indicating the expression change after intervention. For concepts and clusters, the square encodes the aggregate change of their member genes, computed in the same way as in the Causal Graph Visualiza-tion ; for individual genes, it encodes the gene-level change. Rows are labeled with summarized names for concepts and clusters, while individual genes are identified by their global IDs [35]. To maintain a clear display, each cluster shows only its top five representative genes. This group-based design allows users to evaluate semantic consistency at the cluster level rather than examining individual genes. If the response pattern or the summarized name of a cluster conflicts with its parent concept, users can adjust the assignment via drag-and-drop. Specifically, dragging a cluster into empty space extracts it to form a new concept (Fig. 5(a)). Alternatively, dropping the cluster into another concept reassigns its membership (Fig. 5(b)). Once the refined concept structure is considered appropriate, users can click the edit button to rename the concept (Fig. 4(i)). This interactive process refines the causal relationship for virtual cell retraining. 
+
+6 EVALUATION 
+
+To demonstrate the effectiveness of CELLens for facilitating the explo-ration, validation, and refinement of causal relationships in virtual cells, we performed two case studies focusing on the refined virtual cell and the identified key regulatory genes. 
+
+6.1 Case Study 
+
+The case study was conducted with B1 involved in the requirements analysis. B1 aimed to uncover the underlying mechanisms of rice. Therefore, B1 used CELLens to analyze rice gene expression data. In the case study, to allow B1 to focus more on analysis, we used the pair analytics protocol, in which we handled the tool’s navigation [2, 10]. Before this process, we obtained informed consent from B1, and we did not collect any private or sensitive personal information from B1. 
+
+6.1.1 Virtual Cell Refinement 
+
+Preliminary . To uncover the mechanisms of rice, B1 aimed to train a causal-driven virtual cell specific to this species. He began by curating a recent rice single-cell dataset [55], which contains 116,564 cells from eight distinct organs. Since B1 focused on gene functions, he extracted only the gene expression data to construct the model. To mitigate the noise from lowly expressed genes, B1 followed a standard data preprocessing pipeline [19], retaining 115,393 high-quality cells and Same concepts 
+
+> photosynthesis mixed concept mixed concept storage photosynthesis oxidative stress chromatin carbohydrate catabolism lipid hydrolysis mixed concept lipid metabolism mixed concept enzyme binding mixed concept mixed concept
+
+a
+
+b
+
+Fig. 6: The initial causal graph visualization. the top 2,000 highly expressed genes. Based on the progress detailed in Sec. 3, these genes were grouped into 15 high-level concepts, serving as the foundational nodes for the initial concept-level causal graph. 
+
+Overview . B1 began his analysis with the causal graph visualization. Initially, the concept regions were colorless, indicating that no coun-terfactual interventions had been applied (Fig. 6). He noted that most concepts in the initial causal graph were connected, while several iso-lated concepts were located at the periphery. Wondering why these isolated concepts were not connected to the others, B1 decided to check them first. Among them, he observed two distinct concepts with the same name, “ photosynthesis ” (Figs. 6(a) and 6(b)). The duplicated naming prompted B1 to examine whether they represented the same or different biological semantics. He first focused on photosynthesis A(Fig. 6(a)), which lacked any direct connections to the rest of the graph. To understand how the other concepts were affected by photosynthesis 
+
+A, B1 applied a counterfactual intervention to increase its expression level (Fig. 4(d)). The virtual cell then generated concept-level changes across the graph, revealing the responses of other concepts. 
+
+Disentangling mixed concepts . Upon update, the color of concept re-gions changed, reflecting the magnitude of their changes in response to the intervention (Fig. 4). In the causal path visualization, the top-ranked causal path with a high saliency score originated from photosynthesis 
+
+A caught B1’s attention. This causal path passed through several in-termediate concepts, and pointed to photosynthesis B (Fig. 4(e)). To examine how the concepts in this path changed after the intervention, B1 checked the color of their corresponding regions. He noted that most regions were shown in darker red, indicating relatively large posi-tive changes, which suggested that the concepts along this path were strongly associated with the intervention response. However, this path was misaligned with the causal graph via two missing links (Figs. 4(f 1)and (f 2)). B1 therefore decided to examine these two missing links first to understand why they were missing in the causal graph. Investigating the first missing link ( photosynthesis A → mixed con-cept) (Fig. 4(f 1)), B1 found that the target concept was named “mixed”. Recognizing that such semantic ambiguity could affect the causal dis-covery algorithm [46], he hypothesized that the missing link might be caused by the mixed semantics of the target concept. To determine what components contributed to the mixed semantics, B1 analyzed this concept’s internal clusters. He found that most clusters’ names were associated with biosynthesis and stimulus activities ( e.g ., response to water, thiamine biosynthetic process, and catalytic activity) (Fig. 4(g)). However, he noticed an outlier cluster named “microtubule-based pro-cess,” which is related to cytoskeleton organization (Fig. 4(h 1)). B1 explained that this cytoskeleton-related cluster was semantically dis-tinct from the biosynthesis- and stimulus-related clusters, making it unreasonable to cluster them together. To further examine whether the genes in this outlier cluster differed from those in other clusters, B1 selected this cluster to inspect the projection of its member genes. He observed that its genes were spa-tially segregated on the right side of the concept region, indicating their difference to other clusters (Fig. 4(h 2)). Additionally, B1 expanded this outlier cluster to check the annotations of its member genes. He noted that most genes within this cluster were annotated as N/A (Fig. 4(h 1)), suggesting that limited annotation information may have contributed to its misclassification. B1 therefore decided to separate the “microtubule-based process” cluster from the mixed concept. After checking the names of other concepts, he found no existing concept that could ap-propriately accommodate this cluster. He therefore dragged it into the empty space in the counterfactual clustering visualization (Fig. 5(a)), extracting it into an independent concept. After separating this out-lier cluster, the remaining concept showed clearer semantics related to biosynthesis and stimulus activities. Therefore, he then renamed the remaining concept to “ biosynthesis and stimulus ” and explicitly added the missing causal link from photosynthesis A (Fig. 7(a)). 
+
+Correcting a misidentified downstream concept . B1 then inves-tigated the second missing link ( chromatin → photosynthesis B) (Fig. 4(f 2)). From a biological perspective, he considered that photosyn-thesis is unlikely to be a direct downstream concept of chromatin [24]. Given the noticeable change in photosynthesis B after the intervention, B1 suspected that the concept might still contain components respon-sive to chromatin, while its name might not accurately reflect its internal composition. He therefore examined the internal clusters of photosyn-thesis B to inspect its semantic composition. He found that there were indeed two clusters related to photosynthesis (Fig. 5(c 1)). However, their colors were light, indicating relatively small changes after the intervention. For further analysis, B1 checked the gene projection of these two clusters. He observed that although their projections were concentrated, they contained only a small number of genes (Fig. 5(c 2)), suggesting that they were unlikely to represent the primary semantics of the concept. Considering that GO-enrichment-based naming mainly relies on frequent annotation patterns, B1 inferred that these small but semantically consistent clusters likely biased the concept name, contributing to its misidentification. To correct this semantic misassignment, he dragged the two photo-synthesis clusters into photosynthesis A at the start of the path, merging them with the more biologically coherent upstream photosynthesis con-cept (Fig. 5(b)). After this reassignment, B1 checked the remaining clusters and found that they mainly represented cellular metabolism-related activities ( e.g ., oxidation-reduction process, lipid transport, and zinc ion binding). Consequently, he renamed the refined concept to “cellular metabolism ” and explicitly added the missing causal link from 
+
+chromatin to it (Fig. 7(b)). 
+
+Verifying the refined model . After completing the causal relationship refinements, B1 retrained the virtual cell using the updated causal rela-tionships. In the previous exploration, he inferred that photosynthesis 
+
+should positively regulate biosynthesis and stimulus , as the downstream concept region turned red after the intervention. To examine whether the updated causal relationships helped the model learn this expected positive influence, he conducted a counterfactual experiment on the test set by comparing three conditions: the control condition without intervention, the initial model after increasing photosynthesis , and the refined model after the same intervention. He then compared the mean gene expression of biosynthesis and stimulus across these conditions. Generally, the refined model achieved the highest mean expression of 0.162 (95% CI [0.158, 0.165]), the control condition got the second at 0.156 (95% CI [0.151, 0.160]) and the initial model got the lowest at 0.131 (95% CI [0.127, 0.134]). The Friedman test [17] indicated that the difference among the three conditions was statistically significant (p < 0.001). This result matched B1’s expectation, indicating that the refined model better reflected the hypothesized positive regulatory relationship between photosynthesis and biosynthesis and stimulus .
+
+6.1.2 Key Regulatory Gene Identification 
+
+Identifying regulatory genes along the pathway . After refining the causal graph and retraining the virtual cell, B1 aimed to identify candidate regulatory genes associated with the refined causal path from 
+
+photosynthesis to cellular metabolism , which passed through several intermediate concepts. Assuming that genes involved in regulating this path would show stronger responses to intervention, he performed a counterfactual intervention on the start concept photosynthesis . In the updated scatterplot of the causal graph, some gene points appeared darker than others, indicating larger expression changes. B1 noted that these darker genes were mainly located in concepts along the path, specifically within the biosynthesis and stimulus and cellular metabolism concepts (Fig. 7). B1 initially aimed to identify a regulatory gene at the start of the causal path. Therefore, he examined candidate regulatory genes within the source concept, photosynthesis . Within this region, he observed several darker gene points. To further inspect these genes, he expanded the darkest red cluster in photosynthesis and identified the gene with the darkest red color, Os07g0605200 (Fig. 7(c)). Noting that it is annotated with transcription regulation and DNA-templated processes, which are relevant to photosynthesis-related regulation [9], B1 hypothesized that this gene might act as an upstream regulator involved in the downstream changes along this causal path. He then examined the downstream concept, biosynthesis and stimulus , identifying two genes shown in clearly darker red: Os03g0128700 (Fig. 7(d 1)) and Os10g0463800 (Fig. 7(d 2)). Based on these visual and annotation cues, B1 inferred that Os07g0605200 could be an upstream regulatory gene associated with the link from photosynthesis to biosynthesis and stimulus , potentially influencing the two downstream responsive genes. 
+
+Regulatory gene verification . To check these findings with exist-ing biological evidence, B1 consulted recent literature. A recent study reported a regulatory relationship between Os07g0605200 and Os10g0463800 in the control of grain chalkiness [56], which provided gene-level support for B1’s inference. B1 noted that this gene-level evi-cellular metabolism microtubule-based process storage photosynthesis chromatin carbohydrate catabolism biosynthesis and stimulus mixed concept enzyme binding 
+
+> photosynthesis
+> negative regulation of catalytic
+> Os07g0605200 · regulation of transcription, DNA-templated;
+> Os11g0210201 · N/A
+> biosynthesis and stimulus
+> response to water
+> Os03g0128700 · protein phosphorylation; protein kinase; ...
+> Os10g0463800 · N/A
+
+c
+
+b
+
+a
+
+d1 
+
+d2 
+
+> biosynthesis and stimulus
+
+Fig. 7: Refining the causal relationships and updating the counterfactual generation result. dence was consistent with the inferred concept-concept relationship and concept-gene correspondences. Specifically, Os10g0463800 is related to grain chalkiness, which has been associated with starch biosynthesis under environmental stimuli [60]. This supported the correspondence between Os10g0463800 and the biosynthesis and stimulus concept. Moreover, starch biosynthesis relies on carbon and energy supplied by upstream photosynthesis [63], providing support for the inferred positive relationship from photosynthesis to biosynthesis and stimulus .In contrast, B1 found no prior reports linking Os07g0605200 with Os03g0128700. Since regulatory responses can vary across biological conditions, he considered Os03g0128700 a potentially novel down-stream gene. Following this exploratory rationale, he further inspected highly responsive genes within the cellular metabolism concept. Ul-timately, B1 selected these newly identified genes as candidates for future experimental analysis. 
+
+7 EXPERT FEEDBACK AND DISCUSSION 
+
+After the case study sessions, we conducted semi-structured interviews with five domain experts (B1–B5) to gather feedback. Among them, B1–B3 had participated in the requirement analysis and iterative tool development, while B4–B5 were newly invited domain experts who had not been involved in the previous process. Since B2–B5 were not in-volved in the case study, we began by providing them with a 30-minute introduction to the system and the case study. Following the introduc-tion, each subsequent interview lasted between 30 and 50 minutes. The interviews were guided by several questions: whether the causal graph visualization helped experts understand concept-concept causal rela-tionships, gene-concept correspondences and gene-gene similarities; whether the causal path and counterfactual clustering visualizations helped them validate causal relationships and locate relationships re-quiring refinement; and whether the refinement interactions matched their expected causal refinement process. Beyond these questions, we also invited experts to share additional benefits and useful suggestions for improvement. Before this process, we obtained informed consent from all participants, and we did not collect any private or sensitive personal information from the experts. Overall, the experts provided positive feedback regarding the effectiveness of CELLens in explor-ing, validating, and refining the causal relationships in virtual cells. Based on their feedback and our experience developing the tool, we also identified several limitations that require further investigation. 
+
+7.1 Effectiveness 
+
+Transparent exploration of cellular mechanisms . All experts ap-preciated the gene-similarity-aware causal graph, emphasizing that it successfully preserves both concept-concept causal relationships, gene-concept correspondences and gene-gene similarities. This design supports mechanism exploration from both the concept and gene levels. B2 noted, “This design allows us to easily trace how an intervention in one concept propagates along causal paths to affect the downstream concepts.” Regarding gene-gene similarities within each concept, B2 specifically praised the spatial arrangement within each concept region: “By looking at the distances between genes inside a concept, I can easily understand its semantic purity.” B4 further emphasized that linking con-cept and gene-level evidence is important, because a causal relationship alone is often insufficient for biological interpretation. This transparent layout helps biologists effectively identify biologically implausible concept formations before executing complex simulations. 
+
+Interactive refinement of causal relationships . B3 particularly praised how the tool integrates counterfactual generation with inter-active visual editing. The experts pointed out that errors in virtual cells may arise from incorrect or missing concept-concept causal rela-tionships and inaccurate concept-gene correspondences, and CELLens provides direct interactions to refine both types of structures. For concept-concept causal relationships, the experts valued the immediate visual feedback after the intervention action, as updated counterfactual colors and causal paths help them judge whether the modified structure produces a more plausible downstream response. For concept-gene correspondences, B3 noted, “In traditional tools, fixing an error re-quires manual adjustment, which is extremely slow. In CELLens, the intuitive drag-and-drop interaction allows me to easily reassign mis-classified clusters to restore correct concept-gene correspondences or extract them to form new concepts.” B5 further noted that this human-in-the-loop process allows experts to use their domain knowledge to find implausible relationships, check the results through counterfactual feedback, and edit them directly. 
+
+Generalization to other domains . While the case study focused on rice cell mechanisms, B2 emphasized that the core framework, specifi-cally the causal graph visualization and counterfactual generation, can be applied to biological problems beyond rice cell analysis. “The funda-mental definition of these causal concepts is universal,” B2 elaborated. “This system can be adapted to explore other complex regulatory net-works, such as cell-cell communication in tumor microenvironments or the driving factors behind immune cell exhaustion.” B4 further noted that the proposed tool can also be utilized in other domains with similar causal analysis needs. This is because the analysis in CELLens is built around high-level concept-concept causal relationships, low-level gene-gene similarities, and concept-gene correspondences. Therefore, it can be adapted to other causal analysis tasks where similar multi-level structure is available, as long as the data processing methods are adjusted to the corresponding data types. 
+
+7.2 Limitations and Future Work 
+
+Integration of multi-omics data . B2 noted that cellular behaviors are regulated by multiple interacting modalities, while the current causal graph models only one data modality at a time. He suggested extending CELLens to jointly analyze gene expression and spatial transcriptomics within a unified causal network. However, effectively aligning heterogeneous data modalities and reliably analyzing cross-modal causal relationships remain challenging, making multi-omics causal analysis an important direction for future work. 
+
+Scalability of dense source-target relationships . Although the Causal Graph Visualization satisfies our requirements for jointly presenting causal relationships and gene-gene similarities, its readability may decrease when a concept is connected to a large number of concepts. In such cases, forcing all concepts to border the same concept may lead to crowded regions and make the left-to-right relationship harder to perceive. This limitation could be mitigated in future work by reducing the complexity, such as filtering weak causal links, aggregating low-impact concepts, or introducing hierarchical concept structure. 
+
+Usability evaluation . Currently, to allow B1 to focus more on ana-lytical tasks rather than interface operation, we implemented the pair analytics protocol in the case study, which helped us discuss the analy-sis results. However, when the proposed tool is deployed in real-world scenarios, experts will need to navigate the tool on their own. Un-der such conditions, the learning curve remains unexplored, and the usability of complex interactions without guidance requires further validation. In addition, the evaluation is also limited by the small num-ber of participating experts. Therefore, we plan to share CELLens with a broader community of biologists and collect their feedback to iteratively improve its usability. 
+
+8 CONCLUSION 
+
+In this paper, we propose an interactive visual analysis tool to ex-plore, validate, and refine causal relationships in virtual cells. The core contribution is a gene-similarity-aware causal graph visualization that simultaneously preserves concept-concept causal relationships, concept-gene correspondences, and gene-gene similarities. By integrat-ing causal path and counterfactual clustering visualizations, our system enables experts to interactively correct the causal graph and identify key regulatory genes of interest. Case studies and domain expert feedback demonstrate that the proposed tool effectively supports causal-driven biological research and helps uncover novel biological mechanisms. Beyond virtual cells, this work may also be adapted to causal visual analysis tasks with the similar multi-level structure, where users need to inspect high-level causal relationships, low-level domain-specific similarities, and correspondences between these two levels. ACKNOWLEDGMENTS 
+
+The work is supported by Yuelushan Laboratory Breeding Program (Grant No. YLS-2025-ZY01015), the National Natural Science Foun-dation of China (Grant Nos. 62225205, 62532005, 62402167), the Sci-ence and Technology Program of Changsha (kh2301011), the Major Sci-ence and Technology Research Projects of Hunan Province (Grant Nos. 2024QK2010, 2024QK2009), the Yunnan Provincial Major Science and Technology Special Plan Projects (Grant No. 202502AD080009), the Yunnan Science and Technology Talents and Platforms Program (202605AK340003), Project of Yuelushan Center for Industrial Innova-tion (Grant No. 2025TCII0206), the Hunan Natural Science Foundation (Grant No. 2025JJ60419), and the Science and Technology Innovation Program of Hunan Province (Grant No. 2023ZJ1080). 
+
+REFERENCES 
+
+[1] S. Aibar, C. B. González-Blas, T. Moerman, V. A. Huynh-Thu, H. Imri-chova, G. Hulselmans, F. Rambow, J.-C. Marine, P. Geurts, J. Aerts, et al. Scenic: single-cell regulatory network inference and clustering. Nature methods , 14(11):1083–1086, 2017. doi: 10.1038/nmeth.4463 2 [2] R. Arias-Hernandez, L. T. Kaastra, T. M. Green, and B. Fisher. Pair analytics: Capturing reasoning processes in collaborative visual analytics. In Proceedings of the IEEE International Conference on System Sciences ,pp. 1–10, 2011. doi: 10.1109/HICSS.2011.339 7 [3] M. Ashburner, C. A. Ball, J. A. Blake, D. Botstein, H. Butler, J. M. Cherry, A. P. Davis, K. Dolinski, S. S. Dwight, J. T. Eppig, et al. Gene ontology: tool for the unification of biology. Nature genetics , 25(1):25–29, 2000. doi: 10.1038/75556 6 [4] F. Aurenhammer. Voronoi diagrams—a survey of a fundamental geometric data structure. ACM computing surveys (CSUR) , 23(3):345–405, 1991. doi: 10.1145/116873.116880 6 [5] J. Bae, T. Helldin, and M. Riveiro. Understanding indirect causal rela-tionships in node-link graphs. In Computer graphics forum , vol. 36, pp. 411–421. Wiley Online Library, 2017. doi: 10.1111/cgf.13198 2 [6] M. Bereket and T. Karaletsos. Modelling cellular perturbations with the sparse additive mechanism shift variational autoencoder. Advances in Neural Information Processing Systems , 36:1–12, 2023. 2 [7] D. Borland, A. Z. Wang, and D. Gotz. Using counterfactuals to improve causal inferences from visualizations. IEEE Computer Graphics and Applications , 44(1):95–104, 2024. doi: 10.1109/MCG.2023.3338788 2 [8] C. Bunne, Y. Roohani, Y. Rosen, A. Gupta, X. Zhang, M. Roed, T. Alexan-drov, M. AlQuraishi, P. Brennan, D. B. Burkhardt, et al. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell ,187(25):7045–7063, 2024. doi: 10.1016/j.cell.2024.11.015 1 [9] S. J. Burgess, I. Reyna-Llorens, S. R. Stevenson, P. N. Bowman, A. J. Townsend, and S. Kelly. Transcriptional control of photosynthetic capacity: conservation and divergence from arabidopsis to rice. New Phytologist ,216(2):510–528, 2017. doi: 10.1111/nph.14682 8 [10] C. Chen, F. Lv, Y. Guan, P. Wang, S. Yu, Y. Zhang, and Z. Tang. Human-guided image generation for expanding small-scale training image datasets. 
+
+IEEE Transactions on Visualization and Computer Graphics , 31(6):3809– 3821, 2025. doi: 10.1109/TVCG.2025.3567053 4, 7 [11] C. Chen, P. Wang, F. Lyu, Z. Tang, L. Yang, L. Wang, Y. Cai, F. Yu, and K. Li. Interactive hybrid rice breeding with parametric dual projection. 
+
+IEEE Transactions on Visualization and Computer Graphics , 2025. doi: 10.1109/TVCG.2025.3634640 4 [12] L. Cowen, T. Ideker, B. J. Raphael, and R. Sharan. Network propagation: a universal amplifier of genetic associations. Nature Reviews Genetics ,18(9):551–562, 2017. 6 [13] H. Cui, C. Wang, H. Maan, K. Pang, F. Luo, N. Duan, and B. Wang. scgpt: toward building a foundation model for single-cell multi-omics using generative ai. Nature methods , 21(8):1470–1480, 2024. doi: 10. 1038/s41592-024-02201-0 2 [14] F. L. Dennig, M. Miller, D. A. Keim, and M. El-Assady. FS/DS: A theoretical framework for the dual analysis of feature space and data space. 
+
+IEEE Transactions on Visualization and Computer Graphics , 2023. doi: 10.1109/TVCG.2023.3288356 4 [15] M. Fan, J. Yu, D. Weiskopf, N. Cao, H.-Y. Wang, and L. Zhou. Visual analysis of multi-outcome causal graphs. IEEE Transactions on Visualiza-tion and Computer Graphics , 31(1):656–666, 2024. doi: 10.1109/TVCG. 2024.3456346 2 [16] A. G. Forbes, A. Burks, K. Lee, X. Li, P. Boutillier, J. Krivine, and W. Fontana. Dynamic influence networks for rule-based models. IEEE transactions on visualization and computer graphics , 24(1):184–194, 2017. doi: 10.1109/TVCG.2017.2745280 2 [17] M. Friedman. The use of ranks to avoid the assumption of normality implicit in the analysis of variance. Journal of the american statistical association , 32(200):675–701, 1937. doi: 10.2307/2279372 8 [18] E. R. Gansner, Y. Hu, and S. Kobourov. Gmap: Visualizing graphs and clusters as maps. In 2010 IEEE Pacific visualization symposium (PacificVis) , pp. 201–208. IEEE, 2010. doi: 10.1109/PACIFICVIS.2010. 5429590 6 [19] Y. Gao, K. Dong, C. Shan, D. Li, and Q. Liu. Causal disentanglement for single-cell representations and controllable counterfactual generation. 
+
+Nature communications , 16(1):6775, 2025. doi: 10.1038/s41467-025 -62008-1 1, 2, 3, 7 [20] B. Ghai and K. Mueller. D-bias: A causality-based human-in-the-loop system for tackling algorithmic bias. IEEE Transactions on Visualization and Computer Graphics , 29(1):473–482, 2022. doi: 10.1109/TVCG.2022. 3209484 2 [21] G. Guo, E. Karavani, A. Endert, and B. C. Kwon. Causalvis: Visualizations for causal inference. In Proceedings of the 2023 CHI conference on human factors in computing systems , pp. 1–20, 2023. doi: 10.1145/3544548. 3581236 2 [22] E. P. Hoel, L. Albantakis, and G. Tononi. Quantifying causal emergence shows that macro can beat micro. Proceedings of the National Academy of Sciences , 110(49):19790–19795, 2013. doi: 10.1073/pnas.1314922110 2 [23] M. N. Hoque and K. Mueller. Outcome-explorer: A causality guided interactive visual interface for interpretable algorithmic decision making. 
+
+IEEE Transactions on Visualization and Computer Graphics , 28(12):4728– 4740, 2021. doi: 10.1109/TVCG.2021.3102051 2 [24] M. Jan, Z. Liu, J.-D. Rochaix, and X. Sun. Retrograde and anterograde signaling in the crosstalk between chloroplast and nucleus. Frontiers in Plant Science , 13:980237, 2022. doi: 10.3389/fpls.2022.980237 8 [25] S. Kaul, D. Borland, N. Cao, and D. Gotz. Improving visualization interpretation using counterfactuals. IEEE Transactions on Visualization and Computer Graphics , 28(1):998–1008, 2021. doi: 10.1109/TVCG. 2021.3114779 2 [26] Y. Kawahara, M. de la Bastide, J. P. Hamilton, H. Kanamori, W. R. Mc-Combie, S. Ouyang, et al. Improvement of the oryza sativa nipponbare reference genome sequence and annotation: a report from the rice annota-tion project. Rice , 6:1–10, 2013. doi: 10.1186/1939-8433-6-4 6 [27] P. Langfelder and S. Horvath. Wgcna: an r package for weighted corre-lation network analysis. BMC bioinformatics , 9(1):559, 2008. doi: 10. 1186/1471-2105-9-559 3 [28] R. Li, S. Ye, Y. Lin, B. Zhou, Z. Kang, T.-Q. Peng, W. Fu, T. Tang, and Y. Wu. Causality-based visual analytics of sentiment contagion in social media topics. IEEE Transactions on Visualization and Computer Graphics ,2025. doi: 10.1109/TVCG.2025.3633839 2, 4 [29] Y. Liu. CWGCNA: an r package to perform causal inference from the WGCNA framework. NAR Genomics and Bioinformatics , 6(2):lqae042, 2024. doi: 10.1093/nargab/lqae042 2 [30] R. Lopez, J. Regier, M. B. Cole, M. I. Jordan, and N. Yosef. Deep generative modeling for single-cell transcriptomics. Nature methods ,15(12):1053–1058, 2018. doi: 10.1038/s41592-018-0229-2 2 [31] R. Lopez, N. Tagasovska, S. Ra, K. Cho, J. Pritchard, and A. Regev. Learning causal representations of single cells via sparse mechanism shift modeling. In Conference on Causal Learning and Reasoning , pp. 662–691. PMLR, 2023. doi: 10.48550/arXiv.2211.03553 2 [32] M. Lotfollahi, A. Klimovskaia Susmelj, C. De Donno, L. Hetzel, Y. Ji, I. L. Ibarra, S. R. Srivatsan, M. Naghipourfar, R. M. Daza, B. Martin, et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular systems biology , 19(6):MSB202211517, 2023. doi: 10 .15252/msb.202211517 2 [33] M. Lotfollahi, F. A. Wolf, and F. J. Theis. scgen predicts single-cell perturbation responses. Nature methods , 16(8):715–721, 2019. doi: 10. 1038/s41592-019-0494-8 2 [34] J. MacQueen et al. Some methods for classification and analysis of multivariate observations. In Proceedings of the fifth Berkeley symposium on mathematical statistics and probability , vol. 1, pp. 281–297. Oakland, CA, USA, 1967. 6 [35] D. Maglott, J. Ostell, K. D. Pruitt, and T. Tatusova. Entrez gene: gene-centered information at ncbi. Nucleic acids research , 33(suppl_1):D54– D58, 2005. doi: 10.1093/nar/gkl993 7 [36] P. Mazzarello. A unifying concept: the history of cell theory. Nature cell biology , 1(1):E13–E15, 1999. doi: 10.1038/8964 1 [37] L. Meng, S. van den Elzen, N. Pezzotti, and A. Vilanova. Class-constrained t-sne: combining data features and class probabilities. IEEE Transactions on Visualization and Computer Graphics , 30(1):164–174, 2023. doi: 10. 1109/TVCG.2023.3326600 5 [38] L. Peng, Z. Lin, N. Andrienko, G. Andrienko, and S. Chen. Contextualized visual analytics for multivariate events. Visual Informatics , 9(2):100234, 2025. doi: 10.1016/j.visinf.2025.100234 4 [39] Z. Piran, N. Cohen, Y. Hoshen, and M. Nitzan. Disentanglement of single-cell data with biolord. Nature Biotechnology , 42(11):1678–1683, 2024. doi: 10.1038/s41587-023-02079-x 2 [40] A. Regev, S. A. Teichmann, E. S. Lander, I. Amit, C. Benoist, E. Birney, B. Bodenmiller, P. Campbell, P. Carninci, M. Clatworthy, et al. The human cell atlas. elife , 6:e27041, 2017. doi: 10.7554/eLife.27041 1 [41] J. E. Rood, S. Wynne, L. Robson, A. Hupalowska, J. Randell, S. A. Teichmann, and A. Regev. The human cell atlas from a cell census to a unified foundation model. Nature , 637(8048):1065–1071, 2025. doi: 10. 1038/s41586-024-08338-4 1 [42] Y. Roohani, K. Huang, and J. Leskovec. Predicting transcriptional out-comes of novel multigene perturbations with gears. Nature Biotechnology ,42(6):927–935, 2024. doi: 10.1038/s41587-023-01905-6 1, 2 [43] M. Ruscone, E. Tsirvouli, A. Checcoli, D. Turei, E. Barillot, J. Saez-Rodriguez, L. Martignetti, Å. Flobak, and L. Calzone. Neko: a tool for automatic network construction from prior knowledge. PLOS Computa-tional Biology , 21(9):e1013300, 2025. doi: 10.1371/journal.pcbi.1013300 1[44] H. Sakai, S. S. Lee, T. Tanaka, H. Numa, T. Itoh, et al. The rice annotation project database (rap-db): an integrative hub for rice genomics. Nucleic Acids Research , 41(D1):D1196–D1205, 2013. doi: 10.1093/nar/gkj094 6 [45] V. Satopaa, J. Albrecht, D. Irwin, and B. Raghavan. Finding a" kneedle" in a haystack: Detecting knee points in system behavior. In 2011 31st international conference on distributed computing systems workshops , pp. 166–171. IEEE, 2011. doi: 10.1109/ICDCSW.2011.20 6 [46] B. Schölkopf, F. Locatello, S. Bauer, N. R. Ke, N. Kalchbrenner, A. Goyal, and Y. Bengio. Toward causal representation learning. Proceedings of the IEEE , 109(5):612–634, 2021. doi: 10.1109/JPROC.2021.3058954 7 [47] P. Spirtes, C. N. Glymour, and R. Scheines. Causation, prediction, and search . MIT press, 2000. 3 [48] A. Subramanian, P. Tamayo, V. K. Mootha, S. Mukherjee, B. L. Ebert, M. A. Gillette, A. Paulovich, S. L. Pomeroy, T. R. Golub, E. S. Lander, et al. Gene set enrichment analysis: a knowledge-based approach for interpreting genome-wide expression profiles. Proceedings of the national academy of sciences , 102(43):15545–15550, 2005. doi: 10.1073/pnas. 0506580102 6 [49] T. Tang, Y. Wu, J. Gao, K. Ruan, Y. Zhang, S. Ye, Y. Wu, and X. Chen. Arteyer: Enriching gpt-based agents with contextual data visualizations for fine art authentication. Visual Informatics , 8(4):48–59, 2024. doi: 10. 1016/j.visinf.2024.11.001 4 [50] X. Teng, Y. Ahn, and Y.-R. Lin. Vispur: Visual aids for identifying and interpreting spurious associations in data-driven decisions. IEEE Transactions on Visualization and Computer Graphics , 30(1):219–229, 2023. doi: 10.1109/TVCG.2023.3326587 2 [51] C. V. Theodoris, L. Xiao, A. Chopra, M. D. Chaffin, Z. R. Al Sayed, M. C. Hill, H. Mantineo, E. M. Brydon, Z. Zeng, X. S. Liu, et al. Transfer learning enables predictions in network biology. Nature , 618(7965):616– 624, 2023. doi: 10.1038/s41586-023-06139-9 1 [52] L. Van der Maaten and G. Hinton. Visualizing data using t-sne. Journal of Machine Learning Research , 9(11):2579–2605, 2008. 4, 5 [53] D.-B. Vo, K. Lazarova, H. C. Purchase, and M. McCann. Visual causality: Investigating graph layouts for understanding causal processes. In Interna-tional Conference on Theory and Application of Diagrams , pp. 332–347. Springer, 2020. doi: 10.1007/978-3-030-54249-8_26 2 [54] J. Wang and K. Mueller. The visual causality analyst: An interactive inter-face for causal reasoning. IEEE transactions on visualization and com-puter graphics , 22(1):230–239, 2015. doi: 10.1109/TVCG.2015.2467931 4[55] X. Wang, H. Huang, S. Jiang, J. Kang, D. Li, K. Wang, S. Xie, C. Tong, C. Liu, G. Hu, et al. A single-cell multi-omics atlas of rice. Nature ,644(8077):722–730, 2025. doi: 10.1038/s41586-025-09251-0 7 [56] X. Wang, W. Liu, J. Xing, S. Xue, D. Zhou, G. Zhou, W. Xu, Z. Li, Y. Liu, D.-J. Yun, and Z.-Y. Xu. The osmads18-osbzip60 module plays a critical role in influencing grain chalkiness in rice. Science China Life Sciences ,69:651–661, 2026. doi: 10.1007/s11427-025-3129-3 8 [57] A. I. Weinberg, C. Premebida, and D. R. Faria. Causality from bottom to top: A survey. Machine Learning , 114(11):234, 2025. doi: 10.1007/ s10994-025-06855-5 4 [58] S. Wold, K. Esbensen, and P. Geladi. Principal component analysis. 
+
+Chemometrics and Intelligent Laboratory Systems , 2(1-3):37–52, 1987. doi: 10.1007/springerreference_84147 4 [59] X. Xie, F. Du, and Y. Wu. A visual analytics approach for exploratory causal analysis: Exploration, validation, and applications. IEEE Transac-tions on Visualization and Computer Graphics , 27(2):1448–1458, 2020. doi: 10.1109/TVCG.2020.3028957 2, 4 [60] H. Yamakawa, T. Hirose, M. Kuroda, and T. Yamaguchi. Comprehensive expression profiling of rice grain filling-related genes under high tempera-ture using dna microarray. Plant physiology , 144(1):258–277, 2007. doi: 10.1104/pp.107.098665 9 [61] J. N. Yan, Z. Gu, H. Lin, and J. M. Rzeszotarski. Silva: Interactively assessing machine learning fairness using causality. In Proceedings of the 2020 chi conference on human factors in computing systems , pp. 1–13, 2020. doi: 10.1145/3313831.3376447 2 [62] X. Yang, G. Liu, G. Feng, D. Bu, P. Wang, J. Jiang, S. Chen, Q. Yang, H. Miao, Y. Zhang, et al. Genecompass: deciphering universal gene regu-latory mechanisms with a knowledge-informed cross-species foundation model. Cell Research , 34(12):830–845, 2024. doi: 10.1038/s41422-024 -01034-y 2 [63] S. C. Zeeman, J. Kossmann, and A. M. Smith. Starch: its metabolism, evolution, and biotechnological modification in plants. Annual review of plant biology , 61:209–234, 2010. doi: 10.1146/annurev-arplant-042809 -112301 9 [64] Y. Zhang, A. Kota, E. Papenhausen, and K. Mueller. Causalchat: Inter-active causal model development and refinement using large language models. IEEE Transactions on Visualization and Computer Graphics ,2025. doi: 10.1109/TVCG.2025.3602448 2 [65] Z. Zhang, X. Zhao, M. Bindra, P. Qiu, and X. Zhang. scdisinfact: disentan-gled learning for integration and prediction of multi-batch multi-condition single-cell rna-sequencing data. Nature Communications , 15(1):912, 2024. doi: 10.1038/s41467-024-45227-w 2 [66] S. Zhao, J. Zhang, and Z. Nie. Large-scale cell representation learning via divide-and-conquer contrastive learning. arXiv preprint arXiv:2306.04371 ,2023. doi: 10.48550/arXiv.2306.04371 2

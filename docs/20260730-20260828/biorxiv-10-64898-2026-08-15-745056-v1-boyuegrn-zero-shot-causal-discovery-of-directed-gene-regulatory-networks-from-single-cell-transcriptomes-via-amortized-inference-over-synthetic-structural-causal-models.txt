@@ -1,0 +1,2644 @@
+Title: 2026.08.15.745056v1.full.pdf
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.08.15.745056v1.full.pdf
+
+Number of Pages: 55
+
+Markdown Content:
+BoYueGRN: Zero-shot causal discovery of directed gene regulatory 1
+
+networks from single-cell transcriptomes via amortized inference over 2
+
+synthetic structural causal models 3
+
+Authors: Jingyue Wu 1 and Ying-Qiang Shen 2*4
+
+Affiliations: 5
+
+1: Sleep Medicine Center, Mental Health Center, Translational Neuroscience 6
+
+Center, and State Key Laboratory of Biotherapy, West China Hospital, Sichuan 7
+
+University, Chengdu, China 8
+
+2: State Key Laboratory of Oral Diseases, National Clinical Research Center 9
+
+for Oral Diseases, Chinese Academy of Medical Sciences Research Unit of 10 
+
+Oral Carcinogenesis and Management, West China Hospital of Stomatology, 11 
+
+Sichuan University, Chengdu, China. 12 
+
+*Corresponding author: 13 
+
+Ying-Qiang Shen, State Key Laboratory of Oral Diseases, National Clinical 14 
+
+Research Center for Oral Diseases, Chinese Academy of Medical Sciences 15 
+
+Research Unit of Oral Carcinogenesis and Management, West China Hospital 16 
+
+of Stomatology, Sichuan University, Chengdu, China. 17 
+
+Tel. : 0086-17313110393 18 
+
+E-mail address: shen@scu.edu.cn 19 
+
+Key words ：20 
+
+Gene Regulatory Network (GRN) Inference ；Single-Cell Rna-Seq ；Causal 21 
+
+Discovery ；Amortized Inference ；Graph Transformer 22 
+
+23 
+
+24 
+
+Abstract 25 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Gene regulatory network (GRN) inference from single ‐cell RNA ‐seq 26 
+
+conventionally relies on per ‐dataset optimization. Existing tools must be refit for 27 
+
+every new dataset, and the majority fail to infer causal regulatory directions. 28 
+
+Here we present BoYueGRN, an amortized causal discovery framework trained 29 
+
+exclusively on 10,000 synthetic structural causal models. For any unseen 30 
+
+dataset, a single forward pass returns edge probabilities and regulatory 31 
+
+directions, while TF-centric sliding windows with asymmetric fusion extend this 32 
+
+fixed-size model to full-transcriptome coverage. BoYueGRN demonstrates 33 
+
+strong zero ‐shot performance across BEELINE benchmarks. On two 34 
+
+independent genome-wide CRISPRi Perturb-seq screens, directional accuracy 35 
+
+on retained edges reaches 0.86 and 0.95. Reconstructed cell-type- and stage-36 
+
+specific GRN dynamics across five diseases spanning more than 270,000 cells 37 
+
+yield experimentally testable biological hypotheses. BoYueGRN reframes 38 
+
+directed GRN inference as a train-once, reuse-across-datasets paradigm. By 39 
+
+decoupling network reconstruction from per-dataset optimization, this paradigm 40 
+
+opens the door to systematic, atlas-scale mapping of regulatory dynamics 41 
+
+across human diseases. 42 
+
+Introduction 43 
+
+Cellular states and functions are orchestrated by GRN, in which transcription 44 
+
+factors activate or repress target genes along directed edges[1]. Dissecting 45 
+
+these directed relationships is therefore a prerequisite for mechanistic 46 
+
+interpretation of cell identity, differentiation, and disease. Single-cell RNA 47 
+
+sequencing now provides transcriptomic measurements at single-cell 48 
+
+resolution and at a scale of millions of cells, raising the prospect of 49 
+
+reconstructing GRNs directly from steady-state single-cell data[2, 3] 50 
+
+A wide range of methods has been proposed to infer GRNs from single-cell 51 
+
+transcriptomes, yet systematic evaluations indicate that expression-based 52 
+
+reconstruction remains only partially reliable. Early approaches such as 53 
+
+ARACNE, CLR, and PIDC score pairwise associations using mutual 54 
+
+information or multivariate information measures adapted to single-cell 55 
+
+sparsity[4-6]. GENIE3 and its scalable variant GRNBoost2 regress each gene 56 
+
+on all remaining genes[7, 8], whereas Gaussian graphical models and 57 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+shrinkage partial-correlation methods estimate conditional dependencies 58 
+
+among genes[9, 10]. A second generation of methods—SCENIC, SCENIC+, 59 
+
+CellOracle, FigR, and LINGER—incorporates TF-binding priors from motif 60 
+
+databases, ChIP-seq evidence, or paired chromatin accessibility[11-15]. More 61 
+
+recent deep-learning models infer regulatory interactions directly from 62 
+
+expression profiles[16-19], and pretrained foundation models such as 63 
+
+Geneformer, scGPT, and RegFormer offer transferable single-cell 64 
+
+representations[20-22]; expression-driven transformer GRN methods such as 65 
+
+STGRNS and GeneCompass likewise remain per-dataset or per-corpus 66 
+
+learners rather than amortized, train-once directed inference as pursued here. 67 
+
+Nevertheless, community assessments of bulk expression profiles have 68 
+
+concluded that reliable network inference from gene expression remains an 69 
+
+unsolved problem[23, 24], and on the scRNA-seq-oriented BEELINE 70 
+
+benchmark most algorithms perform only marginally above random on real 71 
+
+networks[25]. 72 
+
+Beyond accuracy, three structural limitations constrain the utility of existing 73 
+
+tools. The first is coverage: methods whose computational cost grows 74 
+
+quadratically with gene number are typically confined to a few hundred highly 75 
+
+variable genes, excluding the majority of low- and mid-expression disease-76 
+
+relevant genes. The second is directionality: most tools emit only undirected 77 
+
+associations, and prior-knowledge methods can orient edges only where ChIP-78 
+
+seq or motif evidence exists, which is incomplete for most cell types and TFs. 79 
+
+The third is the fitting strategy: current methods re-optimize parameters 80 
+
+separately for each dataset, which is slow and unstable when genes vastly 81 
+
+outnumber cells, and they are designed for a single snapshot rather than for 82 
+
+disease progression resolved across stages and cell types. A method that 83 
+
+simultaneously delivers genome-wide coverage, regulatory direction, and train-84 
+
+once-reuse-everywhere efficiency remains an unmet need. 85 
+
+Amortized causal discovery offers precisely such a strategy by replacing per-86 
+
+dataset optimization with a model trained once on simulated data and then 87 
+
+applied to new data in a single forward pass. Identifiability theory establishes 88 
+
+that causal direction can be recovered from observational data alone in both 89 
+
+linear non-Gaussian and nonlinear additive noise models[26, 27], and structure 90 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+learning can be formulated as a continuous optimization problem[28]. These 91 
+
+results transfer naturally to scRNA-seq because cell-to-cell variation within a 92 
+
+single steady-state experiment carries statistical structure reflecting the 93 
+
+underlying regulation, obviating the need for time series or perturbation 94 
+
+measurements[3]. ACD on time series and AVICI on synthetic and SERGIO-95 
+
+based semi-synthetic expression data have demonstrated this paradigm[29-31], 96 
+
+and the more recent CDFM confirms that zero-shot transfer to real data can 97 
+
+succeed when the synthetic distribution spans a sufficiently broad mechanistic 98 
+
+space[32]. Sim-to-real transfer is well established in other fields, for example 99 
+
+domain randomization in robotics[33]. However, whether it can be applied 100 
+
+directly to GRN inference remains unclear. That is because GRN inference 101 
+
+confronts distinct challenges: a high-dimensional space of tens of thousands of 102 
+
+genes, extremely sparse expression with dropout noise, directed TF-to-target 103 
+
+regulation, and scale-free hub topology. To date, no amortized causal discovery 104 
+
+framework has been tailored to these constraints, leaving a critical 105 
+
+methodological gap for scalable, directed GRN inference from observational 106 
+
+single-cell data. 107 
+
+Here we present BoYueGRN, an amortized causal discovery framework for 108 
+
+directed GRN inference from scRNA-seq that closes this gap. The model is 109 
+
+trained entirely on 10,000 synthetic expression datasets generated by structural 110 
+
+causal models (SCMs) whose topology, noise mechanisms, and expression 111 
+
+statistics are aligned with real GRNs; for any new dataset, a single forward pass 112 
+
+returns edge probabilities and regulatory directions, and TF-centric sliding 113 
+
+windows extend this fixed-size model to full-transcriptome coverage. The name 114 
+
+BoYue, drawn from the Chinese adage “ bo guan er yue qu” (coined by the 115 
+
+renowned Song dynasty poet Su Shi, meaning "survey broadly, then extract 116 
+
+selectively"), captures this design: broad pretraining on synthetic causal models 117 
+
+followed by selective inference in a single forward pass. Having seen no real 118 
+
+data during training, BoYueGRN already outperforms several mainstream 119 
+
+methods at the TF-centric single-window scale and achieves the best AUROC 120 
+
+on all six BEELINE datasets under full-genome coverage; on two genome-wide 121 
+
+CRISPRi perturbation screens it attains strong directional accuracy. Building on 122 
+
+these benchmarks, we apply BoYueGRN to five disease settings spanning 123 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+more than 270,000 cells, where the model reconstructs cell-type- and stage-124 
+
+specific GRN dynamics, reproduces known pathological regulatory features, 125 
+
+and generates experimentally testable hypotheses. BoYueGRN thus reframes 126 
+
+directed GRN inference as train-once-reuse-across-datasets, converting 127 
+
+network reconstruction from a per-dataset analysis into a reusable capability 128 
+
+for disease research. 129 
+
+130 
+
+Results 131 
+
+The BoYueGRN framework 132 
+
+BoYueGRN is an amortized framework for directed GRN inference from 133 
+
+scRNA-seq, trained exclusively on synthetic SCMs and, once trained, requiring 134 
+
+only a single forward pass to produce a directed, genome-wide GRN for any 135 
+
+new real dataset (Fig. 1). 136 
+
+We first construct the training corpus by simulating 10,000 synthetic expression 137 
+
+datasets whose graph topology is generated by preferential attachment and 138 
+
+whose expression follows additive noise structural equations (Fig. 1a, b). A five-139 
+
+node seed causal chain is created first, after which each node selects parents 140 
+
+from earlier-indexed nodes with probability proportional to in-degree plus one; 141 
+
+constraining parents to earlier-indexed nodes guarantees acyclicity by 142 
+
+construction and reproduces the scale-free hub structure of real GRNs[34]. 143 
+
+Each node’s expression is generated in topological order through additive noise 144 
+
+structural equations (roughly 50% linear and 50% GELU mechanisms), 145 
+
+푧￿ = ￿ 푊
+
+> ￿∈￿￿(￿)
+
+[푝, 푖] ⋅ 푋[: , 푝] + 휀 ￿￿￿ , 푋[: , 푖] = 푓 ￿(푧 ￿) + 휀 ￿￿￿ 146 
+
+where the magnitude gap between the injection noise 휀￿￿￿ ∼ 풩(0, 0.3 ￿) and the 147 
+
+final noise 휀￿￿￿ ∼ 풩(0, 2.0 ￿) supplies the structural basis for directional 148 
+
+identifiability[27], and a log1p transform of the non-negative expression yields 149 
+
+the non-negative, sparse, approximately log-normal statistics characteristic of 150 
+
+scRNA-seq. Two complementary gene-pair features serve as model inputs— 151 
+
+the Ledoit–Wolf shrunk precision matrix P [35] , capturing linear conditional 152 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+dependence, and the distance correlation matrix D [36] , capturing nonlinear 153 
+
+dependence—while the directed adjacency matrix A is retained as supervision 154 
+
+for both the edge-existence and direction tasks (full definitions in Methods). 155 
+
+Three graph Transformer encoders of identical eight-layer architecture then 156 
+
+learn node representations from P+D, serving the edge-existence task and two 157 
+
+target-typed direction tasks with separately optimized heads (Fig. 1b, Fig. S1). 158 
+
+One encoder is dedicated to edge existence; the other two handle the TF-to-159 
+
+non-TF and TF-to-TF direction tasks, respectively. The edge encoder is trained 160 
+
+from scratch, while the two direction encoders are warm-started from its weights 161 
+
+and fine-tuned independently so that no parameters are ultimately shared. All 162 
+
+three use edge-biased attention, superimposing a linear projection of gene-pair 163 
+
+statistics onto the standard QKᵀ dot product to couple message passing with 164 
+
+pairwise dependence strength. Contrasting weight cosine similarity, parameter 165 
+
+distributions, and output embedding-space structure confirms that the task 166 
+
+heads learn clearly differentiated representations (Fig. S3). The edge-existence 167 
+
+head scores whether an edge exists via a symmetric dot product, whereas the 168 
+
+direction head scores regulatory direction via asymmetric source/target 169 
+
+projections (Fig. S2), 170 
+
+edge_prob[푖, 푗] = 휎 ￿ 푊￿ℎ￿ ⋅ 푊 ￿ℎ￿￿
+
+￿푑 ￿
+
++ MLP([푃 ￿￿ , 퐷 ￿￿ ])￿ , dir_score[푖, 푗] 171 
+
+= 휎￿src_proj(ℎ ￿) ⋅ tgt_proj(ℎ ￿)￿ + MLP([푃 ￿￿ , 퐷 ￿￿ ])￿ 172 
+
+Because the two projections differ, the ordered-pair scores dir_score[푖, 푗] and 173 
+
+dir_score[푗, 푖] are decoupled by construction, structurally demanding features 174 
+
+that distinguish the regulator role from the target role; these features conflict 175 
+
+with those needed by the edge-existence head, motivating separate training of 176 
+
+the two tasks. The direction head is further split into dual experts by target-gene 177 
+
+type: the TT expert is trained only on TF-to-TF ground-truth edges and the NT 178 
+
+expert only on TF-to-non-TF edges, and because genome-wide validation on 179 
+
+real data shows the TT expert to be superior on both edge types, the deployed 180 
+
+pipeline routes every edge to the TT expert (Methods); the matched-expert 181 
+
+advantage on synthetic data (Fig. 2e) reflects the synthetic training distribution 182 
+
+and does not transfer to real inputs, which is why the deployed routing rule is 183 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+uniform rather than type-matched. All models are trained only on synthetic data 184 
+
+(loss functions in Methods). 185 
+
+Finally, to achieve full-transcriptome coverage from a model trained and 186 
+
+inferred at a fixed G=200-gene scale, TF-centric windows slide across the 187 
+
+genome and their predictions are merged by complementary fusion rules (Fig. 188 
+
+1c). Each window contains 5 TFs and 195 target genes (preselected by 189 
+
+Pearson correlation and rotated across windows), so each TF is examined 190 
+
+alongside its candidate targets in multiple windows. Edge probability is fused 191 
+
+by taking the maximum across windows as a recall-oriented strategy, whereas 192 
+
+direction score is fused by taking the mean across windows as a multi-window 193 
+
+consensus. 194 
+
+edge_prob ￿￿￿￿￿ [푖, 푗] = max  
+
+> ￿
+
+edge_prob (￿) [푖, 푗], dir_score ￿￿￿￿￿ [푖, 푗] 195 
+
+= 1푊 ￿ dir_score (￿) ￿￿￿￿ 
+
+[푖, 푗] 196 
+
+Directed edges are emitted at threshold τ=0.2, and the resulting directed GRN 197 
+
+directly supports the five downstream analyses shown on the right of Fig. 1c: 198 
+
+edge-count trajectory, edge rewiring, TF-hub target dynamics, GO-NES 199 
+
+pathway dynamics, and driver-TF reverse lookup. 200 
+
+201 
+
+We next verify that the synthetic training distribution faithfully mimics real 202 
+
+transcriptomes and that the model has learned both target tasks, since 203 
+
+alignment between training and inference distributions is a prerequisite for zero-204 
+
+shot transfer. 205 
+
+After log1p transformation, synthetic expression reproduces the qualitative 206 
+
+shape of real scRNA-seq—non-negative, sparse (35% zeros, comparable to 207 
+
+the 42–51% of the real datasets), and approximately log-normal—and its 208 
+
+positive-expression distribution (mean 3.87) closely matches that of five of the 209 
+
+six BEELINE datasets (positive-expression means 4.21–4.76; overlap 210 
+
+coefficient 0.63–0.90, KS distance 0.10–0.20; Fig. 2a), while the average out-211 
+
+degree of synthetic networks is 4.9 with a long tail extending to 15, reproducing 212 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+the scale-free hub structure of the preferential attachment generator (Fig. 2b). 213 
+
+The edge model yields highly reproducible AUROC values (~0.870) across four 214 
+
+random seeds (Fig. 2c). Averaging predicted probabilities from these four 215 
+
+independently trained models during inference mitigates seed ‐dependent noise 216 
+
+and further improves the AUROC to 0.875, indicating that edge-prediction 217 
+
+ability is stable and initialization-independent (Fig. 2c). For direction prediction, 218 
+
+experts matched to edge type reach DirAcc of 0.976–0.987 on their respective 219 
+
+edge types (Fig. 2d). Against an unspecialized single-model baseline, matched 220 
+
+experts are superior on their own edge types: 0.978for the NT expert on TF-to-221 
+
+non-TF edges and 0.976 for the TT expert on TF-to-TF edges. By contrast, 222 
+
+mismatched combinations systematically degrade (NT expert 0.896 on TF-to-223 
+
+TF edges; TT expert 0.931 on TF-to-non-TF edges) (Fig. 2e). Collectively, 224 
+
+validations covering data fidelity, edge learnability, and direction separability 225 
+
+support the model’s transferability to real scRNA ‐seq data. 226 
+
+Edge and direction prediction benchmarks 227 
+
+We next test whether the edge-prediction and direction-inference abilities 228 
+
+established on synthetic data transfer to real scRNA-seq. Zero-shot evaluation 229 
+
+is performed on the six BEELINE benchmark datasets (mDC, mHSC-E, mHSC-230 
+
+GM, mHSC-L, hESC, hHep), with ground-truth networks taken from the ChIP-231 
+
+seq-derived networks released with BEELINE, and BoYueGRN is compared 232 
+
+against seven established methods (GENIE3, GRNBoost2, Correlation, 233 
+
+MutualInfo, PPCOR, GLasso, and dCor) plus a random baseline on identical 234 
+
+inputs. Direction prediction is assessed on the same benchmark and further 235 
+
+validated against causal ground truth on two genome-wide Perturb-seq screens. 236 
+
+Edge-existence prediction. At the TF-centric single-window setting (G=200), 237 
+
+BoYueGRN attains the highest AUROC on five of six datasets (mHSC-E 0.749, 238 
+
+mHSC-GM 0.760, mHSC-L 0.751, hESC 0.736, hHep 0.604; mean 0.679; Fig. 239 
+
+3a). Beyond overall ranking, the early precision ratio (EPR), the enrichment 240 
+
+multiple of ground-truth edges among the top-k predictions, exceeds 2 on four 241 
+
+of six datasets, peaking at 2.97 for mHSC-L (Fig. 3b). Extending the model to 242 
+
+full-genome coverage via window sliding raises the mean AUROC to 0.760 and 243 
+
+keeps EPR above 4 on all six datasets (Fig. 3c–d). 244 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Small-sample recovery via multi-window ensembling. The single dataset 245 
+
+on which single-window performance initially lags, mDC, illustrates that this is 246 
+
+an explainable statistical-estimation problem rather than a model deficiency, 247 
+
+and its recovery provides direct evidence for the robustness of multi-window 248 
+
+asymmetric fusion. Under the single-window G=200 setting, BoYueGRN's initial 249 
+
+AUROC on mDC is only 0.472 with an EPR of 0.18—the only one of the six 250 
+
+datasets that fails to clearly lead the baselines. mDC has only 383 cells, 30 TFs, 251 
+
+and 657 ChIP-seq ground-truth edges—the lowest edge count and edge 252 
+
+density (≈22 edges per TF) among the four ChIP-seq–annotated datasets, 253 
+
+making it both the smallest and, within its ground-truth class, the most sparsely 254 
+
+annotated of the six. It is also the only dataset whose expression distribution 255 
+
+departs markedly from the rest (positive-expression mean 1.08 vs 4.21–4.76; 256 
+
+overlap coefficient 0.47 vs 0.63–0.90; Fig. 2a), so the model operates partly 257 
+
+out-of-distribution on it. At the high-dimensional ratio n≈383, p=200, the Ledoit– 258 
+
+Wolf shrunk precision matrix degrades and the distance correlation matrix 259 
+
+likewise suffers small-sample noise, and the statistical uncertainty of both input 260 
+
+features—compounded by this distributional mismatch—jointly suppresses 261 
+
+single-window performance. Consistent with a dimensionality effect, ablation 262 
+
+shows that mDC's optimal single-window size is G=150 rather than G=200. 263 
+
+When the model is extended to genome-wide coverage, however, the max-264 
+
+fusion integration of 3,990 overlapping windows averages out single-window 265 
+
+statistical noise: mDC's AUROC recovers from 0.472 to 0.791 and its EPR rises 266 
+
+from 0.18 to 4.76, a level fully consistent with the other five datasets (EPR 4.19– 267 
+
+5.31). That this recovery holds even for the distributionally outlying dataset 268 
+
+underscores that the robustness of multi-window asymmetric fusion extends 269 
+
+beyond statistical noise to moderate distribution shift. In genome-wide mode 270 
+
+BoYueGRN outperforms both random guessing and all baseline methods on all 271 
+
+six datasets. 272 
+
+Direction inference and confidence calibration. Using the stronger of the 273 
+
+two direction experts (the TT expert), BoYueGRN exceeds the unspecialized 274 
+
+scheme on all six BEELINE datasets, with four reaching DirAcc ≥ 0.83 (Fig. 4a). 275 
+
+Because ChIP-seq ground truth reflects physical binding rather than causal 276 
+
+regulation, we further test direction inference on two independent human 277 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Perturb-seq datasets that provide causal ground truth from TF knockdown: 278 
+
+HCT116, from the X-Atlas/Orion genome-wide Perturb-seq atlas of colon 279 
+
+cancer generated on the FiCS fixation-freezing platform[37], and K562, from 280 
+
+the genome-wide CRISPRi screen of Replogle et al.[38].Accuracy falls below 281 
+
+the random level (0.5) at the default G=200 input scale, but genome-wide 282 
+
+coverage raises it to 0.821 and 0.810, respectively (Fig. 4b). The below-chance 283 
+
+single-window values indicate a systematic inversion rather than an absence of 284 
+
+signal: at G=200 the window is largely filled with genes unrelated to the 285 
+
+perturbed TF, so pairwise direction comparisons are dominated by noise, 286 
+
+whereas genome-wide windows pair each TF with its correlation-preselected 287 
+
+candidate targets and mean-aggregate direction scores across many windows, 288 
+
+which removes the inversion. Per-condition decomposition shows that on 289 
+
+retained edges (edge_prob > 0.2) accuracy reaches 0.859 (HCT116) and 0.947 290 
+
+(K562) overall and 0.949/0.958 on the TF-to-TF subset, while shuffled controls 291 
+
+return exactly to the random level (Fig. 4c–d). Collectively, direction inference 292 
+
+yields both high accuracy and trustworthy prediction confidence. Its probability 293 
+
+outputs can therefore be directly deployed for downstream edge filtering and 294 
+
+driver-gene ranking. 295 
+
+Rank-deficiency guard for Pearson preselection at low cell-to-gene ratios. 296 
+
+Datasets with a low cell-to-gene ratio require a targeted guard to keep 297 
+
+correlation-based preselection statistically stable. When the ratio of sampled 298 
+
+cells to genes is low, the Pearson correlation matrix tends to be rank-deficient 299 
+
+and correlation-based target preselection degenerates into noise-driven 300 
+
+ranking, so the candidate gene set must be shrunk by variance. We 301 
+
+encountered this with the BEELINE hESC dataset (758 cells, 17,735 genes): 302 
+
+its subsampled cell-to-gene ratio of 500/17,735 = 0.028 falls below the 303 
+
+preselection stability threshold of 0.04, the Pearson correlation matrix is 304 
+
+severely rank-deficient (rank ≤ 500), per-TF top-50 target selection is 305 
+
+dominated by noise and effectively random, within-window ground-truth edge 306 
+
+coverage collapses, and the genome-wide AUROC is only 0.501 (random level) 307 
+
+with an EPR of 1.99×—clearly below the other five datasets (EPR 4.64–5.31). 308 
+
+We therefore introduce adaptive variance-based subsampling: when the ratio 309 
+
+falls below the threshold, candidates are restricted to the n_keep genes of 310 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+highest variance (n_keep = n_sub/0.05 = 10,000), compressing the input from 311 
+
+17,735 to 10,000 genes to restore preselection stability. After this fix, hESC’s 312 
+
+AUROC rises to 0.718, EPR to 4.19×, and DirAcc to 0.841 (Table 1), bringing 313 
+
+its genome-wide results in line with the other datasets (the hESC result in Fig. 314 
+
+3 is the post-fix value). The fix is purely variance-based and uses no ground-315 
+
+truth information; a control benchmark that selects genes by ground-truth 316 
+
+connectivity (AUROC 0.736, numerically identical to the single-window hESC 317 
+
+value in Fig. 3a) closely matches the fixed result, confirming that the earlier 318 
+
+discrepancy reflected preselection rather than the inference model itself. The 319 
+
+rank-deficiency guard is therefore a necessary engineering component of 320 
+
+window-based preselection at low cell-to-gene ratios, ensuring stable genome-321 
+
+wide coverage under extreme high-dimensional inputs. 322 
+
+Table 1 | hESC genome-wide evaluation before and after the rank-323 
+
+deficiency guard 324 
+
+325 
+
+Metric Before After Change Input genes 17,735 10,000 —AUROC 0.501 0.718 +0.217 EPR 1.99× 4.19× ×2.1 DirAcc 0.698 0.841 +0.143 
+
+326 
+
+Design ablations. Systematic ablations confirm that every module of the model 327 
+
+contributes an observable performance gain rather than being set heuristically. 328 
+
+We first examine the complementarity of the two input feature sets by 329 
+
+comparing the P+D dual-channel fusion against single-channel inputs: joint 330 
+
+modeling of P and D outperforms the single-channel setting with D features 331 
+
+alone (Fig. 5a). Comparing the separated edge/direction training strategy 332 
+
+against a joint-training baseline, task-separated training raises edge-prediction 333 
+
+AUROC from 0.564 to0.679 (Fig. 5b). Increasing the training corpus from 10k 334 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+to 20k SCMs causes only a small 2.2% AUROC drop; adding Spearman 335 
+
+correlation as a third input channel degrades performance by 7.2%; and 336 
+
+superimposing extra noise with σ=0.05 causes a large 24.1% AUROC decline 337 
+
+(Fig. 5c). These results indicate that the P+D dual-channel configuration of the 338 
+
+precision and distance correlation matrices is sufficient for the tasks evaluated 339 
+
+here, and redundant statistics or a larger training set add noise rather than 340 
+
+signal. Against the DAGMA constrained training paradigm as a reference 341 
+
+baseline, dual-expert routing achieves a DirAcc of 0.910, essentially on par with 342 
+
+DAGMA’s 0.905, but with the practical advantage that inference requires no 343 
+
+per-dataset optimization (Fig. 5d). A parameter scan over window size G shows 344 
+
+AUROC first rising then falling and peaking at G=200 (Fig. 5e). Together, these 345 
+
+ablations demonstrate that each design choice of BoYueGRN is empirically 346 
+
+justified by an observable performance gain. 347 
+
+Expanded gene selection recovers disease-relevant pathways missed by 348 
+
+conventional selection 349 
+
+Because the scale of the input gene set directly constrains biological discovery, 350 
+
+we developed a DEG-Expanded strategy that replaces conventional HVG 351 
+
+selection and validated it on a multi-stage non-alcoholic fatty liver disease 352 
+
+(NAFLD; renamed metabolic dysfunction-associated steatotic liver disease, 353 
+
+MASLD, by the 2023 Delphi consensus, with NASH correspondingly MASH) 354 
+
+dataset[39]. BoYueGRN trains and infers on fixed-size (G=200) gene subsets 355 
+
+and achieves genome-wide coverage through sliding windows, but 356 
+
+conventional highly variable gene (HVG) selection typically retains only a few 357 
+
+hundred genes (for example 350), a cap that can constrain downstream 358 
+
+biological mining. To break this constraint, the DEG-Expanded strategy 359 
+
+constructs the input gene set from differentially expressed genes (DEGs). We 360 
+
+validate it on a NAFLD cohort (GSE202379, 99,809 cells × 30,908 genes; five 361 
+
+stages: Healthy, NAFLD, NASH, Cirrhosis, End-stage). NAFLD is the most 362 
+
+common chronic liver disease worldwide and can progress from simple 363 
+
+steatosis through steatohepatitis (NASH) to cirrhosis and hepatocellular 364 
+
+carcinoma. To isolate the effect of gene coverage on discovery, we merge all 365 
+
+cell types, run GO enrichment[40, 41] on the expanded input gene set, and 366 
+
+compare term by term against the conventional strategy (DEG-350) (Fig. 6). 367 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Expansion broadens coverage without sacrificing specificity (Fig. 6a). All 213 368 
+
+GO terms detected by the conventional strategy (DEG-350) are fully contained 369 
+
+in the 2,521 terms of DEG-Expanded, with the input gene number enlarged 370 
+
+20.3-fold and the number of disease-related terms enlarged 10.3-fold. The 371 
+
+2,308 newly added terms carry genuine enrichment signal: their median 372 
+
+max|NES| is 1.28, 94% exceed the empirical threshold |NES|=1, and the 373 
+
+distribution is comparable to that of shared terms and strongly divergent from 374 
+
+random. This coverage expansion translates directly into discoveries 375 
+
+inaccessible to the conventional strategy (Fig. 6b). Twenty disease pathways 376 
+
+entirely absent under the conventional strategy form a stage-resolved 377 
+
+pathological cascade (Fig. 6c): hepatocyte neural/developmental features are 378 
+
+lost in the Healthy stage and glutamate receptor signaling declines with 379 
+
+progression; regenerative attempts emerge in NASH with co-activation of G2/M 380 
+
+transition, liver development, and GABA signaling; genomic instability 381 
+
+accompanies immune attack in Cirrhosis, involving DNA/mitotic recombination, 382 
+
+T-cell-mediated cytotoxicity, and catecholamine metabolism; and precancerous 383 
+
+features of hepatocellular carcinoma (HCC) transformation appear at the End-384 
+
+stage with epigenetic remodeling, including base excision repair, ganglioside 385 
+
+metabolism, regulation of histone modification, and telomere-maintenance 386 
+
+suppression. Ganglioside metabolism, strongly activated at the End-stage with 387 
+
+little precedent in the NAFLD literature, is a candidate HCC marker. Cross-388 
+
+stage trajectories of eight representative pathways further validate the temporal 389 
+
+consistency of the outputs (Fig. 6d): lipid response (NAFL), coagulation (NASH), 390 
+
+ER stress (Cirrhosis, reversed at End-stage), and BMP/Wnt signaling (End-391 
+
+stage) dominate in turn, consistent with classical pathology, and ER stress 392 
+
+shifting from activation to suppression shows that the method captures pathway 393 
+
+off-switching, not only activation. These results indicate that conventional gene-394 
+
+selection strategies systematically lose disease-mechanism-relevant signals, 395 
+
+whereas DEG-Expanded leverages expanded gene coverage to mine 396 
+
+reproducible, evidence-backed pathway features. 397 
+
+BoYueGRN reveals stage-specific regulatory programs in disease 398 
+
+progression 399 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Having fixed a concrete analysis protocol through the DEG-Expanded 400 
+
+evaluation—DEG-Expanded gene selection, the TT direction expert, and an 401 
+
+edge_prob > 0.2 threshold, we apply BoYueGRN to five diseases spanning 402 
+
+metabolic (NAFLD)[39], chronic inflammatory (periodontitis)[42], neoplastic 403 
+
+(HCC)[43], precancerous (proliferative verrucous leukoplakia, PVL)[44], and 404 
+
+neurodegenerative pathologies (Alzheimer’s disease, AD)[45]. Each disease 405 
+
+spans multiple stages and cell types (Fig. 7–8, Fig. S4–6). We resolved each 406 
+
+dataset by cell type and stage, examining which stage-specific regulatory 407 
+
+programs appear in each cell type and which TFs drive them. Directed, 408 
+
+genome-wide GRNs are well suited to these questions: edge-count trajectories 409 
+
+track program rewiring, and driver-TF reverse lookup identifies the TFs behind 410 
+
+each pathway change. Together the five settings provide a broad test of the 411 
+
+method’s generality. 412 
+
+Biphasic regulatory network rewiring in NAFLD progression. Cell-type-413 
+
+resolved analysis shows that NAFLD regulatory dynamics are driven almost 414 
+
+entirely by hepatocytes (Fig. 7a). The hepatocyte GRN size follows a415 
+
+pronounced biphasic expansion trajectory: 501k at Healthy, peaking at 676k at 416 
+
+NASH, bottoming at 364k at Cirrhosis, and rebounding to 565k at End-stage, 417 
+
+while LSECs, cholangiocytes, and hepatic stellate cells remain nearly constant. 418 
+
+Edge rewiring localizes the two turning points to specific stage transitions: 419 
+
+NAFLD-to-NASH is the largest expansion period and NASH-to-Cirrhosis the 420 
+
+largest contraction (Fig. 7b). Cell-type-resolved pathway and driver analyses 421 
+
+uncover three programs invisible in merged analyses (Fig. 7c–f). First, LSECs 422 
+
+collapse their lipid/cholesterol metabolism at the End-stage while maintaining 423 
+
+strong activation of antiviral/innate immune pathways, consistent with the 424 
+
+established scavenger and antigen-presentation roles of liver sinusoidal 425 
+
+endothelial cells, with the end-stage timing of the lipid-program collapse being 426 
+
+the novel element contributed by the present analysis. Second, hepatocytes 427 
+
+simultaneously activate DNA synthesis and mitochondrial membrane 428 
+
+permeabilization at the End-stage, complementing the regenerative signals 429 
+
+seen at the merged level and corresponding to regenerative failure in end-stage 430 
+
+liver disease. Third, the LSEC lipid-pathway collapse is driven by the 431 
+
+synchronous decline of related TFs such as SMAD6 and NAP1L4, while 432 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+MEOX2, DBP, and TCF4 establish de novo regulation, mutually corroborating 433 
+
+the HCC-transforming precancerous pathways recovered by DEG-Expanded 434 
+
+enrichment at the End-stage and consistent with the NASH-to-HCC transition 435 
+
+reported in the literature. The network also reproduces the literature consensus 436 
+
+patterns of declining Hippo signaling across NAFLD stages and canonical Wnt 437 
+
+activation at the End-stage[46], independently supporting the biological fidelity 438 
+
+of cell-type-resolved GRNs. 439 
+
+A reversible-to-irreversible regulatory state transition in periodontitis. 440 
+
+Cell-type-resolved GRN analysis of a public periodontal single-cell dataset 441 
+
+(GSE164241, 51,110 cells × 23,341 genes; three stages: healthy buccal 442 
+
+mucosa, BM, gingivitis GM, periodontitis PD) reveals a switch from a reversible 443 
+
+to an irreversible regulatory state. Periodontitis is among the most common 444 
+
+chronic inflammatory diseases of the oral cavity; early gingivitis is fully 445 
+
+reversible by plaque removal, whereas progression to periodontitis entails 446 
+
+irreversible alveolar bone resorption and attachment loss. Fibroblasts, the core 447 
+
+effectors of periodontal tissue repair and ECM homeostasis, show an inverted 448 
+
+U GRN size trajectory, expanding from 390k edges at the healthy stage to a 449 
+
+peak of 466k at GM, then falling back to 407k at PD, whereas the epithelial 450 
+
+GRN size remains stable (Fig. 8a). Edge-rewiring analysis reveals two 451 
+
+qualitatively different regimes: BM to GM progression nets 75.6k edges with co-452 
+
+activation of inflammatory response and ECM organization programs, 453 
+
+corresponding to a reversible inflammatory-repair response to plaque 454 
+
+stimulation, whereas GM to PD progression nets a loss of 58.6k edges, with the 455 
+
+lost edges mainly attributable to collagen biosynthesis and tissue repair while 456 
+
+inflammatory programs persist, suggesting that the irreversibility of PD tissue 457 
+
+destruction stems not from enhanced inflammation but from active silencing of 458 
+
+repair programs (Fig. 8b–d). Driver-TF reverse lookup (Fig. 8e–f) shows that 459 
+
+periodontitis drivers are distributed across multiple non-epithelial compartments 460 
+
+rather than concentrated in a single cell type. Ranked by regulatory-change 461 
+
+magnitude, myeloid cells are dominated by weakening of cell-cycle and protein 462 
+
+ubiquitination programs (RSF1 and other myeloid regulators) and endothelial 463 
+
+cells by rearrangement of autophagy and glycan-metabolism programs 464 
+
+(ZNF440 and other endothelial regulators). Ranked by signal strength, the top-465 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+ranked regulators in Fig. 8f include GTF2F1, ETV6, TGFB1, and the T-cell 466 
+
+splicing factors SRSF9 and SRSF2. The strong myeloid signal of TGFB1 (a 467 
+
+master fibrosis regulator), together with the innate-immune programs prominent 468 
+
+in myeloid cells, corresponds to the fibrosis and inflammation axes of 469 
+
+periodontitis (Fig. 8e–f). At the network level, the inverted-U trajectory identifies 470 
+
+gingivitis as a reversible window: intervention while repair programs remain 471 
+
+active can restore tissue homeostasis, whereas once repair programs are 472 
+
+silenced, damage accumulates and cannot self-reverse, providing a GRN-level 473 
+
+account consistent with the established clinical reversibility of gingivitis, a 474 
+
+hypothesis-generating observation rather than new clinical evidence. 475 
+
+Extended analyses of neoplastic, precancerous, and neurodegenerative 476 
+
+settings. Extending the same analysis to three additional pathologies confirms 477 
+
+that BoYueGRN consistently recovers pathology-coherent programs across 478 
+
+diverse disease modes. HCC is the natural extension of the NAFLD case: the 479 
+
+precancerous pathways and MYC expansion detected at the NAFLD End-stage 480 
+
+are fully expressed in HCC, and the two cases form an internally consistent 481 
+
+progression chain. In HCC (Normal and Tumor), the hepatocyte GRN size 482 
+
+expands 21-fold in an almost purely additive manner (Fig. S4a, b), and the 483 
+
+pathway heatmaps reveal a metabolic-to-proliferative switch, with DNA-484 
+
+replication and cell-cycle programs activated and hepatocyte-specific metabolic 485 
+
+programs suppressed (Fig. S4c, d). In driver-TF reverse lookup, the core 486 
+
+drivers NCOA6, DNAJC2, and SNRPB, independently returned by the change-487 
+
+magnitude (Fig. S4e) and signal-strength (Fig. S4f) rankings, pointing to 488 
+
+metabolic reprogramming, ribosomal stress, and splicing dysregulation. PVL, 489 
+
+an invasive oral precancerous lesion prone to recurrence and malignant 490 
+
+transformation, shows a highly cell-type-heterogeneous response across its 491 
+
+mild/moderate/severe stages (with healthy gingival BM reused from the 492 
+
+periodontitis dataset as control, so cross-study batch and site differences may 493 
+
+contribute to the reported expansion ratios): the T-cell GRN expands 5.6-fold 494 
+
+and the epithelial GRN 2.3-fold, with core perturbations in the 495 
+
+microenvironmental compartment, and driver-TF reverse lookup independently 496 
+
+recovers IRF6 (Fig. S5)[47]. In AD (Control and AD; Fig. S6), network 497 
+
+expansion is mild; at the pathway level, the most prominent change in 498 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+astrocytes is enhancement of protein-complex assembly and protein-transport 499 
+
+programs, accompanied by weakening of MAPK/ERK cascade signaling, while 500 
+
+oxidative phosphorylation, insulin-receptor signaling, and synaptic-organization 501 
+
+terms appear but do not reach significance. Together, the consistent recovery 502 
+
+of pathology-coherent programs across neoplastic, precancerous, and 503 
+
+neurodegenerative settings supports the general applicability of the method. 504 
+
+Discussion 505 
+
+BoYueGRN reframes directed GRN inference as a train-once, cross-dataset 506 
+
+inference paradigm, replacing the per-dataset optimization that has long 507 
+
+constrained the field. Trained entirely on synthetic structural causal models, the 508 
+
+model reconstructs genome-scale directed regulatory networks from real 509 
+
+scRNA-seq data in a single forward pass, simultaneously delivering the 510 
+
+prediction accuracy, gene coverage, and reliability of regulatory direction that 511 
+
+existing tools struggle to combine. We validated its performance on the 512 
+
+BEELINE benchmark and two Perturb-seq screens, and, applying the same 513 
+
+pipeline to five disease datasets, the model not only reproduced reported 514 
+
+pathological features but also generated experimentally testable regulatory 515 
+
+hypotheses, demonstrating both reliable predictive ability and mechanistic 516 
+
+discovery value. 517 
+
+To address the high ‐dimensionality, noise, and directional constraints inherent 518 
+
+to scRNA ‐seq GRN inference, we adopt an amortized causal discovery design. 519 
+
+GENIE3, GRNBoost2, graphical lasso, and NOTEARS all refit models per 520 
+
+dataset, which is slow and unstable when p ≫n; an amortized model trains once 521 
+
+and then infers at near-zero marginal cost. This lineage extends from the time-522 
+
+series-oriented ACD and the i.i.d.-setting AVICI to the CDFM foundation 523 
+
+model[29, 30, 32], yet none targets GRN inference, and even the closest 524 
+
+predecessor, AVICI, has been validated only on synthetic and semi-synthetic 525 
+
+data. What enables the transfer is the alignment of the synthetic training 526 
+
+distribution with real GRNs along three axes: (1) scale-free hub topology from 527 
+
+preferential attachment; (2) an additive-noise mechanism that separates 528 
+
+injection noise from final noise to render directions identifiable; and (3) log1p-529 
+
+transformed, sparse, non-negative expression statistics. Whereas simulators 530 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+such as SERGIO generate gold-standard benchmarks for GRN methods[31], 531 
+
+BoYueGRN instead uses synthetic causal models directly as training material 532 
+
+and shows that effective mechanistic alignment between synthetic data and real 533 
+
+single-cell transcriptomes enables zero-shot transfer inference to real datasets. 534 
+
+Four design decisions jointly underpin the model’s performance. First, fusing 535 
+
+the Ledoit–Wolf shrunk precision matrix with the distance correlation matrix 536 
+
+jointly captures linear and nonlinear regulation, outperforming the distance-537 
+
+correlation-only channel. Second, training edge existence and direction 538 
+
+separately, because the two tasks demand conflicting features, raises edge-539 
+
+prediction AUROC from 0.564 to 0.679, and TT/NT dual-expert routing 540 
+
+achieves a DirAcc of 0.910, matching the acyclicity-constrained DAGMA (0.905) 541 
+
+while requiring no optimization at inference[48]. Third, TF-centric sliding 542 
+
+windows with asymmetric fusion extend the fixed 200-gene model to 99.4–100% 543 
+
+genome-wide coverage without loss of accuracy. Fourth, replacing 544 
+
+conventional HVG selection with DEG-Expanded enlarges the NAFLD input 20-545 
+
+fold while preserving every GO term detected by the conventional strategy, 546 
+
+shifting analysis from genome-wide scanning toward disease-focused 547 
+
+reconstruction. 548 
+
+Applying the framework to GRN-dynamics reconstruction across five diseases 549 
+
+spanning neoplastic, precancerous, and neurodegenerative settings recovered 550 
+
+pathology-coherent regulatory programs and generated testable hypotheses in 551 
+
+every case, with most of these signals recovered only at cell-type resolution 552 
+
+rather than in merged analyses. Because inference requires no retraining or 553 
+
+case-specific tuning, the same zero-shot pipeline applies directly to any disease 554 
+
+with scRNA-seq data, making BoYueGRN broadly accessible for hypothesis 555 
+
+generation and mechanistic discovery. Furthermore, we provide the top 15 556 
+
+aggregated results across cell types. Users may select cell types of interest to 557 
+
+perform in ‐depth mining of cell ‐specific regulatory features. For instance, 558 
+
+analyses of PVL T cells reveal markedly enhanced regulatory activity of IRF6, 559 
+
+a well ‐validated tumor suppressor in squamous carcinoma, from mild to 560 
+
+moderate lesion stages, with its regulated target genes expanding from 88 to 561 
+
+470, consistent with tumor-suppressive programs being engaged rather than 562 
+
+lost during early lesion progression. As illustrated by this, a single set of GRN 563 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+inferences can support both broad-scale summaries and cell-type-focused 564 
+
+analyses. 565 
+
+BoYueGRN can deliver reliable GRN ‐inferred outputs for downstream tasks. 566 
+
+The most direct extension is in silico perturbation simulation on BoYueGRN’s 567 
+
+directed regulatory networks, predicting transcriptome-cascade effects of TF 568 
+
+knockout or overexpression to computationally prioritize CRISPR functional 569 
+
+screens. Integrating the framework with multi-omics signals such as ATAC-seq 570 
+
+motif analysis and spatial-transcriptomic neighborhood information could 571 
+
+further improve tissue-specific regulatory inference. At the mechanistic level, 572 
+
+the multi-cell-type, stage-resolved directed GRNs produced here provide a new 573 
+
+basis for dissecting intercellular regulatory crosstalk—resolving transcriptional 574 
+
+signal transmission between cells, distinguishing cell-autonomous from non-575 
+
+cell-autonomous drivers, and tracing the origin nodes of regulatory 576 
+
+dysregulation across disease stages. At the translational level, GRN-dynamics 577 
+
+features such as network expansion ratio are candidates for prognostic 578 
+
+modeling once patient-level outcome data become available; the present 579 
+
+analyses are hypothesis-generating and carry no clinical validation. 580 
+
+It is worth noting that although we have implemented corresponding 581 
+
+countermeasures, some inherent challenges of GRN inference cannot be fully 582 
+
+eliminated. The gold ‐standard annotations of the BEELINE benchmark, derived 583 
+
+from ChIP ‐seq, suffer incomplete coverage: many so ‐called negative samples 584 
+
+merely reflect absent evidence rather than proven absence of regulation, 585 
+
+lowering the attainable AUROC ceiling[25]. We therefore use both AUROC and 586 
+
+EPR in all evaluations, and interventional benchmarks in the style of 587 
+
+CausalBench would provide a stronger basis for causal claims and are a natural 588 
+
+next step. In addition, DEG calls are computed per cell with Wilcoxon tests and 589 
+
+do not model sample-level nesting, so significance may be inflated; DEG 590 
+
+selection is therefore used as a gene-coverage heuristic rather than an 591 
+
+inferential claim, and pseudobulk or mixed-model sensitivity analyses are a 592 
+
+worthwhile refinement. In addition, cell types with few cells and few differential 593 
+
+genes are subject to limited statistical power, and the TF number and 594 
+
+window ‐rotation mechanism of the sliding ‐window framework introduce 595 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+secondary biases. Further, the CRISPRi ‐based Perturb ‐seq ground truth is 596 
+
+itself conservative: both screens use knockdown rather than knockout, the 597 
+
+median knockdown efficiency in HCT116 is approximately 75.4%, weaker 598 
+
+regulatory effects are hard to detect, and measured directional accuracy 599 
+
+therefore likely underestimates BoYueGRN’s true performance. Furthermore, 600 
+
+the cell ‐type ‐specific GRNs of the five disease datasets are currently validated 601 
+
+mainly through indirect consistency with the published literature, and some 602 
+
+newly generated hypotheses await confirmation in independent cohorts or 603 
+
+wet ‐lab perturbations, a limitation imposed by the high cost of in vivo 604 
+
+cell ‐type ‐specific perturbation experiments and shared by single ‐cell research 605 
+
+broadly rather than specific to this method. 606 
+
+In summary, BoYueGRN demonstrates that amortized training on synthetic 607 
+
+data can learn causal features that transfer zero-shot to real scRNA-seq, even 608 
+
+without epigenetic priors or perturbation information, reconstructing biologically 609 
+
+valid directed regulatory networks from steady-state transcriptomes. This work 610 
+
+shifts GRN inference from a per-dataset optimization paradigm to a train-once-611 
+
+reuse paradigm and provides a unified framework for multi-stage, multi-cell-612 
+
+type disease regulatory dynamics. As single-cell multi-omics data and large-613 
+
+scale perturbation screens continue to accumulate, this paradigm—combining 614 
+
+prior-free direction inference, genome-wide coverage, and disease-network 615 
+
+dynamic phenotype analysis—should prove valuable for disease-mechanism 616 
+
+elucidation, therapeutic target discovery, and precision medicine. 617 
+
+Methods 618 
+
+1. Framework overview 619 
+
+BoYueGRN is an amortized GRN inference framework trained once on 620 
+
+synthetic SCMs and thereafter producing a directed, genome-wide GRN for any 621 
+
+new real dataset in a single forward pass. The workflow proceeds in three 622 
+
+stages. First, synthetic data generation constructs 10,000 expression datasets 623 
+
+under controllable rules with fully known graph structure, edge weights, 624 
+
+mechanism types, and noise magnitudes, providing complete supervision for 625 
+
+both the edge-existence and direction tasks. Second, model training serves the 626 
+
+edge-existence and direction tasks with independently trained encoders, the 627 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+direction task further split into dual experts by target-gene type. Third, zero-shot 628 
+
+inference slides fixed G=200-gene windows TF-centrically across the genome, 629 
+
+one forward pass per window, fusing edge probability by maximum and 630 
+
+direction score by mean, and emitting directed edges at threshold τ=0.2. The 631 
+
+upfront cost of the amortized paradigm buys nearly free inference at 632 
+
+deployment—the computational prerequisite for large-scale GRN-dynamics 633 
+
+analysis across cell types, stages, and diseases. 634 
+
+2. Data sources and preprocessing 635 
+
+Data sources. Model training uses only synthetic data (Section 3); all real data 636 
+
+are reserved for zero-shot evaluation and biological applications. The first class 637 
+
+is the BEELINE benchmark, comprising six scRNA-seq datasets (mDC, mHSC-638 
+
+E, mHSC-GM, mHSC-L, hESC, hHep) with the ChIP-seq-derived directed 639 
+
+networks released with the benchmark as ground truth, for fair comparison 640 
+
+against eight existing methods (GENIE3, GRNBoost2, Correlation, MutualInfo, 641 
+
+PPCOR, GLasso, dCor, and a random baseline)[25]. The second class is the 642 
+
+Perturb-seq benchmark, comprising the X-Atlas/Orion genome-wide CRISPR 643 
+
+interference (CRISPRi) Perturb-seq screen in HCT116 (colon cancer cell line, 644 
+
+38,606 genes, about 3.4 million cells)[37] and the genome-wide CRISPRi 645 
+
+screen of Replogle et al. in K562 (myeloid leukemia cell line, 8,248 genes, 646 
+
+11,258 cells)[38], both providing causal ground truth for regulatory direction 647 
+
+through TF knockdown with transcriptomic-response measurement. The third 648 
+
+class is disease cases: NAFLD (GSE202379)[39], hepatocellular carcinoma 649 
+
+(HCC, GSE149614)[43], periodontitis (GSE164241) [42], Alzheimer’s disease 650 
+
+(GSE157827)[45], and proliferative verrucous leukoplakia (GSE196296) [44]. 651 
+
+Preprocessing. Each expression matrix is z-scored per gene before feature 652 
+
+computation (Section 4). Cell filtering proceeds in two steps: Perturb-seq cells 653 
+
+are grouped by guide type with at least 50 cells per perturbed TF, and disease-654 
+
+case cells are grouped by cell-type annotation with at least 100 cells per (cell 655 
+
+type × stage) combination (the “valid cell type” criterion). At most 500 cells per 656 
+
+window are used for input-feature computation (MAX_CELLS=500), with 657 
+
+downsampling beyond that, to control the cost and numerical stability of 658 
+
+precision-matrix estimation. For Perturb-seq ground truth, HCT116 uses a 659 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Welch t test to define target genes significantly differentially expressed after TF 660 
+
+knockdown (p < 0.01, |log2FC| > 0.25; 1,320 perturbed TFs); because CRISPRi 661 
+
+mediates transcriptional knockdown rather than complete knockout, the median 662 
+
+knockdown efficiency in HCT116 is approximately 75.4%[37], and these 663 
+
+ground-truth edges may underestimate true regulatory effects. K562 follows the 664 
+
+authors’ released Truth-seq calls (|z| ≥ 2.0) to define regulatory edges (663 TFs 665 
+
+covered by windows). 666 
+
+3. Synthetic data generation with structural causal models 667 
+
+Synthetic data are generated by structural causal models under controllable 668 
+
+rules (10,000 independent datasets; each G=200 genes × C=1,000 cells), 669 
+
+providing the complete ground truth that real scRNA-seq lacks, since only a 670 
+
+small fraction of gene pairs can be validated by ChIP-seq or Perturb-seq. 671 
+
+Graph topology. The first five nodes form a seed causal chain (each node has 672 
+
+exactly one incoming edge from an earlier-indexed node); subsequent nodes 673 
+
+sample parents among earlier-indexed nodes with probability proportional to 674 
+
+(in-degree + 1), with an expected parent count of about 5. Constraining parents 675 
+
+to earlier-indexed nodes guarantees acyclicity by construction, and preferential 676 
+
+attachment[34] produces a scale-free hub structure mimicking the real-GRN 677 
+
+characteristic in which a few hub TFs regulate many targets. Edge weights W 678 
+
+~ Uniform(−1.5, 2.0), mixing activation (about 57%) and repression (about 43%). 679 
+
+Structural equations. Each node’s expression is generated in topological 680 
+
+order through additive noise structural equations (ANM)[27], with about 50% 681 
+
+linear and about 50% GELU mechanisms. 682 
+
+푧￿ = ￿ 푊
+
+> ￿∈￿￿(￿)
+
+[푝, 푖] ⋅ 푋[: , 푝] + 휀 ￿￿￿ , 푋[: , 푖] = 푓 ￿(푧 ￿) + 휀 ￿￿￿ (1) 683 
+
+The magnitude gap between the injection noise 휀￿￿￿ ∼ 풩(0, 0.3 ￿) and the final 684 
+
+noise 휀￿￿￿ ∼ 풩(0, 2.0 ￿) satisfies the directional identifiability condition of 685 
+
+additive noise models: independence holds in the parent-to-child direction but 686 
+
+not the reverse, providing an identifiable signal for direction learning, further 687 
+
+reinforced by the 50% nonlinear mechanisms. After log1p transformation of the 688 
+
+non-negative expression, synthetic expression acquires the non-negative, 689 
+
+sparse, approximately log-normal statistics of scRNA-seq (about 37% zeros), 690 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+aligning the synthetic distribution with real single-cell data. The 10,000 datasets 691 
+
+are split 80/10/10 (train/validation/test) under fixed random seeds, consistent 692 
+
+across training seeds. 693 
+
+4. Input features 694 
+
+Two complementary gene-pair features are computed from the standardized 695 
+
+expression of the G genes in a window: the Ledoit–Wolf shrunk precision matrix 696 
+
+P (linear conditional dependence) and the distance correlation matrix D697 
+
+(nonlinear dependence). P is the inverse of the Ledoit–Wolf shrunk covariance 698 
+
+estimate; P[i,j] reflects partial correlation after removing confounding by the 699 
+
+remaining G−2 genes, capturing direct regulation rather than indirect co-700 
+
+expression, and shrinkage guarantees invertibility and numerical stability when 701 
+
+G approaches the sample size. D is defined by the covariance of double-702 
+
+centered distances (dCov²). 703 
+
+퐷[푖, 푗] = ￿dCov ￿(푋 ￿, 푋 ￿)￿dvar(푋 ￿) ⋅ dvar(푋 ￿) , 퐷[푖, 푗] ∈ [0,1] (2) 704 
+
+D captures nonlinear/non-monotonic dependence inaccessible to linear partial 705 
+
+correlation, making the two channels complementary. The model input is the 706 
+
+concatenation cat([P, D]) of shape (1, G, 2G), linearly projected to 707 
+
+d_model=512 before entering the graph Transformer encoder. 708 
+
+5. Model architecture 709 
+
+BoYueGRN uses three independently trained encoders and two independent 710 
+
+prediction heads. The three encoders share one architecture—an 8-layer graph 711 
+
+Transformer[49] (GraphTransformerEncoder, G=200, d_model=512, 712 
+
+n_heads=8, n_layers=8, dropout=0.1, with edge-biased attention and 713 
+
+stochastic depth), each gene a node. The edge encoder is trained from scratch, 714 
+
+while the two direction encoders are warm-started from its weights and fine-715 
+
+tuned independently (with no final parameter sharing), because the edge and 716 
+
+direction heads require conflicting features (distinguishing edge/no-edge 717 
+
+versus distinguishing i→j from j→i). The edge-existence head (EdgeHead; 718 
+
+about 25.4 million parameters in total) scores gene pairs with a symmetric dot 719 
+
+product superimposed on pairwise statistics. 720 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+edge_prob[푖, 푗] = 휎 ￿ (푊 ￿ℎ￿) ⋅ (푊 ￿ℎ￿)￿
+
+￿푑 ￿
+
++ MLP([푃 ￿￿ , 퐷 ￿￿ ])￿ (3) 721 
+
+The direction head (AsymmetricDirHead; about 1.05 million parameters) scores 722 
+
+direction with asymmetric source/target projections. 723 
+
+dir_score[푖, 푗] = 휎￿src_proj(ℎ ￿) ⋅ tgt_proj(ℎ ￿)￿ + MLP([푃 ￿￿ , 퐷 ￿￿ ])￿ (4) 724 
+
+Because the two projections differ, the ordered-pair scores dir_score[푖, 푗] and 725 
+
+dir_score[푗, 푖] are decoupled by construction, structurally requiring features that 726 
+
+distinguish the regulator from the target role. The direction head is further 727 
+
+trained as dual experts by target-gene type: the TT expert only on TF-to-TF 728 
+
+ground-truth edges and the NT expert only on TF-to-non-TF edges, with 729 
+
+inference routed by target-gene type (TF targets to the TT expert, non-TF 730 
+
+targets to the NT expert). Because the TT expert outperforms the NT expert on 731 
+
+both edge types in genome-wide HCT116 validation, the benchmark and 732 
+
+disease-case analyses reported here uniformly use the TT expert. 733 
+
+6. Training procedure 734 
+
+All models are trained only on synthetic data. Edge model. 20,000 steps, batch 735 
+
+size 32, Adam optimizer[50] (lr=2e-4, weight_decay=0.01, linear warmup of 736 
+
+2,000 steps), gradient clipping 1.0; the loss is positive-example-weighted binary 737 
+
+cross-entropy on off-diagonal gene pairs with label smoothing, 738 
+
+ℒ￿￿￿￿ = − 1|Ω| ￿ 푤￿￿ (￿,￿)∈￿ 
+
+￿푦 ￿￿ ￿ log휎(푙 ￿￿ ) + (1 − 푦 ￿￿ ￿ )log(1 − 휎(푙 ￿￿ ))￿, 푤￿￿ 739 
+
+= ￿ 10.0, 퐴￿￿ = 1 1.0, 퐴￿￿ = 0 (5) 740 
+
+where 푦￿￿ ￿ = 0.9퐴 ￿￿ + 0.1(1 − 퐴 ￿￿ ) (label_smoothing=0.1, shifting each target 741 
+
+0.1 toward the opposite class) and 퐴￿￿ is the ground-truth adjacency; positive 742 
+
+weighting (pos_weight=10.0) mitigates the extreme class imbalance in which 743 
+
+positive edges account for only about 0.1%. Four random seeds (0–3) are 744 
+
+trained independently and their predictions averaged at inference. Direction 745 
+
+model. 20,000 steps, Adam (lr=1e-4, weight_decay=0.01, linear warmup of 746 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1,000 steps), label-smoothed binary cross-entropy (smoothing=0.1) computed 747 
+
+only on ground-truth edges of the corresponding type, 748 
+
+ℒ￿￿￿ = − 1|ℰ ￿￿￿￿ | ￿ ￿푦 ￿log휎(푙 ￿￿ ) + (1 − 푦 ￿)log(1 − 휎(푙 ￿￿ ))￿ 
+
+> (￿,￿)∈ℰ ￿￿￿￿
+
+(6) 749 
+
+where ℰ￿￿￿￿ is the TT (TF-to-TF) or NT (TF-to-non-TF) ground-truth edge set 750 
+
+and the direction label is the edge direction (1 for i→j, 0 for j→i); the NT expert 751 
+
+is a four-seed ensemble and the TT expert uses the best single seed. No real 752 
+
+scRNA-seq data are seen during training; zero-shot generalization relies on 753 
+
+alignment of the synthetic distribution with real single-cell statistics (Section 3). 754 
+
+7. Zero-shot inference and genome-wide coverage 755 
+
+For gene sets larger than 200, fixed TF-centric windows slide across the gene 756 
+
+set to achieve genome-wide coverage. Each window contains 5 TFs 757 
+
+(TF_PER_WINDOW=5) and 195 target genes, with targets preselected by 758 
+
+Pearson correlation (top-50 candidates per TF on a subsample of n_sub = 759 
+
+min(500, n_cells) cells) and rotated across windows so every gene is 760 
+
+sufficiently covered; each window performs one independent forward pass 761 
+
+(about 1 ms). Cross-window fusion follows a complementary rule: edge 762 
+
+probability is fused by the maximum across windows (a recall-oriented strategy 763 
+
+retaining strong evidence from any window), and direction score by the mean 764 
+
+across windows (a multi-window consensus suppressing single-window noise). 765 
+
+edge_prob ￿￿￿￿￿ [푖, 푗] = max  
+
+> ￿
+
+edge_prob (￿) [푖, 푗], dir_score ￿￿￿￿￿ [푖, 푗] 766 
+
+= 1푊 ￿ dir_score (￿) ￿￿￿￿ 
+
+[푖, 푗] (7) 767 
+
+Directed edges are emitted at threshold τ=0.2 (an empirical value balancing 768 
+
+precision/recall and consistent with the low-confidence bin boundary of the 769 
+
+calibration curve). Rank-deficiency guard. The statistical stability of 770 
+
+preselection depends on the cell-to-gene ratio n_sub/n_genes (n_sub =771 
+
+min(500, n_cells)); when the ratio falls below 0.04, the Pearson correlation 772 
+
+matrix is rank-deficient (rank ≤ n_sub) and top-50 target selection is noise-773 
+
+dominated, so candidates are restricted to the n_keep = n_sub/0.05 genes of 774 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+highest variance (e.g., for hESC with ratio 500/17,735 ≈ 0.028 below 0.04, 775 
+
+n_keep = 10,000). The guard is based only on gene variance and uses no 776 
+
+ground-truth information. 777 
+
+8. Benchmark evaluation 778 
+
+BEELINE zero-shot benchmark. The six datasets are compared against the 779 
+
+same seven methods plus a random baseline on identical inputs. BEELINE 780 
+
+additionally provides a seventh dataset (mESC), which we exclude because it 781 
+
+is the only time-course entry in the benchmark: its 421 cells pool five 782 
+
+differentiation time points (0-72 h), violating the steady-state, exchangeable-783 
+
+cells assumption on which the input statistics P and D rest, whereas the other 784 
+
+six datasets are single-condition snapshots. The window-level benchmark uses 785 
+
+a G=200 single window (top-50 TFs + the 150 target genes of highest 786 
+
+expression variance, padded with the highest-variance genes when fewer than 787 
+
+200), ensuring fair comparison with baselines; the genome-wide benchmark 788 
+
+covers all genes with the Section 7 sliding windows. Metrics are AUROC, EPR, 789 
+
+ECR, and DirAcc (defined in Section 11). Perturb-seq direction validation. 790 
+
+Because ChIP-seq ground truth reflects physical binding rather than causal 791 
+
+regulation, direction inference is further validated on two human Perturb-seq 792 
+
+datasets (HCT116 and K562; ground-truth construction in Section 2). 793 
+
+Directional accuracy is computed only on predicted edges (edge_prob > 0.2); 794 
+
+shuffled controls (randomly permuted ground-truth directions) test for 795 
+
+systematic bias in direction judgment. Confidence calibration. Predicted 796 
+
+edges are binned by edge_prob into low/mid/high bins (bin center 797 
+
+0.10/0.50/0.90), and the empirical DirAcc per bin is computed to test 798 
+
+consistency between model probability and independently validated accuracy; 799 
+
+an optional high-confidence filter (edge_prob ≥ 0.65) can further restrict edges 800 
+
+when stricter precision is desired, although the analyses reported here operate 801 
+
+on the τ=0.2 emission threshold (Section 7). 802 
+
+9. Disease-case analyses and the DEG-Expanded strategy 803 
+
+The fixed window scale G=200 also determines the gene-selection strategy, 804 
+
+because gene selection dictates which genes enter the sliding windows and 805 
+
+hence the network’s coverage. Conventional HVG selection restricts the input 806 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+to a few hundred genes (for example 350), a cap that limits the discovery range 807 
+
+by excluding many disease-relevant genes (mid- and low-expression markers, 808 
+
+cell-type-specific TFs). We therefore propose the DEG-Expanded strategy, 809 
+
+constructing the input from statistically significant differentially expressed genes 810 
+
+to lift the cap. Unified pipeline. All five cases share one pipeline. DEGs are 811 
+
+first selected by Wilcoxon rank-sum test (stage vs baseline, BH-FDR < 0.05, 812 
+
+|log2FC| > 0.5), with the union across stages taken and no truncation (e.g., 813 
+
+7,121 genes for NAFLD). TFs are then filtered from the DEG set using a species 814 
+
+TF list (the BEELINE human TF catalog compiled from RegNetwork and 815 
+
+TRRUST, which includes curated non-classical regulators such as signaling 816 
+
+molecules, receptors, and splicing factors alongside DNA-binding transcription 817 
+
+factors); when the cap is exceeded, the top max_tfs=150 are taken in 818 
+
+descending |log2FC| order. Direction inference uses the TT expert; sliding 819 
+
+windows, preselection, fusion, and the edge threshold follow Section 7820 
+
+(edge_prob > 0.2). Cell type × stage resolution. Each dataset is split by cell-821 
+
+type annotation and stage, and one GRN is inferred per (cell type × stage) 822 
+
+combination (≥ 100 cells per group), preventing merged analyses from 823 
+
+canceling cell-type-specific regulatory signals; subsequent pathway and driver 824 
+
+analyses operate at this resolution. 825 
+
+10. GO enrichment and pathway interpretation 826 
+
+For each (cell type × stage) GRN, a prerank gene list is built using TF-to-target 827 
+
+edge probability as the gene-importance score, and prerank GSEA (gseapy 828 
+
+implementation) is run against GO biological-process terms, reporting each 829 
+
+term’s NES, nominal p-value, and FDR q-value. Filtering rules. Enrichments 830 
+
+dominated by ribosomal gene families (RPL/RPS/MRPL/MRPS; housekeeping-831 
+
+gene contamination) and overly broad generic transcription terms (e.g., 832 
+
+GO:0006355) are removed; NOM p < 0.05 is primary and p < 0.10 secondary. 833 
+
+Pathway selection and ranking. Pathways are ranked by |ΔNES| (late−early; 834 
+
+the most drastic changes) and by max|NES| (strongest cross-stage signal), 835 
+
+taking the top 15 of each, deduplicating across cell types, and retaining the best 836 
+
+cell type. Driver-TF reverse lookup. For each selected pathway, the 837 
+
+edge_prob of every TF over all target genes in the pathway is aggregated; e2 838 
+
+takes the top 15 TFs by |Δedge_prob| (late−early) and e3 the top 15 TFs by 839 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+maximum edge_prob, and when the same TF regulates multiple pathways the 840 
+
+highest-scoring version is retained. Sliding-window strategy. For low-gene-841 
+
+number cases such as PVL and periodontitis, to increase statistical power each 842 
+
+stage is enriched separately on 3 windows with 50% overlap, and significant 843 
+
+terms are merged to reduce window-level stochastic fluctuation. 844 
+
+11. Evaluation metrics 845 
+
+AUROC measures edge-ranking quality. Early precision ratio (EPR) is the 846 
+
+enrichment multiple of ground-truth edges among the top-N predictions (N = 847 
+
+number of ground-truth positives). 848 
+
+EPR = Precision@푁 푁￿￿ /푁 ￿￿￿￿ 
+
+(8) 849 
+
+Early count ratio (ECR) is the multiple of the ground-truth edge count within 850 
+
+top-N relative to the random expectation, measuring the gain in absolute top-851 
+
+hit count. Directional accuracy (DirAcc) is defined as 852 
+
+DirAcc = #{ edges with correctly predicted direction }#{ evaluated edges } (9) 853 
+
+and is evaluated only on predicted edges with edge_prob > 0.2, reported 854 
+
+separately for TF-to-non-TF (NT domain), TF-to-TF (TT domain), and all edges. 855 
+
+Confidence calibration. Predicted edges are binned by edge_prob (bin center 856 
+
+0.10/0.50/0.90) and the empirical DirAcc per bin computed; perfect calibration 857 
+
+corresponds to DirAcc = model confidence (the y=x line), and τ=0.2 splits edges 858 
+
+into discarded (≤0.2) and retained (>0.2) classes. 859 
+
+12. Statistical analyses 860 
+
+Differential expression. DEGs for each disease stage against its baseline are 861 
+
+identified by Wilcoxon rank-sum test with Benjamini–Hochberg FDR correction 862 
+
+(FDR < 0.05, |log2FC| > 0.5). Perturb-seq ground truth. HCT116 uses a 863 
+
+Welch t test (p < 0.01, |log2FC| > 0.25); K562 follows the authors’ released 864 
+
+Truth-seq calls (|z| ≥ 2.0). Direction baseline controls. Randomly permuting 865 
+
+ground-truth edge directions and recomputing DirAcc serves as the null 866 
+
+hypothesis (HCT116 0.501, K562 0.500, no systematic bias). Multi-seed 867 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+robustness. The edge model and NT direction expert are each trained with 868 
+
+four independent seeds, with inter-seed consistency reported (e.g., synthetic-869 
+
+data edge-prediction AUROC 0.867–0.870) and ensembled means reducing 870 
+
+seed sensitivity. GO enrichment significance. NOM p and FDR q come from 871 
+
+gseapy prerank GSEA; term-count comparisons (e.g., the max|NES| 872 
+
+distribution difference between DEG-Expanded and the conventional strategy, 873 
+
+p < 1e-100) use the Wilcoxon rank-sum test. Ablation comparisons. Paired 874 
+
+configuration comparisons (e.g., P+D vs D alone, joint vs separated training, 875 
+
+dual experts vs DAGMA) use identical BEELINE inputs and evaluation protocol. 876 
+
+13. Computational tools and software 877 
+
+Python 3.12; PyTorch 2.x (CUDA-accelerated training, CPU-supported 878 
+
+inference); scikit-learn (Ledoit–Wolf precision matrix, evaluation metrics); SciPy 879 
+
+(distance correlation, sparse matrices, Wilcoxon tests); gseapy (prerank GSEA); 880 
+
+scanpy (h5ad reading, cell-annotation handling); h5py (h5ad/h5 data reading); 881 
+
+matplotlib / numpy / pandas (plotting and data processing). Base dependencies 882 
+
+are in requirements.txt and full-pipeline dependencies in requirements-883 
+
+pipeline.txt (pyproject.toml requires Python ≥ 3.10; the tested environment is 884 
+
+3.12). All scripts support the BOYUE_ROOT, BOYUE_DATA, and 885 
+
+BOYUE_CKPT environment variables to override default paths. 886 
+
+Data availability 887 
+
+BEELINE benchmark data come from the original benchmark release[25]. For 888 
+
+Perturb-seq data, the HCT116 files come from the X-Atlas/Orion genome-wide 889 
+
+screen[37] and the K562 files from the genome-wide CRISPRi screen of 890 
+
+Replogle et al.[38]. Disease-case data come from NCBI GEO: NAFLD 891 
+
+(GSE202379)[39], HCC (GSE149614)[43], periodontitis (GSE164241)[42], 892 
+
+PVL (GSE196296)[44], and AD (GSE157827)[45]. The PVL healthy control is 893 
+
+taken from the BM of the periodontitis dataset. All datasets are directly available 894 
+
+from their respective public sources. 895 
+
+Code availability 896 
+
+Reproducible code is publicly available at 897 
+
+https://github.com/holaoctopus/BoYueGRN The code repository does not 898 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+include figure-generation scripts; Trained model checkpoints (edge model 4 899 
+
+seeds, NT direction expert 4 seeds, TT direction expert, and 7 ablation models) 900 
+
+are distributed via a HuggingFace model repository at 901 
+
+https://huggingface.co/Holaoctopus/boyuegrn. 902 
+
+Acknowledgements 903 
+
+This work was supported by the Sichuan Provincial Natural Science 904 
+
+Foundation(2026NSFSC0666) 905 
+
+Competing interests 906 
+
+The authors declare no competing interests. 907 
+
+908 
+
+Reference 909 
+
+1. Mercatelli, D., et al., Gene regulatory network inference resources: A 910 
+
+practical overview. Biochimica et Biophysica Acta (BBA)-Gene Regulatory 911 
+
+Mechanisms, 2020. 1863 (6): p. 194430. 912 
+
+2. Tang, F., et al., mRNA-Seq whole-transcriptome analysis of a single cell. 913 
+
+Nature methods, 2009. 6(5): p. 377-382. 914 
+
+3. Badia-i-Mompel, P., et al., Gene regulatory network inference in the era of 915 
+
+single-cell multi-omics. Nature Reviews Genetics, 2023. 24 (11): p. 739-754. 916 
+
+4. Margolin, A.A., et al., ARACNE: an algorithm for the reconstruction of gene 917 
+
+regulatory networks in a mammalian cellular context. BMC bioinformatics, 918 
+
+2006. 7(Suppl 1): p. S7. 919 
+
+5. Faith, J.J., et al., Large-scale mapping and validation of Escherichia coli 920 
+
+transcriptional regulation from a compendium of expression profiles. PLoS 921 
+
+biology, 2007. 5(1): p. e8. 922 
+
+6. Chan, T.E., M.P.H. Stumpf, and A.C. Babtie, Gene regulatory network 923 
+
+inference from single-cell data using multivariate information measures. 924 
+
+Cell systems, 2017. 5(3): p. 251-267. 925 
+
+7. Huynh-Thu, V.A., et al., Inferring regulatory networks from expression data 926 
+
+using tree-based methods. PloS one, 2010. 5(9): p. e12776. 927 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+8. Moerman, T., et al., GRNBoost2 and Arboreto: efficient and scalable 928 
+
+inference of gene regulatory networks. Bioinformatics, 2019. 35 (12): p. 929 
+
+2159-2161. 930 
+
+9. Friedman, J., T. Hastie, and R. Tibshirani, Sparse inverse covariance 931 
+
+estimation with the graphical lasso. Biostatistics, 2008. 9(3): p. 432-441. 932 
+
+10. Opgen-Rhein, R. and K. Strimmer, From correlation to causation networks: 933 
+
+a simple approximate learning algorithm and its application to high-934 
+
+dimensional plant gene expression data. BMC systems biology, 2007. 1(1): 935 
+
+p. 37. 936 
+
+11. Aibar, S., et al., SCENIC: single-cell regulatory network inference and 937 
+
+clustering. Nature Methods, 2017. 14 (11): p. 1083-1086. 938 
+
+12. Bravo González-Blas, C., et al., SCENIC+: single-cell multiomic inference 939 
+
+of enhancers and gene regulatory networks. Nature Methods, 2023. 20 (9): 940 
+
+p. 1355-1367. 941 
+
+13. Kamimoto, K., et al., Dissecting cell identity via network inference and in 942 
+
+silico gene perturbation. Nature, 2023. 614 (7949): p. 742-751. 943 
+
+14. Kartha, V.K., et al., Functional inference of gene regulation using single-944 
+
+cell multi-omics. Cell Genomics, 2022. 2(9): p. 100166. 945 
+
+15. Yuan, Q. and Z. Duren, Inferring gene regulatory networks from single-cell 946 
+
+multiome data using atlas-scale external data. Nature Biotechnology, 2024. 947 
+
+43 (2): p. 247-257. 948 
+
+16. Yuan, Y. and Z. Bar-Joseph, Deep learning for inferring gene relationships 949 
+
+from single-cell expression data. Proceedings of the National Academy of 950 
+
+Sciences, 2019. 116 (52): p. 27151-27158. 951 
+
+17. Deshpande, A., et al., Network inference with Granger causality ensembles 952 
+
+on single-cell transcriptomics. Cell Reports, 2022. 38 (6): p. 110333. 953 
+
+18. Shu, H., et al., Modeling gene regulatory networks using neural network 954 
+
+architectures. Nature Computational Science, 2021. 1(7): p. 491-501. 955 
+
+19. Keyl, P., et al., Single-cell gene regulatory network prediction by 956 
+
+explainable AI. Nucleic Acids Research, 2023. 51 (4): p. e20-e20. 957 
+
+20. Theodoris, C.V., et al., Transfer learning enables predictions in network 958 
+
+biology. Nature, 2023. 618(7966): p. 616-624. 959 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+21. Cui, H., et al., scGPT: toward building a foundation model for single-cell 960 
+
+multi-omics using generative AI. Nature Methods, 2024. 21(8): p. 1470-961 
+
+1480. 962 
+
+22. Hu, L., et al., RegFormer: a single-cell foundation model powered by gene 963 
+
+regulatory hierarchies. Nature Communications, 2026. 17: p. 6432. 964 
+
+23. Marbach, D., et al., Revealing strengths and weaknesses of methods for 965 
+
+gene network inference. Proceedings of the National Academy of Sciences, 966 
+
+2010. 107 (14): p. 6286-6291. 967 
+
+24. Marbach, D., et al., Wisdom of crowds for robust gene network inference. 968 
+
+Nature Methods, 2012. 9(8): p. 796-804. 969 
+
+25. Pratapa, A., et al., Benchmarking algorithms for gene regulatory network 970 
+
+inference from single-cell transcriptomic data. Nature Methods, 2020. 17 (2): 971 
+
+p. 147-154. 972 
+
+26. Shimizu, S., et al., A linear non-Gaussian acyclic model for causal 973 
+
+discovery. Journal of Machine Learning Research, 2006. 7: p. 2003-2030. 974 
+
+27. Hoyer, P.O., et al., Nonlinear causal discovery with additive noise models ,975 
+
+in Advances in Neural Information Processing Systems 21 (NIPS 2008) .976 
+
+2008. 977 
+
+28. Zheng, X., et al., DAGs with NO TEARS: Continuous Optimization for 978 
+
+Structure Learning . 2018, arXiv. 979 
+
+29. Löwe, S., et al., Amortized Causal Discovery: Learning to Infer Causal 980 
+
+Graphs from Time-Series Data , in Conference on Causal Learning and 981 
+
+Reasoning (CLeaR) . 2022, arXiv. 982 
+
+30. Lorch, L., et al., Amortized Inference for Causal Structure Learning , in 983 
+
+Advances in Neural Information Processing Systems 35 . 2022, Neural 984 
+
+Information Processing Systems Foundation, Inc. (NeurIPS). p. 13104-985 
+
+13118. 986 
+
+31. Dibaeinia, P. and S. Sinha, SERGIO: A Single-Cell Expression Simulator 987 
+
+Guided by Gene Regulatory Networks. Cell Systems, 2020. 11 (3): p. 252-988 
+
+271.e11. 989 
+
+32. Qiao, J., et al., CDFM: Towards a General-Purpose Causal Discovery 990 
+
+Foundation Model . 2026, arXiv. 991 
+
+33. Tobin, J., et al., Domain randomization for transferring deep neural 992 
+
+networks from simulation to the real world , in 2017 IEEE/RSJ International 993 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Conference on Intelligent Robots and Systems (IROS) . 2017, IEEE. p. 23-994 
+
+30. 995 
+
+34. Barabási, A.-L.s. and R.k. Albert, Emergence of Scaling in Random 996 
+
+Networks. Science, 1999. 286 (5439): p. 509-512. 997 
+
+35. Ledoit, O. and M. Wolf, A well-conditioned estimator for large-dimensional 998 
+
+covariance matrices. Journal of Multivariate Analysis, 2004. 88 (2): p. 365-999 
+
+411. 1000 
+
+36. Székely, G.J., M.L. Rizzo, and N.K. Bakirov, Measuring and testing 1001 
+
+dependence by correlation of distances. The Annals of Statistics, 2007. 1002 
+
+35 (6). 1003 
+
+37. Huang, A.C., et al., X-Atlas/Orion: Genome-wide Perturb-seq Datasets via 1004 
+
+a Scalable Fix-Cryopreserve Platform for Training Dose-Dependent 1005 
+
+Biological Foundation Models . 2025, openRxiv. 1006 
+
+38. Replogle, J.M., et al., Mapping information-rich genotype-phenotype 1007 
+
+landscapes with genome-scale Perturb-seq. Cell, 2022. 185 (14): p. 2559-1008 
+
+2575.e28. 1009 
+
+39. Gribben, C., et al., Acquisition of epithelial plasticity in human chronic liver 1010 
+
+disease. Nature, 2024. 630 (8015): p. 166-173. 1011 
+
+40. Subramanian, A., et al., Gene set enrichment analysis: A knowledge-based 1012 
+
+approach for interpreting genome-wide expression profiles. Proceedings of 1013 
+
+the National Academy of Sciences, 2005. 102 (43): p. 15545-15550. 1014 
+
+41. Fang, Z., X. Liu, and G. Peltz, GSEApy: a comprehensive package for 1015 
+
+performing gene set enrichment analysis in Python. Bioinformatics, 2023. 1016 
+
+39 (1). 1017 
+
+42. Williams, D.W., et al., Human oral mucosa cell atlas reveals a stromal-1018 
+
+neutrophil axis regulating tissue immunity. Cell, 2021. 184 (15): p. 4090-1019 
+
+4104.e15. 1020 
+
+43. Lu, Y., et al., A single-cell atlas of the multicellular ecosystem of primary 1021 
+
+and metastatic hepatocellular carcinoma. Nature Communications, 2022. 1022 
+
+13 (1). 1023 
+
+44. Zhong, L., et al., Single 
+
+‐cell transcriptomics dissects premalignant 1024 
+
+progression in proliferative verrucous leukoplakia. Oral Diseases, 2024. 1025 
+
+30 (2): p. 172-186. 1026 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+45. Lau, S.-F., et al., Single-nucleus transcriptome analysis reveals 1027 
+
+dysregulation of angiogenic endothelial cells and neuroprotective glia in 1028 
+
+Alzheimer’s disease. Proceedings of the National Academy of Sciences, 1029 
+
+2020. 117 (41): p. 25800-25809. 1030 
+
+46. Moya, I.M. and G. Halder, Hippo–YAP/TAZ signalling in organ regeneration 1031 
+
+and regenerative medicine. Nature Reviews Molecular Cell Biology, 2019. 1032 
+
+20 (4): p. 211-226. 1033 
+
+47. Botti, E., et al., Developmental factor IRF6 exhibits tumor suppressor 1034 
+
+activity in squamous cell carcinomas. Proceedings of the National 1035 
+
+Academy of Sciences, 2011. 108 (33): p. 13710-13715. 1036 
+
+48. Bello, K., B. Aragam, and P. Ravikumar, DAGMA: Learning DAGs via M-1037 
+
+matrices and a Log-Determinant Acyclicity Characterization . 2022, arXiv. 1038 
+
+49. Vaswani, A., et al., Attention Is All You Need . 2017, arXiv. 1039 
+
+50. Kingma, D.P. and J. Ba, Adam: A Method for Stochastic Optimization . 2014, 1040 
+
+arXiv. 1041 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. 1 The BoYueGRN framework. 1042 
+
+abc
+
+preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint a, SCM-based synthetic data generation. Graph topologies are scale-free 1043 
+
+DAGs grown by preferential attachment (a five-node seed causal chain; each 1044 
+
+new node samples parents from earlier-indexed nodes with probability 1045 
+
+proportional to in-degree plus one, guaranteeing acyclicity), yielding the 1046 
+
+directed adjacency matrix A and the weight matrix W (1,000 cells per SCM; 1047 
+
+10,000 SCMs in total). b, Expression simulation and amortized training. Each 1048 
+
+node’s expression is generated in topological order through structural 1049 
+
+equations with additive noise (about 50% linear and 50% GELU mechanisms), 1050 
+
+producing the 200-gene × 1,000-cell expression matrix X, from which the 1051 
+
+Ledoit–Wolf shrunk partial-correlation matrix P and the distance-correlation 1052 
+
+matrix D are computed; three GraphTransformer encoders of identical 1053 
+
+architecture with no weight sharing (Enc_edge, Enc_dir-nt, Enc_dir-tt) feed 1054 
+
+task-specific prediction heads (EdgeHead producing Edge_prob; 1055 
+
+AsymmetricDirHeads producing Dir_score-nt and Dir_score-tt). c, Zero-shot 1056 
+
+inference on real scRNA-seq. P and D matrices derived from real data are 1057 
+
+scored within TF-centric overlapping windows (5 TFs plus 195 correlation-1058 
+
+preselected targets each) that slide across the transcriptome for full-gene 1059 
+
+coverage; the resulting directed GRN supports five downstream analyses: 1060 
+
+edge-count trajectories, edge rewiring, TF-hub target dynamics, GO-NES 1061 
+
+pathway dynamics, and driver-TF reverse lookup. 1062 
+
+1063 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. 2 Fidelity of the synthetic training distribution and task learnability. 1064 
+
+a, Density of positive log1p expression for synthetic data (mean 3.87; 35% 1065 
+
+zeros) versus the six BEELINE datasets (positive-expression means 1.08–4.76; 1066 
+
+overlap coefficients 0.47–0.90; KS distances as indicated); inset: sparsity 1067 
+
+(percentage of zeros) of synthetic and real datasets (42–51%). b, Out-degree 1068 
+
+distribution of the synthetic networks (mean 4.9, long tail), reproducing the 1069 
+
+scale-free hub topology of the preferential-attachment generator. c, Edge-1070 
+
+prediction AUROC across four independent training seeds (approximately 0.87 1071 
+
+each) and after four-seed probability ensembling (0.875). d, Directional 1072 
+
+accuracy (DirAcc) on matched edge types for the NT expert (four seeds and 1073 
+
+their mean) and the TT expert on synthetic test data (0.976–0.987). e, Matched 1074 
+
+versus mismatched expert assignment (DirAcc heatmap): the unspecialized 1075 
+
+single model achieves 0.961 on both edge types; the NT specialist achieves 1076 
+
+0.978 on TF→non-TF edges but 0.896 on TF→TF edges, and the TT specialist 1077 
+
+achieves 0.976 on TF→TF edges but 0.931 on TF→non-TF edges. 1078 
+
+1079 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. 3 Zero-shot edge prediction on the BEELINE benchmark. 1080 
+
+a, Single-window (G=200) AUROC of BoYueGRN and seven baseline methods 1081 
+
+(GENIE3, GRNBoost2, Correlation, MutualInfo, PPCOR, GLasso, dCor) plus a 1082 
+
+random baseline across the six BEELINE datasets; BoYueGRN attains the 1083 
+
+highest AUROC on five of six datasets (mHSC-E 0.749, mHSC-GM 0.760, 1084 
+
+mHSC-L 0.751, hESC 0.736, hHep 0.604), with mDC at 0.47. b, Early precision 1085 
+
+ratio (EPR) under the same single-window setting (BoYueGRN: 2.50, 2.70, 2.97, 1086 
+
+and 2.42 on mHSC-E, mHSC-GM, mHSC-L, and hESC). c, AUROC at G=200 1087 
+
+versus genome-wide (full-gene, multi-window) coverage; genome-wide 1088 
+
+inference outperforms all baselines on all six datasets (mean AUROC 0.760), 1089 
+
+including recovery of the distributionally outlying mDC dataset (0.472 to 0.791). 1090 
+
+d, EPR at G=200 versus genome-wide coverage, exceeding 4 on all six 1091 
+
+datasets in genome-wide mode. The hESC values shown incorporate the 1092 
+
+variance-based rank-deficiency guard (Table 1). 1093 
+
+1094 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1095 
+
+Fig. 4 Direction inference on BEELINE and Perturb-seq benchmarks. 1096 
+
+a, DirAcc (all ground-truth edges) on the six BEELINE datasets for the NT-only, 1097 
+
+TT-only, and type-matched routing schemes; the TT expert leads on all six 1098 
+
+datasets, with four reaching DirAcc ≥ 0.83. b, Directional accuracy on the two 1099 
+
+genome-wide CRISPRi Perturb-seq screens (HCT116 and K562; NT and TT 1100 
+
+experts) at the default G=200 single window versus genome-wide multi-window 1101 
+
+coverage; single-window values fall to or below the 0.5 chance level, whereas 1102 
+
+genome-wide coverage raises accuracy to 0.821 (HCT116) and 0.810 (K562). 1103 
+
+c, d, Per-condition decomposition for HCT116 (c) and K562 (d): directional 1104 
+
+accuracy stratified by input scale (G=200 versus full-gene) and edge type 1105 
+
+(TF→non-TF and TF→TF); the bars labelled "High-conf" denote the retained-1106 
+
+edge set at edge_prob > 0.2 (the τ = 0.2 emission threshold), distinct from the 1107 
+
+optional stricter-precision filter (edge_prob ≥ 0.65) defined in the Methods. On 1108 
+
+these retained edges accuracy reaches 0.86 (HCT116) and 0.95 (K562), and 1109 
+
+0.95/0.96 on the TF→TF subset, whereas shuffled-direction controls return to 1110 
+
+the chance level (0.5). 1111 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1112 
+
+Fig. 5 Design ablations. 1113 
+
+a, Input-statistic ablation (BEELINE AUROC): P+D dual-channel input (0.679) 1114 
+
+versus D-only (0.541) and N-only (0.505) single-channel inputs. b, Training-1115 
+
+strategy ablation (BEELINE edge AUROC): task-separated (0.679) versus joint 1116 
+
+(0.564) training. c, Data and channel ablations (BEELINE mean AUROC, four 1117 
+
+mouse datasets): P+D baseline (0.789), 20k-SCM training corpus (0.767), 1118 
+
+added Spearman-correlation channel (0.717), and superimposed noise with 1119 
+
+σ=0.05 (0.548). d, Direction-training ablation (BEELINE DirAcc, four mouse 1120 
+
+datasets): dual-expert specialist (0.910) versus the acyclicity-constrained 1121 
+
+DAGMA baseline (λ=1e-4; 0.905) and an unspecialized baseline (0.807), with 1122 
+
+no per-dataset optimization at inference. e, Window-size trade-off: AUROC on 1123 
+
+synthetic data is flat across G, whereas BEELINE (real) AUROC peaks at 1124 
+
+G=200. 1125 
+
+1126 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1127 
+
+Fig. 6 DEG-Expanded gene selection recovers disease-relevant pathways 1128 
+
+missed by conventional selection (NAFLD). 1129 
+
+preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint a, GO term inclusion and coverage: all 213 terms detected by the conventional 1130 
+
+DEG-350 strategy are contained in the 2,521 DEG-Expanded terms (2,308 1131 
+
+new), with input genes enlarged from 350 to 7,121 (20.3-fold) and disease-1132 
+
+related terms from 67 to 692 (10.3-fold). b, New terms are not noise: max|NES| 1133 
+
+distributions for DEG-350 shared terms (median 1.41; 94% above |NES|=1), 1134 
+
+DEG-Expanded shared terms (median 1.24; 97%), and DEG-Expanded new 1135 
+
+terms (median 1.28; 94%), with cumulative distributions of the three groups. c, 1136 
+
+Twenty disease pathways detected only under DEG-Expanded form a stage-1137 
+
+resolved pathological cascade across Healthy, NAFLD, NASH, Cirrhosis, and 1138 
+
+End-stage (including Hippo signaling decline, GABA signaling, unfolded protein 1139 
+
+response, and end-stage glycosphingolipid biosynthesis). d, Cross-stage NES 1140 
+
+trajectories of eight representative pathways (fatty acid response, unfolded 1141 
+
+protein/ER response, blood coagulation, autophagy of mitochondria, BMP 1142 
+
+signaling, canonical Wnt, bile acid metabolism, bile acid transport), showing 1143 
+
+temporally ordered dominance and pathway off-switching (ER response 1144 
+
+reversing from activation to suppression at the End-stage). 1145 
+
+1146 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1147 
+
+Fig. 7 Cell-type-resolved regulatory rewiring across NAFLD progression. 1148 
+
+a, GRN scale (regulatory edges, p>0.2) across disease stages by cell type: 1149 
+
+hepatocytes follow a pronounced biphasic expansion (501k edges at Healthy, 1150 
+
+preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint 676k at NASH, 364k at Cirrhosis, 565k at End-stage), whereas LSECs, 1151 
+
+cholangiocytes, and hepatic stellate cells remain nearly constant. b, Edge 1152 
+
+rewiring (gained and lost edges) between consecutive stage transitions: 1153 
+
+NAFLD-to-NASH is the largest expansion and NASH-to-Cirrhosis the largest 1154 
+
+contraction. c, d, Top-15 pathways ranked by |ΔNES| (c) and max|NES| (d) 1155 
+
+across stages for LSECs and hepatocytes, including end-stage collapse of 1156 
+
+LSEC lipid/cholesterol metabolic programs with maintained antiviral/innate 1157 
+
+immune activation, and hepatocyte DNA-synthesis and mitochondrial-1158 
+
+membrane-permeabilization programs. e, f, Upstream regulators of the top 1159 
+
+pathways ranked by |ΔNES| (e) and max|NES| (f): the LSEC lipid-pathway 1160 
+
+collapse is driven by synchronous decline of SMAD6 and NAP1L4, while 1161 
+
+MEOX2, DBP, and TCF4 establish de novo regulation. 1162 
+
+1163 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. 8 A reversible-to-irreversible regulatory state transition in 1164 
+
+periodontitis. 1165 
+
+a, GRN scale across stages (healthy buccal mucosa BM, gingivitis GM, 1166 
+
+periodontitis PD) for six cell types: fibroblasts show an inverted-U trajectory 1167 
+
+(390k edges at BM, 466k at GM, 407k at PD), whereas the epithelial GRN 1168 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+remains stable. b, Edge rewiring: BM-to-GM progression nets 75.6k gained 1169 
+
+edges; GM-to-PD progression nets 58.6k lost edges. c, d, Top-15 pathways 1170 
+
+ranked by |ΔNES| (c) and max|NES| (d) across stages and cell types; the edges 1171 
+
+lost at PD are mainly attributable to collagen biosynthesis and tissue repair 1172 
+
+while inflammatory programs persist. e, f, Upstream regulators of the top 1173 
+
+pathways ranked by |ΔNES| (e) and max|NES| (f): myeloid cells are dominated 1174 
+
+by weakening of cell-cycle and protein-ubiquitination programs (including 1175 
+
+RSF1), T cells are led by the splicing factors SRSF9 and SRSF2, and the strong 1176 
+
+myeloid signal of TGFB1 (a master fibrosis regulator) corresponds to the 1177 
+
+fibrosis axis of periodontitis; the complete per-cell-type rankings (including the 1178 
+
+myeloid innate-immune regulator TLR4) are given in the supplementary driver-1179 
+
+TF panels (Supplementary Fig. S7). 1180 
+
+# Supplementary Figure Legends 1181 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+1182 
+
+Fig. S1 Input feature assembly and graph Transformer encoder 1183 
+
+architecture. 1184 
+
+Rows of the partial-correlation matrix P and the distance-correlation matrix D 1185 
+
+for each gene are concatenated into a 400-dimensional feature, projected by 1186 
+
+an input projection layer to a 512-dimensional node embedding (H⁰), and 1187 
+
+passed through N=8 identical encoder layers. Each layer applies LayerNorm, 1188 
+
+Q/K/V projections, 8-head parallel attention with edge-bias injection of the 1189 
+
+pairwise statistics (P_ij, D_ij) onto the attention logits, head concatenation with 1190 
+
+output projection, and a feed-forward network with residual connections. 1191 
+
+1192 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. S2 Prediction-head architectures. 1193 
+
+EdgeHead: pairwise feature assembly concatenates the two node embeddings 1194 
+
+with the corresponding P and D entries (concat(H_i, H_j, P_ij, D_ij)), followed 1195 
+
+by two Linear+LayerNorm+ReLU blocks, a scalar linear layer producing edge 1196 
+
+logits (G×G), and a sigmoid with zeroed diagonal yielding edge probabilities. 1197 
+
+AsymmetricDirHead: the direction encoder embedding is split into source and 1198 
+
+target projections (H_src, H_tgt); pairwise features concat(H_src[i], H_tgt[j], 1199 
+
+P_ij, D_ij) pass through the same MLP structure to produce direction logits and, 1200 
+
+after sigmoid, direction probabilities for the NT- and TT-derived heads. 1201 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. S3 Differentiation of the independently trained encoders. 1202 
+
+a, Cosine similarity among the three encoders (enc_edge, enc_dir_nt, 1203 
+
+enc_dir_tt) at the input projection and at the Q projections of layers 0, 3, and 7: 1204 
+
+the two direction encoders remain similar to each other (about 0.95–0.98) while 1205 
+
+both diverge from the edge encoder (about 0). b, Weight distributions of the 1206 
+
+input feature projection (512×400) for the three encoders. c, Output embedding 1207 
+
+norms (200 genes, same input) for the three encoders (means 19.1, 31.7, and 1208 
+
+36.4). d, t-SNE of the 512-dimensional output embeddings (same input), 1209 
+
+showing well-separated encoder-specific structure. 1210 
+
+1211 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. S4 Hepatocellular carcinoma: network expansion and driver 1212 
+
+regulators. 1213 
+
+a, GRN scale in Normal versus Tumor liver across six cell types: the hepatocyte 1214 
+
+GRN expands 21-fold in an almost purely additive manner. b, Edge rewiring 1215 
+
+from Normal to Tumor (gained versus lost edges). c, d, Top-15 pathways 1216 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+ranked by |ΔNES| (c) and max|NES| (d), dominated by proliferative programs 1217 
+
+(mitotic spindle, CENP-A-containing chromatin assembly, kinetochore 1218 
+
+organization), consistent with a metabolic-to-proliferative transition. Per-cell-1219 
+
+type TF-hub analysis (Supplementary Fig. S8) shows that MYC and E2F-family 1220 
+
+factors (E2F1, E2F3, E2F5) broaden their regulatory reach in the Tumor stage. 1221 
+
+e, f, Upstream regulators ranked by |ΔNES| (e) and max|NES| (f): NCOA6, 1222 
+
+DNAJC2, and SNRPB are returned independently by both rankings, pointing to 1223 
+
+metabolic reprogramming, ribosomal stress, and splicing dysregulation. 1224 
+
+1225 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. S5 Proliferative verrucous leukoplakia: cell-type-heterogeneous 1226 
+
+regulatory responses. 1227 
+
+a, GRN scale across Healthy, A (mild), B (moderate), and C (severe) stages for 1228 
+
+six cell types: the T-cell GRN expands 5.6-fold and the epithelial GRN 2.3-fold. 1229 
+
+b, Edge rewiring across stage transitions. c, d, Top-15 pathways ranked by 1230 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+|ΔNES| (c) and max|NES| (d), with core perturbations in the microenvironmental 1231 
+
+compartment. e, f, Upstream regulators ranked by |ΔNES| (e) and max|NES| 1232 
+
+(f): driver reverse lookup independently recovers IRF6 (top-ranked in e), whose 1233 
+
+regulatory activity rises from mild to moderate stages (target genes expanding 1234 
+
+from 88 to 470). 1235 
+
+1236 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+Fig. S6 Alzheimer’s disease: mild network expansion with pathway-level 1237 
+
+changes in astrocytes. 1238 
+
+a, GRN scale in Control versus AD across five brain cell types (astrocytes, 1239 
+
+OPCs, microglia, endothelial cells, oligodendrocytes), showing mild expansion. 1240 
+
+b, Edge rewiring from Control to AD. c, d, Top-15 pathways ranked by |ΔNES| 1241 
+
+(c) and max|NES| (d): the most prominent astrocyte changes are enhancement 1242 
+
+> preprint (which was not certified by peer review) is the author/funder. All rights reserved. No reuse allowed without permission. The copyright holder for this this version posted August 20, 2026. ;https://doi.org/10.64898/2026.08.15.745056 doi: bioRxiv preprint
+
+of protein-containing complex assembly and protein-transport programs 1243 
+
+accompanied by weakening of MAPK/ERK cascade signaling, while oxidative 1244 
+
+phosphorylation, insulin-receptor signaling, and synaptic-organization terms 1245 
+
+appear but do not reach significance. e, f, Upstream regulators ranked by 1246 
+
+|ΔNES| (e) and max|NES| (f) across cell types. 1247

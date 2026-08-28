@@ -1,0 +1,558 @@
+Title: Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure
+
+URL Source: https://arxiv.org/pdf/2608.14293v1
+
+Published Time: Mon, 17 Aug 2026 00:58:42 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure 
+
+Gauthier Avite 1,∗, Maxime Sanchez-Renauld 1,2,3,4,5,∗, Nicolas Bourriez 1,∗, and Auguste Genovesio 1 
+
+> 1
+
+IBENS, Ecole Normale Supérieure, Université PSL, Paris, France  
+
+> 2
+
+Institut Curie, Université PSL, Paris, France  
+
+> 3
+
+INSERM, Paris, France  
+
+> 4
+
+Mines ParisTech, Université PSL, Paris, France  
+
+> 5
+
+Iktos, Paris, France 
+
+{gauthier.avite,maxime.sanchez,nicolas.bourriez,auguste.genovesio}@ens.fr 
+
+> ∗
+
+These authors contributed equally to this work. 
+
+Abstract. High-content microscopy enables systematic profiling of cel-lular responses to chemical perturbations, but the scale of the chemical space makes exhaustive phenotypic characterization experimentally in-feasible. This motivates computational models that can predict image-derived phenotypes without acquiring the corresponding treated cells. We formulate molecule-induced phenotype prediction as an inductive conditional transport problem in image representation space. Given a negative-control phenotype and the structure of a molecule, we aim to predict the phenotype induced by the corresponding molecule. We first evaluate classical optimal transport baselines and show that static couplings do not yield useful predictions on large-scale phenotypic im-age datasets. We then introduce a molecule-conditioned Neural Optimal Transport (NOT) model with a Monge-Gap regularization training ob-jective that learns to transport negative-control unperturbed phenotypes toward perturbed phenotypes using molecular structure as condition-ing information. NOT recovers molecule-specific phenotypic effects while reducing microscopy-associated technical variation, thereby facilitating comparisons across experimental batches. On unseen active molecules, the model outperforms baseline approaches, demonstrating that chemi-cally conditioned transport can generalize beyond the molecules observed during training. We identified the molecular encoder as the main limita-tion to this generalization, while transport in a compressed representa-tion space improves performance and scalability. These results establish NOT as a promising framework for predicting cellular phenotypes from molecular structure and negative-control phenotypes, while highlighting the development of more informative molecular representations as a key direction for improving out-of-distribution performance. 
+
+Keywords: Microscopy Imaging · Cellular Phenotypes · Optimal Trans-port · Deep Learning · Computer Vision · Molecules arXiv:2608.14293v1 [cs.CV] 14 Aug 2026 2 G. Avite et al. 
+
+# 1 Introduction 
+
+Cell Painting assay [4] provides rich image-based descriptions of cellular re-sponses to chemical and genetic perturbations by staining multiple cellular com-partments. Large-scale initiatives such as JUMP-CP [8] now provide standard-ized morphological profiles for hundreds of thousands of perturbations (see Ap-pendix Sec. B for additional background on the assay and dataset). However, the chemical space of drug-like molecules remains far larger than any imaging campaign can cover. Acquiring a Cell Painting-based phenotypic response for every candidate molecule is therefore experimentally and economically infeasi-ble, creating a need for models that can predict these image-derived phenotypes without acquiring the corresponding treated cells. We study this problem in phenotypic representation space. Cell Painting images are encoded into self-supervised DINOv2 representations [25] and ag-gregated at the well level. Given negative-control DMSO phenotypes and the structure of a molecule, our objective is to predict the corresponding perturbed phenotypes. Our model acts on individual representations but is trained at the distribution level by matching predicted and observed phenotype sets. Because control and treated wells are unpaired, the problem is naturally distributional rather than a pointwise regression task. It is also inductive: a useful model must predict responses for molecules not observed during training. Existing methods address only parts of this setting. Contrastive image-structure models [14,32] align molecules and acquired microscopy profiles in a shared space, but do not directly predict the distributional shift from negative-control to per-turbed phenotypes. Generative approaches instead aim to synthesize perturbation-induced images, whereas our model predicts phenotypic representations and is trained by matching predicted and observed phenotype distributions. Classi-cal optimal transport can align observed control and perturbed distributions, but the resulting coupling is transductive and provides no prediction rule for unseen molecules. Structure-to-phenotype prediction is further complicated by activity cliffs, for which small structural changes can induce large phenotypic shifts [31, 37]. We therefore adapt molecule-conditioned Neural Optimal Transport to pre-dict Cell Painting phenotypes. Building on the Monge-Gap estimator [38] and its conditional extension by Driessen et al. [11], we learn an inductive map that transforms individual negative-control phenotypes under molecular conditioning, while matching the resulting predictions to the observed perturbed phenotype distribution. While Driessen et al. apply conditional Monge-Gap transport to single-cell transcriptomic responses, we consider well-level image-derived pheno-types, which are high-dimensional and strongly affected by plate- and batch-level technical variation. We adapt the framework by transporting autoencoded DINOv2 representations, injecting the molecular condition through multi-head attention, and incorporating an unbalanced-OT resampling heuristic [12] to mit-igate over-represented or noisy regions across experimental batches. We evaluate the resulting model under two complementary forms of gen-eralization. On held-out plates containing molecules observed during training, Conditional Neural Optimal Transport for Cellular Phenotypes 3
+
+Neural OT recovers molecule-specific phenotypic effects and generates profiles that are more comparable across experimental batches than either raw or DMSO-normalized measurements. On held-out active molecules, the model outperforms random and identity baselines, providing evidence that molecular conditioned transport can generalize beyond the compounds observed during training. The Monge-Gap regularizer, making the learned map an approximate optimal trans-port rather than an arbitrary distribution-matching map, governs a trade-off between the two retrieval granularities: it markedly improves replicate-level re-trieval, while at plate level a small penalty leaves performance within noise of the best and stronger regularization becomes detrimental. Our ablations further show that transport in a compressed phenotype space via autoencoding improves performance, whereas compressing the molecular condition substantially reduces retrieval, and identify molecular representation quality as the main possible im-provement to out-of-distribution generalization.                         
+
+> Fig. 1: Overview of the molecule-conditioned Neural Optimal Transport framework. (a) Model architecture . DMSO images and molecular structures are en-coded separately and projected to a common dimension d, then combined through cross-attention to predict perturbation-induced phenotype embeddings. (b) Training objective . The conditional map Tθ(· | f)transforms the source distribution μinto Tθ#μ.Learning minimizes a fitting loss between the predicted and target distributions, to-gether with a Monge-Gap regularizer that constrains the transport. (c) Evaluation .Predictions are ranked against candidate target phenotypes by cosine similarity. Re-trieval is successful when the correct perturbation appears among the top kcandidates, using held-out plates for in-distribution evaluation and held-out molecules for out-of-distribution evaluation. 4G. Avite et al.
+
+# 2 Related Work 
+
+2.1 Contrastive and generative phenotype models 
+
+Contrastive methods such as CLOOME, MoCoP, and MolPhenix [14, 24, 32] align molecular structures and microscopy phenotypes in a shared space for cross-modal retrieval. They can generalize molecular representations to unseen molecules, but return points in a joint alignment space scored against acquired images rather than phenotype distributions in the native morphology space, and do not model the shift from negative-control morphology. Generative approaches including PhenDiff, CellFlux, IMPA, and MorphoDiff [3, 23, 26, 41] instead sim-ulate or synthesize perturbation-induced morphology. Closer to response pre-diction, chemCPA [16] conditions a compositional autoencoder on molecular structure to predict single-cell transcriptomic responses to unseen drugs; this paradigm was subsequently recast as conditional OT [11]. Our task differs from both cross-modal retrieval and image synthesis: we learn a molecule-conditioned map that transports unpaired control phenotypes toward the distribution of ob-served perturbation responses in phenotypic-representation space. 
+
+2.2 Optimal transport for cross-domain alignment 
+
+Optimal transport provides a principled framework to compare and align prob-ability distributions [27, 40]. Classical Wasserstein distances rely on a ground cost between samples, while Gromov–Wasserstein (GW) compares intra-domain relational structures and can therefore align distributions supported on different metric spaces [21]. Fused Gromov–Wasserstein (FGW) combines feature-level and structural costs, making it attractive for structured and multimodal align-ment when partial feature information is available [39]. These methods are ap-pealing for matching heterogeneous biological representations, but their static formulation is transductive : the coupling is computed only for the samples ob-served during optimization and yields no prediction rule for molecules unseen at optimization time. They can also be computationally expensive, with GW-style solvers relying on non-convex optimization and costly pairwise distance matrices [28]. Low-rank approximations reduce this cost [34], but the result-ing alignment still depends strongly on the compatibility of source and target geometries. When some correspondences are known, a line of work injects this partial supervision directly into the transport problem: keypoint-guided OT con-strains the plan to preserve a set of annotated matches [15], augmented GW adds feature-level priors while relaxing the isometry invariance of GW [10], and seed-informed GW fixes known node matchings to guide network alignment [19]. We evaluate the FGW instance of this idea, biasing the feature cost at known structure–phenotype pairs, as a static baseline (Appendix Sec. D). All of these formulations nonetheless remain transductive and alignment-oriented, whereas our goal is an inductive map that predicts the perturbed phenotype distribution for unseen molecules. Conditional Neural Optimal Transport for Cellular Phenotypes 5
+
+2.3 Neural Optimal Transport 
+
+Neural Optimal Transport learns parametric maps that generalize beyond cou-plings tied to fixed samples. Early approaches parametrize Brenier potentials with input-convex neural networks [2,5] and condition them on perturbations [6]; CellOT [7] applies this formulation to unpaired single-cell response prediction. To avoid the convexity constraints and min–max instabilities of these estima-tors [1], the Monge Gap [38] regularizes an unconstrained map toward optimality, an idea recently extended to conditional single-cell perturbation modeling [11]. These developments provide the basis for the model detailed in Sec. 3.1. 
+
+# 3 Method 
+
+Optimal transport tools underlying our approach are recalled in Appendix Sec. A. Here, we describe how we learn an inductive, molecule-conditioned transport map via the Monge Gap regularizer and an unbalanced resampling heuristic ( Sec. 3.1, Figure 1b), and finally instantiate the model, together with its archi-tecture and conditioning mechanism, for our setting ( Sec. 3.2, Fig. 1a). The classical Gromov–Wasserstein formulations that we use as static-OT baselines are not part of the learned model and are deferred to Appendix Sec. D. 
+
+3.1 Neural Optimal Transport 
+
+To obtain an inductive model, we learn a parametric map Tθ that can be evalu-ated on new points rather than a coupling tied to a fixed sample [7]. 
+
+General Neural OT. For the quadratic cost c(x, y ) = 12 ∥x − y∥22, Brenier’s theo-rem [5] states that the optimal Monge map is the gradient of a convex potential, 
+
+T ⋆ = ∇ϕ with ϕ convex. This motivates parametrizing ϕ with an input-convex neural network (ICNN) [2], and conditional variants (PICNNs) that condition the potential on side information such as a drug identity [6]. In practice, enforcing convexity and estimating the associated convex conjugate leads to a min–max objective that is delicate to optimize and can be unstable in high dimension [1]. Moreover, the Brenier characterization requires the source measure to be abso-lutely continuous and is tied to the squared-Euclidean cost, which is restrictive for morphology embeddings, where cosine geometry is more natural. 
+
+Monge Gap. The Monge Gap [38] removes any architectural constraint on Tθ
+
+and instead regularizes a generic map toward optimality. It relies on the debiased Sinkhorn divergence [13] 
+
+∆ε(α, β ) = Wε(α, β ) − 12 Wε(α, α ) − 12 Wε(β, β ), (1) a positive, differentiable divergence that interpolates between OT and Maximum Mean Discrepancy (MMD) and is unbiased for empirical measures. For a source 6 G. Avite et al. 
+
+measure μ, the Monge Gap of a map Tθ is 
+
+Mε(Tθ ) = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+c xi, T θ (xi) − Wε
+
+ μ, T θ#μ ≥ 0, (2) i.e. the excess transport cost of Tθ relative to the entropic OT optimum between 
+
+μ and its own pushforward; it vanishes exactly when Tθ is ε-optimal for that pair. Learning a Monge map then amounts to minimizing a distributional fit plus this penalty, 
+
+min  
+
+> θ
+
+∆ε
+
+ Tθ#μ, ν  + λ Mε(Tθ ), (3) where the first term drives Tθ#μ toward ν and the second encourages a geometry-preserving optimal map rather than an arbitrary matching. This formulation has recently been extended to conditional single-cell perturbation modeling [11]. 
+
+Unbalanced resampling. Standard OT assumes that μ and ν share the same total mass and matches them exactly, which makes it sensitive to outliers and to over- or under-represented regions, both common across Cell Painting plates and batches. Unbalanced OT relaxes the marginal constraints with soft diver-gence penalties [9]. In the neural setting, Eyring et al. [12] show that injecting unbalancedness improves unpaired domain translation, and realize it through an OT-based resampling heuristic: an unbalanced coupling ˆπτ is estimated on each mini-batch and used to resample source and target points before the balanced map estimator is applied, effectively down-weighting noisy or over-represented samples. We adopt this heuristic, controlled by an unbalancedness parameter τ .
+
+3.2 Molecule-Conditioned Neural OT 
+
+We parametrize a molecule-conditioned map Tθ (x, f m), where x is a negative-control phenotypic representation and fm is a molecular representation of the molecule derived from its chemical structure. 
+
+Architecture and conditioning mechanism. A molecular representation  hm is first extracted from the structure of molecule  m and projected into the phenotype-conditioning space through a trainable encoder, 
+
+fm = gψ (hm).
+
+The representation  hm may correspond to a molecular fingerprint, physicochem-ical descriptors [29], or the embedding of a pretrained molecular encoder [17,30]. The control phenotype  x and molecular condition  fm are then combined through a multi-head attention block followed by a feed-forward residual block, produc-ing the transported phenotype  Tθ (x | fm). We compare alternative molecular representations in Section 5.2, while keeping the conditional transport architec-ture fixed. Full architecture and optimization hyperparameters are described in Figure 1a and reported in Appendix C.2. Conditional Neural Optimal Transport for Cellular Phenotypes 7
+
+For a batch of control phenotypes {xi}ni=1 ∼ μ and perturbed phenotypes 
+
+{yj }mj=1 ∼ ν associated with that molecule, we minimize: 
+
+L(θ) = ∆εfit (Tθ#μ, ν ) + λ
+
+"
+
+1
+
+n
+
+> n
+
+X
+
+> i=1
+
+c xi, T θ (xi | fm) − Wεreg (μ, T θ#μ)
+
+#
+
+, (4) which is the Monge-Gap objective (3) instantiated with the conditioned map, two separate entropic scales εfit and εreg , and a cosine ground cost c that matches the geometry of DINOv2 phenotypic representations. When unbalanced resam-pling is enabled, the batches {xi} and {yj } are replaced by their ˆπτ -resampled counterparts before Equation (4) is evaluated. Both terms are differentiable in 
+
+θ. At inference, the phenotypic response of an unseen molecule is predicted by pushing its negative-control unperturbed phenotype through Tθ (· | fm).
+
+# 4 Data and Evaluation Protocol 
+
+4.1 Data 
+
+Cell Painting is a high-content fluorescence microscopy assay that captures cel-lular phenotypes by staining multiple cellular compartments under chemical or genetic perturbations [4]. We use the JUMP Cell Painting dataset (JUMP-CP), a large-scale, standardized collection of perturbation experiments performed across multiple sites and experimental batches in U2OS cells [8]. Following [31], each five-channel microscopy image is converted into a single image-level phenotypic representation using DINOv2 [25]. The image-level representations acquired from the same experimental well are then aggregated into one well-level phenotype. Each well therefore constitutes one experimental replicate of the corresponding perturbation. Each molecule plate contains DMSO negative-control wells and the same eight positive-control molecules. The DMSO profiles define the source phenotype distributions transported by the model. Because the eight positive controls are repeated across plates, laboratories, and experimental batches, they provide a controlled benchmark for evaluating generalization across held-out plates while keeping molecule identity fixed. Examples of Cell Painting images from these controls are shown in Figure 5. 
+
+4.2 Evaluation Splits 
+
+We evaluate two complementary settings that probe different notions of gener-alization; in both, source samples are drawn from the negative-control wells of the corresponding plates. 
+
+Plate-level split (in-distribution). Training and evaluation plates are disjoint, while the same eight positive-control molecules appear in both sets. All molecules are therefore observed during training, whereas the experimental plates and as-sociated batch effects are held out. This setting measures generalization across 8 G. Avite et al. 
+
+plates and batches and provides replicate-based experimental references. It also provides strong replicate-based experimental upper bounds. We use 5-fold cross-validation over plates and train each fold with three random seeds. Each train-ing split contains on average 260,262 DMSO points and 142,196 non-DMSO positive-control points, while each validation split contains 65,065 DMSO points and 35,549 non-DMSO positive-control points. 
+
+Molecule-level split (out-of-distribution). Training and evaluation molecules are disjoint, so at test time the model conditions on the structure of a molecule it has never seen in training. This is the harder and more application-relevant set-ting, as it directly measures structure-driven generalization to unseen molecules. We use 5-fold cross-validation over molecules and train each fold with 3 ran-dom seeds. The benchmark is restricted to the  12 ,400  molecules in the top  10% 
+
+of phenotypic activity, ranked by their distance to matched DMSO controls. Selection details are given in Appendix B.3. Each training split contains on av-erage 267,785 DMSO source points and 265,496 non-DMSO perturbation points, while each validation split contains 263,439 DMSO source points and 66,374 non-DMSO perturbation points. In average, each molecule has around 30 points. 
+
+4.3 Evaluation Metrics 
+
+As illustrated in Figure 1c, evaluation is formulated as a retrieval task: predicted phenotypes are ranked against measured candidate phenotypes using cosine sim-ilarity, and retrieval is successful when the candidate associated with the correct molecule appears among the top  k.
+
+In-distribution retrieval. For the plate-level split, predictions are evaluated against the eight positive-control molecules present on each held-out plate. We report Retrieval@1, which measures whether the nearest candidate target phenotype corresponds to the correct molecule. 
+
+Out-of-distribution retrieval. For the molecule-level split, predictions are ranked against all candidate molecules in the held-out fold, and we report Retrieval@10 at two granularities. Replicate-level retrieval (R@10 rep ) ranks individual target wells for each predicted well and is therefore sensitive to replicate-level variabil-ity. Plate-level retrieval (R@10 plate ) first averages predicted and target pheno-types within each plate for each molecule before ranking, reducing replicate noise and more directly reflecting the downstream objective of molecule prioritization. We emphasize plate-level retrieval because it is more stable while better reflecting downstream molecule prioritization. Whenever measured phenotypes are used as queries for the experimental reproducibility references, the corresponding query replicates are excluded from the retrieval catalogue. Conditional Neural Optimal Transport for Cellular Phenotypes 9
+
+# 5 Results 
+
+5.1 In-Distribution Generalization Across Experimental Plates 
+
+We first evaluate generalization across held-out plates using the in-distribution split defined in Section 4.2. 
+
+Experimental reproducibility references. To contextualize model performance, we construct two references from observed perturbed replicates. For the held-out-replicate reference, the real replicates of each molecule within a test plate are randomly divided into two disjoint sets: one is treated as the prediction and the other as the retrieval target. This avoids self-matching and estimates the agreement that can be expected between independent experimental replicates. We additionally report a plate-mean replicate reference, obtained by averaging observed target replicates within each plate and molecule. As it directly uses the measured perturbed phenotypes, this reference provides an experimental estimate of the maximum performance possible after suppressing replicate-level noise. 
+
+Neural OT recovers molecule-specific phenotypic activities. Figure 2a compares Neural OT with the identity mapping (no transport) and the two replicate-based references. Leaving the DMSO profiles unchanged results in low Retrieval@1, confirming that the perturbed phenotypes cannot be recovered from the plate-specific controls alone. In contrast, Neural OT improves retrieval for all of the eight molecules and substantially increases the mean Retrieval@1. The improve-ment is especially pronounced for molecules inducing strong and distinctive mor-phological responses. Molecules with weaker effects remain harder, as their tar-get distributions overlap more strongly with the DMSO controls and with other perturbations. For all molecules, Neural OT reaches or exceeds the performance obtained between independently held-out experimental replicates. It nevertheless remains slightly below the plate-mean replicate reference, indicating that part of the re-maining error is associated with replicate-level variability. Overall, these results show that the model learns molecule-dependent transport directions that gener-alize across plates, rather than applying a common transformation to all DMSO controls. 
+
+Predicted phenotypes recover molecule-specific target structure. The qualitative visualization in Figure 2b supports the retrieval results. The UMAP projection is fitted jointly on the source and target embeddings and then applied to the Neural OT predictions. Neural OT transports controls molecules toward the corresponding target regions and recovers the distinct clusters associated with the strongest phenotypic responses. These results indicate that the model learns molecule-specific transformations rather than a common shift toward a generic perturbed phenotype. 10 G. Avite et al.         
+
+> (a) Performance of Neural-OT versus Baselines 234567
+> UMAP 1
+> 5678910
+> UMAP 2
+> Type
+> Source Target Predicted Source -> Predicted
+> Molecule
+> 1602 1603 1604 1607 (b) UMAP of Sources, Targets and Predictions
+
+Fig. 2: In-distribution prediction on held-out plates. (a) Retrieval@1 for the eight shared positive controls, reported as mean ± standard deviation across five folds and three seeds. (b) UMAP of source, target, and predicted phenotypes for the four most active controls. The projection was fitted jointly on source and target embeddings. 
+
+Model-generated phenotypes enable batch-robust cross-plate comparisons. Be-yond predicting phenotypes that have not been experimentally acquired, a model trained across heterogeneous plates can be used to derive standardized surrogate representations of measured perturbations. For each held-out plate, we gener-ated molecule-conditioned phenotypes from its plate-specific DMSO controls and compared the resulting profiles across plates. Because the same transport map is learned jointly across multiple experimental batches, the generated profiles em-phasize perturbation-associated variation that is reproducible across the training data while attenuating plate-specific batch-related variations. We evaluated this property using cross-plate retrieval, in which each query profile was matched to molecule-level mean profiles from other plates using cosine similarity. Generated phenotypes achieved a mean average precision of  0.65 ,compared with  0.36  for raw measured phenotypes and  0.47  after DMSO-based per-plate normalization (following standard normalization from [31], Figure 3). These results indicate that model-generated profiles can serve as batch-robust surrogate representations for comparing molecules across experimental batches. 
+
+5.2 Out-Of-Distribution Regime 
+
+In the following regime, we focus on predicting the phenotypic response of molecules that were never seen during training using the molecule-level split of Section 4.2. Our ablation baseline uses morganc+rdkc structure features; NOT with a cosine ground cost; no dimensionality reduction on the conditioning signal; DI-NOv2 phenotype embeddings reduced to 50D by an autoencoder, the reduction that performs best both in the in-distribution setting (Section 5.1) and out-of-distribution (Table 1b); Monge-Gap weight λ = 0 .1; and unbalancedness τ = 1 .We compare it against three reference mappings: the identity map, which pre-dicts the negative-control morphology unchanged; a plate-mean predictor, which Conditional Neural Optimal Transport for Cellular Phenotypes 11 Real phenotypes (Raw) Real phenotypes (Normalized) Generated phenotypes 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Mean mAP across controls
+> 0.36 0.47 0.65
+> Molecule 1600 1601 1602 1603 1604 1605 1606 1607
+
+Fig. 3: Generated phenotypes improve cross-plate comparability. Cross-plate retrieval performance on held-out plates. Bars show the mean mAP across controls, while points denote individual molecules. Real phenotypes are evaluated either directly or after per-plate DMSO-based normalization. Generated phenotypes achieve higher cross-plate mAP than both real baselines. 
+
+assigns every compound its plate-average phenotype; and a random baseline. Full ablation hyperparameters are listed in Appendix C.3. 
+
+Neural OT generalizes to unseen compounds. Figure 4a contrasts NOT with the identity and plate-mean baselines on the ablation configuration. NOT reaches R@10 plate = 0 .095 ± 0.007 , well above the identity map ( 0.059 ± 0.003 ) and the plate-mean predictor ( 0.004 ); the same ordering holds at replicate level ( 0.035 
+
+vs. 0.018 vs. 0.004 ). The plate-mean predictor is a constant map, so it returns the same top-k for every query and exactly k of the M validation compounds are retrieved: it sits precisely at the chance level k/M = 10 /2248 ≈ 0.004 , by construction and without run-to-run variance (dashed line in Figure 4). A condi-tioned transport map therefore recovers compound-specific phenotypic structure that neither a trivial copy of the control nor a plate summary can capture. 
+
+The molecular encoder is the dominant factor. Because the compound enters the map only through the structure encoder, its representation quality governs out-of-distribution behavior. Figure 4b compares four encoders under an otherwise identical NOT (the corresponding numbers are given in Table 8, Appendix C.4): retrieval improves markedly from unimol2 and molformer to the fingerprint-based morgan , and is best with the combined morganc+rdkc descriptor, with R@10 plate rising from 0.029 to 0.095 . This confirms that conditioning quality is the main bottleneck for generalization. We did not evaluate a large pretrained graph encoder in this study; given the trend, a stronger molecular graph repre-sentation [35] is a promising direction for further gains. 
+
+Ablation study. We now vary one component at a time around the baseline; all numbers are 5-fold, 3-seed means. 12 G. Avite et al. Replicate R@10 Plate R@10 0.00 0.02 0.04 0.06 0.08 0.10 0.12 Retrieval@10    
+
+> Neural OT (ours) Identity Mapping random (chance)
+> (a) NOT vs. baselines unimol2 molformer morgan morganc+rdkc 0.00 0.02 0.04 0.06 0.08 0.10 0.12 Retrieval@10
+> Replicate R@10 Plate R@10 random (chance) (b) Effect of the structure encoder
+
+Fig. 4: Neural OT on the molecule-level OOD split (5-fold, 3-seed mean ± std). (a) 
+
+Replicate- and plate-level Retrieval@10 for NOT (ours) and the identity mapping: the conditioned map clearly outperforms the baseline. (b) The same metrics for four molecular structure encoders under an otherwise identical NOT, ordered by plate-level retrieval: retrieval improves substantially with encoder quality. Bars show the mean and error bars the standard deviation over five folds and three seeds. The dashed line marks the chance level ( k/M = 10 /2248 ). 
+
+Loss and cost (Table 9, Appendix C.4). Under cross-validation, the cosine and squared-Euclidean ( ℓ2) ground costs perform comparably, with error bars that overlap at both granularities, so we do not find a decisive advantage for either. We retain the cosine cost for its geometric consistency with the DINOv2 morphology embeddings, on which cosine similarity is the natural notion of proximity. 
+
+Dimensionality reduction (Table 1). Compressing the conditioning signal sharply hurts retrieval (Table 1a): plate R@10 falls from 0.095 to 0.036 –0.037 under an autoencoder or PCA, supporting the view that the map needs a detailed representation of the compound. Compressing the phenotype embeddings, in contrast, helps (Table 1b): a 50D autoencoder reaches 0.101 , ahead of PCA (0.075 ) and of no reduction ( 0.066 ), consistent with performing OT in a lower-dimensional space to mitigate its well-known curse of dimensionality [27]. 
+
+Regularization and conditioning (Table 2). The Monge-gap regularizer trades off the two granularities (Table 2a): increasing λ improves replicate retrieval (best at λ = 10 ) but degrades plate retrieval, which is highest at low regularization (λ ∈ { 0, 0.1}); we keep a small λ = 0 .1 for a mild geometry-preserving penalty. The conditioning mechanism matters as well (Table 2b): injecting the molec-ular structure through multi-head attention outperforms plain concatenation (0.095 vs. 0.084 at plate level), supporting our attention-based design. Unbal-anced resampling gives only small, consistent plate gains around τ ≈ 0.90 –0.95 
+
+(Appendix C.4, Table 10). We conjecture that with a larger λ, predictions for the same molecule may become more similar to each other, while their average may represent the true Conditional Neural Optimal Transport for Cellular Phenotypes 13 
+
+Table 1: Impact of dimensionality reduction on OOD retrieval (5-fold, 3-seed mean ±std; best in bold, second underlined). (a) Reducing the conditioning embed-ding sharply hurts retrieval. (b) Reducing the phenotype embedding helps, the 50D autoencoder being best; this ablation was run at τ =0 .95 , the near-optimal unbalanced-ness of Table 10 (Appendix C.4). Reduction R@10 rep R@10 plate 
+
+None 0.035 ±0.002 0.095 ±0.007 
+
+Autoencoder 0.017 ±0.001 0.036 ±0.002 
+
+PCA 0.018 ±0.001 0.037 ±0.003   
+
+> (a) Conditioning embedding ( τ=1 )
+
+Reduction R@10 rep R@10 plate 
+
+None 0.024 ±0.001 0.066 ±0.004 
+
+Autoencoder 0.037 ±0.002 0.101 ±0.007 
+
+PCA 0.027 ±0.001 0.075 ±0.006   
+
+> (b) Phenotype embedding ( τ=0 .95 )
+
+molecular effect less accurately. This could be verified by looking at the in-tramolecular dispersion of predictions across different strengths of Monge-Gap regularization. 
+
+Table 2: Ablations on the Monge-Gap strength and the conditioning mechanism (5-fold, 3-seed mean ±std; best in bold, second underlined). (a) Monge-Gap strength λ:the geometry-preserving penalty trades replicate for plate retrieval. (b) Injecting the molecular structure by multi-head attention versus plain concatenation. 
+
+λ R@10 rep R@10 plate 
+
+10.0 0.061 ±0.005 0.062 ±0.005 
+
+1.0 0.050 ±0.004 0.073 ±0.007 
+
+0.1 0.035 ±0.002 0.095 ±0.007 
+
+0.0 0.034 ±0.001 0.101 ±0.007 (a) Monge-Gap strength λ
+
+Conditioning R@10 rep R@10 plate 
+
+Attention 0.035 ±0.002 0.095 ±0.007 
+
+Concat 0.029 ±0.001 0.084 ±0.005  
+
+> (b) Conditioning mechanism
+
+Sinkhorn parameters. Finally, retrieval is stable across a broad range of the entropic scales ϵfit and ϵreg , indicating that the model is not sensitive to their precise setting. 
+
+# 6 Conclusion 
+
+We introduced a molecule-conditioned Neural OT model to predict individual Cell Painting phenotypes from plate-specific negative controls and molecular structure through distribution-level training, defining phenotype prediction as an inductive conditional transport problem. On held-out experimental plates, the model recovers molecule-specific phenotypic effects and produces surrogate profiles that are more comparable across batches than raw or normalized real 14 G. Avite et al. 
+
+ones. On molecules unseen during training, the model outperforms baselines, providing evidence that structure-conditioned phenotype prediction can gener-alize beyond the compounds observed during training. Our ablations clarify the main factors controlling this generalization. Multi-head attention improves conditioning quality. Transport in a DINOv2 com-pressed phenotype space improves retrieval, whereas compressing the molecular condition substantially degrades performance. Molecular representation qual-ity therefore remains a major bottleneck for OOD prediction. The Monge-Gap strength controls a trade-off between replicate-level and plate-level retrieval: stronger regularization improves the recovery of individual replicates. 
+
+Limitations. Absolute retrieval remains modest, reflecting the intrinsic difficulty of structure–phenotype prediction and the prevalence of activity cliffs [31, 37]; our study also leaves the potential strongest pretrained graph encoders [35], due to it being closed-source, unevaluated. The split holds out molecule identities rather than molecular scaffolds, and thus does not guarantee generalization to structurally distant chemical series. The static optimal-transport couplings we tested fail on this data (Appendix D), and the model predicts phenotype embed-dings rather than images, so it does not by itself yield inspectable morphologies. 
+
+Future work. These limitations point to three directions. First, stronger molec-ular graph representations [35] or molecular encoder trained/fine-tuned dur-ing Neural-OT training should raise the conditioning ceiling identified in Sec-tion 5.2. Second, the same conditional-transport formulation could extend be-yond molecules to genetic perturbations, by replacing the molecular encoder with a gene or protein encoder such as Geneformer [36] or ESM-2 [20], potentially en-abling prediction of knockout or over-expression phenotypes. Lastly, coupling the transported embeddings with a decoder back to image space would turn distributional predictions into inspectable phenotypes, connecting our approach with generative phenotype models. 
+
+# Software and Data 
+
+We will release the code to ensure reproducibility. All source data used in this study are publicly available as part of the JUMP Cell Painting Consortium dataset ( cpg0016 ). Data access instructions and documentation are available at 
+
+https://broadinstitute.github.io/jump_hub/ .
+
+# Use of generative AI. 
+
+Generative AI tools were used to improve the clarity and language of the manuscript, assist with code generation and review, and support figure preparation. All gen-erated or modified text, code and figures were inspected, tested, and validated by the authors. The scientific content, analyses, interpretations, and conclusions remain the sole responsibility of the authors. Conditional Neural Optimal Transport for Cellular Phenotypes 15 
+
+# References 
+
+1. Amos, B.: On amortizing convex conjugates for optimal transport. In: International Conference on Learning Representations (2023), https://openreview.net/forum? id=TQ5WUwS_4ai 
+
+2. Amos, B., Xu, L., Kolter, J.Z.: Input convex neural networks. In: Proceedings of the 34th International Conference on Machine Learning. Proceedings of Machine Learning Research, vol. 70, pp. 146–155. PMLR (2017), https://proceedings. mlr.press/v70/amos17b.html 
+
+3. Bourou, A., Boyer, T., Gheisari, M., Daupin, K., Dubreuil, V., De Thonel, A., Mezger, V., Genovesio, A.: PhenDiff: Revealing subtle phenotypes with diffusion models in real images. In: Medical Image Computing and Computer Assisted In-tervention – MICCAI 2024. Lecture Notes in Computer Science, vol. 15003, pp. 358–367. Springer Nature Switzerland (2024). https://doi.org/10.1007/978-3-031-72384-1_34 
+
+4. Bray, M.A., Singh, S., Han, H., Davis, C.T., Borgeson, B., Hartland, C., Kost-Alimova, M., Gustafsdottir, S.M., Gibson, C.C., Carpenter, A.E.: Cell Painting, a high-content image-based assay for morphological profiling using multiplexed fluorescent dyes. Nature Protocols 11 (9), 1757–1774 (2016). https://doi.org/ 10.1038/nprot.2016.105 
+
+5. Brenier, Y.: Décomposition polaire et réarrangement monotone des champs de vecteurs. C. R. Acad. Sci. Paris Sér. I Math. 305 , 805–808 (1987) 6. Bunne, C., Krause, A., Cuturi, M.: Supervised training of conditional Monge maps. In: Advances in Neural Information Processing Systems. vol. 35, pp. 6859– 6872 (2022), https://proceedings.neurips.cc/paper_files/paper/2022/hash/ 2d880acd7b31e25d45097455c8e8257f-Abstract-Conference.html 
+
+7. Bunne, C., Stark, S.G., Gut, G., del Castillo, J.S., Levesque, M., Lehmann, K.V., Pelkmans, L., Krause, A., Rätsch, G.: Learning single-cell perturbation responses using neural optimal transport. Nature Methods 20 (11), 1759–1768 (2023). https: //doi.org/10.1038/s41592-023-01969-x 
+
+8. Chandrasekaran, S.N., Ackerman, J., Alix, E., Ando, D.M., Arevalo, J., Bennion, M., Boisseau, N., Borowa, A., Boyd, J.D., Brino, L., Byrne, P.J., Ceulemans, H., Ch’ng, C., Cimini, B.A., Clevert, D.A., Deflaux, N., Doench, J.G., et al.: JUMP Cell Painting dataset: Morphological impact of 136,000 chemical and genetic per-turbations. bioRxiv (2023). https://doi.org/10.1101/2023.03.23.534023 
+
+9. Chizat, L., Peyré, G., Schmitzer, B., Vialard, F.X.: Scaling algorithms for unbal-anced optimal transport problems. Mathematics of Computation 87 (314), 2563– 2609 (2018). https://doi.org/10.1090/mcom/3303 
+
+10. Demetci, P., Tran, Q.H., Redko, I., Singh, R.: Breaking isometric ties and introduc-ing priors in Gromov–Wasserstein distances. In: Proceedings of the 27th Interna-tional Conference on Artificial Intelligence and Statistics (AISTATS). Proceedings of Machine Learning Research, vol. 238 (2024) 11. Driessen, A., Rajwade, D.A., Harsanyi, B., Rapsomaniki, M., Born, J.: Condi-tional Monge Gap enables generalizable single-cell perturbation modelling. Nature Machine Intelligence 8, 984–996 (2026). https://doi.org/10.1038/s42256-026-01242-8 
+
+12. Eyring, L., Klein, D., Uscidda, T., Palla, G., Kilbertus, N., Akata, Z., Theis, F.: Unbalancedness in neural Monge maps improves unpaired domain transla-tion. In: International Conference on Learning Representations (2024), https: //openreview.net/forum?id=2UnCj3jeao 16 G. Avite et al. 13. Feydy, J., Séjourné, T., Vialard, F.X., Amari, S.i., Trouvé, A., Peyré, G.: Interpo-lating between optimal transport and MMD using Sinkhorn divergences. In: Pro-ceedings of the 22nd International Conference on Artificial Intelligence and Statis-tics. Proceedings of Machine Learning Research, vol. 89, pp. 2681–2690. PMLR (2019), https://proceedings.mlr.press/v89/feydy19a.html 
+
+14. Fradkin, P., Azadi, P., Suri, K., Wenkel, F., Bashashati, A., Sypetkowski, M., Beaini, D.: How molecules impact cells: Unlocking contrastive PhenoMolecular retrieval (2024). https://doi.org/10.52202/079017-3513 
+
+15. Gu, X., Yang, Y., Zeng, W., Sun, J., Xu, Z.: Keypoint-guided optimal transport with applications in heterogeneous domain adaptation. In: Advances in Neural Information Processing Systems (NeurIPS) (2022) 16. Hetzel, L., Böhm, S., Kilbertus, N., Günnemann, S., Lotfollahi, M., Theis, F.J.: Predicting cellular responses to novel drug perturbations at a single-cell resolution. In: Advances in Neural Information Processing Systems (2022), https : / / proceedings. neurips.cc/ paper_files/ paper/2022/ hash/ aa933b5abc1be30baece1d230ec575a7-Abstract-Conference.html 
+
+17. Ji, X., Wang, Z., Gao, Z., Zheng, H., Zhang, L., Ke, G., E, W.: Exploring molecular pretraining model at scale. In: Advances in Neural Information Processing Systems. vol. 37, pp. 46956–46978 (2024). https://doi.org/10.52202/079017-1489 
+
+18. Kantorovich, L.V.: On the translocation of masses. Doklady Akademii Nauk SSSR 
+
+37 , 199–201 (1942) 19. Li, M., Koyutürk, M.: Generalized Gromov–Wasserstein distance for seed-informed network alignment. In: Complex Networks & Their Applications XII. Studies in Computational Intelligence, vol. 1143, pp. 258–270. Springer (2024). https://doi. org/10.1007/978-3-031-53472-0_22 
+
+20. Lin, Z., Akin, H., Rao, R., Hie, B., Zhu, Z., Lu, W., Smetanin, N., Verkuil, R., Kabeli, O., Shmueli, Y., Costa, A.d.S., Fazel-Zarandi, M., Sercu, T., Candido, S., Rives, A.: Evolutionary-scale prediction of atomic-level protein structure with a language model. Science 379 (6637), 1123–1130 (2023). https://doi.org/10. 1126/science.ade2574 
+
+21. Mémoli, F.: Gromov–wasserstein distances and the metric approach to object matching. Foundations of Computational Mathematics 11 (4), 417–487 (2011). 
+
+https://doi.org/10.1007/s10208-011-9093-5 
+
+22. Monge, G.: Mémoire sur la théorie des déblais et des remblais. Histoire de l’Académie Royale des Sciences de Paris pp. 666–704 (1781) 23. Navidi, Z., Ma, J., Miglietta, E., Liu, L., Carpenter, A.E., Cimini, B.A., Haibe-Kains, B., Wang, B.: MorphoDiff: Cellular morphology painting with diffusion models. In: International Conference on Learning Representations (ICLR) (2025), 
+
+https://openreview.net/forum?id=PstM8YfhvI 
+
+24. Nguyen, C.Q., Pertusi, D., Branson, K.M.: Molecule–morphology contrastive pre-training for transferable molecular representation (2023). https://doi.org/10. 48550/arXiv.2305.09790 
+
+25. Oquab, M., Darcet, T., Moutakanni, T., Vo, H.V., Szafraniec, M., Khalidov, V., Fernandez, P., Haziza, D., Massa, F., El-Nouby, A., Assran, M., Ballas, N., Galuba, W., Howes, R., Huang, P.Y., Li, S.W., Misra, I., Rabbat, M., Sharma, V., Syn-naeve, G., Xu, H., Jégou, H., Mairal, J., Labatut, P., Joulin, A., Bojanowski, P.: DINOv2: Learning robust visual features without supervision. Transactions on Ma-chine Learning Research (2024), https://openreview.net/forum?id=a68SUt6zFt 
+
+26. Palma, A., Theis, F.J., Lotfollahi, M.: Predicting cell morphological responses to perturbations using generative modeling. Nature Communications 16 , 505 (2025). 
+
+https://doi.org/10.1038/s41467-024-55707-8 Conditional Neural Optimal Transport for Cellular Phenotypes 17 27. Peyré, G., Cuturi, M.: Computational optimal transport. Foundations and Trends in Machine Learning 11 (5–6), 355–607 (2019). https://doi.org/10.1561/ 2200000073 
+
+28. Peyré, G., Cuturi, M., Solomon, J.: Gromov-wasserstein averaging of kernel and distance matrices. In: Proceedings of the 33rd International Conference on Ma-chine Learning. Proceedings of Machine Learning Research, vol. 48, pp. 2664–2672. PMLR (2016), https://proceedings.mlr.press/v48/peyre16.html 
+
+29. Rogers, D., Hahn, M.: Extended-connectivity fingerprints. Journal of Chemical Information and Modeling 50 (5), 742–754 (2010). https://doi.org/10.1021/ ci100050t 
+
+30. Ross, J., Belgodere, B., Chenthamarakshan, V., Padhi, I., Mroueh, Y., Das, P.: Large-scale chemical language representations capture molecular structure and properties. Nature Machine Intelligence 4, 1256–1264 (2022). https://doi.org/ 10.1038/s42256-022-00580-7 
+
+31. Sanchez, M., Bourriez, N., Bendidi, I., Cohen, E., Svatko, I., Del Nery, E., Taj-mouati, H., Bollot, G., Calzone, L., Genovesio, A.: Large scale compound selection guided by Cell Painting reveals activity cliffs and functional relationships. Com-munications Biology 9(1), 225 (2026). https://doi.org/10.1038/s42003-025-09500-y 
+
+32. Sanchez-Fernandez, A., Rumetshofer, E., Hochreiter, S., Klambauer, G.: CLOOME: Contrastive learning unlocks bioimaging databases for queries with chemical structures. Nature Communications 14 (1), 7339 (2023). https://doi. org/10.1038/s41467-023-42328-w 
+
+33. Santambrogio, F.: Optimal Transport for Applied Mathematicians, Progress in Nonlinear Differential Equations and Their Applications, vol. 87. Birkhäuser, Cham (2015). https://doi.org/10.1007/978-3-319-20828-2 
+
+34. Scetbon, M., Peyré, G., Cuturi, M.: Linear-time Gromov Wasserstein distances using low rank couplings and costs. In: Proceedings of the 39th International Conference on Machine Learning. Proceedings of Machine Learning Research, vol. 162, pp. 19347–19365. PMLR (2022), https://proceedings.mlr.press/ v162/scetbon22b.html 
+
+35. Sypetkowski, M., Wenkel, F., Poursafaei, F., Dickson, N., Suri, K., Fradkin, P., Beaini, D.: On the scalability of GNNs for molecular graphs. In: Advances in Neural Information Processing Systems (2024), https://proceedings.neurips. cc / paper _ files / paper / 2024 / hash / 2345275663a15ee92a06bc957be54a2c -Abstract-Conference.html 
+
+36. Theodoris, C.V., Xiao, L., Chopra, A., Chaffin, M.D., Al Sayed, Z.R., Hill, M.C., Mantineo, H., Brydon, E.M., Zeng, Z., Liu, X.S., Ellinor, P.T.: Transfer learning enables predictions in network biology. Nature 618 (7965), 616–624 (2023). https: //doi.org/10.1038/s41586-023-06139-9 
+
+37. van Tilborg, D., Alenicheva, A., Grisoni, F.: Exposing the limitations of molecular machine learning with activity cliffs. Journal of Chemical Information and Model-ing 62 (23), 5938–5951 (2022). https://doi.org/10.1021/acs.jcim.2c01073 
+
+38. Uscidda, T., Cuturi, M.: The Monge Gap: A regularizer to learn all transport maps. In: Proceedings of the 40th International Conference on Machine Learning. Pro-ceedings of Machine Learning Research, vol. 202, pp. 34709–34733. PMLR (2023), 
+
+https://proceedings.mlr.press/v202/uscidda23a.html 
+
+39. Vayer, T., Chapel, L., Flamary, R., Tavenard, R., Courty, N.: Optimal transport for structured data with application on graphs. In: Proceedings of the 36th Inter-national Conference on Machine Learning. Proceedings of Machine Learning Re-18 G. Avite et al. search, vol. 97, pp. 6275–6284. PMLR (2019), https://proceedings.mlr.press/ v97/titouan19a.html 
+
+40. Villani, C.: Optimal Transport: Old and New, Grundlehren der Mathematischen Wissenschaften, vol. 338. Springer, Berlin, Heidelberg (2009). https://doi.org/ 10.1007/978-3-540-71050-9 
+
+41. Zhang, Y., Su, Y., Wang, C., Li, T., Wefers, Z., Nirschl, J.J., Burgess, J., Ding, D., Lozano, A., Lundberg, E., Yeung-Levy, S.: CellFlux: Simulating cellular morphol-ogy changes via flow matching. In: Proceedings of the 42nd International Confer-ence on Machine Learning. Proceedings of Machine Learning Research, vol. 267, pp. 76111–76138. PMLR (2025), https://proceedings.mlr.press/v267/zhang25bt. html Conditional Neural Optimal Transport for Cellular Phenotypes 19 
+
+# A Optimal Transport Preliminaries 
+
+Let (X , d X ) and (Y, d Y ) be two metric spaces equipped with probability measures 
+
+μ and ν. In our setting, μ is the distribution of negative-control (DMSO) pheno-typic representations and ν the distribution of molecule-perturbed phenotypic representations. We briefly recall the tools we build on and refer to [27, 33, 40] for comprehensive treatments. 
+
+Monge and Kantorovich problems. Given a ground cost c(x, y ), the Monge prob-lem [22] seeks a map T : X → Y that pushes μ onto ν while minimizing the total displacement cost, 
+
+T ⋆ ∈ arg min 
+
+> T#μ=ν
+
+Z
+
+> X
+
+c x, T (x) dμ (x), (5) where T#μ denotes the pushforward of μ by T . This problem is non-convex and may admit no solution, in particular when μ and ν are discrete with unequal support sizes. The Kantorovich relaxation [18] instead optimizes over couplings 
+
+π ∈ Π(μ, ν ), the set of joint distributions with marginals μ and ν,
+
+Wc(μ, ν ) = min 
+
+> π∈Π(μ,ν )
+
+Z
+
+> X ×Y
+
+c(x, y ) dπ (x, y ), (6) which is a linear program, convex in π, and always admits a solution. For em-pirical measures μ = Pni=1 aiδxi and ν = Pmj=1 bj δyj , Equation (6) becomes a finite linear program over coupling matrices π ≥ 0 with π1 = a and π⊤1 = b.The optimal π aligns mass between observed samples, but it is transductive : it is defined only for the points seen at optimization time and does not yield a prediction rule for unseen molecules. 
+
+# B Cell Painting data 
+
+B.1 Cell Painting Assay 
+
+Cell Painting [4] is a standardized fluorescence microscopy assay that captures di-verse visual characteristics of cells at single-cell resolution. Cells are labeled using a fixed set of fluorescent markers, each highlighting a different cellular compo-nent (compartments and organelles, such as the nucleus, cytoskeleton, mitochon-dria, endoplasmic reticulum, and plasma membrane), and imaged across multiple channels to produce rich, multi-channel microscopy images. Images are typically acquired across five to six fluorescence channels, producing multi-channel mi-croscopy images that encode diverse aspects of cell morphology, organization, and subcellular structure. Cell Painting is widely used in large-scale biologi-cal and pharmaceutical studies, including drug discovery, genetic perturbation screening, and functional genomics. Its central premise is that perturbations that affect similar biological pathways induce similar cellular phenotypes, which 20 G. Avite et al. 
+
+can be detected through changes in cell morphology and organization. As a re-sult, Cell Painting has become a key modality for representation learning, where the goal is to learn feature embeddings that capture biologically meaningful variation across perturbations with or without task-specific supervision. From a machine learning perspective, Cell Painting datasets pose several challenges. They are high-dimensional, multichannel, and exhibit strong sources of varia-tion unrelated to biological signal, such as technical variation (batch effects), imaging artifacts, and cell-cycle heterogeneity. Moreover, biological semantics are indirect: labels often correspond to treatments or genes rather than explicit visual concepts. Consequently, evaluating representation quality is non-trivial and typically relies on downstream proxy tasks, such as perturbation match-ing or gene–molecule association retrieval. These properties make Cell Painting pertinent for understanding whether representation learning methods can move beyond appearance-driven features and capture higher-level, biologically mean-ingful abstractions. 
+
+B.2 JUMP-CP 
+
+JUMP-Cell Painting is a large-scale microscopy dataset generated by the Joint Undertaking for Morphological Profiling (JUMP) Consortium, a collaboration between ten pharmaceutical companies, six technology companies, and two non-profit organizations [8]. The dataset comprises Cell Painting images of human osteosarcoma (U2OS) cells subjected to diverse perturbations, including chem-ical treatments, gene overexpression, and CRISPR-Cas9 knockouts. JUMP-CP includes over 116,750 molecules, 12,602 gene overexpression perturbations, and 7,975 gene knockouts, totaling approximately 115 TB of data and capturing single-cell profiles for more than 1.6 billion cells. Each experimental molecule plate, across all batches and laboratories, contains the same eight positive-control molecules (Figure 5) and negative controls (DMSO only). We used these shared controls to define a standardized benchmark for evaluating representation ro-bustness across experimental conditions.   
+
+> Fig. 5: Examples of images from the eight positive controls of JUMP-CP. Conditional Neural Optimal Transport for Cellular Phenotypes 21
+> Fig. 6: Distribution of molecule-level phenotypic distances to DMSO nega-tive controls. The red vertical line indicates the threshold separating the top ( 10% )most phenotypically active molecules, retained for the out-of-distribution evaluation, from the remaining molecules.
+
+B.3 Selection of the Most Phenotypically Active Molecules 
+
+To focus the out-of-distribution evaluation on compounds that induce a measur-able phenotypic response, we retained the top ( 10% ) most phenotypically active molecules. This threshold was motivated by the analysis in [31], which estimated that approximately ( 10% ) of the screened molecules induced a detectable phe-notypic response. Molecules were ranked according to the distance between their phenotypic representations and those of the corresponding DMSO negative con-trols. The resulting activity distribution and the threshold used to define the selected subset are shown in Figure 6. The activity score and threshold were computed independently of model pre-dictions and were used exclusively to define the molecules evaluated in the OOD benchmark. No activity score, rank, or measured target phenotype was provided to the model at training or inference time. 
+
+# C Training HP of Neural OT 
+
+C.1 Implementation Details 
+
+Phenotypic representations. We extract image-level representations using DINOv2-Giant [25] and aggregate the representations belonging to the same experimen-22 G. Avite et al.             
+
+> Table 3: Experimental setup for NOT training. Element Value Seeds 1, 2, 3 Split strategy Plate-level 5-fold cross-validation Train/validation split 80/20 per fold Number of train/validation plates ≈1285 train, ≈322 validation per fold Image embedding reduction Autoencoder, 50 dimensions Molecular condition Morgan fingerprint Fingerprint size 1024 bits Morgan radius 2Representation level Well-level embeddings
+
+tal well into a single well-level phenotype. Unless otherwise stated, the resulting embeddings are compressed to 50 dimensions using an autoencoder before being provided to the NOT network. We additionally evaluate PCA-based reduction and transport in the unreduced DINOv2 space in Table 1b. 
+
+Molecular representations. We compare four molecular conditioning representa-tions. The first is a binary Morgan fingerprint (ECFP) [29]. The second concate-nates a count-based Morgan fingerprint with RDKit physicochemical descriptors (morganc+rdkc ) as done in [32]. We additionally evaluate embeddings extracted from two pretrained molecular encoders: MolFormer [30], which operates on molecular string representations, and Uni-Mol2 [17], which incorporates molec-ular geometric information. For a controlled comparison, each representation is passed through the same trainable projection network  gψ , while the remain-ing transport architecture and optimization procedure are kept unchanged. We specifically used MoLFormer-XL-both-10pct and Uni-Mol2-1.1B. 
+
+C.2 Neural OT Training Details and Hyperparameters 
+
+The hyperparameters reported in this section correspond to the in-distribution 
+
+experiments of Section 5.1 (the positive-control benchmark); the out-of-distribution ablation of Section 5.2 uses the separate configuration of Appendix C.3. We eval-uated our NOT with 5-fold cross-validation over plates, training each fold with three random seeds. In each fold, 80% of the plates are used for training and the held-out 20% for validation, i.e. about 1285 training and 322 validation plates per fold. Image representations were extracted from DINOv2-Giant [25] embeddings and compressed to 50 dimensions using an autoencoder. The molecular condition was represented by a Morgan fingerprint with radius 2 (ECFP4 [29]) and 1024 bits. All experiments were performed at the well-embedding level representations of phenotypes. The NOT model uses an attention-based conditional architecture. The archi-tecture includes both attention and feed-forward residual connections. Conditional Neural Optimal Transport for Cellular Phenotypes 23                              
+
+> Table 4: Neural OT model architecture. Element Value Architecture Attention conditional network Phenotypic input AE-reduced DINOv2 embedding, 50 dimensions Conditional input Morgan fingerprint, 1024 bits Fingerprint encoder MLP: 1024 →512 →512 →50 , ReLU activations Number of attention heads 2Feed-forward hidden dimension 64 EMA decay 0.99
+> Table 5: Optimization hyperparameters. Hyperparameter Value Number of epochs 50 Optimizer Adam Learning rate 10 −4
+> Learning-rate scheduler Warmup + constant + cosine decay Warmup fraction 0.2 Warmup epochs 10 Constant LR fraction 0.3 Constant epochs 15 Cosine decay fraction 0.5 Cosine decay epochs 25 Noise augmentation None
+
+The model was trained for 50 epochs using Adam with an initial learning rate of 10 −4. The learning-rate schedule consisted of a warmup phase, a constant phase, and a cosine decay phase. Training batches were grouped by perturbation and plate, with a dataloader batch size of one grouped item (molecule). 
+
+C.3 Out-of-Distribution Ablation Setup and Hyperparameters 
+
+The molecule-level out-of-distribution study of Section 5.2 uses a separate sweep, summarized in Table 7. It differs from the in-distribution training above mainly in its data split: molecules, rather than plates, are held out, and performance is estimated by 5-fold cross-validation over 3 seeds. All numbers in Section 5.2 are means ± standard deviation over the resulting fifteen runs; unless a component is explicitly ablated, it takes the baseline value listed below. 
+
+C.4 Additional Out-of-Distribution Ablation Tables 
+
+This section reports, in tabular form, three ablations discussed in Section 5.2: the structure encoder (Table 8, the numbers behind Figure 4b), the ground cost (Table 9), and the unbalancedness τ of the resampling heuristic (Table 10). As 24 G. Avite et al.                 
+
+> Table 6: Optimal transport loss configuration. Element Value Training objective Sinkhorn fitting loss + Monge-gap regular-ization Cost type Cosine cost
+> εfit 0.01 Sinkhorn fitting blur √0.01 = 0 .1
+> Fitting debias True
+> εreg 0.1 Monge-gap/Sinkhorn cost blur √0.1≈0.316
+> Monge-gap debias False Regularization strength 1Reach / τresampling None
+
+everywhere in Section 5.2, values are means ± standard deviation over 5 folds and 3 seeds, using only finished runs. 
+
+# D Static Optimal Transport 
+
+We contrast our learned map against classical static optimal transport couplings, which we use as baselines. Throughout, μ and ν denote the negative control and perturbed morphology distributions, Π(μ, ν ) the set of couplings with these marginals (as in Equation (6)), and dX , d Y intra-domain distances. Unlike the neural map of Section 3.1, these formulations are transductive : they return a cou-pling over the samples observed at optimization time and provide no prediction rule for unseen molecules. 
+
+D.1 GW 
+
+When source and target live in different spaces, so that a pointwise cost c(x, y ) is unavailable, the Gromov–Wasserstein (GW) distance [21] compares intra-domain 
+
+dissimilarities rather than samples directly, 
+
+GW p(μ, ν ) = min 
+
+> π∈Π(μ,ν )
+
+Z Z 
+
+dX (x, x ′) − dY (y, y ′) p dπ (x, y ) dπ (x′, y ′). (7) GW is invariant to isometries of each space, which makes it appealing for aligning heterogeneous biological modalities, but the resulting problem is a non-convex quadratic assignment. 
+
+D.2 FGW 
+
+Fused Gromov–Wasserstein (FGW) [39] interpolates between a feature-level Wasser-stein cost and the structural GW term through a trade-off parameter α ∈ [0 , 1] ,Conditional Neural Optimal Transport for Cellular Phenotypes 25 
+
+Table 7: Hyperparameters for the molecule-level OOD ablation (Section 5.2). The settings that differ from the in-distribution setup of Appendix C.2 are the data split, the entropic scales εfit , ε reg , the Monge-gap weight λ, the number of epochs, and the structure encoder. Element Value Split strategy Molecule-level OOD (disjoint train/test molecules) Cross-validation 5-fold × 3 seeds molecule subset Most-active molecules Phenotype embedding DINOv2-Giant, autoencoder-reduced to 50D Structure encoder (baseline) morganc+rdkc , radius 3; no reduction Architecture Attention conditional network; EMA decay 0.99 Optimizer Adam Learning rate 10 −4, warmup(20%)+constant(30%)+cosine(50%) Number of epochs 20 Objective / cost Sinkhorn fit + Monge-gap; cosine cost 
+
+εfit / εreg 0.002 / 0.08 
+
+Monge-gap λ (baseline) 0.1
+
+Unbalancedness τ (baseline) 1 (balanced) 
+
+Table 8: Structure encoders under NOT on the molecule-level OOD split (5-fold, 3-seed mean ±std). Best in bold, second best underlined. These are the values plotted in Figure 4b. Structure encoder R@10 rep R@10 plate 
+
+morganc+rdkc 0.035 ±0.002 0.095 ±0.007 
+
+morgan 0.028 ±0.001 0.071 ±0.007 
+
+molformer 0.017 ±0.001 0.040 ±0.003 
+
+unimol2 0.015 ±0.001 0.029 ±0.003 
+
+FGW pα(μ, ν ) = min 
+
+> π∈Π(μ,ν )
+
+(1 −α)
+
+Z
+
+c(x, y ) dπ + α
+
+Z Z 
+
+dX (x, x ′)−dY (y, y ′) p dπ dπ, 
+
+(8) where the couplings inside each integral are as in Equations (6) and (7). FGW suits structured objects for which both feature and relational information matter, and partial supervision can be injected by biasing the feature cost c at known correspondences. GW and FGW are typically optimized by conditional-gradient schemes that solve an entropic OT problem at each iteration, giving an overall 
+
+O(n3) cost [28]; low-rank couplings and costs can bring this closer to linear in the number of samples [34]. 26 G. Avite et al. 
+
+Table 9: Ablation on the training objective and ground cost (5-fold, 3-seed mean ±std). Best in bold, second best underlined. Objective / cost R@10 rep R@10 plate 
+
+NOT (cosine cost) 0.035 ±0.002 0.095 ±0.007 
+
+NOT ( ℓ2 cost) 0.038 ±0.002 0.095 ±0.006 
+
+Table 10: Unbalancedness τ of the resampling heuristic (5-fold, 3-seed mean ±std). Best in bold, second best underlined. Mild unbalancedness ( τ ≈ 0.90 –0.95 ) gives small, consistent plate gains over the balanced τ =1 baseline. 
+
+τ (unbalanced resampler) R@10 rep R@10 plate 
+
+1.00 0.035 ±0.002 0.095 ±0.007 
+
+0.95 0.037 ±0.002 0.101 ±0.007 
+
+0.90 0.037 ±0.001 0.101 ±0.007 
+
+D.3 Semi-supervised FGW 
+
+In JUMP-CP a subset of structure–phenotype correspondences is actually known: for the imaged molecules we know which molecule was applied to which well. FGW offers a simple way to exploit such partial supervision by biasing its feature cost at the known matches, an instance of the broader idea of injecting known correspondences into (Gromov–)Wasserstein transport [10, 15, 19]. Given a set of supervision pairs S = {(i⋆, j ⋆)} that link structure sample i⋆ to phenotype sample j⋆, we build the feature-cost matrix 
+
+Cij =
+
+(
+
+−λ, (i, j ) ∈ S ,
+
+0, otherwise , λ > 0, (9) and solve the fused problem (8) with this cost, i.e. T = FGW α(C, d X , d Y ). The negative entries reward the coupling for placing mass on the known correspon-dences, so that supervision propagates to the unlabeled pairs through the struc-tural GW term; λ controls the strength of the prior and α its balance against the geometry. Setting S = ∅ recovers the unsupervised FGW baseline. We evaluated this heuristic as a static baseline for structure →phenotype matching. On JUMP-CP, however, even a large fraction of supervised corre-spondences yields only marginal gains and the coupling stays close to chance, consistent with a strong manifold mismatch between fingerprint and morphol-ogy geometries. Like GW and FGW, the heuristic is moreover transductive : the recovered T matches only the observed samples and provides no map for un-seen molecules, which is one of the considerations that motivated the inductive Neural OT model of Section 3.1. Conditional Neural Optimal Transport for Cellular Phenotypes 27                
+
+> Table 11: Static GW/FGW on the most-active JUMP-CP subset ( 1125 molecules): number of correct structure →phenotype matches. Even 80% of supervised correspon-dences leaves the coupling at chance level. Method Phenotype distance # correct (out of 1125) GW ℓ20GW cosine 1Random coupling —1Semi-supervised FGW ( 80% labels, λ=100 )cosine 3
+
+D.4 Empirical results on JUMP-CP 
+
+We evaluated these static couplings on the most-active subset of JUMP-CP (the top ∼1% , i.e. 1125 molecules), matching molecular fingerprints to morphology embeddings. Table 11 reports the number of correctly recovered structure →phenotype matches. Plain GW recovers essentially no correct match, on par with a random coupling, and injecting supervision up to 80% of the pairs moves the count only from 1 to 3 out of 1125 .This behavior is not a shortcoming of semi-supervised OT in general: inject-ing known correspondences into GW/OT is known to sharpen alignment when the two domains share a recoverable geometry, whether across single-cell multi-omics [10], heterogeneous domains [15], or partially seeded networks [19]. The near-chance coupling we observe on JUMP-CP is therefore consistent with a strong manifold mismatch between fingerprint and morphology geometries: on Cell Painting, small structural changes can induce large phenotypic shifts (activ-ity cliffs) [31, 37], so the intra-domain distances that GW aligns are not related by an isometry. A structural coupling, even a partially supervised one, then can-not localize the correct phenotype of a molecule. This failure, together with the absence of any out-of-sample prediction rule, is what motivated the inductive NOT model of Section 3.1.

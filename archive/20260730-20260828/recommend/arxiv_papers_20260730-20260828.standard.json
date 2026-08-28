@@ -1,0 +1,992 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-28T13:06:32.062949+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 22,
+    "deep_cap": 6,
+    "deep_selected": 14,
+    "quick_candidates": 14,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2608.05359v1",
+      "source": "arxiv",
+      "title": "CASCADE: An Agentic Regulatory Network Framework for Patient-Data-Validated Downstream Perturbation Prediction",
+      "abstract": "CASCADE is an agentic framework that predicts downstream transcriptional effects of gene perturbation from precomputed   ARACNe regulatory networks, exposed via MCP. Prior work validates such tools by checking whether predicted genes are   known cancer genes (membership); we instead test whether the predicted direction of change matches reality, using   focal-gene copy-number amplification as a dosage-based proxy for the inverse of knockdown against real TCGA patient   tumor data.   For MYC, CASCADE's predicted knockdown targets show strong concordance with real amplified-vs-non-amplified tumor   expression across three cancer types (BRCA: 90.0%, COAD: 72.0%, STAD: 85.7%; all p<0.0013), well above permutation   baselines, surviving a PAM50 subtype control and replicating in an independent cohort (METABRIC, 87.2%). Compared   against curated MSigDB gene-set baselines via Fisher's exact test, CASCADE's accuracy is not shown to exceed existing   public knowledge of MYC- or E2F-driven biology, though its gene-specific direction-calling clearly outperforms a naive   uniform guess.   Extending to fifteen additional genes, validation proves gene-specific rather than universal: proliferation-machinery   regulators mostly replicate, while lineage-identity transcription factors and one cyclin-D paralog (CCND2)   consistently fail, a pattern we discuss as a hedged, post-hoc hypothesis.   We separately benchmark whether an LLM-based agent correctly grounds natural-language requests into CASCADE's real MCP   tool calls. Across 35 queries, a documented local model reaches 71.4% exact match (85.7% for a larger model); schema   and gene-alias failures are resolved by scale or server-side correction, but both models confidently default to the   wrong perturbation type on ambiguous queries, a failure a targeted fix could not resolve because its trigger condition   never occurs.",
+      "authors": [
+        "Jose A. Bird"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-05T19:30:44+00:00",
+      "link": "https://arxiv.org/pdf/2608.05359v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "agentic framework for downstream perturbation prediction, directly predicts transcriptional effects of gene perturbation",
+      "llm_evidence_cn": "智能体框架预测基因扰动后下游转录效应，直接对应基因扰动预测",
+      "llm_evidence": "智能体框架预测基因扰动后下游转录效应，直接对应基因扰动预测",
+      "canonical_evidence": "智能体框架预测基因扰动后下游转录效应，直接对应基因扰动预测",
+      "llm_tldr_en": "CASCADE predicts downstream effects of gene perturbation from ARACNe networks and validates against TCGA copy-number amplification, showing high direction concordance for MYC knockdown across cancers.",
+      "llm_tldr_cn": "针对现有基因扰动预测工具仅用已知癌基因成员关系验证而忽视预测方向正确性的问题，本文提出CASCADE智能体框架，基于ARACNe调控网络通过MCP预测扰动后的下游转录变化。它使用TCGA患者肿瘤数据中焦点基因拷贝数扩增作为敲低的剂量代理，验证预测方向是否与真实表达一致。对MYC的预测在BRCA、COAD、STAD三个癌种中达到72-90%的一致性，显著优于置换检验，为扰动预测模型的验证提供了新范式。",
+      "llm_tldr": "针对现有基因扰动预测工具仅用已知癌基因成员关系验证而忽视预测方向正确性的问题，本文提出CASCADE智能体框架，基于ARACNe调控网络通过MCP预测扰动后的下游转录变化。它使用TCGA患者肿瘤数据中焦点基因拷贝数扩增作为敲低的剂量代理，验证预测方向是否与真实表达一致。对MYC的预测在BRCA、COAD、STAD三个癌种中达到72-90%的一致性，显著优于置换检验，为扰动预测模型的验证提供了新范式。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.06824v1",
+      "source": "arxiv",
+      "title": "Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling",
+      "abstract": "A central task in virtual cell modeling is predicting single-cell transcriptional responses to unseen genetic perturbations and drug combinations, and biological networks provide valuable priors on gene relationships. Existing graph-based models commonly use the same network to structure gene representations and mediate intergene interactions, thereby implicitly treating stable associations as perturbation-response pathways. Gene Ontology and control-derived coexpression networks encode relatively stable relationships rather than intervention-specific response directions or magnitudes. We therefore propose GeneGeoFlow, which conditions a control-anchored residual flow on gene-wise geometry derived from biological networks to learn intervention-specific transcriptional responses. GeneGeoFlow derives multi-scale spectral coordinates from Gene Ontology and control-derived coexpression networks. A perturbation-conditioned, gene-wise gating module selects relevant structural scales and network sources, yielding intervention-specific gene geometry. The resulting geometry conditions a control-anchored residual flow without explicitly propagating target-derived signals along the graph. Condition-wise optimal transport couples unpaired control and perturbed populations for training, while a Delta-correlation objective aligns the predicted and observed condition-level expression-shift directions. GeneGeoFlow achieves Pearson Delta scores of 0.8979 on the Norman additive benchmark and 0.9088 on five held-out drug combinations in the fixed ComboSciPlex test split. These results support perturbation-conditioned gene geometry as an effective structural prior for intervention-specific response prediction, without conflating stable gene relationships with response propagation.",
+      "authors": [
+        "Quanquan Li",
+        "Yihe Chi",
+        "Liuyang Song",
+        "Hongbo Zhang",
+        "Jingyu Li",
+        "Xidong Xi",
+        "Conghua Wei",
+        "Yijie Sun",
+        "Yu Chen",
+        "Xin Liu",
+        "Qi Hu",
+        "Jing Ke",
+        "Guitao Cao"
+      ],
+      "primary_category": "q-bio.MN",
+      "categories": [
+        "q-bio.MN",
+        "cs.AI"
+      ],
+      "published": "2026-08-07T05:29:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.06824v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "directly addresses virtual cell perturbation modeling and prediction of transcriptional responses to genetic perturbations",
+      "llm_evidence_cn": "直接面向虚拟细胞扰动建模，预测未知基因扰动的转录响应",
+      "llm_evidence": "直接面向虚拟细胞扰动建模，预测未知基因扰动的转录响应",
+      "canonical_evidence": "直接面向虚拟细胞扰动建模，预测未知基因扰动的转录响应",
+      "llm_tldr_en": "GeneGeoFlow conditions a control-anchored residual flow on gene geometry from biological networks to predict transcriptional responses to unseen perturbations and drugs, outperforming graph-based virtual cell models.",
+      "llm_tldr_cn": "在虚拟细胞建模中，基因扰动响应预测是核心任务，但现有图方法常把稳定关联当作扰动通路。对此提出GeneGeoFlow，将控制锚定残差流与基因几何条件结合，利用基因本体和共表达网络提供先验，从而建模干预特异的响应方向与大小。实验显示其在预测未见遗传扰动和药物组合的转录响应上优于现有图基模型，为虚拟细胞建模提供更准确的扰动响应预测方案。",
+      "llm_tldr": "在虚拟细胞建模中，基因扰动响应预测是核心任务，但现有图方法常把稳定关联当作扰动通路。对此提出GeneGeoFlow，将控制锚定残差流与基因几何条件结合，利用基因本体和共表达网络提供先验，从而建模干预特异的响应方向与大小。实验显示其在预测未见遗传扰动和药物组合的转录响应上优于现有图基模型，为虚拟细胞建模提供更准确的扰动响应预测方案。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "Find papers on gene perturbation prediction using virtual cell modeling",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16419v1",
+      "source": "arxiv",
+      "title": "PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data",
+      "abstract": "Large language models can describe mechanisms, yet scalable post-training still depends on costly, manually curated biological reasoning traces. Here we show that cellular perturbation atlases can instead become reinforcement-learning environments, where measured gene responses provide computable rewards for biological reasoning. We introduce PertMind, which combines trusted-trajectory supervised initialization with gene-, pathway-, and format-level reinforcement signals. Trained only on forward perturbation-response prediction, PertMind improved response inference in unseen cellular contexts while retaining general language capabilities. It also transferred without task-specific post-training to reverse perturbation identification, double-perturbation reasoning, phenotypic-screen prioritization, and biological-process interpretation. PertMind further generated biological profiles that supported competitive gene, cell, and donor representations across multiscale downstream tasks. These results support the hypothesis that reinforcement on experimental endpoints can concentrate reusable biological strategies already accessible to pretrained models. More broadly, perturbation-derived reinforcement learning offers a scalable route for transforming expanding experimental atlases into training environments for general-purpose biological reasoning.",
+      "authors": [
+        "Zhenchao Tang",
+        "Xiaogang Xu",
+        "Tianxu Lv",
+        "Jiahui Guan",
+        "Jiale Zhou",
+        "Haohuai He",
+        "Zhi Song",
+        "Hanbo Huang",
+        "Jiehui Huang",
+        "Jiafei Wu",
+        "Zhe Liu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "q-bio.QM"
+      ],
+      "published": "2026-08-17T11:17:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.16419v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "directly targets LLM-based gene perturbation response prediction from cellular perturbation data",
+      "llm_evidence_cn": "直接面向基于大语言模型的基因扰动响应预测，利用细胞扰动数据训练",
+      "llm_evidence": "直接面向基于大语言模型的基因扰动响应预测，利用细胞扰动数据训练",
+      "canonical_evidence": "直接面向基于大语言模型的基因扰动响应预测，利用细胞扰动数据训练",
+      "llm_tldr_en": "PertMind turns cellular perturbation atlases into RL environments with gene-response rewards, enabling LLMs to learn forward perturbation prediction and generalize to unseen contexts and reverse tasks without task-specific training.",
+      "llm_tldr_cn": "针对大语言模型生物推理后训练依赖昂贵人工轨迹的问题，PertMind提出将细胞扰动图谱作为强化学习环境，用测量的基因响应作为可计算奖励。模型结合可信轨迹监督与基因、通路、格式三个层面的强化信号，仅在前向扰动响应预测上训练即可提升未见细胞情境中的响应推断，并保留通用语言能力，还能迁移到反向扰动任务。这为利用大规模扰动数据驱动LLM生物推理提供了新范式。",
+      "llm_tldr": "针对大语言模型生物推理后训练依赖昂贵人工轨迹的问题，PertMind提出将细胞扰动图谱作为强化学习环境，用测量的基因响应作为可计算奖励。模型结合可信轨迹监督与基因、通路、格式三个层面的强化信号，仅在前向扰动响应预测上训练即可提升未见细胞情境中的响应推断，并保留通用语言能力，还能迁移到反向扰动任务。这为利用大规模扰动数据驱动LLM生物推理提供了新范式。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "large language model for gene perturbation prediction inference",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-07-743481-v1",
+      "source": "biorxiv",
+      "title": "SLIM: A small linear model with STRING embeddings for single-cell genetic perturbation prediction",
+      "abstract": "Predicting cellular responses to genetic perturbations is central to understanding gene function and prioritizing therapeutic targets, but experimental screens cannot exhaustively cover genes, cell types, and perturbation combinations. Recent benchmarks have shown that simple baselines can match or outperform substantially more complex models, suggesting that informative biological priors may be as important as model capacity. Here we present SLIM, a lightweight extension of the bilinear model of Ahlmann-Eltze et al. SLIM represents perturbations with 64-dimensional embeddings derived from the STRING protein network and predicts mean transcriptional responses through a closed-form ridge-regression estimator. It then constructs single-cell populations by retrieving training cells and rescaling each gene to match the predicted mean. We evaluated SLIM against four deep learning models and two simple baselines on four single-gene perturbation datasets and one combinatorial perturbation dataset. Across these within-dataset benchmarks, SLIM achieved competitive mean-response accuracy, ranked first in eight of twelve single-gene dataset-metric comparisons, and produced substantially lower maximum mean discrepancy values than the evaluated alternatives. The model has 640 trainable parameters and fitted each benchmark dataset in under 10 seconds on a CPU. These results show that compact biological representations can support accurate and computationally efficient perturbation prediction. Code is available at https://github.com/RasmussenLab/SLIM.\n\nKey PointsO_LISLIM combines a closed-form bilinear predictor with STRING-derived perturbation embeddings.\nC_LIO_LIAcross five within-dataset benchmarks, SLIM achieved competitive mean-response prediction with only 640 trainable parameters.\nC_LIO_LISLIM builds cell populations by rescaling retrieved training cells to the predicted mean, so they inherit realistic cell-to-cell variation and gene-gene covariation.\nC_LIO_LIThe results highlight the importance of perturbation representations and population-construction procedures in low-data benchmarks.\nC_LIO_LISLIM fits each benchmark dataset in under 10 seconds on a standard CPU.\nC_LI",
+      "authors": [
+        "Hu, D.",
+        "Pielies Avelli, M.",
+        "Jensen, L. J.",
+        "Rasmussen, S."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-07T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.07.743481v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Directly predicts single-cell genetic perturbation responses using STRING protein network embeddings",
+      "llm_evidence_cn": "直接利用STRING蛋白网络嵌入预测单细胞基因扰动响应",
+      "llm_evidence": "直接利用STRING蛋白网络嵌入预测单细胞基因扰动响应",
+      "canonical_evidence": "直接利用STRING蛋白网络嵌入预测单细胞基因扰动响应",
+      "llm_tldr_en": "SLIM is a lightweight linear model that encodes perturbations with 64-dimensional STRING embeddings and uses closed-form ridge regression to predict mean transcriptional responses, matching or outperforming complex baselines on single-cell perturbation benchmarks.",
+      "llm_tldr_cn": "针对实验筛选无法穷尽基因、细胞类型及扰动组合的问题，本文提出SLIM，一种基于STRING蛋白网络嵌入的小型线性模型。它用64维扰动嵌入通过闭式岭回归预测扰动后的平均转录响应，避免依赖大规模复杂模型。基准测试表明，简单的线性模型结合生物学先验即可达到甚至超越更复杂方法的性能，为单细胞基因扰动预测提供了高效轻量的基线方案。",
+      "llm_tldr": "针对实验筛选无法穷尽基因、细胞类型及扰动组合的问题，本文提出SLIM，一种基于STRING蛋白网络嵌入的小型线性模型。它用64维扰动嵌入通过闭式岭回归预测扰动后的平均转录响应，避免依赖大规模复杂模型。基准测试表明，简单的线性模型结合生物学先验即可达到甚至超越更复杂方法的性能，为单细胞基因扰动预测提供了高效轻量的基线方案。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.28090v1",
+      "source": "arxiv",
+      "title": "PerturbMap: Cross-Context Transfer of Single-Cell Perturbation Responses",
+      "abstract": "Single-cell perturbation atlases rarely measure every intervention in every cellular context: a query perturbation is often observed in one or more source contexts but missing in the recipient context where its effect is needed. Ignoring those measured responses discards query-specific experimental evidence, whereas copying or weakly calibrating them across contexts risks transferring the wrong signal. We propose PerturbMap, which predicts a missing recipient-context effect by combining a recipient-local low-rank base with accepted proposals that transport the same perturbation's measured source responses through source-to-recipient ridge experts fit on paired training perturbations, with proposal weights determined by route reliability estimated on validation anchors. On the Perturb-CITE-seq melanoma cohort, PerturbMap improves full-effect MSE by 4.1\\% over a recipient-local low-rank base and achieves lower MSE than FedAvg, zero-response, raw-copy, calibrated-copy, and identity-shuffled affine controls. It remains within $2.82\\times10^{-6}$ MSE of our centralized token-matched pooled reference, which uses a stronger training interface. A condition-mean specificity diagnostic shows the same direction: same-recipient top-10 counterpart retrieval by cosine increases from 74.5\\% for the low-rank base to 80.5\\% for PerturbMap.",
+      "authors": [
+        "Panpan Cui",
+        "Yiqi Liu",
+        "Wenhao Sun"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-30T11:58:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.28090v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "cross-context transfer prediction of missing single-cell perturbation responses",
+      "llm_evidence_cn": "对缺失的单细胞扰动响应进行跨背景迁移预测",
+      "llm_evidence": "对缺失的单细胞扰动响应进行跨背景迁移预测",
+      "canonical_evidence": "对缺失的单细胞扰动响应进行跨背景迁移预测",
+      "llm_tldr_en": "PerturbMap predicts missing recipient-context perturbation effects by combining a recipient-local low-rank base with source-response proposals transported through ridge experts, weighting routes by estimated reliability.",
+      "llm_tldr_cn": "PerturbMap 针对单细胞扰动图谱中同一扰动常在部分背景被测量而在目标背景缺失的问题，提出跨背景迁移预测方法。该方法将目标背景局部低秩基与经成对训练扰动拟合的源到目标岭专家传递的源响应候选相结合，并按估计的路径可靠性加权。这样既保留查询特异实验证据，又避免错误信号跨背景复制。该方法可预测未测量背景下的单细胞扰动效应。",
+      "llm_tldr": "PerturbMap 针对单细胞扰动图谱中同一扰动常在部分背景被测量而在目标背景缺失的问题，提出跨背景迁移预测方法。该方法将目标背景局部低秩基与经成对训练扰动拟合的源到目标岭专家传递的源响应候选相结合，并按估计的路径可靠性加权。这样既保留查询特异实验证据，又避免错误信号跨背景复制。该方法可预测未测量背景下的单细胞扰动效应。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.00152v1",
+      "source": "arxiv",
+      "title": "Response Magnitude as a Dominant Signal for Held-Out CRISPRi Perturbation Effect Prediction",
+      "abstract": "Predicting the magnitude of a CRISPRi perturbation's transcriptomic effect on held-out target genes is an important open problem in single-cell biology. Recent work has documented that simple baselines often match or exceed deep perturbation predictors on related protocols. We study this phenomenon on the Virtual Cell Challenge (VCC) benchmark under a strict held-out target-gene split, identify the specific low-dimensional signal that drives the gap, and characterize how it transfers across cell types. The target is the log Anderson-Darling distance from non-targeting controls, which is strongly predictable from four deterministic scalar functions of the 2,000-dimensional input. A deep MLP encoder with direct access to the full input collapses toward the marginal training mean, and standard remedies do not close the gap. A linear regression on the four magnitude scalars alone exceeds the strongest x-only classical model, while a Random Forest on the input plus the four scalars substantially outperforms our deep proof-of-concept encoder. Two pre-specified controls attribute the magnitude gain to per-row alignment rather than added dimensionality. Under zero-shot transfer to two external CRISPRi screens evaluated against a target-gene endpoint rebuilt from single-cell data, magnitude-only predictors transfer positively whereas expression-only predictors are negative or unresolved. Exposing magnitude to the deep encoder improves transfer over its expression-only counterpart, yet the encoder does not outperform a four-scalar linear regression on the same features. We also find that the Anderson-Darling column distributed with these screens measures transcriptome-wide response breadth rather than target-gene effect strength, so evaluating transfer against it scores a different outcome.",
+      "authors": [
+        "Mehrdad Shoeibi",
+        "Niloofar Yousefi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-31T17:09:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.00152v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "analyzes held-out CRISPRi perturbation effect prediction in single-cell data and exposes dominant low-dimensional signal",
+      "llm_evidence_cn": "分析单细胞数据中留出CRISPRi扰动效应预测并揭示主导低维信号",
+      "llm_evidence": "分析单细胞数据中留出CRISPRi扰动效应预测并揭示主导低维信号",
+      "canonical_evidence": "分析单细胞数据中留出CRISPRi扰动效应预测并揭示主导低维信号",
+      "llm_tldr_en": "This paper studies held-out CRISPRi perturbation effect prediction on the Virtual Cell Challenge, showing that a simple scalar baseline often matches deep models and isolating the low-dimensional signal behind the gap.",
+      "llm_tldr_cn": "该研究针对单细胞生物学中留出目标基因的CRISPRi扰动效应幅度预测这一开放问题，在Virtual Cell Challenge基准上采用严格留出目标基因划分进行系统分析。实验发现简单基线常能达到甚至超过深度扰动预测器，并识别出驱动差距的特定低维信号：目标是对数Anderson-Darling距离，可由输入向量的四个确定性标量函数强预测。研究还刻画了该信号在不同细胞类型间的迁移。这一发现为构建和评估基因扰动预测模型提供了重要基准洞见。",
+      "llm_tldr": "该研究针对单细胞生物学中留出目标基因的CRISPRi扰动效应幅度预测这一开放问题，在Virtual Cell Challenge基准上采用严格留出目标基因划分进行系统分析。实验发现简单基线常能达到甚至超过深度扰动预测器，并识别出驱动差距的特定低维信号：目标是对数Anderson-Darling距离，可由输入向量的四个确定性标量函数强预测。研究还刻画了该信号在不同细胞类型间的迁移。这一发现为构建和评估基因扰动预测模型提供了重要基准洞见。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "What methods predict gene perturbation effects in single cell data?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.01734v1",
+      "source": "arxiv",
+      "title": "LLM-Guided Retrieval for Prediction of Molecular Perturbation Responses",
+      "abstract": "Predicting transcriptomic responses to small-molecule perturbations across cell lines is central to drug discovery, but exhaustive profiling of drug-cell combinations is infeasible. We frame molecular perturbation prediction as retrieve-and-aggregate: approximate an unmeasured drug's response in a cell line by aggregating measured responses of a small set of biologically related compounds. We propose LLM-Guided Retrieval (LGR), where a large language model (LLM) ranks candidate neighbor drugs (restricted to those profiled in the target cell line); after which a fixed mean aggregator combines their observed expression deltas to form the prediction. We evaluate on the Tahoe-100M single-cell perturbation atlas under unseen-drug, unseen-cell-line, and open-world regimes. LGR consistently improves over drug mean, ChemCPA, and chemistry-based kNN baselines, with the strongest gains for unseen cell-line generalization, where it achieves higher correlation and lower error than mean baselines. Across settings, LGR improves directional (sign) accuracy of gene regulation, indicating better recovery of biologically meaningful perturbation effects even when magnitude-based metrics are similar. These results suggest that retrieval quality, rather than predictor complexity, is a key driver of zero-shot molecular perturbation prediction, and that LLMs can provide a useful biological prior when used as constrained retrieval modules.",
+      "authors": [
+        "Betty Xiong",
+        "Jan-Christian Huetter",
+        "Gabriele Scalia",
+        "Tommaso Biancalani",
+        "Sepideh Maleki"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-03T05:57:02+00:00",
+      "link": "https://arxiv.org/pdf/2608.01734v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-guided retrieval aggregates measured responses of related compounds to predict molecular perturbation responses.",
+      "llm_evidence_cn": "利用大语言模型引导检索并聚合相关化合物的实测响应来预测分子扰动响应",
+      "llm_evidence": "利用大语言模型引导检索并聚合相关化合物的实测响应来预测分子扰动响应",
+      "canonical_evidence": "利用大语言模型引导检索并聚合相关化合物的实测响应来预测分子扰动响应",
+      "llm_tldr_en": "LGR uses a large language model to rank neighbor drugs and aggregates their observed expression deltas to predict transcriptomic responses to unseen small-molecule perturbations.",
+      "llm_tldr_cn": "针对小分子扰动的转录组响应预测，本文将问题建模为检索-聚合：通过聚合少量生物学相关化合物的实测表达变化来估计未测药物响应。提出LLM引导检索（LGR），用大语言模型对候选邻居药物排序，再以固定均值聚合器生成预测。在Tahoe-100M单细胞扰动图谱上评估了未见过药物、未见过细胞系等设置，展示了LLM在分子扰动预测中的应用价值。",
+      "llm_tldr": "针对小分子扰动的转录组响应预测，本文将问题建模为检索-聚合：通过聚合少量生物学相关化合物的实测表达变化来估计未测药物响应。提出LLM引导检索（LGR），用大语言模型对候选邻居药物排序，再以固定均值聚合器生成预测。在Tahoe-100M单细胞扰动图谱上评估了未见过药物、未见过细胞系等设置，展示了LLM在分子扰动预测中的应用价值。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "large language model for gene perturbation prediction inference",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.08430v1",
+      "source": "arxiv",
+      "title": "Human-Guided Causal Knowledge Injection for Virtual Cells",
+      "abstract": "Virtual cells employ machine learning models to simulate and predict cellular behaviors, serving as a critical computational framework for investigating health and disease. Injecting causal graphs into virtual cells can improve the interpretability, but such graphs are usually not available in real-world applications. Recently, many methods have been proposed to construct causal graphs from data, which group genes based on their similarities to form concepts and extract their causal relationships. However, since this automatic process is unsupervised, the causal graphs usually contain errors. In this paper, we propose a human-guided causal knowledge injection method for virtual cells. We developed a gene-similarity-aware causal graph visualization supported by a hybrid optimization algorithm to help explore both the causal relationships between concepts and the similarities between genes. Based on the exploration, we further developed a counterfactual analysis strategy supported by a counterfactual visualization and a causal path visualization to help validate and refine causal graphs. The effectiveness of our method is demonstrated through two real-world case studies, the extraction of scientifically meaningful causal insights, and positive feedback from domain experts.",
+      "authors": [
+        "Pengcheng Wang",
+        "Changjian Chen",
+        "Zhuo Tang",
+        "You Wu",
+        "Long Wang",
+        "Feng Yu",
+        "Kenli Li"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC",
+        "cs.AI"
+      ],
+      "published": "2026-08-09T03:00:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.08430v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "virtual cell modeling with human-guided causal knowledge injection for cellular behavior prediction",
+      "llm_evidence_cn": "通过人类引导的因果知识注入的虚拟细胞建模用于细胞行为预测",
+      "llm_evidence": "通过人类引导的因果知识注入的虚拟细胞建模用于细胞行为预测",
+      "canonical_evidence": "通过人类引导的因果知识注入的虚拟细胞建模用于细胞行为预测",
+      "llm_tldr_en": "This paper injects human-curated causal graphs into virtual cell models to improve interpretability and reliability, directly supporting perturbation response prediction.",
+      "llm_tldr_cn": "虚拟细胞利用机器学习模型模拟和预测细胞行为，但自动构建的因果图常含错误。该工作提出人类引导的因果知识注入方法，结合基因相似性感知的因果图可视化与混合人机交互，将人工校验的因果知识注入虚拟细胞。该方法降低了因果图噪音，提升了虚拟细胞模型的可解释性和预测可靠性，为基因扰动响应预测和疾病研究提供了更可信的计算框架。",
+      "llm_tldr": "虚拟细胞利用机器学习模型模拟和预测细胞行为，但自动构建的因果图常含错误。该工作提出人类引导的因果知识注入方法，结合基因相似性感知的因果图可视化与混合人机交互，将人工校验的因果知识注入虚拟细胞。该方法降低了因果图噪音，提升了虚拟细胞模型的可解释性和预测可靠性，为基因扰动响应预测和疾病研究提供了更可信的计算框架。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "Research on virtual cell models for perturbation response prediction",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.15288v1",
+      "source": "arxiv",
+      "title": "$D^{2}R^{2}$: Discrete Diffusion with Regulation Reinforcement for Single-Cell Perturbation Prediction",
+      "abstract": "Predicting single-cell transcriptomic responses to genetic perturbations is central to functional genomics and virtual-cell modeling. Existing approaches, however, typically predict an entire expression profile as a whole, leaving the order in which individual gene responses are generated unmodeled. To address this problem, we introduce \\textbf{$D^{2}R^{2}$} (\\textbf{D}iscrete \\textbf{D}iffusion with \\textbf{R}egulation \\textbf{R}einforcement), which reformulates perturbation prediction as regulation-guided gene-wise progressive generation. A Masked Discrete Diffusion Model represents expression as ordinal tokens and reconstructs a fully masked profile step by step, allowing generated gene responses to condition those that remain masked. A Regulatory Policy Module initializes the generation policy from a gene regulatory network inferred from control cells and adapts it to the perturbation and current partially generated state. Then, group-relative policy optimization refines only the ordering policy using final perturbation-effect agreement as reward. Across Norman19 and VCC-H1, $D^{2}R^{2}$ achieves the best performance on all five metrics on Norman19 and remains competitive on H1. Controlled ablations holding the generator and generation budget fixed show that biological-prior ordering improves over random ordering and is more reliable than uncertainty-based heuristics, whereas reversing the biological-prior ordering degrades every metric. Biological analyses further show that the refined policy prioritizes regulatory genes early while promoting perturbation-specific transcription factors and responsive genes. These results establish gene generation order as an effective, controllable, and biologically interpretable dimension of single-cell perturbation prediction.",
+      "authors": [
+        "Ninghan Fan",
+        "Qi Liu",
+        "Xunuo Zhu",
+        "Yukai Sun",
+        "Luyuan Chen",
+        "Xuheng Zhou",
+        "Yuetian Du",
+        "Ming Kong",
+        "Xiaojun Zhu",
+        "Jie Liu",
+        "Zhan Zhou",
+        "Qiang Zhu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-15T15:34:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.15288v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Predicts single-cell transcriptomic responses to genetic perturbations via discrete diffusion",
+      "llm_evidence_cn": "利用离散扩散模型预测基因扰动下的单细胞转录组响应",
+      "llm_evidence": "利用离散扩散模型预测基因扰动下的单细胞转录组响应",
+      "canonical_evidence": "利用离散扩散模型预测基因扰动下的单细胞转录组响应",
+      "llm_tldr_en": "This paper proposes D2R2, a masked discrete diffusion model with regulation-guided generation, to predict single-cell transcriptomic responses to genetic perturbations, directly addressing single-cell perturbation response prediction and virtual-cell modeling.",
+      "llm_tldr_cn": "现有方法通常将整个表达谱作为一个整体进行预测，忽略了基因响应生成的顺序。该论文提出D2R2，将扰动预测重构为调控引导的逐基因渐进生成过程，采用掩码离散扩散模型将表达表示为有序标记并逐步重建。该方法在基因水平上有序生成响应，能够更细致地建模扰动效应，为单细胞扰动响应预测和虚拟细胞建模提供了新范式。",
+      "llm_tldr": "现有方法通常将整个表达谱作为一个整体进行预测，忽略了基因响应生成的顺序。该论文提出D2R2，将扰动预测重构为调控引导的逐基因渐进生成过程，采用掩码离散扩散模型将表达表示为有序标记并逐步重建。该方法在基因水平上有序生成响应，能够更细致地建模扰动效应，为单细胞扰动响应预测和虚拟细胞建模提供了新范式。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16424v1",
+      "source": "arxiv",
+      "title": "Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing",
+      "abstract": "Generative modeling has shown increasing promise for predicting cellular perturbation effects under chemical compound treatments. Existing approaches either model perturbation as a distribution-to-distribution mapping without explicit concentration handling, or treat concentration as a discrete class label, precluding continuous dose control. We introduce a joint flow matching approach that simultaneously models cell latents and drug concentration via a dual-timestep formulation, enabling dose-conditioned single-cell morphing through the invertibility of flow matching. The joint formulation induces a monotonic dose-response geometry in latent space and additionally supports concentration estimation from cell morphology. As proof of concept, we further demonstrate generalization to an unseen dose held out during training. Empirically, our method achieves competitive or improved per-concentration metrics on two compounds compared with representative baselines, while enabling capabilities structurally unavailable to discrete-class methods.",
+      "authors": [
+        "Lea Bogensperger",
+        "Manuela Merlo",
+        "Martin Baumgartner",
+        "Michael Krauthammer",
+        "Bernard Ciraulo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-17T11:23:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.16424v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "predicts single-cell perturbation response under compound treatments with continuous dose control",
+      "llm_evidence_cn": "预测化合物处理下的单细胞扰动响应，支持连续剂量控制",
+      "llm_evidence": "预测化合物处理下的单细胞扰动响应，支持连续剂量控制",
+      "canonical_evidence": "预测化合物处理下的单细胞扰动响应，支持连续剂量控制",
+      "llm_tldr_en": "Joint flow matching co-models cell latents and drug concentration with a dual-timestep formulation, enabling continuous dose-conditioned single-cell morphing and dose-response estimation.",
+      "llm_tldr_cn": "针对现有扰动预测模型缺乏连续剂量控制的问题，本文提出联合流匹配方法，将细胞隐变量与药物浓度同时建模，利用流匹配的可逆性实现剂量条件下的细胞形态变换。联合公式诱导出单调的剂量响应几何，并支持从形态反推浓度，显著提升了对化学扰动响应的连续建模能力。该工作为单细胞层面的扰动反应预测提供了新的生成式框架。",
+      "llm_tldr": "针对现有扰动预测模型缺乏连续剂量控制的问题，本文提出联合流匹配方法，将细胞隐变量与药物浓度同时建模，利用流匹配的可逆性实现剂量条件下的细胞形态变换。联合公式诱导出单调的剂量响应几何，并支持从形态反推浓度，显著提升了对化学扰动响应的连续建模能力。该工作为单细胞层面的扰动反应预测提供了新的生成式框架。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.23114v1",
+      "source": "arxiv",
+      "title": "DeMixPert: Decomposed Response Modeling with Gaussian Mixtures for OOD Single-Cell Perturbation Prediction",
+      "abstract": "Predicting transcriptome-wide responses to unseen genetic perturbations remains a major computational challenge because accurate prediction requires recovering both perturbation-specific transcriptional shifts and heterogeneous cellular responses. Existing methods often entangle deterministic response structure with stochastic population-level variation, causing dominant shared patterns to mask weaker perturbation-specific signals and impair distributional modeling. To address these challenges, we propose \\textbf{DeMixPert}, an approach for Decomposed response Modeling with Gaussian Mixtures for Out-Of-Distribution (OOD) single-cell Perturbation prediction. DeMixPert decomposes perturbation-induced changes into a basal-state-dependent systematic response, a perturbation-specific response, and population-level variation. The systematic component is derived from the basal state encoded from control-cell expression, whereas the perturbation-specific component is inferred from pretrained target embeddings for unseen-target generalization. DeMixPert models population-level variation using a Gaussian prototype Invertible Network and adaptively combines reusable Gaussian prototypes according to the basal state and perturbation condition. The resulting mixture is mapped to a condition-specific variation distribution. Sampled variations are integrated with the systematic and perturbation-specific components, followed by joint decoding with the basal state to reconstruct perturbed-cell gene expression. Experimental results show that DeMixPert effectively captures heterogeneous single-cell perturbation responses and achieves superior performance across unseen-perturbation settings. The source code is made publicly available upon publication.",
+      "authors": [
+        "Jiawen Liu",
+        "Xuechenxiao Cao",
+        "Yutong Li",
+        "Bing Liu",
+        "Jiaming Liang",
+        "Tinghe Zhang",
+        "Xiaoqi Sheng",
+        "Hongmin Cai"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-24T11:24:17+00:00",
+      "link": "https://arxiv.org/pdf/2608.23114v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Decomposed response modeling with Gaussian mixtures for out-of-distribution single-cell perturbation prediction.",
+      "llm_evidence_cn": "基于高斯混合的分解响应建模，用于分布外单细胞扰动预测",
+      "llm_evidence": "基于高斯混合的分解响应建模，用于分布外单细胞扰动预测",
+      "canonical_evidence": "基于高斯混合的分解响应建模，用于分布外单细胞扰动预测",
+      "llm_tldr_en": "DeMixPert decomposes perturbation response into baseline and perturbation-specific components using Gaussian mixtures, improving out-of-distribution single-cell perturbation prediction.",
+      "llm_tldr_cn": "预测未知基因扰动的转录组响应是计算挑战，现有方法常混淆确定性与随机响应。DeMixPert将扰动响应分解为基线成分与扰动特异性成分，并用高斯混合建模细胞异质性，从而改善分布外单细胞扰动预测。该方法在OOD场景下能恢复被共享模式掩盖的扰动信号，为扰动响应预测提供更准确的分布建模。",
+      "llm_tldr": "预测未知基因扰动的转录组响应是计算挑战，现有方法常混淆确定性与随机响应。DeMixPert将扰动响应分解为基线成分与扰动特异性成分，并用高斯混合建模细胞异质性，从而改善分布外单细胞扰动预测。该方法在OOD场景下能恢复被共享模式掩盖的扰动信号，为扰动响应预测提供更准确的分布建模。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-04-732812-v1",
+      "source": "biorxiv",
+      "title": "A confound-diagnostic toolkit for in silico perturbation with single-cell foundation models",
+      "abstract": "Deleting a gene token from a cells input sequence offers a convenient native strategy for in silico perturbation, but the resulting embedding delta may not represent a biological knockout response. Apparent effects can instead reflect gene identity, universal responsiveness, limited tokenization coverage, library-size contamination, or circular state scoring. Here, we present a confound-diagnostic framework combining held-out increment testing, responsiveness adjustment, coverage gating, library-size diagnostics, and de-circularized state-shift analysis, together with a numerically matched reimplementation of frozen Geneformers perturbation engine. Across Frangieh and Replogle datasets and linear and nonlinear readouts, the native embedding delta provided no reproducible held-out improvement beyond gene identity. Signal-injection calibration showed that the test detected injected residual signal, whereas native increments remained below its detection floor. Matched controls traced apparent positives to raw-count library-size structure, broad responsiveness, and self-referential scoring, while coverage constrained perturbation applicability and estimate stability without establishing biological specificity. This model-adaptable framework helps determine when foundation-model perturbation readouts warrant biological interpretation.\n\nMotivationFoundation-model in silico perturbation could predict perturbation effects when matched experimental data are unavailable. However, in zero-shot settings, embedding-derived responses may reflect gene identity, universal responsiveness, tokenization limits, library-size artifacts, or circular state scoring rather than biological knockout effects. We therefore developed a reusable confound-diagnostic framework that applies matched controls to test whether native perturbation readouts contain information beyond these confounds and warrant biological interpretation.",
+      "authors": [
+        "Qiu, R.",
+        "Zhao, M. M."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-07T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.04.732812v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Diagnoses confounds in in silico perturbation by deleting gene tokens from single-cell foundation model input sequences.",
+      "llm_evidence_cn": "诊断通过删除单细胞基础模型基因token进行原位扰动时的混杂因素",
+      "llm_evidence": "诊断通过删除单细胞基础模型基因token进行原位扰动时的混杂因素",
+      "canonical_evidence": "诊断通过删除单细胞基础模型基因token进行原位扰动时的混杂因素",
+      "llm_tldr_en": "Shows that naive gene-token deletion in single-cell foundation models can produce confounded embedding deltas, and provides a diagnostic toolkit including multiple checks for valid in silico perturbation analysis.",
+      "llm_tldr_cn": "在单细胞基础模型中删除基因token是常见的原位扰动策略，但所得嵌入差可能不代表真实的基因敲除响应，而受基因身份、通用响应性、tokenization覆盖度等因素混杂。本文提出一套混杂诊断框架，结合多重检验、响应度调整、覆盖度门控等步骤，并在Frangieh和Replogle数据集上验证。结果表明原生删除策略需要校正，该工具为基于基础模型的基因扰动推断提供了可靠性保障。",
+      "llm_tldr": "在单细胞基础模型中删除基因token是常见的原位扰动策略，但所得嵌入差可能不代表真实的基因敲除响应，而受基因身份、通用响应性、tokenization覆盖度等因素混杂。本文提出一套混杂诊断框架，结合多重检验、响应度调整、覆盖度门控等步骤，并在Frangieh和Replogle数据集上验证。结果表明原生删除策略需要校正，该工具为基于基础模型的基因扰动推断提供了可靠性保障。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "large language model for gene perturbation prediction inference",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-07-743468-v1",
+      "source": "biorxiv",
+      "title": "DigiAra Computationally Designs Plant Mutants for Resistance to Microbial Infection in Arabidopsis",
+      "abstract": "Plant breeding is a resource-intensive process that requires repeated cultivation and selection across multiple generations to develop varieties with desirable traits, yet computational tools capable of supporting this process remain limited. Here, we present DigiAra, an AI-based framework for designing Arabidopsis thaliana mutants with targeted traits, particularly enhanced microbial resistance. DigiAra implements an S3 pipeline--simulation, scoring, and screening: it simulates the transcriptional effects of genetic perturbations and microbial infections, scores the predicted responses in terms of relevant traits through biological pathway analysis, and screens candidate perturbations at multiple levels. In doing so, DigiAra enables the computational exploration of the genome-wide effects of genetic perturbations and diverse microbial infections in Arabidopsis. To develop DigiAra, we address two fundamental challenges. Methodologically, we introduce a hybrid architecture that integrates local gene-level interaction modeling with global transcriptional-state modeling to predict perturbation-induced changes in the Arabidopsis transcriptional state. From a data perspective, we establish a standardized pipeline for curating, harmonizing, and processing an integrated Arabidopsis-microbe transcriptional dataset comprising 495 samples from 26 projects. As a result, DigiAra accurately predicts gene-expression changes induced by unobserved genetic perturbations and microbial infections, achieving a Pearson correlation of 0.49. Moreover, it recapitulates the general non-self response (GNSR), a 24-gene program reflecting broad transcriptional reprogramming across bacterial perturbations. In an independent study, the predicted pattern-triggered immunity pathway scores further correlate with bacterial load, with a Pearson correlation of 0.57. Lastly, we deploy DigiAra to identify 27 gene knockouts through genome-wide screening that are predicted to enhance resistance to Pseudomonas syringae pv. tomato DC3000 (Pst DC3000) while limiting growth compromise, 9 of which are supported by published studies. Together, these results establish DigiAra as an effective framework for the computational design of Arabidopsis mutants. We have made our implementation openly available at https://github.com/youlab2025/DigiAra.",
+      "authors": [
+        "Bai, T.",
+        "Cui, S.",
+        "You, Y."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-07T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.07.743468v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Simulates transcriptional effects of genetic perturbations and screens candidate mutants",
+      "llm_evidence_cn": "模拟遗传扰动的转录效应并筛选候选突变体",
+      "llm_evidence": "模拟遗传扰动的转录效应并筛选候选突变体",
+      "canonical_evidence": "模拟遗传扰动的转录效应并筛选候选突变体",
+      "llm_tldr_en": "DigiAra is an AI framework that simulates transcriptional effects of genetic perturbations and infections, scores responses via pathway analysis, and screens candidate Arabidopsis mutants for enhanced microbial resistance.",
+      "llm_tldr_cn": "植物育种常需多代栽培选择，过程繁琐且缺乏计算设计工具。针对这一问题，DigiAra提出基于AI的突变体设计框架，构建模拟、评分、筛选三阶段流程：先模拟基因扰动与微生物感染的转录效果，再利用通路分析评估预测响应，最后筛选潜在靶点。该流程在拟南芥中成功设计出具有增强微生物抗性的突变体，为作物精准育种提供新的计算路径。",
+      "llm_tldr": "植物育种常需多代栽培选择，过程繁琐且缺乏计算设计工具。针对这一问题，DigiAra提出基于AI的突变体设计框架，构建模拟、评分、筛选三阶段流程：先模拟基因扰动与微生物感染的转录效果，再利用通路分析评估预测响应，最后筛选潜在靶点。该流程在拟南芥中成功设计出具有增强微生物抗性的突变体，为作物精准育种提供新的计算路径。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-11-744106-v1",
+      "source": "biorxiv",
+      "title": "Method Choice, Not Biology, Determines In Silico Perturbation Results: A Systematic Evaluation of Eight Methods Across Four Datasets",
+      "abstract": "Most in silico perturbation methods for single-cell transcriptomics have been validated only on individual datasets, leaving their reliability and generalizability unknown. Through systematic cross-method, cross-dataset benchmarking of eight methods spanning six mathematical frameworks across four datasets, we find that six of eight methods--including widely used VAE-based and tensor decomposition approaches--fail to produce detectable transcription factor (TF)-to-pathway signals. Only CellOracle and DDIM consistently detected TF-to-glycolysis directional regulation. Cross-pathway analysis in PBMC monocytes revealed biologically coherent TF-pathway associations beyond glycolysis (SPI1[-&gt;]glycolysis 4.4x enrichment, FOS[-&gt;]AP-1 targets 4.4x), with SOX9 serving as a biological specificity control (no pathway enrichment). Method choice alone could reverse biological conclusions: DDIM and scTenifoldKnk rankings were significantly anti-correlated ({rho}=-0.811, p=0.027). CRISPRi Perturb-seq validation in K562 cells confirmed TF knockdown suppresses glycolysis gene expression (JUN {delta}=-1.72, CEBPB {delta}=-1.59, SPI1 {delta}=-1.57, FOS {delta}=-0.70), but CellOracle-predicted perturbation directions did not match experimental directions (40.9% agreement, not different from chance), revealing a fundamental gap between steady-state correlation and causal perturbation. Diagnostic analyses using VAE latent space profiling, correlation distribution comparison, and gene-gene graph analysis identified distinct failure modes in unsuccessful methods: VAE latent space competition (STAT3 signal-to-noise 0.44 vs. SPI1 4.25), correlation noise (TF-glycolysis |r|=0.038 indistinguishable from background |r|=0.047), and graph non-specificity (0.84x enrichment). A controlled ablation experiment showed that adding a GRN prior to DDIM did not improve target recall (delta=0 for all TFs), confirming that performance differences are multi-factorial. These findings establish preliminary guidance for method selection, including cross-pathway validation, direction-aware benchmarking, and minimum data requirements ([&ge;]500 cells, [&ge;]1,000 HVGs).",
+      "authors": [
+        "Wenjie, G.",
+        "Wu, S.",
+        "Hu, G.",
+        "Yang, Z.",
+        "Wang, Z.",
+        "Cai, J.",
+        "Mao, J."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-19T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.11.744106v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "systematic evaluation of in silico perturbation methods for single-cell transcriptomics, directly benchmarking perturbation prediction approaches",
+      "llm_evidence_cn": "对单细胞转录组扰动预测方法进行系统评估，直接比较八种方法",
+      "llm_evidence": "对单细胞转录组扰动预测方法进行系统评估，直接比较八种方法",
+      "canonical_evidence": "对单细胞转录组扰动预测方法进行系统评估，直接比较八种方法",
+      "llm_tldr_en": "Benchmarks eight in silico perturbation methods across four datasets, finding six fail to detect TF-to-pathway signals and only CellOracle and DDIM are consistent, highlighting method-driven variability.",
+      "llm_tldr_cn": "针对计算机模拟扰动方法仅在单数据集验证导致可靠性存疑的问题，本文对八种跨六个数学框架的扰动预测方法在四个数据集上进行系统基准测试。结果显示六种方法（包括广泛使用的VAE和张量分解方法）无法产生可检测的转录因子到通路信号，仅CellOracle和DDIM一致检测到方向性调控。这表明方法选择而非生物学本身主导了扰动推断结果，为单细胞扰动预测方法的比较和选择提供了重要参考。",
+      "llm_tldr": "针对计算机模拟扰动方法仅在单数据集验证导致可靠性存疑的问题，本文对八种跨六个数学框架的扰动预测方法在四个数据集上进行系统基准测试。结果显示六种方法（包括广泛使用的VAE和张量分解方法）无法产生可检测的转录因子到通路信号，仅CellOracle和DDIM一致检测到方向性调控。这表明方法选择而非生物学本身主导了扰动推断结果，为单细胞扰动预测方法的比较和选择提供了重要参考。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "What methods predict gene perturbation effects in single cell data?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.01669v2",
+      "source": "arxiv",
+      "title": "CellPrism: A Visual Analytics System for Exploring AI-Driven Virtual Cells in Drug Discovery",
+      "abstract": "Gene perturbation analysis plays a critical role in drug discovery by enabling researchers to investigate how interventions on specific genes influence global gene expression patterns within cells. Recent advances in artificial intelligence-driven virtual cell models have made it possible to predict gene expression outcomes for a wide range of perturbation strategies in silico, substantially reducing reliance on costly and time-consuming biological experiments. However, effectively exploring and interpreting the high-dimensional perturbation spaces produced by these models remains challenging because of the combinatorial nature of perturbations and the complex cell-specific gene expression responses they generate. In this work, we present CellPrism, a visual analytics system designed to support the systematic exploration of gene perturbation strategies for drug discovery. Specifically, CellPrism integrates clustering-based overviews to summarize perturbation outcomes, a glyph-based representation to compactly encode gene expression patterns across cell types, and coordinated views that enable fine-grained comparison and interpretation of perturbation effects. We demonstrate the effectiveness of CellPrism through a real-world case study and expert interviews. This work highlights the value of visual analytics in bridging virtual cell modeling with expert-driven decision making in drug discovery.",
+      "authors": [
+        "Chuhan Shi",
+        "Zijian Guo",
+        "Zelin Zang",
+        "Chengbo Zheng",
+        "Ding Ding",
+        "Rui Sheng"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-08-03T04:04:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.01669v2",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Supports exploration of AI-driven virtual cell models for gene perturbation response prediction in drug discovery",
+      "llm_evidence_cn": "面向药物发现中AI虚拟细胞模型的基因扰动响应预测与探索",
+      "llm_evidence": "面向药物发现中AI虚拟细胞模型的基因扰动响应预测与探索",
+      "canonical_evidence": "面向药物发现中AI虚拟细胞模型的基因扰动响应预测与探索",
+      "llm_tldr_en": "CellPrism is a visual analytics system for AI-driven virtual cell models that lets researchers interactively compare predicted gene expression across perturbations and cell types, addressing the challenge of interpreting high-dimensional perturbation spaces in drug discovery.",
+      "llm_tldr_cn": "针对AI虚拟细胞模型产生的高维扰动空间难以探索和解读的问题，本文提出可视化分析系统CellPrism。该系统支持研究人员在硅基环境中直观比较不同基因扰动和细胞类型下的基因表达预测结果，从而降低对昂贵生物实验的依赖。借助交互式可视化，用户可以高效分析组合扰动与细胞特异性响应，为药物发现中的扰动策略评估提供支持。",
+      "llm_tldr": "针对AI虚拟细胞模型产生的高维扰动空间难以探索和解读的问题，本文提出可视化分析系统CellPrism。该系统支持研究人员在硅基环境中直观比较不同基因扰动和细胞类型下的基因表达预测结果，从而降低对昂贵生物实验的依赖。借助交互式可视化，用户可以高效分析组合扰动与细胞特异性响应，为药物发现中的扰动策略评估提供支持。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "Find papers on gene perturbation prediction using virtual cell modeling",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.22690v1",
+      "source": "arxiv",
+      "title": "MorphoCLIP: Text-Supervised Contrastive Learning for Perturbation Matching in Cell Painting Images",
+      "abstract": "Cell Painting microscopy captures how cells change after a chemical or genetic perturbation. Connecting these images to the perturbations that produced them could make large imaging screens easier to search and interpret, but the task remains difficult because biological effects are subtle and technical variation is substantial. We introduce MorphoCLIP, a contrastive model that links Cell Painting profiles with text descriptions of compounds, CRISPR knockouts, and ORF overexpressions. The model keeps its vision and language backbones frozen and trains only a compact cross-channel module and projection layers, so it can be trained on a single consumer GPU. On held-out CPJUMP1 data, MorphoCLIP searches in both directions: from a cell image to its perturbation description and from a description to matching cell images. In both cases, a correct match appears among the top ten results much more often than expected by chance. Adding a replicate-alignment loss makes profiles from repeated experiments more consistent, although this improvement does not yet translate into reliable gene-compound matching. Gene-aware labels and plate correction also show no consistent retrieval benefit. These findings suggest that text supervision can help organize chemical and genetic Cell Painting data. Matching compounds with genetic perturbations, however, remains an open problem.",
+      "authors": [
+        "Sukhrobbek Ilyosbekov",
+        "Shubham Gajjar",
+        "Rongfei Jin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-24T01:04:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.22690v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "genetic perturbation image-phenotype matching using text-supervised contrastive learning",
+      "llm_evidence_cn": "利用文本监督对比学习进行遗传扰动的图像-表型匹配",
+      "llm_evidence": "利用文本监督对比学习进行遗传扰动的图像-表型匹配",
+      "canonical_evidence": "利用文本监督对比学习进行遗传扰动的图像-表型匹配",
+      "llm_tldr_en": "MorphoCLIP is a contrastive model that matches Cell Painting images to text descriptions of chemical and genetic perturbations, enabling searchable perturbation profiling with a lightweight trainable module.",
+      "llm_tldr_cn": "MorphoCLIP 针对细胞绘画成像中化合物、CRISPR 敲除和 ORF 过表达等扰动难以与其图像自动关联的问题，提出冻结视觉与语言骨干、仅训练紧凑跨通道模块和投影层的文本监督对比模型。该方法在 CPJUMP1 数据上支持图像与扰动文本的双向检索。这项工作为大规模成像筛选中的扰动效应搜索与解释提供了一种轻量可扩展方案。",
+      "llm_tldr": "MorphoCLIP 针对细胞绘画成像中化合物、CRISPR 敲除和 ORF 过表达等扰动难以与其图像自动关联的问题，提出冻结视觉与语言骨干、仅训练紧凑跨通道模块和投影层的文本监督对比模型。该方法在 CPJUMP1 数据上支持图像与扰动文本的双向检索。这项工作为大规模成像筛选中的扰动效应搜索与解释提供了一种轻量可扩展方案。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-05-06-722433-v2",
+      "source": "biorxiv",
+      "title": "Learning activator-inhibitor dynamics at the cell cortex with neural likelihood ratio estimation",
+      "abstract": "A key question in cell biology is how cell-scale organization emerges from a given set of molecular players and rules of interaction. Given its multiscale nature, addressing this question requires a combination of experimental perturbation, mathematical modeling, and parameter inference. We leverage recent advances in each of these fields, focusing in particular on neural-network methods for simulation-based inference, to study how cell-scale patterns of Rho GTPase activity are defined by molecular-scale activator-inhibitor interactions with filamentous actin. Using an existing model of this interaction, we demonstrate that an over-expressive, regularized classification neural network can approximate the likelihood of data arising from a particular parameter set. We show that variations in F-actin assembly dynamics can be inferred directly from experimental data, but only if the network is made less sensitive to model misspecification. We use our approach to interpret perturbation experiments in which increasing RhoGAP coexpression increases the frequency and coherence of Rho activity waves in frog eggs. After showing that the known functions of RhoGAP are insufficient to explain experimentally-observed dynamics, we use neural methods to suggest an alternative pathway by which RhoGAP could decrease filament nucleation rates to sustain waves. Our work yields specific, experimentally-testable predictions and illustrates how a combination of traditional forward models and modern inference tools can aid in unraveling mechanisms of self-organization.",
+      "authors": [
+        "Maxian, O.",
+        "Munro, E.",
+        "Dinner, A."
+      ],
+      "primary_category": "systems biology",
+      "categories": [
+        "systems biology"
+      ],
+      "published": "2026-07-30T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.05.06.722433v2.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "neural simulation-based inference of cell cortex activator-inhibitor dynamics",
+      "llm_evidence_cn": "基于神经网络的仿真推断用于细胞皮层激活-抑制动力学",
+      "llm_evidence": "基于神经网络的仿真推断用于细胞皮层激活-抑制动力学",
+      "canonical_evidence": "基于神经网络的仿真推断用于细胞皮层激活-抑制动力学",
+      "llm_tldr_en": "Combines experimental perturbation, mathematical modeling, and neural likelihood ratio estimation to infer cell-scale activator-inhibitor dynamics at the cell cortex from data.",
+      "llm_tldr_cn": "针对细胞尺度组织如何由分子间相互作用涌现这一核心问题，将实验扰动、数学模型与基于神经网络的仿真推断相结合，以研究Rho GTPase活性在细胞皮层的模式。利用一个过表达且正则化的分类网络近似数据似然，并从数据中推断激活-抑制与肌动蛋白丝的相互作用参数。该方法为虚拟细胞建模和生物系统仿真提供了高效的参数推断工具。",
+      "llm_tldr": "针对细胞尺度组织如何由分子间相互作用涌现这一核心问题，将实验扰动、数学模型与基于神经网络的仿真推断相结合，以研究Rho GTPase活性在细胞皮层的模式。利用一个过表达且正则化的分类网络近似数据似然，并从数据中推断激活-抑制与肌动蛋白丝的相互作用参数。该方法为虚拟细胞建模和生物系统仿真提供了高效的参数推断工具。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.05002v1",
+      "source": "arxiv",
+      "title": "HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer's disease loci",
+      "abstract": "Sequence-to-function models predict molecular phenotypes from complete sequence windows. At genome-wide association study loci, however, the prevailing design perturbs only the lead variant on the reference genome, even though the lead is often correlated with nearby variants through linkage disequilibrium. This single-variant perturbation implicitly fixes all linked alleles at their reference-genome states and may therefore create an uncommon or unobserved population haplotype. We study this input-construction problem at 38 Alzheimer's disease loci. We introduce HaploPerturb, which uses phased ROS/MAP genotypes or the European 1000 Genomes panel to fit a fixed-margin latent Gaussian factor model and rank partner configurations conditional on each lead allele. The leading public-panel construction agrees with the donor-panel construction at all loci under a strict linkage-disequilibrium threshold and 36 of 37 loci under a broader threshold after restricting to shared partners. Known-truth simulations show exact recovery of the dominant configuration under strong linkage disequilibrium and expose persistent residual correlation under a misspecified one-factor model. In an AlphaGenome benchmark against cell-type-specific ROS/MAP eQTLs, broader-set public-panel haplotypes yield microglial enrichment of 2.07 (95\\% whole-locus bootstrap percentile interval 1.48--3.60), compared with 1.43 (0.69--2.29) for a lead-only edit. Empirical-mode and LD-sign backgrounds yield 2.20 (1.60--3.64), with no detectable advantage or loss relative to the HaploPerturb top configuration. Thus population-informed sequence construction matters in this application, while the choice among reasonable leading haplotype rules is less consequential than the choice between a haplotype and a lead-only reference background.",
+      "authors": [
+        "Jichun Xie"
+      ],
+      "primary_category": "stat.AP",
+      "categories": [
+        "stat.AP",
+        "stat.CO"
+      ],
+      "published": "2026-08-05T16:10:35+00:00",
+      "link": "https://arxiv.org/pdf/2608.05002v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "haplotype perturbation construction for sequence-to-function models at GWAS loci",
+      "llm_evidence_cn": "为GWAS位点的序列-功能模型构建单倍型扰动",
+      "llm_evidence": "为GWAS位点的序列-功能模型构建单倍型扰动",
+      "canonical_evidence": "为GWAS位点的序列-功能模型构建单倍型扰动",
+      "llm_tldr_en": "HaploPerturb constructs realistic haplotype perturbations instead of single-variant edits, improving sequence-to-function predictions at Alzheimer's disease loci.",
+      "llm_tldr_cn": "序列-功能模型通常只对先导变异进行单点扰动，忽略连锁不平衡，导致输入的等位基因组合在人群中不真实。HaploPerturb利用已定相的基因型拟合低秩copula，构建连锁的单倍型扰动，在38个阿尔茨海默病风险位点上改进了序列到分子表型的预测。该方法使功能基因组学中的遗传扰动设计更接近真实种群背景，提高了变异效应推断的可靠性。",
+      "llm_tldr": "序列-功能模型通常只对先导变异进行单点扰动，忽略连锁不平衡，导致输入的等位基因组合在人群中不真实。HaploPerturb利用已定相的基因型拟合低秩copula，构建连锁的单倍型扰动，在38个阿尔茨海默病风险位点上改进了序列到分子表型的预测。该方法使功能基因组学中的遗传扰动设计更接近真实种群背景，提高了变异效应推断的可靠性。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-07-28-741284-v1",
+      "source": "biorxiv",
+      "title": "CENO: A Genome-Scale World Model for Evolutionary Sequence Interpretation and Programmable Regulatory Design",
+      "abstract": "DNA encodes biological function across a continuum of sequence scales, from single-nucleotide and motif-level grammar to regulatory neighborhoods, chromatin-scale organization and evolutionary constraint. A useful model of genomes should therefore do more than classify short sequence windows: it should maintain nucleotide-resolution state over long contexts, score counterfactual mutations, condition on homologous sequence evidence and generate candidates that can be evaluated against structural or functional objectives. We define such a system operationally as a genomic world model: a general-purpose generative model of genome sequence space that unifies sequence understanding and sequence design through a shared state and likelihood interface. Here we introduce CENO, a family of long-context generative genomic world models designed to preserve local DNA grammar while extending usable context to regulatory and chromatin scales. CENO combines Mamba sequence-mixing layers, sparse attention layers and mixture-of-experts capacity in a single autoregressive backbone, and is trained at 300M, 600M and 1B parameter scales with a staged curriculum that progresses from 8k-token cross-domain genomic pretraining to 131k- and 1M-token whole-genome long-context continuation. We evaluate CENO under a unified world-model benchmark paradigm spanning retrieval, representation, counterfactual perturbation, reconstruction, evolutionary conditioning and design. CENO retains practical long-context inference and retrieves distal sequence in synthetic assays. In zero-shot long-context analyses, without task-specific fine-tuning, long-context continuation yields annotation- and chromatin-boundary-associated attention patterns and frozen-state representations that generalize across human cell types and mouse cell or tissue settings. To incorporate evolutionary information, we further post-train CENO on packed real multiple-sequence-alignment contexts and score variants by reference-mutant likelihood deltas, improving matched variant-effect prediction and producing evolutionary enrichment signals across species. Complementing these perturbation-based variant tests, we evaluate zero-shot long-sequence generation by partial-gene continuation, asking whether the model can recover withheld gene-scale sequence structure across eukaryotic, bacterial and archaeal species; recovery improves with model scale and later whole-genome long-context training. Finally, we use CENO as the backbone for a cell-type-specific enhancer design workflow in mouse cortex, coupling a CENO-based accessibility oracle with conditional supervised fine-tuning and oracle-guided reinforcement learning. Together, CENO provides a genome-scale sequence world-model framework for sequence interpretation, evolutionary reasoning, gene-scale reconstruction and programmable regulatory sequence generation.",
+      "authors": [
+        "Ma, M.",
+        "Wu, Y.",
+        "Chen, X.",
+        "Jiang, F.",
+        "Lin, P.",
+        "Ye, D.",
+        "Sun, Y.",
+        "Zhang, Y.",
+        "Shi, T.",
+        "Zhao, Y.",
+        "Ouyang, W.",
+        "Zhou, B.",
+        "Bai, L.",
+        "Ren, Y."
+      ],
+      "primary_category": "genomics",
+      "categories": [
+        "genomics"
+      ],
+      "published": "2026-07-30T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.07.28.741284v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "counterfactual mutation scoring and regulatory sequence design in a genomic world model",
+      "llm_evidence_cn": "在基因组世界模型中对反事实突变评分并设计调控序列",
+      "llm_evidence": "在基因组世界模型中对反事实突变评分并设计调控序列",
+      "canonical_evidence": "在基因组世界模型中对反事实突变评分并设计调控序列",
+      "llm_tldr_en": "CENO is a genome-scale world model that scores counterfactual mutations and generates regulatory sequences, enabling sequence-level prediction of genetic perturbation effects.",
+      "llm_tldr_cn": "CENO提出一种基因组规模的世界模型，以核苷酸分辨率维护长程上下文，对反事实突变进行评分，并可生成满足功能目标的候选调控序列，从而统一序列理解与设计。其核心贡献是将进化与调控约束纳入生成模型，为在功能基因组学中预测遗传扰动的分子后果提供了新工具。",
+      "llm_tldr": "CENO提出一种基因组规模的世界模型，以核苷酸分辨率维护长程上下文，对反事实突变进行评分，并可生成满足功能目标的候选调控序列，从而统一序列理解与设计。其核心贡献是将进化与调控约束纳入生成模型，为在功能基因组学中预测遗传扰动的分子后果提供了新工具。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-03-740213-v1",
+      "source": "biorxiv",
+      "title": "VariantFlux: A genotype-first modelling workflow for predicting the impact of genetic variations on human metabolism",
+      "abstract": "Human genetic variation is a major determinant of organ metabolism, yet how naturally occurring variants shape quantitative metabolic phenotypes remains unclear. We present VariantFlux, a workflow that integrates ancestry-aware variant interpretation into genome-scale metabolic modelling to generate personalised, variant-constrained kidney reconstructions. Using the Human1 v1.19 model, we built a kidney-specific baseline model constrained by 482 metabolites and analysed 2,547 individuals from the 1000 Genomes Project, in whom [~]50% of metabolic genes were predicted damaging by at least three computational tools. These variants, whose burden differed subtly across ancestries, were translated into gene-dosage-anchored flux constraints for homozygous knockouts and graded heterozygous knockdowns. Despite widespread perturbation, >97% of models preserved baseline growth, indicating strong metabolic robustness. Yet individual genomes exhibited distinct flux-rewiring patterns, with frequent individual-specific gain-of-flux events and fewer shared loss-of-flux reactions. Limited ancestry clustering suggests metabolic responses are driven mainly by unique variant combinations. VariantFlux links human genomes to organ-level flux phenotypes, enabling precision medicine, pharmacogenomics, and disease risk prediction.\n\nConceptual advanceWe present VariantFlux, a genotype-first framework that integrates predicted variant effects directly into genome-scale metabolic networks to generate personalised, organ-specific flux phenotypes. Unlike association-based metabolomics studies, this bottom-up approach enables exploratory, mechanistic prediction of how naturally occurring genetic variation reshapes human metabolism.",
+      "authors": [
+        "Nazem-Bokaee, H."
+      ],
+      "primary_category": "systems biology",
+      "categories": [
+        "systems biology"
+      ],
+      "published": "2026-08-09T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.03.740213v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "predicts impact of genetic variations on metabolism using genome-scale metabolic modelling",
+      "llm_evidence_cn": "利用基因组规模代谢建模预测遗传变异对代谢的影响",
+      "llm_evidence": "利用基因组规模代谢建模预测遗传变异对代谢的影响",
+      "canonical_evidence": "利用基因组规模代谢建模预测遗传变异对代谢的影响",
+      "llm_tldr_en": "Presents VariantFlux, a genotype-first workflow integrating ancestry-aware variant interpretation with genome-scale metabolic modelling to build personalised variant-constrained kidney reconstructions and predict variant-induced metabolic changes.",
+      "llm_tldr_cn": "针对自然遗传变异如何影响定量代谢表型这一难题，提出VariantFlux工作流，将基于祖源的变异解释整合进基因组规模代谢建模，生成个体化的变异约束肾脏重建。基于Human1模型和1000 Genomes数据，分析大量个体的有害变异负荷，揭示变异对代谢基因剂量的影响。该方法为从基因型预测代谢表型提供了新工具，也有助于理解遗传扰动在功能基因组中的作用。",
+      "llm_tldr": "针对自然遗传变异如何影响定量代谢表型这一难题，提出VariantFlux工作流，将基于祖源的变异解释整合进基因组规模代谢建模，生成个体化的变异约束肾脏重建。基于Human1模型和1000 Genomes数据，分析大量个体的有害变异负荷，揭示变异对代谢基因剂量的影响。该方法为从基因型预测代谢表型提供了新工具，也有助于理解遗传扰动在功能基因组中的作用。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.14293v1",
+      "source": "arxiv",
+      "title": "Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure",
+      "abstract": "High-content microscopy enables systematic profiling of cellular responses to chemical perturbations, but the scale of the chemical space makes exhaustive phenotypic characterization experimentally infeasible. This motivates computational models that can predict image-derived phenotypes without acquiring the corresponding treated cells. We formulate molecule-induced phenotype prediction as an inductive conditional transport problem in image representation space. Given a negative-control phenotype and the structure of a molecule, we aim to predict the phenotype induced by the corresponding molecule. We first evaluate classical optimal transport baselines and show that static couplings do not yield useful predictions on large-scale phenotypic image datasets. We then introduce a molecule-conditioned Neural Optimal Transport (NOT) model with a Monge-Gap regularization training objective that learns to transport negative-control unperturbed phenotypes toward perturbed phenotypes using molecular structure as conditioning information. NOT recovers molecule-specific phenotypic effects while reducing microscopy-associated technical variation, thereby facilitating comparisons across experimental batches. On unseen active molecules, the model outperforms baseline approaches, demonstrating that chemically conditioned transport can generalize beyond the molecules observed during training. We identified the molecular encoder as the main limitation to this generalization, while transport in a compressed representation space improves performance and scalability. These results establish NOT as a promising framework for predicting cellular phenotypes from molecular structure and negative-control phenotypes, while highlighting the development of more informative molecular representations as a key direction for improving out-of-distribution performance.",
+      "authors": [
+        "Gauthier Avité",
+        "Maxime Sanchez-Renauld",
+        "Nicolas Bourriez",
+        "Auguste Genovesio"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-08-14T13:25:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.14293v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Predicts induced cellular phenotypes from molecular perturbations via conditional neural optimal transport",
+      "llm_evidence_cn": "通过条件神经最优传输预测分子扰动诱导的细胞表型",
+      "llm_evidence": "通过条件神经最优传输预测分子扰动诱导的细胞表型",
+      "canonical_evidence": "通过条件神经最优传输预测分子扰动诱导的细胞表型",
+      "llm_tldr_en": "The paper casts chemical-induced phenotype prediction as conditional optimal transport in image representation space, learning to map control phenotype and molecular structure to treated phenotype.",
+      "llm_tldr_cn": "高内涵成像能系统刻画细胞对化学扰动的反应，但化学空间巨大无法逐一实验测定。本文将分子诱导的表型预测建模为图像表示空间中的条件最优传输问题，给定阴性对照表型和分子结构，预测对应处理产生的表型。静态最优传输基线在规模数据上效果不佳，而条件神经方法能在不采集处理细胞的情况下泛化预测新分子表型，推动大规模化学筛选。",
+      "llm_tldr": "高内涵成像能系统刻画细胞对化学扰动的反应，但化学空间巨大无法逐一实验测定。本文将分子诱导的表型预测建模为图像表示空间中的条件最优传输问题，给定阴性对照表型和分子结构，预测对应处理产生的表型。静态最优传输基线在规模数据上效果不佳，而条件神经方法能在不采集处理细胞的情况下泛化预测新分子表型，推动大规模化学筛选。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-15-745056-v1",
+      "source": "biorxiv",
+      "title": "BoYueGRN: Zero-shot causal discovery of directed gene regulatory networks from single-cell transcriptomes via amortized inference over synthetic structural causal models",
+      "abstract": "Gene regulatory network (GRN) inference from single-cell RNA-seq conventionally relies on per-dataset optimization. Existing tools must be refit for every new dataset, and the majority fail to infer causal regulatory directions. Here we present BoYueGRN, an amortized causal discovery framework trained exclusively on 10,000 synthetic structural causal models. For any unseen dataset, a single forward pass returns edge probabilities and regulatory directions, while TF-centric sliding windows with asymmetric fusion extend this fixed-size model to full-transcriptome coverage. BoYueGRN demonstrates strong zero-shot performance across BEELINE benchmarks. On two independent genome-wide CRISPRi Perturb-seq screens, directional accuracy on retained edges reaches 0.86 and 0.95. Reconstructed cell-type- and stage-specific GRN dynamics across five diseases spanning more than 270,000 cells yield experimentally testable biological hypotheses. BoYueGRN reframes directed GRN inference as a train-once, reuse-across-datasets paradigm. By decoupling network reconstruction from per-dataset optimization, this paradigm opens the door to systematic, atlas-scale mapping of regulatory dynamics across human diseases.",
+      "authors": [
+        "Wu, J.",
+        "Shen, Y.-Q."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-20T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.15.745056v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "zero-shot causal gene regulatory network discovery from single-cell transcriptomes supports perturbation effect modeling",
+      "llm_evidence_cn": "从单细胞转录组零样本发现因果基因调控网络，为扰动效应建模提供因果结构支撑",
+      "llm_evidence": "从单细胞转录组零样本发现因果基因调控网络，为扰动效应建模提供因果结构支撑",
+      "canonical_evidence": "从单细胞转录组零样本发现因果基因调控网络，为扰动效应建模提供因果结构支撑",
+      "llm_tldr_en": "BoYueGRN learns amortized causal discovery from 10,000 synthetic structural causal models, returning edge probabilities and directions for unseen single-cell datasets in a single forward pass with strong zero-shot benchmarks.",
+      "llm_tldr_cn": "BoYueGRN 针对现有基因调控网络推断需为每个数据集重新拟合且难以判断因果方向的问题，提出在合成结构因果模型上训练的摊销因果发现框架。模型对未见数据集一次前向传播即可输出边概率和调控方向，并通过以转录因子为中心的滑动窗口扩展到全转录组。在 BEELINE 基准上展现强零样本性能。该方法可为单细胞扰动响应预测提供可迁移的因果调控先验。",
+      "llm_tldr": "BoYueGRN 针对现有基因调控网络推断需为每个数据集重新拟合且难以判断因果方向的问题，提出在合成结构因果模型上训练的摊销因果发现框架。模型对未见数据集一次前向传播即可输出边概率和调控方向，并通过以转录因子为中心的滑动窗口扩展到全转录组。在 BEELINE 基准上展现强零样本性能。该方法可为单细胞扰动响应预测提供可迁移的因果调控先验。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.14542v1",
+      "source": "arxiv",
+      "title": "Generation-Powered Inference for Distribution-Valued Outcomes",
+      "abstract": "Modern generative models increasingly produce distribution-valued outputs, such as predicted cellular responses to genetic perturbations in single-cell genomics. While these models provide valuable auxiliary information, they are inherently imperfect, creating a need for statistical methods that leverage their predictions without relying on their correctness. We propose generation-powered inference (GPI), a general framework for improving inference on distribution-valued parameters using auxiliary generative models. Focusing on Wasserstein barycenters and related distributional functionals, we introduce a function-valued bridge representation that transforms inference in the nonlinear Wasserstein space into estimation of a mean function in a Hilbert space, enabling an augmented estimation framework analogous to prediction-powered inference. We develop a family of GPI estimators with optimal information borrowing, establish consistency, asymptotic normality, and simultaneous confidence bands, and derive valid inference for linear functionals and Wasserstein distances. Simulation studies demonstrate efficiency gains over labeled-data-only methods and robust performance under generative model misspecification. We illustrate the proposed framework using a Perturb-seq study of K562 cells, where synthetic perturbation responses generated by the State foundation model are used to improve inference for pathway-level consensus gene expression distributions associated with perturbations of the 40S ribosome module.",
+      "authors": [
+        "Yijiao Zhang",
+        "Hongzhe Li"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "stat.ML"
+      ],
+      "published": "2026-08-14T17:55:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.14542v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Statistical inference framework for distribution-valued outcomes applied to predicted cellular responses to genetic perturbations.",
+      "llm_evidence_cn": "针对基因扰动预测的分布值输出统计推断框架",
+      "llm_evidence": "针对基因扰动预测的分布值输出统计推断框架",
+      "canonical_evidence": "针对基因扰动预测的分布值输出统计推断框架",
+      "llm_tldr_en": "Proposes generation-powered inference (GPI) to calibrate distribution-valued predictions such as single-cell perturbation responses, using a bridge representation to enable inference in Wasserstein space.",
+      "llm_tldr_cn": "现有生成模型可输出分布值结果（如基因扰动后的单细胞响应），但其预测可能不准确。本文提出生成驱动推断（GPI）通用框架，将非线性Wasserstein空间中的推断转化为希尔伯特空间中的均值函数估计，从而在不依赖生成模型正确性的前提下改进分布值参数推断。该方法适用于基因扰动响应等分布值结果的统计推断，为扰动预测提供可靠的校准工具。",
+      "llm_tldr": "现有生成模型可输出分布值结果（如基因扰动后的单细胞响应），但其预测可能不准确。本文提出生成驱动推断（GPI）通用框架，将非线性Wasserstein空间中的推断转化为希尔伯特空间中的均值函数估计，从而在不依赖生成模型正确性的前提下改进分布值参数推断。该方法适用于基因扰动响应等分布值结果的统计推断，为扰动预测提供可靠的校准工具。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.21349v1",
+      "source": "arxiv",
+      "title": "PerturbRx: Learning Treatment-Conditioned Latent Transitions for Patient Drug Response Prediction",
+      "abstract": "Scarce data and tumor heterogeneity limit patient-level cancer treatment-response prediction. Existing approaches predict response from pretreatment molecular profiles and drug representations, without explicitly modeling the molecular changes expected under treatment. We propose PerturbRx, a treatment-conditioned representation learning framework that learns intervention-induced latent transitions and uses them as patient-drug response features. PerturbRx trains a drug- and dose-conditioned transition predictor from context-matched but cell-unpaired control and treated single-cell populations, then freezes and transfers the predictor to pretreatment patient profiles without requiring post-treatment measurements. The transition is combined with patient and drug representations to predict response. Across TCGA and patient-derived xenograft benchmarks, PerturbRx achieves the strongest aggregate predictive performance among the evaluated methods. These results support perturbation-pretrained latent transitions as useful representations for patient-level drug-response prediction.",
+      "authors": [
+        "Yoshitaka Inoue",
+        "Minoh Jeong",
+        "Alfred Hero",
+        "Rui Kuang",
+        "Augustin Luna"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG"
+      ],
+      "published": "2026-08-21T17:54:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.21349v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "single-cell drug perturbation response prediction via treatment-conditioned latent transitions",
+      "llm_evidence_cn": "通过治疗条件化潜空间转移进行单细胞药物扰动反应预测",
+      "llm_evidence": "通过治疗条件化潜空间转移进行单细胞药物扰动反应预测",
+      "canonical_evidence": "通过治疗条件化潜空间转移进行单细胞药物扰动反应预测",
+      "llm_tldr_en": "PerturbRx learns drug- and dose-conditioned latent transitions from cell-unpaired control and treated single-cell populations and transfers the frozen transition predictor to patient profiles for treatment response prediction.",
+      "llm_tldr_cn": "PerturbRx 针对患者层面癌症治疗反应预测中数据稀缺且未显式建模治疗引起分子变化的问题，提出治疗条件化表示学习框架。该框架从背景匹配但细胞未配对的对照与处理单细胞群体中训练药物和剂量条件化的潜空间转移预测器，随后冻结并迁移到治疗前患者特征上，无需治疗后测量。转移特征作为患者-药物反应特征用于预测。该方法显式利用干预诱导的潜状态转变，改善了患者药物反应预测。",
+      "llm_tldr": "PerturbRx 针对患者层面癌症治疗反应预测中数据稀缺且未显式建模治疗引起分子变化的问题，提出治疗条件化表示学习框架。该框架从背景匹配但细胞未配对的对照与处理单细胞群体中训练药物和剂量条件化的潜空间转移预测器，随后冻结并迁移到治疗前患者特征上，无需治疗后测量。转移特征作为患者-药物反应特征用于预测。该方法显式利用干预诱导的潜状态转变，改善了患者药物反应预测。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-08-03-742524-v1",
+      "source": "biorxiv",
+      "title": "RiboRep: Replicate-Aware Cross-Modal Transformers for Codon-Resolved Ribosome Density Prediction",
+      "abstract": "Ribosome profiling enables genome-wide measurement of translation at nucleotide resolution and provides a dynamic view of cellular protein synthesis under diverse biological conditions. Existing computational approaches primarily operate on codon-level representations, potentially losing fine-grained translational signals critical for modeling context-dependent cellular responses. Such predictive translational modeling is increasingly important for emerging biological digital twins, where accurate simulation of molecular-state dynamics is required to characterize cellular adaptation, perturbation response, and phenotype progression. We present RiboRep, a replicate-aware cross-modal transformer for codon-resolved ribosome density prediction. RiboRep jointly models nucleotide-resolution RNA sequences and reference ribosome occupancy signals using dual-stream convolutional encoders, RoPE-based self-attention, asymmetric cross-attention, and replicate-aware conditioning tokens. By explicitly modeling replicate-specific variation and integrating sequence context with experimentally observed translational activity, RiboRep provides a framework for reconstructing and simulating translational states across biological conditions. Across bacterial, yeast, and plant ribosome profiling datasets, RiboRep achieves competitive or improved performance compared with existing baselines, with particularly strong gains on replicate-rich plant datasets. Ablation studies further demonstrate the importance of local codon-aware feature extraction, replicate-aware conditioning, and gated readout. Beyond predictive performance, the proposed framework establishes a foundation for translation-aware molecular digital twins capable of modeling ribosome occupancy landscapes, perturbation-induced translational responses, and condition-specific regulatory programs at codon resolution. 1",
+      "authors": [
+        "Kuo, A.",
+        "Yue, Z.",
+        "Ku, W.-S.",
+        "Chen, H."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-08-07T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.08.03.742524v1.full.pdf",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "explicitly targets perturbation response and molecular-state simulation for biological digital twins",
+      "llm_evidence_cn": "明确面向扰动响应与分子状态模拟，服务于生物数字孪生",
+      "llm_evidence": "明确面向扰动响应与分子状态模拟，服务于生物数字孪生",
+      "canonical_evidence": "明确面向扰动响应与分子状态模拟，服务于生物数字孪生",
+      "llm_tldr_en": "RiboRep predicts codon-resolved ribosome density with replicate-aware cross-modal transformers, enabling fine-grained translation modeling for biological digital twins and perturbation response simulation.",
+      "llm_tldr_cn": "针对现有计算翻译组方法丢失细粒度信号的问题，RiboRep提出复制感知的跨模态Transformer，在密码子分辨率上预测核糖体密度。该模型能刻画上下文依赖的细胞响应，支持生物数字孪生中分子状态动力学的模拟，以表征细胞适应、扰动响应和表型进展。结果显示了高分辨率翻译组建模在虚拟细胞与扰动预测中的价值。",
+      "llm_tldr": "针对现有计算翻译组方法丢失细粒度信号的问题，RiboRep提出复制感知的跨模态Transformer，在密码子分辨率上预测核糖体密度。该模型能刻画上下文依赖的细胞响应，支持生物数字孪生中分子状态动力学的模拟，以表征细胞适应、扰动响应和表型进展。结果显示了高分辨率翻译组建模在虚拟细胞与扰动预测中的价值。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}

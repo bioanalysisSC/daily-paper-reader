@@ -1,0 +1,1528 @@
+Title: A confound-diagnostic toolkit for in silico perturbation with single-cell foundation models
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.08.04.732812v1.full.pdf
+
+Number of Pages: 41
+
+Markdown Content:
+A confound -diagnostic toolkit for in silico perturbation with single -cell foundation models 1
+
+Ru Qiu 1,* , Max Mingqian Zhao 2, 3 
+
+2
+
+> 1
+
+State Key Laboratory of Ophthalmology, Zhongshan Ophthalmic Center, Sun Yat -sen 3
+
+University, Guangdong Provincial Key Laboratory of Ophthalmology and Visual Science, 4
+
+Guangzhou 510060, Guangdong, China 5
+
+> 2
+
+Department of Electrical and Computer Engineering, The University of Texas at San Antonio, 6
+
+San Antonio, TX 78249, USA 7
+
+> 3
+
+Health Careers High School, Northside Independent School District, San Antonio, TX 78229, 8
+
+USA 9
+
+> *
+
+Correspondence: Ru Qiu (qiur3@alumni.sysu.edu.cn); ORCID 0009 -0007 -0021 -7241 10 
+
+Keywords: single -cell foundation models; in silico perturbation; Geneformer; Perturb -seq; 11 
+
+confound diagnostics; tokenization coverage 12 
+
+13 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Summary 14 
+
+Deleting a gene token from a cell’s input sequence offers a convenient native strategy for in 15 
+
+silico perturbation, but the resulting embedding delta may not represent a biological knockout 16 
+
+response. Apparent effects can instead reflect gene identity, universal responsiveness, limited 17 
+
+tokenization coverage, library -size contamination, or circular state scoring. Here, we present a 18 
+
+confound -diagnostic framework combining held -out increment testing, responsiveness 19 
+
+adjustment, coverage gating, library -size diagnostics, and de -circularized state -shift analysis, 20 
+
+together with a numerically matched reimplementation of frozen  Geneformer’s perturbation 21 
+
+engine. Across Frangieh and Replogle datasets and linear and nonlinear readouts, the native 22 
+
+embedding delta provided no reproducible held -out improvement beyond gene identity. Signal -23 
+
+injection calibration showed that the test  detected injected  residual signal, whereas native 24 
+
+increments remained below its detection floor. Matched controls traced apparent positives to 25 
+
+raw -count  library -size  structure, broad responsiveness, and self -referential scoring, while 26 
+
+coverage constrained perturbation applicability and estimate stability without establishing 27 
+
+biological specificity. This model -adaptable framework helps determine when foundation -model 28 
+
+perturbation readouts warrant biological interpretation. 29 
+
+30 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Motivation 31 
+
+Foundation -model in silico perturbation could  predict perturbation effects  when matched 32 
+
+experimental data are unavailable. However, in zero -shot settings, embedding -derived responses 33 
+
+may reflect gene identity, universal responsiveness, tokenization limits, library -size artifacts, or 34 
+
+circular state scoring rather than biological knockout effects. We therefore developed a reusable 35 
+
+confound -diagnostic framework that applies matched controls to test whether native perturbation 36 
+
+readouts contain information beyond these confounds and warrant biological interpretation. 37 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Introduction 38 
+
+Single -cell foundation models, including Geneformer 1, scGPT 2 and scFoundation 3, have created 39 
+
+new opportunities for learning transferable representations of genes and cells from large -scale 40 
+
+transcriptomic data. One proposed application is zero -shot in silico perturbation. In tokenized 41 
+
+models such as Geneformer , this can be implemented by removing a target -gene token from a 42 
+
+cell’s input sequence and interpreting the resulting change in model embedding, referred to here 43 
+
+as the embedding delta, as a predicted knockout response. This native token -deletion strategy is 44 
+
+attractive because it could, in principle, estimate perturbation effects when matched experimental 45 
+
+perturbation data are unavailable. It also differs from network -inference and supervised 46 
+
+perturbation -response methods, such as CellOracle 4, scGen 5, and GEARS 6, which typically 47 
+
+require additional regulatory information, chromatin data, or perturbation training datasets. 48 
+
+Despite this promise, the biological validity of native foundation -model perturbation readouts 49 
+
+remains unresolved. Recent benchmarking studies have reported limited zero -shot  utility on 50 
+
+general single -cell tasks 7 and on perturbation -specific evaluations 8,9 , modest or inconsistent gains 51 
+
+over simple baselines 10,11 , and substantial sensitivity to metric choice, normalization strategy, 52 
+
+baseline definition, and target readout 12 . These findings indicate that apparent predictive 53 
+
+performance alone is insufficient to establish perturbation -specific biological signal. Rigorous 54 
+
+evaluation therefore requires determining whether an embedding -derived perturbation readout 55 
+
+provides information beyond confounding structure in the model representation, input data, and 56 
+
+evaluation design. 57 
+
+Several confounding factors can inflate apparent perturbation readouts, making them appear 58 
+
+informative without necessarily reflecting perturbation -specific biological signal 13 . Gene identity 59 
+
+and baseline expression structure can make affected genes predictable even in the absence of a 60 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+perturbation -induced embedding delta. Highly expressed or broadly connected genes can appear 61 
+
+responsive across many perturbations, producing non -specific saliency patterns. Differential -62 
+
+expression targets derived from raw counts can be distorted by library -size variation. In 63 
+
+tokenized models, a nominal knockout may have limited meaning when the target gene is absent 64 
+
+from most truncated input sequences. Cell -state -shift analyses can also become circular when a 65 
+
+deletion is evaluated against a state axis partly defined by that same deletion. These failure 66 
+
+modes are mechanistically distinct and require matched diagnostic controls. 67 
+
+The central methodological need is therefore a framework that evaluates whether native 68 
+
+foundation -model perturbation readouts remain informative after explicit control for known 69 
+
+confounds. Such a framework should test incremental value beyond gene identity, account for 70 
+
+universal responsiveness in affected -gene saliency, verify that the perturbation is applied in a 71 
+
+sufficient fraction of cells, protect differential -expression targets from library -size artifacts, and 72 
+
+avoid self -referential scoring in cell -state projections.  A confound -aware workflow would 73 
+
+provide practical safeguards for interpreting current token -deletion readouts and for evaluating 74 
+
+future foundation -model perturbation methods. 75 
+
+Here, we present a reusable confound -diagnostic workflow for evaluating native foundation -76 
+
+model in silico perturbation, using frozen Geneformer  token deletion as a case study. The 77 
+
+workflow integrates held -out increment testing, universal -responsiveness adjustment, 78 
+
+tokenization -coverage gating, library -size diagnostics, and de -circularized state -shift analysis. A 79 
+
+numerically matched reimplementation of Geneformer’s  native perturbation response enables 80 
+
+controlled coverage -to -estimate analyses. Across the Frangieh and Replogle datasets and across 81 
+
+linear and nonlinear readout models, native embedding deltas showed no reproducible 82 
+
+improvement beyond gene identity. Signal -injection calibration confirmed that the increment test 83 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+was sensitive to  injected  residual signal,  and  matched controls attributed apparent positive 84 
+
+findings to library -size structure,  universal  responsiveness, and self -referential scoring. 85 
+
+Tokenization coverage constrained perturbation applicability and estimate stability but did not 86 
+
+establish biological specificity. Although the empirical analysis is limited to frozen Geneformer, 87 
+
+the framework is broadly applicable for determining when foundation -model perturbation 88 
+
+readouts warrant biological interpretation. 89 
+
+90 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Results 91 
+
+A numerically matched reimplementation enables confound -controlled testing of 92 
+
+embedding -delta signal 93 
+
+We first established a reproducible reimplementation of Geneformer’s native in silico knockout 94 
+
+response. In this token -deletion procedure, the target -gene token is removed from each cell’s 95 
+
+input sequence, and the resulting change in gene or cell embeddings is summarized as the native 96 
+
+perturbation response. We reimplemented the per -cell gene cosine -similarity response to target -97 
+
+gene deletion, referred to as path -D, and validated it against the official Geneformer 98 
+
+InSilicoPerturber  output. Path -D reproduced the official output to numerical precision, with 99 
+
+Pearson’s r>0.999999 and a maximum absolute error of 3×10 −7.100 
+
+This matched reimplementation provided the computational basis for the confound -diagnostic 101 
+
+workflow. Cached per -cell path -D responses enabled controlled resampling while holding the 102 
+
+model checkpoint, tokenization, target gene, and perturbation operator fixed. The workflow 103 
+
+incorporated held -out increment testing against a gene -identity baseline, universal -104 
+
+responsiveness adjustment, tokenization -coverage gating, library -size diagnostics, and de -105 
+
+circularized cell -state -shift analysis ( Figure 1 ; Table 1 ). 106 
+
+We first asked whether the native embedding delta improved prediction of experimentally 107 
+
+measured perturbation effects beyond gene identity. In the Frangieh Perturb -CITE -seq dataset, 108 
+
+we evaluated CCND1 knockout using a DESeq2 -derived pseudobulk differential -expression 109 
+
+target. The unperturbed Geneformer embedding of each evaluated gene served as the baseline, 110 
+
+and the matched baseline -plus -delta model additionally included the 768 -dimensional knockout 111 
+
+embedding delta. 112 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+The gene -identity baseline achieved a held -out Pearson correlation of r=0.487. Adding the 113 
+
+embedding delta yielded an increment of Δr=−0.004. Similar near -zero increments were 114 
+
+observed for ridge regression, a regularization -swept multilayer perceptron, and gradient -boosted 115 
+
+trees (Δr=−0.004, −0.024, and +0.010, respectively;  Figure 2A ). Thus, across linear and 116 
+
+nonlinear readout models, the native embedding delta did not provide a reproducible held -out 117 
+
+improvement beyond the matched gene -identity baseline. 118 
+
+Embedding -delta increments remain near zero across datasets and perturbation programs 119 
+
+We next examined whether this result generalized to a more heterogeneous perturbation dataset. 120 
+
+Among perturbations represented by at least 50 cells, the mean pairwise perturbation -profile 121 
+
+correlation was +0.06 in the Replogle K562 CRISPRi  dataset, compared with +0.40 in the 122 
+
+Frangieh dataset, indicating greater diversity among Replogle transcriptional responses. Split -123 
+
+half reliability for the selected Replogle perturbations ranged from 0.88 to 0.99, confirming that 124 
+
+these perturbation programs were reproducible. 125 
+
+Despite this heterogeneity, embedding -delta increments on DESeq2 -derived targets remained 126 
+
+near zero across perturbations representing distinct biological processes ( Figure 2B ). The 127 
+
+increments were −0.016 for HSPA9, −0.004 for SUPT6H, −0.014 for CSE1L, and −0.008 for 128 
+
+DHX15. Each perturbation was supported by 35 –46 pseudobulk replicates, compared with 48 129 
+
+controls, and showed strong agreement between DESeq2 and size -factor -normalized fold -change 130 
+
+directions. 131 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+GATA1 was included as an additional, biologically informative case. Although GATA1 132 
+
+knockdown produced the strongest transcriptional program among the evaluated perturbations, 133 
+
+with 766 differentially expressed genes, its embedding -delta increment was also near zero 134 
+
+(Δr=−0.004). Because only three pseudobulk replicates were available and the sign -check value 135 
+
+was +0.66, GATA1 was considered supportive rather than primary evidence. 136 
+
+These findings argue against dataset homogeneity or weak experimental perturbation effects as 137 
+
+explanations for the near -zero increments. The Replogle dataset contained diverse and 138 
+
+reproducible perturbation -specific transcriptional programs, yet the native Geneformer 139 
+
+embedding delta did not recover detectable information beyond gene identity. 140 
+
+Finally, we calibrated the sensitivity of the held -out increment test by introducing features with 141 
+
+known residual signal beyond the gene -identity baseline. A detectable increment emerged when 142 
+
+the injected feature had a per -gene correlation of approximately c ∗=0.20 with the residual target. 143 
+
+By contrast, the native delta increment remained within the prespecified near -zero band 144 
+
+(Δr=−0.004;  Figure 2C ). Under this calibration, any perturbation -specific information carried by 145 
+
+the native embedding delta was therefore below the detection threshold of the analysis. 146 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+As a complementary positive control, we confirmed that the increment test recovers genuine 147 
+
+perturbation signal, not only synthetic injections. A real, held -out measurement of the CCND1 148 
+
+effect —computed on a disjoint half of the CCND1 cells and passed through the identical 149 
+
+machinery —produced a clear positive increment (Δr  = +0.092 ± 0.016), whereas the native 150 
+
+embedding delta and a random -noise feature both remained within the near -zero band (Δr = 151 
+
+−0.005 and −0.000, respectively;  Figure 2D ). Thus the native delta behaves like the noise 152 
+
+control rather than like a real perturbation feature, indicating that the near -zero native increment 153 
+
+reflects an absence of signal rather than an insensitive test. 154 
+
+Matched controls identify confounds underlying apparently informative readouts 155 
+
+We next examined exploratory readouts that initially appeared informative but were not intended 156 
+
+as primary evidence of perturbation -specific signal. These analyses served as diagnostic stress 157 
+
+tests to determine whether the observed signals persisted after matched confound controls. 158 
+
+Directional and scalar readouts were sensitive to score construction and target definition. An 159 
+
+oracle -direction diagnostic yielded a correlation of r=+0.39, but the scoring direction was 160 
+
+defined using the target itself; reversing that direction reversed the sign of the correlation by 161 
+
+construction. A simple readout based on response magnitude and projection achieved r=+0.27 162 
+
+against a raw -count log2 fold -change target, but only r=+0.01 against the primary DESeq2 -163 
+
+derived target. Thus, the apparent performance was largely dependent on raw -count structure 164 
+
+rather than a robust perturbation -specific signal. 165 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+A 768 -dimensional embedding -delta probe similarly achieved r=+0.69 on the exploratory target. 166 
+
+However, the unperturbed gene -embedding baseline performed comparably, and adding the 167 
+
+embedding delta produced no detectable held -out improvement over this matched baseline 168 
+
+(Figure 3A ). The apparent predictability was therefore attributable primarily to gene identity and 169 
+
+baseline expression structure rather than to information introduced by token deletion. 170 
+
+Affected -gene saliency also reflected broad responsiveness. The initial saliency readout 171 
+
+correlated with the CCND1 effect at r=−0.34, but the partial correlation after adjustment for 172 
+
+universal responsiveness was only r=+0.02. This attenuation indicates that the saliency pattern 173 
+
+largely captured genes that respond across many perturbations rather than genes specifically 174 
+
+affected by CCND1 knockout. 175 
+
+Together, these matched controls substantially attenuated the apparently informative exploratory 176 
+
+readouts. Directional performance depended on target -defined orientation, raw -count 177 
+
+performance disappeared after normalized differential -expression analysis, high -dimensional 178 
+
+probes did not improve over gene identity, and saliency was removed by adjustment for 179 
+
+universal responsiveness ( Figure 3B ). 180 
+
+Universal responsiveness and library -size structure drive exploratory signal inflation 181 
+
+Across 232 Frangieh perturbations, each gene’s universal mean absolute response was strongly 182 
+
+associated with the absolute CCND1 effect (Spearman’s ρ=+0.868). In contrast, embedding -shift 183 
+
+magnitude was inversely associated with biological effect magnitude (ρ=−0.45;  Figure 3C ). 184 
+
+These findings indicate that apparent affected -gene saliency was dominated by broadly 185 
+
+responsive genes and that larger embedding shifts did not preferentially correspond to larger 186 
+
+biological effects. 187 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Raw -count fold -change targets also contained substantial library -size structure. The CCND1 –188 
+
+TIMP1 correlation shifted from r=−0.600 for raw -count log2 fold change to r=+0.060 after size -189 
+
+factor normalization, while the control -split association approached zero. Library -size structure 190 
+
+also inflated apparent predictability: across 13,054 genes, the gene -identity baseline achieved a 191 
+
+held -out correlation of r=0.693 on the raw -count target, compared with r=0.487 on the DESeq2 -192 
+
+derived target ( Figure 3D ). 193 
+
+These results show that raw -count fold -change targets can inflate apparent model performance 194 
+
+and are unsuitable as primary reference targets in this setting. Perturbation effects should instead 195 
+
+be estimated using size -factor -normalized pseudobulk differential -expression analyses with 196 
+
+appropriate control groups. 197 
+
+De -circularization does not support pathway -specific cell -state movement 198 
+
+We also evaluated whether native Geneformer  knockout shifted cell embeddings toward 199 
+
+experimentally observed perturbation states. In the Replogle K562 dataset, in silico GATA1 200 
+
+knockout initially appeared to move cells toward the experimental GATA1 -knockdown state, 201 
+
+with z≈+4.6 relative to a small random -gene null (n=10). 202 
+
+To reduce self -referential scoring, we constructed a cross -gene projection matrix in which the in 203 
+
+silico  knockout of gene A was projected onto the experimental perturbation -state axis of a 204 
+
+different gene B. This design separated the deleted gene from the axis used for evaluation. 205 
+
+Deterministic comparisons among experimentally perturbed genes served as the primary analysis, 206 
+
+while the seed -fixed random -gene null was used as a sensitivity check. 207 
+
+After de -circularization, the projection matrix showed no  evidence of the expected  pathway -208 
+
+specific structure. If native knockout induced pathway -directed state movement, same -pathway 209 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+off -diagonal projections would be expected to exceed cross -pathway projections. Instead, cross -210 
+
+pathway projections were larger than same -pathway projections (16.7× 10 −3 versus 3.7× 10 −3), 211 
+
+opposite to the expected pattern. The same -pathway signal was also small and only weakly 212 
+
+separated from the random -gene null (n=6). These findings suggest that the initial GATA1 state 213 
+
+shift was more consistent with self -referential scoring than with pathway -specific state 214 
+
+movement. Gene groups, projection axes, and null genes are listed in  Supplementary Table S1 .215 
+
+This cell -level analysis is distinct from the per -gene differential -expression increment test, in 216 
+
+which GATA1 likewise showed no detectable embedding -delta increment. 217 
+
+Tokenization coverage constrains perturbation applicability and estimate stability 218 
+
+We next examined tokenization coverage, defined as the fraction of cells in which the target -219 
+
+gene token was present in the top -4096 input sequence. When the target token was absent, no 220 
+
+deletion occurred and the cell did not contribute to the native knockout estimate. Across 217 in -221 
+
+vocabulary Frangieh targets, median coverage was 47%. Several biologically relevant targets had 222 
+
+substantially lower coverage, including JAK2 at 2.3% and CD274 at 11% ( Figure 4A ), 223 
+
+indicating that native token deletion was applicable to only a small fraction of cells for some 224 
+
+perturbations. 225 
+
+The numerically matched path -D implementation enabled direct evaluation of coverage effects. 226 
+
+We repeatedly subsampled token -containing cells while holding the model checkpoint, 227 
+
+tokenization, target gene, and perturbation operator fixed, thereby isolating the effect of the 228 
+
+number of contributing cells. 229 
+
+For the exploratory raw -count CCND1 target, the recovered knockout estimate changed 230 
+
+systematically with the number of contributing cells and converged as this number increased 231 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+(Figure 4B ). However, convergence produced a stable estimate of the same exploratory readout 232 
+
+and did not establish perturbation specificity. An ablation comparing fixed -direction and fully 233 
+
+resampled estimates further indicated that the coverage dependence arose primarily from the 234 
+
+directional component of the native response. 235 
+
+These results identify tokenization coverage as both an applicability and an estimate -stability 236 
+
+constraint. Higher coverage allows native deletion to be applied in more cells and improves 237 
+
+estimate stability, but it does not establish biological specificity. Even high -coverage readouts 238 
+
+therefore require controls for gene identity, universal responsiveness, library -size structure, and 239 
+
+circular state scoring. 240 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Discussion 241 
+
+This study presents a reusable confound -diagnostic workflow for evaluating native foundation -242 
+
+model in silico perturbation readouts. Using frozen Geneformer  token deletion as a case study, 243 
+
+we found that the native embedding delta provided no reproducible held -out improvement 244 
+
+beyond a gene -identity baseline across two perturbation datasets and linear and nonlinear readout 245 
+
+models. Signal -injection calibration confirmed that the increment test could recover added 246 
+
+residual signal, whereas the native delta remained below the detection threshold of the analysis. 247 
+
+Matched diagnostics further showed that apparently informative readouts could arise from gene 248 
+
+identity, universal responsiveness, library -size structure, and self -referential state scoring. 249 
+
+Tokenization coverage imposed an additional constraint on perturbation applicability and 250 
+
+estimate stability but did not establish biological specificity. 251 
+
+The primary evidence came from held -out increment testing. Adding the 768 -dimensional 252 
+
+knockout embedding delta to unperturbed gene embeddings did not improve prediction of 253 
+
+experimentally measured perturbation effects. This result was consistent across ridge regression, 254 
+
+multilayer perceptrons, and gradient -boosted trees and across the Frangieh Perturb -CITE -seq and 255 
+
+Replogle K562 CRISPRi  datasets. Importantly, the Replogle dataset contained heterogeneous 256 
+
+and reproducible perturbation -specific transcriptional programs, arguing against weak or 257 
+
+homogeneous benchmark signal as the explanation for the near -zero increments. Moreover, the 258 
+
+signal -injection analysis recovered detectable increments once the injected feature carried 259 
+
+sufficient residual information, whereas the native delta remained within the near -zero band. 260 
+
+Thus, under the tested design, any perturbation -specific information carried by the native 261 
+
+embedding delta was below the detection threshold rather than obscured by an insensitive 262 
+
+evaluation. 263 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+The exploratory analyses identified several distinct mechanisms of apparent signal inflation. 264 
+
+Unperturbed gene embeddings supported substantial predictability without information from the 265 
+
+knockout operation, indicating that gene identity and baseline expression structure can be 266 
+
+mistaken for perturbation -specific signal. Affected -gene saliency largely reflected genes that 267 
+
+responded broadly across many perturbations rather than specifically to CCND1 knockout. Raw -268 
+
+count fold -change targets contained library -size structure that inflated apparent predictability and 269 
+
+cross -perturbation correlations. Cell -state -shift readouts became misleading when the deleted 270 
+
+gene also contributed to the experimental axis used for scoring; after cross -gene de -271 
+
+circularization, the expected pathway -specific structure was not observed. These findings 272 
+
+emphasize that apparently strong correlations are insufficient unless the corresponding 273 
+
+alternative explanations are explicitly controlled. 274 
+
+Tokenization coverage represents a related but conceptually distinct limitation. Native deletion 275 
+
+can occur only in cells whose truncated input sequence contains the target token. Across 276 
+
+Frangieh targets, coverage varied widely, and several biologically relevant genes were 277 
+
+represented in only a small fraction of cells. Controlled subsampling showed that the recovered 278 
+
+estimate changed systematically with the number of contributing cells and converged as that 279 
+
+number increased. However, convergence stabilized the evaluated readout without demonstrating 280 
+
+that it was biologically specific. Coverage should therefore be treated as an applicability and 281 
+
+stability criterion rather than as evidence supporting biological validity. 282 
+
+The contribution of this study is not an additional aggregate benchmark of perturbation 283 
+
+prediction, but a framework for determining why a native perturbation readout appears 284 
+
+informative and whether that signal persists after matched controls. The numerically matched 285 
+
+path -D implementation enables controlled manipulation of the number of contributing cells 286 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+while holding the model, tokenization, target gene, and perturbation operator fixed. Held -out 287 
+
+increment testing directly assesses whether the embedding delta adds information beyond gene 288 
+
+identity, whereas universal -responsiveness adjustment, library -size diagnostics, and de -289 
+
+circularized projections address complementary sources of signal inflation. Although 290 
+
+tokenization coverage is specific to token -based models, other architectures will require 291 
+
+analogous applicability checks to verify that the perturbation operator meaningfully alters the 292 
+
+relevant model input or representation. 293 
+
+The empirical scope of the study remains intentionally limited. We evaluated frozen Geneformer 294 
+
+native token deletion and did not test fine -tuned perturbation models, decoder -based 295 
+
+architectures, inference -time steering, or alternative perturbation operators. The findings 296 
+
+therefore should not be generalized to all single -cell foundation models or perturbation -modeling 297 
+
+strategies. The cell -state analysis used K562 perturbation axes rather than an independent 298 
+
+differentiation or functional -state reference, and the GATA1 analysis had limited pseudobulk 299 
+
+replication. In addition, the coverage -to -estimate analysis assessed estimate stability using an 300 
+
+exploratory readout and did not establish biological accuracy. These limitations define the scope 301 
+
+of the conclusions but do not change the central result: under the tested conditions, the native 302 
+
+Geneformer embedding delta provided no detectable perturbation -specific information beyond 303 
+
+gene identity. 304 
+
+Native token deletion remains computationally simple and potentially useful as a hypothesis -305 
+
+generating operation, but deletion of an input token should not be assumed to reproduce 306 
+
+biological loss of function. Future methods may improve perturbation modeling through 307 
+
+supervised fine -tuning, decoder -based response prediction, inference -time steering 14 , rank -aware 308 
+
+evaluation 15 , or perturbation operators designed to better approximate biological intervention. 309 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Regardless of architecture, foundation -model perturbation readouts should be interpreted only 310 
+
+after controlling for gene identity, broad responsiveness, library -size effects, perturbation 311 
+
+applicability, and circular evaluation. More broadly, the framework presented here provides 312 
+
+practical safeguards for developing, benchmarking, and interpreting foundation -model in silico 313 
+
+perturbation methods. 314 
+
+315 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Author contributions 316 
+
+R.Q. conceived and designed the study, developed the methodology and software, performed the 317 
+
+analyses, interpreted the results, and wrote the manuscript. M.M.Z. contributed to data analysis, 318 
+
+code review, result interpretation, and manuscript editing. All authors reviewed and approved the 319 
+
+final manuscript. 320 
+
+Declaration of interests 321 
+
+The authors declare no competing interests. 322 
+
+Supplemental information 323 
+
+Supplemental information includes Supplementary Table S1, which lists the de -circularization 324 
+
+gene groups, projection axes, and random -null genes, and Supplementary Table S2, which 325 
+
+provides the reported -numbers provenance. 326 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+References 327 
+
+1.  Theodoris CV, Xiao L, Chopra A, et al. Transfer learning enables predictions in 328 
+
+network biology.  Nature . 2023;618(7965):616 -624. doi:10.1038/s41586 -023 -06139 -9329 
+
+2.  Cui H, Wang C, Maan H, et al. scGPT: Toward building a foundation model for single -330 
+
+cell multi -omics using generative AI.  Nat Methods . 2024;21(8):1470 -1480. 331 
+
+doi:10.1038/s41592 -024 -02201 -0332 
+
+3.  Hao M, Gong J, Zeng X, et al. Large -scale foundation model on single -cell 333 
+
+transcriptomics.  Nat Methods . 2024;21(8):1481 -1491. doi:10.1038/s41592 -024 -02305 -7334 
+
+4.  Kamimoto K, Stringa B, Hoffmann CM, Jindal K, Solnica -Krezel L, Morris SA. 335 
+
+Dissecting cell identity via network inference and in silico gene perturbation.  Nature .336 
+
+2023;614(7949):742 -751. doi:10.1038/s41586 -022 -05688 -9337 
+
+5.  Lotfollahi M, Wolf FA, Theis FJ. scGen predicts single -cell perturbation responses. 338 
+
+Nat Methods . 2019;16(8):715 -721. doi:10.1038/s41592 -019 -0494 -8339 
+
+6.  Roohani Y, Huang K, Leskovec J. Predicting transcriptional outcomes of novel 340 
+
+multigene perturbations with GEARS.  Nat Biotechnol . 2024;42(6):927 -935. 341 
+
+doi:10.1038/s41587 -023 -01905 -6342 
+
+7.  Kedzierska KZ, Crawford L, Amini AP, Lu AX. Zero -shot evaluation reveals 343 
+
+limitations of single -cell foundation models.  Genome Biol . 2025;26(1):101. 344 
+
+doi:10.1186/s13059 -025 -03574 -x345 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+8.  Boylan J, Solovyeva E, Bouiller T, et al. Single cell foundation models evaluation 346 
+
+(scFME) for in -silico perturbation.  bioRxiv . Preprint posted online September 24, 347 
+
+2025:2025.09.22.677811. doi:10.1101/2025.09.22.677811 348 
+
+9.  Liu X, Boylan J, Bouiller T, et al. Evaluating foundation models for in -silico 349 
+
+perturbation.  bioRxiv . Preprint posted online May 15, 2025:2025.05.11.653338. 350 
+
+doi:10.1101/2025.05.11.653338 351 
+
+10.  Wenteler A, Occhetta M, Branson N, et al. PertEval -scFM: Benchmarking single -cell 352 
+
+foundation models for perturbation effect prediction.  bioRxiv . Preprint posted online May 1, 353 
+
+2025:2024.10.02.616248. doi:10.1101/2024.10.02.616248 354 
+
+11.  Ahlmann -Eltze C, Huber W, Anders S. Deep -learning -based gene perturbation effect 355 
+
+prediction does not yet outperform simple linear baselines.  Nat Methods . 2025;22(8):1657 -356 
+
+1661. doi:10.1038/s41592 -025 -02772 -6357 
+
+12.  Heidari M, Karimpour M, Srivatsa S, Montazeri H. Evaluating single -cell perturbation 358 
+
+response models is far from straightforward.  bioRxiv . Preprint posted online February 17, 359 
+
+2026:2026.02.14.705879. doi:10.64898/2026.02.14.705879 360 
+
+13.  Kendiukhov I. Adversarial validation of in silico perturbation profiles for 361 
+
+intelligence -associated genes in human prefrontal cortex.  Comput Biol Chem . 2026;124(Pt 362 
+
+1):109079. doi:10.1016/j.compbiolchem.2026.109079 363 
+
+14.  Demir A, Anderson EW, Jenkins JL, Mukherjee S. CellxPert: Inference -time MCMC 364 
+
+steering of a multi -omics single -cell foundation model for in -silico perturbation.  arXiv .365 
+
+Preprint posted online April 30, 2026:arXiv:2605.00930. doi:10.48550/arXiv.2605.00930 366 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+15.  Wu Y, Wershof E, Schmon S, et al. PerturBench: Benchmarking machine learning 367 
+
+models for cellular perturbation analysis.  Advances in Neural Information Processing 368 
+
+Systems . 2026;38. Accessed July 3, 2026. 369 
+
+https://proceedings.neurips.cc/paper_files/paper/2025/hash/8aee537279a66ced96319d 370 
+
+fca3c00002 -Abstract -Datasets_and_Benchmarks_Track.html 371 
+
+16.  Peidli S, Green TD, Shen C, et al. scPerturb: Harmonized single -cell perturbation data. 372 
+
+Nat Methods . 2024;21(3):531 -540. doi:10.1038/s41592 -023 -02144 -y373 
+
+17.  Frangieh CJ, Melms JC, Thakore PI, et al. Multimodal pooled perturb -CITE -seq 374 
+
+screens in patient models define mechanisms of cancer immune evasion.  Nat Genet .375 
+
+2021;53(3):332 -341. doi:10.1038/s41588 -021 -00779 -1376 
+
+18.  Replogle JM, Saunders RA, Pogson AN, et al. Mapping information -rich genotype -377 
+
+phenotype landscapes with genome -scale perturb -seq.  Cell . 2022;185(14):2559 -2575.e28. 378 
+
+doi:10.1016/j.cell.2022.05.013 379 
+
+19.  Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for 380 
+
+RNA -seq data with DESeq2.  Genome Biol . 2014;15(12):550. doi:10.1186/s13059 -014 -381 
+
+0550 -8382 
+
+20.  Muzellec B, Teleńczuk M, Cabeli V, Andreux M. PyDESeq2: A python package for bulk 383 
+
+RNA -seq differential expression analysis.  Bioinformatics . 2023;39(9):btad547. 384 
+
+doi:10.1093/bioinformatics/btad547 385 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+21.  Robinson MD, McCarthy DJ, Smyth GK. edgeR: A bioconductor package for 386 
+
+differential expression analysis of digital gene expression data.  Bioinformatics .387 
+
+2010;26(1):139 -140. doi:10.1093/bioinformatics/btp616 388 
+
+22.  Squair JW, Gautier M, Kathe C, et al. Confronting false discoveries in single -cell 389 
+
+differential expression.  Nat Commun . 2021;12(1):5692. doi:10.1038/s41467 -021 -25960 -2390 
+
+23.  Zhu A, Ibrahim JG, Love MI. Heavy -tailed prior distributions for sequence count data: 391 
+
+Removing the noise and preserving large differences.  Bioinformatics . 2019;35(12):2084 -392 
+
+2092. doi:10.1093/bioinformatics/bty895 393 
+
+394 
+
+395 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+STAR Methods 396 
+
+Resource availability 397 
+
+Lead contact 398 
+
+Further information and requests for resources should be directed to the lead contact, Ru Qiu. 399 
+
+Materials availability 400 
+
+This study did not generate new biological materials. 401 
+
+Data and code availability 402 
+
+All datasets analyzed in this study are publicly available as preprocessed scPerturb h5ad files 16 .403 
+
+The analysis code is publicly available as isp -confound -toolkit 404 
+
+(https://github.com/willow0077/isp -confound -toolkit) and archived on Zenodo 405 
+
+(https://doi.org/10.5281/zenodo.20743523), organized under  scripts/  — pipeline/  (path -D406 
+
+caching, resampling, state -shift, de -circularization matrix) and  diagnostics/  (token coverage, 407 
+
+confound checks, DESeq2 ground truth, increment tests, heterogeneity pre -check, figure 408 
+
+generation). The repository includes a reported -numbers provenance table, panel -level figure -409 
+
+reproduction notes, a data/local -path manifest, and supplementary audit notes. The cached path -410 
+
+D per -cell response files, DESeq2 outputs, figure inputs, and audit tables enabling pure -NumPy 411 
+
+reproduction of the main figures and increment tests are available on Zenodo: 412 
+
+https://doi.org/10.5281/zenodo.20729460. 413 
+
+Method details 414 
+
+Datasets and preprocessing 415 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+The Frangieh dataset 17  contains patient -derived melanoma cells and autologous tumor -416 
+
+infiltrating lymphocytes profiled by Perturb -CITE -seq after CRISPR -Cas9 knockout. The 417 
+
+scPerturb -harmonized h5ad file used in this study includes cells from control, IFN -γ stimulation, 418 
+
+and co -culture conditions, with perturbed genes and a non -targeting control. 419 
+
+The Replogle dataset 18  contains K562 CRISPR interference perturbations from essential -scale 420 
+
+and genome -scale Perturb -seq experiments. The scPerturb -harmonized subset used in this study 421 
+
+includes perturbed genes and a non -targeting control. 422 
+
+Raw counts from both datasets were used only as input for size -factor -normalized pseudobulk 423 
+
+differential expression or as an explicit diagnostic for library -size contamination. Raw -count 424 
+
+log2 fold change was not used as the primary experimental reference target. 425 
+
+Different analyses used purpose -defined subsets according to the relevant inclusion criteria. For 426 
+
+the Frangieh CCND1 worked example, analysis subsets are listed in  Table  2. Replogle analyses 427 
+
+used analogous per -target subsets. Perturbation subsets were defined separately for universal -428 
+
+responsiveness analysis, heterogeneity analysis, and tokenization -coverage analysis rather than 429 
+
+as a single nested filtering scheme. 430 
+
+Geneformer model and native in silico knockout 431 
+
+All analyses were performed using the frozen  Geneformer V2 -104M model without fine -tuning. 432 
+
+The model contains 12 transformer layers, a hidden dimension of 768, and a gene -token 433 
+
+vocabulary of approximately 20,271 tokens. The specific model checkpoint, Geneformer version, 434 
+
+and commit identifier are listed in the Key resources table. Unless otherwise specified, 435 
+
+embeddings were extracted from the second -to -last hidden layer (hidden_states[11]; emb_layer = 436 
+
+−1 in Geneformer's convention). 437 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Native in silico knockout was performed by deleting the target -gene token from each cell’s rank -438 
+
+ordered top -4096 token sequence. Wild -type and knockout forward passes were then compared 439 
+
+to obtain gene -level or cell -level embedding responses. Gene embeddings were extracted for 440 
+
+evaluated genes, whereas cell embeddings were represented by the classification token. Cells in 441 
+
+which the target -gene token was absent were not assigned a zero response, because no token 442 
+
+deletion occurred in those cells. These cells were excluded from the native knockout estimate. 443 
+
+Tokenization coverage 444 
+
+Tokenization coverage was defined as the fraction of sampled input cells in which the target -445 
+
+gene token was present in the top -4096 token sequence. The denominator was the total number 446 
+
+of sampled cells, and the numerator was the number of cells containing the target token. This 447 
+
+definition separates biological cell sampling from perturbation applicability in the tokenized 448 
+
+model input. Coverage values were recorded for each target and used to determine whether 449 
+
+native token deletion could be meaningfully applied in the sampled cell population. 450 
+
+Path -D implementation and validation 451 
+
+We implemented the per -cell gene cosine -similarity response to target -gene deletion directly 452 
+
+from the frozen Geneformer model and refer to this response as path -D. Validation was 453 
+
+performed by comparing path -D outputs with the official Geneformer InSilicoPerturber outputs 454 
+
+on the same input cells and target genes. Pearson correlation and maximum absolute error were 455 
+
+used as numerical validation metrics. The validation results are reported in the Results. 456 
+
+After validation, per -cell path -D responses were cached and used for downstream NumPy -based 457 
+
+resampling analyses. This implementation allowed repeated subsampling of contributing cells 458 
+
+without rerunning the transformer model. In the coverage -to -estimate analysis, the number of 459 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+contributing cells was varied while the model, per -cell tokenization, target gene, and perturbation 460 
+
+operator were held fixed. This design isolated the effect of the contributing -cell count from 461 
+
+differences among targets, model runs, or perturbation operators. 462 
+
+Experimental reference differential expression 463 
+
+Primary log2 fold -change targets were computed by pseudobulk aggregation followed by 464 
+
+DESeq2 19  with median -of -ratios size factors, implemented in PyDESeq2 20 ; edgeR 21  provides an 465 
+
+equivalent count -based alternative . The exact PyDESeq2 version, DESeq2 -compatible settings, 466 
+
+and preprocessing scripts are listed in the Key resources table and code repository. 467 
+
+Pseudobulk replicates were defined separately for each dataset to avoid cell -level 468 
+
+pseudoreplication 22 . In the Frangieh dataset, pseudobulk replicates were defined by single -guide 469 
+
+RNA. In the Replogle dataset, pseudobulk replicates were defined by gemgroup batch. The non -470 
+
+targeting or control population served as the reference group. Log fold changes were estimated 471 
+
+with apeglm shrinkage 23 . For each perturbation target, a sign check was performed to confirm 472 
+
+that the DESeq2 log fold change agreed in direction with the corresponding size -factor -473 
+
+normalized log2 fold change. 474 
+
+Raw -count log2 fold change was not used as a primary evaluation target. It was used only as an 475 
+
+exploratory diagnostic to assess library -size contamination. 476 
+
+Held -out increment testing 477 
+
+For each readout, we evaluated whether the native knockout embedding delta added predictive 478 
+
+information beyond a matched baseline feature set. The primary baseline was the wild -type gene 479 
+
+embedding, defined as the unperturbed embedding of each evaluated gene. This baseline 480 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+captures gene identity and baseline expression structure without using the native in silico 481 
+
+knockout response. 482 
+
+For each model class, the baseline feature set was compared with the same feature set plus the 483 
+
+768 -dimensional embedding delta. Both feature sets were evaluated using the same model class 484 
+
+and the same cross -validation splits. The evaluated readout models included ridge regression, a 485 
+
+regularization -swept multilayer perceptron, and gradient -boosted trees. All readout models used 486 
+
+a fixed random seed (0) and 5 -fold cross -validation (KFold, shuffle enabled, random_state  = 0), 487 
+
+with feature standardization fit on the training fold only to avoid leakage. Ridge regression used 488 
+
+RidgeCV over 13 logarithmically spaced L2 penalties (10⁻² to 10⁴). The multilayer perceptron 489 
+
+used a single hidden layer of 32 units with early stopping (max_iter = 400, n_iter_no_change = 490 
+
+10), and its L2 penalty (α) was swept over {1, 10, 30, 100}. Gradient -boosted trees used a 491 
+
+histogram -based gradient -boosting regressor (max_depth  = 3, L2 regularization = 1.0, early 492 
+
+stopping). Full configurations and seeds are provided in the deposited analysis code 493 
+
+(scripts/diagnostics/nonlinear_seal.py). 494 
+
+All reported correlations were held -out estimates from 5 -fold cross -validation. Out -of -fold 495 
+
+predictions were pooled across folds before Pearson’s r was computed. In -sample correlations 496 
+
+were not used as evidence of predictive performance. Delta increment was defined as the 497 
+
+difference between the held -out performance of the baseline -plus -delta model and that of the 498 
+
+corresponding matched baseline model. 499 
+
+Signal -injection calibration. To calibrate the sensitivity of the increment test, a synthetic feature 500 
+
+was constructed with a controlled per -gene correlation c to the residual of the DESeq2 target 501 
+
+after the gene -identity baseline, and its recovered increment was evaluated under the identical 502 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+cross -validation. The detection floor was the smallest c whose mean increment exceeded the |Δr| 503 
+
+≤ 0.03 band. 504 
+
+Real -signal positive control. To verify that the increment test can recover genuine perturbation 505 
+
+signal, the CCND1 cells were split into two disjoint halves (seeded). The per -gene log2 fold 506 
+
+change measured on the first half was used as an added feature, and the log2 fold change 507 
+
+measured on the second half served as the held -out target, ensuring non -circularity. This feature 508 
+
+was evaluated against the 768 -dimensional gene -identity baseline under the identical 5 -fold 509 
+
+cross -validation and Ridge configuration used for the native delta, alongside the native delta and 510 
+
+a random -noise feature as references. Increments were averaged over 20 random splits. 511 
+
+Universal -responsiveness analysis 512 
+
+Universal responsiveness was used to assess whether affected -gene saliency reflected 513 
+
+perturbation -specific response or broad responsiveness across perturbations. For each evaluated 514 
+
+gene, a universal -responsiveness score was computed from its mean absolute response across 515 
+
+perturbations satisfying the relevant inclusion criteria. Saliency analyses then evaluated whether 516 
+
+apparent  perturbation -specific signal remained after conditioning on or subtracting this universal -517 
+
+response component. 518 
+
+Library -size contamination analysis 519 
+
+Library -size contamination was evaluated by comparing raw -count log2 fold -change targets with 520 
+
+size -factor -normalized pseudobulk  differential -expression targets. Raw -count targets were used 521 
+
+only as diagnostics to test whether sequencing -depth structure could inflate apparent 522 
+
+predictability or create spurious cross -perturbation correlations. Primary perturbation -effect 523 
+
+analyses used size -factor -normalized DESeq2 targets rather than raw -count log2 fold changes. 524 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+De -circularized cell -state -shift analysis 525 
+
+Cell -state -shift analyses evaluated whether an in silico  knockout moved cells toward an 526 
+
+experimentally observed perturbation state in embedding space. To reduce self -referential 527 
+
+scoring, we constructed a de -circularization matrix in which the knockout of gene A was 528 
+
+projected onto the perturbation -state axis of a different gene B. This cross -gene projection design 529 
+
+separates the deleted gene from the state axis used for scoring. 530 
+
+Same -pathway off -diagonal projections were compared with cross -pathway projections to 531 
+
+evaluate pathway -specific state movement after separating the deleted gene from the scoring axis. 532 
+
+A seed -fixed random -gene null was used as a sensitivity check. Gene groups, projection axes, 533 
+
+and random -null genes are provided in  Supplementary Table S1 .534 
+
+Coverage -to -estimate analysis 535 
+
+Coverage -to -estimate analysis was performed using cached path -D responses. For a fixed target 536 
+
+gene and perturbation operator, contributing cells were repeatedly subsampled from the token -537 
+
+containing cell set. The recovered native -knockout estimate was recomputed after each 538 
+
+subsampling step. This procedure manipulated the number of contributing cells while holding the 539 
+
+model, per -cell tokenization, target gene, and perturbation operator fixed. Fixed -direction and 540 
+
+faithfully resampled estimates were compared to identify which component of the estimate was 541 
+
+most sensitive to coverage. 542 
+
+Diagnostic workflow 543 
+
+The confound -diagnostic workflow consisted of five matched controls applied across the 544 
+
+analyses. The gene -identity baseline tested whether the embedding delta provided held -out 545 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+incremental information beyond unperturbed gene features. The universal -responsiveness control 546 
+
+assessed whether affected -gene saliency reflected  perturbation -specific effects rather than broad 547 
+
+responsiveness across perturbations. The tokenization -coverage gate determined whether the 548 
+
+target -gene token was present in enough sampled cells for native token deletion to be applicable. 549 
+
+The library -size contamination check compared raw -count and size -factor -normalized 550 
+
+differential -expression targets to identify sequencing -depth artifacts. The de -circularization 551 
+
+matrix evaluated whether cell -state -shift readouts remained specific after separating the deleted 552 
+
+gene from the perturbation -state axis used for scoring.  Table  1 lists each diagnostic, the 553 
+
+corresponding confound, and the quantity reported for each analysis. 554 
+
+Quantification and statistical analysis 555 
+
+Pearson’s correlation was used to quantify agreement between model readouts and continuous 556 
+
+differential -expression targets. Spearman’s correlation was used for rank -based analyses, 557 
+
+including universal -responsiveness and perturbation -profile comparisons. For held -out increment 558 
+
+testing, Pearson’s r was computed from pooled out -of -fold predictions generated by 5 -fold cross -559 
+
+validation. The same cross -validation splits were used for each matched baseline and baseline -560 
+
+plus -delta comparison. 561 
+
+Delta increment was defined as the held -out Pearson’s r of the baseline -plus -delta model minus 562 
+
+the held -out Pearson’s r of the matched baseline model. A positive increment indicated 563 
+
+additional predictive information from the embedding delta beyond the baseline feature set. 564 
+
+Small increments within the prespecified near -zero visualization band were interpreted as no 565 
+
+detectable incremental signal rather than as formal evidence of equivalence. 566 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+For differential -expression targets, pseudobulk  replicates were defined by single -guide RNA in 567 
+
+the Frangieh dataset and by gemgroup batch in the Replogle dataset. DESeq2 sign checks were 568 
+
+used to verify agreement between shrinkage -based log fold changes and size -factor -normalized 569 
+
+log2 fold changes. 570 
+
+For cell -state -shift analyses, deterministic cross -gene projection comparisons were used as the 571 
+
+primary de -circularization assessment. Seed -fixed random -gene nulls were used as sensitivity 572 
+
+checks.  Software versions and package identifiers  are  list ed in the Key resources table ; random 573 
+
+seeds  and  model hyperparameters are specified in  the deposited analysis code 574 
+
+(scripts/diagnostics/nonlinear_seal.py) .575 
+
+576 
+
+577 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Figures and figure legends 578 
+
+Figure 1 579 
+
+580 
+
+.CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint Figure 1. Overview of the confound -diagnostic workflow. 581 
+
+Native Geneformer  token -deletion responses are evaluated using five matched diagnostics: gene -582 
+
+identity increment testing, universal -responsiveness adjustment, tokenization -coverage gating, 583 
+
+library -size control, and de -circularized cell -state analysis. Readouts are considered biologically 584 
+
+interpretable only if they remain informative after these controls. 585 
+
+586 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Figure 2 587 
+
+588 
+
+Figure 2.  Native embedding -delta increments remain near zero, below the sensitivity of an 589 
+
+increment test validated by positive controls. 590 
+
+(A)  Held -out increments after adding the embedding delta to the gene -identity baseline. The 591 
+
+shaded band ( ∣Δr ∣≤0.03) is a visualization threshold, not an equivalence bound. (B) Gene -592 
+
+identity baseline and baseline -plus -delta performance across Frangieh CCND1 and five 593 
+
+Replogle perturbations, showing no reproducible positive increment. (C) Signal -injection 594 
+
+calibration. Detectable increments emerged at c ∗≈0.20, whereas the native delta (Δr =−0.004) 595 
+
+remained within the near -zero band, indicating that any additional signal was below the 596 
+
+detection threshold.  (D) Real -signal positive control. A real, held -out CCND1 effect (log2 fold 597 
+
+change from a disjoint half of the CCND1 cells) added through the identical increment 598 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+machinery produced a clear positive increment (Δr = +0.092 ± 0.016 over 20 splits), whereas the 599 
+
+native embedding delta (Δr = −0.005) and a random -noise feature (Δr  = −0.000) remained 600 
+
+within the zero -signal band. The test thus detects real perturbation signal, and the native delta 601 
+
+behaves like the noise control. 602 
+
+603 
+
+.CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint Figure 3 604 
+
+605  Figure 3. Matched controls attenuate apparent signals and reveal underlying confounds. 606 
+
+(A) Adding the 768 -dimensional knockout embedding delta provides no held -out improvement 607 
+
+over matched baselines for differential -expression and saliency readouts. (B) Apparently 608 
+
+informative exploratory readouts are strongly attenuated after controls for score construction, 609 
+
+gene identity, library -size structure, and universal responsiveness. (C) Across 232 Frangieh 610 
+
+perturbations, universal responsiveness correlates strongly with the absolute CCND1 effect 611 
+
+(ρ=0.868), whereas embedding -shift magnitude is inversely associated with biological effect size 612 
+
+(ρ=−0.45). (D) Size -factor normalization removes raw -count structure: the CCND1 –TIMP1 613 
+
+correlation shifts from r=−0.600 to r=0.060, and gene -identity baseline performance decreases 614 
+
+from r=0.693 to r=0.487 across 13,054 genes. 615 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Figure 4 616 
+
+617 
+
+Figure 4. Tokenization coverage constrains perturbation applicability and estimate 618 
+
+stability. 619 
+
+(A) Distribution of tokenization coverage across 217 in -vocabulary Frangieh targets, defined as 620 
+
+the fraction of sampled cells containing the target token in the top -4096 input sequence. JAK2 621 
+
+(2.3%) and CD274 (11%) illustrate low -coverage targets for which native deletion applies to 622 
+
+only a small fraction of cells. (B) Controlled subsampling with the numerically matched path -D623 
+
+implementation shows that the recovered CCND1 readout changes with the number of 624 
+
+contributing cells and converges as this number increases. Coverage therefore affects 625 
+
+applicability and stability but does not establish biological specificity. 626 
+
+627 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+Table 1. Confound -diagnostic controls and reporting criteria for native in silico 628 
+
+perturbation readouts. 629 
+
+Diagnostic  Confound addressed  What to report 
+
+Failure mode if 
+
+omitted 
+
+Gene -identity 
+
+baseline (held -out 
+
+increment test) 
+
+Gene identity and 
+
+baseline expression 
+
+structure predict 
+
+affected genes without 
+
+the perturbation -
+
+induced embedding 
+
+delta 
+
+Held -out increment of the 
+
+baseline -plus -delta model 
+
+over the matched wild -
+
+type -embedding baseline 
+
+(5 -fold CV, pooled out -of -
+
+fold Pearson's r) 
+
+Apparent 
+
+predictability from 
+
+gene identity is 
+
+mistaken for 
+
+perturbation -
+
+specific signal 
+
+Universal -
+
+responsiveness 
+
+baseline 
+
+Hub/high -expression 
+
+genes appear affected 
+
+under many 
+
+perturbations 
+
+Specific saliency after 
+
+subtracting or conditioning 
+
+on the across -perturbation 
+
+baseline 
+
+Generic 
+
+affectedness is 
+
+mistaken for 
+
+perturbation 
+
+specificity 
+
+Tokenization -
+
+coverage gate 
+
+Target token absent 
+
+from many truncated 
+
+cell sequences 
+
+Sampled -cell denominator, 
+
+token -containing 
+
+numerator, and coverage 
+
+fraction 
+
+A nominal KO is 
+
+evaluated in cells 
+
+where no deletion 
+
+occurred 
+
+Library -size 
+
+contamination 
+
+Raw -count log2FC 
+
+captures sequencing -
+
+Pseudobulk DESeq2/edgeR 
+
+target with size factors; 
+
+Depth -confounded 
+
+targets inflate 
+
+> .CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint
+
+check  depth structure  raw -count diagnostic only  apparent 
+
+predictability 
+
+De -circularization 
+
+matrix 
+
+Self -deletion and axis -
+
+attractor artifacts in 
+
+state -shift readouts 
+
+Cross -gene projection 
+
+matrix, comparing same -
+
+pathway and cross -pathway 
+
+structure 
+
+A gene appears to 
+
+move cells toward 
+
+its own deletion 
+
+axis 
+
+630 
+
+.CC-BY-NC-ND 4.0 International license available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is made The copyright holder for this preprint this version posted August 7, 2026. ;https://doi.org/10.64898/2026.08.04.732812 doi: bioRxiv preprint Table 2. Cell subsets used in the Frangieh CCND1 case study. 631 
+
+Subset  n Role 
+
+Full dataset (3 conditions)  218,331  dataset descriptor 
+
+Control condition (all cells)  57,627  —
+
+Non -targeting control cells  15,361  DESeq2 ground -truth 
+
+reference 
+
+In -silico KO input (coverage -passing, of 600 
+
+sampled) 
+
+587  path -D input 
+
+CCND1 -knockout cells  202  ground -truth perturbation 
+
+group 
+
+632 
+
+633

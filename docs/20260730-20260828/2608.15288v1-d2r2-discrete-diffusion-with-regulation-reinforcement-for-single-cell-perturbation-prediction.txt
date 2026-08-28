@@ -1,0 +1,508 @@
+Title: D^2R^2: Discrete Diffusion with Regulation Reinforcement for Single-Cell Perturbation Prediction
+
+URL Source: https://arxiv.org/pdf/2608.15288v1
+
+Published Time: Tue, 18 Aug 2026 00:42:28 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# D2R2: Discrete Diffusion with Regulation Reinforcement for Single-Cell Perturbation Prediction 
+
+## Ninghan Fan 1∗, Qi Liu 1∗, Xunuo Zhu 1∗, Yukai Sun 1∗, Luyuan Chen 1, Xuheng Zhou 1,Yuetian Du 1, Ming Kong 1, Xiaojun Zhu 1, Jie Liu 2†, Zhan Zhou 1†, and Qiang Zhu 1†
+
+> 1
+
+Zhejiang University 2City University of Hong Kong fanninghan@zju.edu.cn, jliu.ee@my.cityu.edu.hk, zhanzhou@zju.edu.cn, zhuq@zju.edu.cn 
+
+Abstract 
+
+Predicting single-cell transcriptomic responses to genetic per-turbations is central to functional genomics and virtual-cell modeling. Existing approaches, however, typically predict an entire expression profile as a whole, leaving the order in which individual gene responses are generated unmodeled. To ad-dress this problem, we introduce D2R2 (Discrete Diffusion with Regulation Reinforcement), which reformulates pertur-bation prediction as regulation-guided gene-wise progressive generation. A Masked Discrete Diffusion Model represents expression as ordinal tokens and reconstructs a fully masked profile step by step, allowing generated gene responses to con-dition those that remain masked. A Regulatory Policy Module initializes the generation policy from a gene regulatory net-work inferred from control cells and adapts it to the perturba-tion and current partially generated state. Then, group-relative policy optimization refines only the ordering policy using final perturbation-effect agreement as reward. Across Norman19 and VCC-H1, D2R2 achieves the best performance on all five metrics on Norman19 and remains competitive on H1. Con-trolled ablations holding the generator and generation bud-get fixed show that biological-prior ordering improves over random ordering and is more reliable than uncertainty-based heuristics, whereas reversing the biological-prior ordering de-grades every metric. Biological analyses further show that the refined policy prioritizes regulatory genes early while promot-ing perturbation-specific transcription factors and responsive genes. These results establish gene generation order as an ef-fective, controllable, and biologically interpretable dimension of single-cell perturbation prediction. 
+
+## Introduction 
+
+Accurate prediction of cellular responses to perturbations is a central challenge in functional genomics and drug dis-covery. Despite rapid advances in high-throughput pertur-bational measurements (Qian, Dong, and Guo 2025), ex-perimentally producing perturbation data remains costly and laborious. These challenges have motivated the development of virtual cell models that simulate cellular responses in silico, offering the potential to advance biological under-standing and accelerate personalized medicine (Bunne et al. 2024; Roohani et al. 2025). However, accurately modeling 
+
+> ∗
+
+These authors contributed equally. 
+
+> †
+
+Corresponding author. 
+
+perturbation-induced transcriptomic responses remains diffi-cult due to complex gene regulatory mechanisms, biological heterogeneity, and dynamic cellular responses. Methods for perturbation prediction have evolved from single-pass predictors built on transformers (Adduri et al. 2025; Cui et al. 2024b) or variational autoencoders (Bereket and Karaletsos 2023) to diffusion-based generative mod-els (He et al. 2026; Klein et al. 2025; Yu et al. 2026), as illustrated in Fig. 1a and b. Despite their architectural di-versity, these approaches predominantly follow a expression profile-level generation paradigm: single-pass models gener-ate the full profile at once, whereas diffusion models itera-tively denoise the entire profile. However, in both cases, the gene-wise generation order remains unmodeled. This omis-sion matters because gene responses are not independent, predicting gene responses in a structured order would allow earlier predictions to provide informative context for later ones (Freimer et al. 2022; Song et al. 2025). This moti-vates a new perturbation-prediction paradigm that explicitly models gene-wise resolution order, allowing individual gene responses to be generated progressively. Decomposing profile generation into gene-wise genera-tion introduces a new challenge: in what order should gene responses be generated? Simple strategies such as random selection, predictive confidence (Chang et al. 2022), or en-tropy (Settles 2009) use either no structural information or only the generator’s instantaneous uncertainty. A biologi-cally grounded ordering could instead exploit gene regula-tory structure to identify genes likely to influence the re-sponses of others. Yet any fixed regulatory prior derived from unperturbed control cells would capture cell-type-level structure rather than perturbation-specific dependencies. The same ordering could not determine which dependencies are most useful for a particular perturbation in the same cell line. Addressing these limitations requires an ordering mechanism that is biologically grounded at initialization yet able to adapt to both the perturbation and the evolving generation state. To overcome the aforementioned challenges, we refor-mulate single-cell perturbation prediction as an gene-wise progressive generation. Based on this formulation, we pro-pose D2R2, a Discrete Diffusion model with Regulation arXiv:2608.15288v1 [cs.AI] 15 Aug 2026 GRN 
+
+Traditional          
+
+> Single-Pass Prediction
+> Progressive generation Gene-wise generation Regulatory guidance
+> Regulation Prior
+> ×N×N
+> ×N×N
+> ×N×NProgressive generation Gene-wise generation Regulatory guidance
+> Progressive generation Gene-wise generation Regulatory guidance
+> Progressive generation Gene-wise generation Regulatory guidance
+
+DDPM 
+
+> Global Denoising
+
+MDDM 
+
+> Random Unmasking
+
+D!R!                        
+
+> Guided Unmasking
+> 0.3 0.1 0.0 0.5 0.2 0.2 0.0 0.8
+> noise noise noise noise 0.2 0.2 0.0 0.8 0.2 0.2 0.0 0.8
+> mask mask mask mask 0.1 0.2 0.1 0.7 0.1 0.1 mask mask mask mask 0.8 0.3 0.2 0.0 0.8 0.3 mask mask mask mask
+
+(a) (b) (c) (d) Figure 1: Paradigm comparison. Each row summarizes paradigm properties and traces gene-expression generation, with web nodes and aligned vector entries denoting genes and their expression values. We compare traditional single-pass prediction, DDPM-based global denoising, and two forms of 
+
+D2R2: random unmasking (MDDM) and regulation-guided unmasking. 
+
+Reinforcement, which couples a Masked Discrete Diffu-sion Model (MDDM) for progressive expression generation with a Regulatory Policy Module (RPM) for biologically grounded, adaptive gene ordering, as shown in Fig. 1c and d. Specifically, MDDM represents expression values as or-dered discrete tokens and begins generation from a fully masked profile. At each step, RPM selects a subset of unre-solved genes, and MDDM predicts their expression tokens. Once generated, these tokens remain fixed and provide ex-plicit context for subsequent steps. RPM determines which genes to generate next by transforming a control-derived reg-ulatory prior into a state- and perturbation-specific genera-tion policy. Training proceeds in two stages. We first ran-domly mask expression tokens at sampled diffusion times and train MDDM with an x0-prediction objective to recon-struct the original tokens from partially masked profiles. We then freeze MDDM, initialize RPM to reproduce an ordering prior derived from a gene regulatory network inferred from unperturbed control cells, and refine only the ordering policy with group-relative policy optimization (GRPO), using final perturbation-response agreement as the reward. Across Norman19 and VCC-H1, experiments validate the effectiveness of D2R2. Controlled ablations with a fixed MDDM show that generation order is consequential: the biological prior outperforms random and uncertainty-based strategies, whereas reversing it consistently degrades predic-tion. RPM further adapts this prior to the perturbation and evolving generation state, while biological analyses show that the refined orders preserve early regulatory-gene prioritiza-tion and promote perturbation-specific transcription factors (TFs) and responsive genes. Together, these results establish generation order as an effective and biologically interpretable component of perturbation prediction. Our contributions are threefold: 
+
+• We formulate single-cell perturbation prediction as gene-wise progressive generation with MDDM, making the generation order explicit and allowing already-resolved gene responses to condition those that remain masked. 
+
+• We introduce RPM, which initializes an ordering policy from a control-derived biological prior and refines it with GRPO while keeping the generator fixed, producing state-and perturbation-specific generation orders. 
+
+• We conduct a controlled study of random, uncertainty-based, biological, reversed, and refined orders, establish-ing generation order and its directionality as substantive design choices. 
+
+## Related Work 
+
+Single-cell perturbation prediction and generative mod-eling. Single-cell perturbation prediction has been studied under diverse predictive and generative formulations. Latent-variable methods such as scGen model perturbation effects as shifts in a shared cellular space (Lotfollahi, Wolf, and Theis 2019), while disentanglement-based predictors sepa-rate cellular state, perturbation, and covariate factors to im-prove generalization (Piran et al. 2024). Distributional and flow-based approaches instead learn mappings between con-trol and perturbed cell populations (Bunne et al. 2023; Klein et al. 2025; Yu et al. 2026). More recently, foundation models use large-scale single-cell pretraining to obtain transferable representations for perturbation prediction (Cui et al. 2024a; Theodoris et al. 2023; Adduri et al. 2025). Although these approaches differ in their representations and predictive tar-gets, they produce the response through a forward prediction, latent transformation, or distributional map. Diffusion-based models introduce iterative generation by denoising cellu-lar states or learning bridges between control and perturbed populations (Tang et al. 2023; He et al. 2026). Their trajecto-ries, however, are typically governed by noise schedules over the whole transcriptomic state rather than an explicit gene-wise resolution order. D2R2 treats perturbation prediction as masked discrete generation over expression tokens, making this order a controllable part of the model. 
+
+Biological priors and regulatory dependencies. Cellu-lar responses to perturbations are constrained by biologi-cal structure, including gene regulatory networks (GRN), transcription factor-target relationships, and pathway inter-actions (Dixit et al. 2016; Norman et al. 2019; Freimer et al. 2022; Shu et al. 2021; Yuan et al. 2021). Prior work in-corporates such information through graph neural networks, message passing, structure-aware embeddings, or adjacency-based regularization (Adduri et al. 2025; Theodoris et al. 2023); graph-based perturbation models similarly use gene– gene relationships to improve response prediction (Roohani, Huang, and Leskovec 2024). These approaches demonstrate the value of regulatory information, but primarily use it to shape gene representations or information exchange within the predictor. Regulatory structure therefore affects how genes interact during prediction, without defining a measur-able sequence in which their responses are resolved. D2R2
+
+applies the structure at this different point: it uses a control-derived GRN to initialize the order in which gene responses are committed, after which the ordering policy is optimized for perturbation prediction. 
+
+Reinforcement learning for adaptive generation policies. 
+
+Reinforcement learning is useful in computational biology when local decisions are difficult to supervise but complete designs can be evaluated through a delayed objective. Ap-plications include optimizing molecular properties (Olive-crona et al. 2017), constructing molecular graphs under non-differentiable objectives (You et al. 2018), RNA inverse fold-ing (Runge et al. 2018), and protein design (Lutz et al. 2023). A parallel line applies RL to sequential generation itself, using sequence-level rewards or actor–critic objectives to judge early actions by their downstream consequences (Ran-zato et al. 2015; Bahdanau et al. 2016). D2R2 has the same delayed-reward structure, but the policy acts on generation order rather than expression values: its actions select genes to unmask, and their value depends on how well the result-ing predictions serve as context for the genes generated later. This allows RPM to optimize the ordering policy while the expression generator remains fixed. 
+
+## Method 
+
+D2R2 first learns to generate perturbed expression to-kens with a masked discrete diffusion model, and then learns which unresolved genes should be predicted at each generation step. This separates expression modeling from generation-order learning and allows us to vary the order while holding the generator fixed. 
+
+Preliminaries 
+
+Problem formulation. We consider perturbation response prediction over a fixed gene set S = {g1, . . . , g L} of L genes, indexed by I = [ L] = {1, . . . , L }. For each sample, let 
+
+c ∈ RL denote the control expression profile, y ∈ RL denote the ground-truth perturbed expression profile, p denote the perturbation condition, and z denote cellular covariates. The goal is to learn a conditional generator that predicts y from the conditioning tuple u = ( c, p, z ).
+
+Discrete expression tokens. D2R2 represents the per-turbed response in a discrete expression-token space, map-ping each continuous expression value yi to an ordinal to-ken x0,i = Q(yi) ∈ { 0, . . . , B − 1}, where Q(·) is an equal-frequency binning operator with B bins. We refer to 
+
+x0 = ( x0,1, . . . , x 0,L ) as the clean discrete perturbed state, i.e., the tokenized form of y, where position i is tied to the fixed gene identity gi. A special mask token m denotes an unpredicted expression token. The mask token makes the unresolved/resolved status of each gene explicit, thereby al-lowing the gene generation order to be directly specified and optimized. 
+
+Masked Discrete Diffusion Model 
+
+D2R2 uses a masked discrete diffusion model as the token-level generator (Austin et al. 2021; Nie et al. 2025a,b), nat-urally allowing already generated genes to serve as explicit context for masked genes. It learns the conditional distribu-tion pθ (x0 | u), where θ denotes the generator parameters. 
+
+Forward masking corruption. During training, we con-struct a partially masked input xt from the ground-truth token state x0. Following masked diffusion models (Austin et al. 2021; Nie et al. 2025a), each expression token is indepen-dently retained with probability αt = 1 −t and replaced with the mask token m otherwise: 
+
+qt(xt | x0) = 
+
+> L
+
+Y
+
+> i=1
+
+αtδx0,i (xt,i ) + (1 − αt)δm(xt,i ) . (1) Here, δa(x) denotes one-hot distribution at a, taking value 1
+
+when x = a and 0 otherwise. This forward process enables continuous-time data corruption, with each gene xt,i at po-sition i equaling the original token x0,i with probability αt
+
+and the mask token m with probability 1 − αt.
+
+Conditional denoising parameterization. The generator 
+
+fθ is a non-causal Transformer (Vaswani et al. 2017) that predicts the original token at each masked gene position. We encode the control profile, perturbation condition, and cellular covariates as Hc = Enc c(c), Hp = Emb p(p),and Hz = Enc z (z), and concatenate them into Hcond =[Hc; Hp; Hz ]. For each fixed gene position i ∈ I , the model input is Ht,i = Emb x(xt,i ) + Emb g (gi). For each bin 
+
+b ∈ { 0, . . . , B − 1}, the predictor outputs 
+
+pθ (x0,i = b | xt, u ) = Softmax b(fθ (Ht; Hcond )i) . (2) 
+
+Training objective. We train fθ with an x0-prediction objective on masked positions. Given x0, we sample t ∼
+
+Unif(0 , 1) and xt ∼ qt(xt | x0), and let Mt = {i :
+
+xt,i = m} denote the masked gene positions. Writing 
+
+pmask (t) = 1 − αt, the masked diffusion loss is 
+
+LMDDM (θ) = Ex0,t,x t [ℓt] ,ℓt = 1
+
+pmask (t)
+
+X
+
+> i∈M t
+
+− log pθ (x0,i | xt, u ). (3) In practice, it is estimated by masked cross-entropy over 
+
+Mt (Nie et al. 2025a,b). 
+
+Iterative denoising. At inference time, D2R2 starts from the fully masked state x1 = ( m, . . . , m ): at each step the pre-dictor outputs token distributions for the currently masked positions, selected positions are updated with sampled to-kens, and once a token is predicted it is kept fixed. After Biological Prior 
+
+Regulatory Policy 
+
+> Which genes to predict next ？
+
+MDDM 
+
+> Predict expression tokens
+
+…                                      
+
+> Gene A Gene B Gene C Gene D Gene E Gene F
+> 𝑰𝒏𝒊𝒕𝒊𝒂𝒍 𝑮𝒆𝒏𝒆 𝑽𝒆𝒄𝒕𝒐𝒓 𝑪𝒐𝒏𝒅𝒊𝒕𝒊𝒐𝒏𝒔
+> MASK MASK MASK MASK MASK MASK
+> Gene A Gene B Gene C Gene D Gene E Gene F
+> 𝒳 !MASK 𝒳 "MASK MASK MASK 𝑺𝒕𝒆𝒑 𝟏 𝑺𝒕𝒆𝒑 𝟐 𝑺𝒕𝒆𝒑 𝟑
+> 𝒳 !𝒳 #𝒳 "𝒳 $MASK MASK
+> 𝒳 !𝒳 #𝒳 "𝒳 $𝒳 %𝒳 &
+> ( Fully Masked)
+> All Predicted
+> Generation Trajectory
+> Not All Predicted Selected Genes 𝐴 𝑨𝒍𝒍 𝑴𝒂𝒔𝒌𝒆𝒅
+> 𝐵
+> 𝑟𝑜𝑙𝑙𝑜𝑢𝑡 𝐴 𝐵 𝐶 𝐷 𝐸 𝐹
+> 𝐶 𝐷 𝐸 𝐹
+> 𝑹𝒆𝒔𝒖𝒍𝒕𝒔 𝑺𝒕𝒆𝒑 𝟏 𝑺𝒕𝒆𝒑 𝟐 𝑺𝒕𝒆𝒑 𝟑
+> 𝑟𝑜𝑙𝑙𝑜𝑢𝑡 𝐴 𝐶 BD𝐸 𝐹
+> 𝑹𝒆𝒔𝒖𝒍𝒕𝒔 𝑺𝒕𝒆𝒑 𝟏 𝑺𝒕𝒆𝒑 𝟐 𝑺𝒕𝒆𝒑 𝟑 𝑺𝒂𝒎𝒑𝒍𝒆× 𝑲 𝑮𝒆𝒕 𝑹𝒆𝒘𝒂𝒓𝒅
+> 𝜋 /
+> 𝑨 𝑮𝒆𝒏𝒆𝒔 𝑩 𝑪 𝑫 𝑬 𝑭
+> Gene F Gene A Gene E Gene C Gene D Gene B
+> 𝔃 (𝒄𝒐𝒗𝒂𝒓𝒊𝒂𝒕𝒆𝒔) 𝒄 (𝒄𝒕𝒓𝒍) 𝒑 (𝒑𝒆𝒓𝒕)
+> 𝑭𝒊𝒏𝒂𝒍 𝑮𝒆𝒏𝒆𝒓𝒂𝒕𝒊𝒐𝒏 𝑹𝒆𝒔𝒖𝒍𝒕
+> RL Optimized
+
+Figure 2: Overview of the D2R2 framework. The left panel shows the iterative generation loop: after the MDDM predicts the selected expression tokens, RPM observes the updated partial state and recomputes which genes should be resolved next. The upper-right panel shows the biological prior used to initialize the policy, while the lower-right panel illustrates GRPO that optimizes the order to each perturbation. generation, the discrete token sequence is converted into a continuous expression profile through a deterministic map-ping that assigns each token the representative value asso-ciated with its bin. The MDDM therefore determines the expression-token distribution for every unresolved gene, but which genes should be committed next iteration is still an open question, leaving space for exploitation. 
+
+Gene Generation Order 
+
+Generation-order strategies. We formulate this open choice as a generation-order strategy that determines which masked genes are committed at each iteration. An order-ing strategy assigns a priority to every position in the cur-rent masked set Mk and selects a subset ak ⊆ M k to resolve. This formulation accommodates simple orderings such as Random, as well as model-uncertainty strategies in Table 2: Confidence high/low ranks genes by the largest pre-dicted token probability, while Entropy high/low ranks them by predictive entropy; “high” and “low” select the largest and smallest scores, respectively (Chang et al. 2022; Set-tles 2009). These strategies provide useful controls, but they use either no structural information or only the generator’s instantaneous uncertainty; neither represents how a pertur-bation response may propagate across genes. 
+
+Biological-prior ordering. To introduce regulatory struc-ture into the generation process, we infer a cell-type-specific GRN Gz = ( S, A z ) from unperturbed control cells using DeepSEM (Shu et al. 2021). The weighted adjacency ma-trix Az represents directed regulatory interactions among genes. We apply PageRank to this weighted graph to obtain a regulatory-influence score for each gene, which accounts for both its direct connections and its recursive influence through the GRN. Sorting genes by decreasing PageRank score yields a fixed biological-prior order, with influential upstream regulators placed earlier. At generation step k, this prior is restricted to the unresolved genes in Mk to define the biological supervision qbio  
+
+> k
+
+used to initialize RPM. The resulting policy encourages regulatory genes to be generated first, so that their predicted responses provide context for genes resolved later. 
+
+Perturbation-specific regulatory policy. We introduce the Regulatory Policy Module (RPM) to transform the static cell-type prior into a state- and perturbation-specific gener-ation policy. At step k, the partially generated state is xk,the unresolved positions are Mk = {i : xk,i = m}, and the policy state is sk = ( xk, p, z, Mk). RPM encodes the cur-rent state together with the perturbation and cellular context and produces an unmasking probability for every unresolved gene: 
+
+πψ (i | sk) = exp( hψ,i (sk)/τ )
+
+P 
+
+> j∈M k
+
+exp( hψ,j (sk)/τ ) , i ∈ M k,
+
+(4) where hψ,i (sk) is the RPM priority logit and τ is a tem-perature. The subset size follows a predefined schedule with Algorithm 1 Step-adaptive generation with RPM                                                                    
+
+> 1: Input: u= ( c, p, z ), MDDM pθ, RPM πψ, and {bk}Kk=1
+> satisfying PKk=1 bk=L.
+> 2: Initialize: x1= ( m, . . . , m )and M1=I.
+> 3: for k= 1 , . . . , K do
+> 4: 1. Generate gene tokens
+> 5: ˆxk,i ∼pθ(x0,i |xk, u ),i∈ M k.
+> 6: 2. Select gene tokens
+> 7: ak←TopK bk{πψ(i|xk, p, z, Mk) : i∈ M k}.
+> 8: 3. Update
+> 9: xk+1 ←xk,xk+1 ,a k←ˆxk,a k.
+> 10: Mk+1 ← M k\ak.
+> 11: end for
+> 12: Return: bin-representative decoding of xK+1 .
+
+P 
+
+> k
+
+|ak| = L. Crucially, RPM recomputes the distribution after every update: once ak is filled by the MDDM, the re-sulting state xk+1 becomes the context for deciding which genes to resolve next. The architecture used to parameterize 
+
+hψ is described in the Appendix. We summarize the whole process in Algorithm 1. 
+
+Biological initialization and GRPO refinement. RPM is first initialized to reproduce the biological-prior policy. For policy states encountered during generation, we minimize 
+
+Lbio (ψ) = −Esk
+
+" X
+
+> i∈M k
+
+qbio  
+
+> k,i
+
+log πψ (i | sk)
+
+#
+
+, (5) which supplies a stable starting point rather than learning from scratch. We then freeze the MDDM and biological prior and refine RPM with GRPO Shao et al. (2024). Next, we construct G
+
+branched rollouts from shared generation state s. In rollout r,RPM samples an ordered subset a(r) = ( i1, . . . , i b) without replacement, with likelihood 
+
+Pψ (a(r) | s) = 
+
+> b
+
+Y
+
+> j=1
+
+πψ (ij | s)1 − P 
+
+> ℓ<j
+
+πψ (iℓ | s) . (6) The sampled genes are resolved by MDDM, and the remain-ing trajectory is completed by the frozen reference policy 
+
+πref . Each rollout receives R(r) = corr(ˆ y(r) − c, y − c),which is normalized within the group to obtain A(r).Let ρ(r) = Pψ (a(r) | s)/P ψold (a(r) | s) and ¯ρ(r) =clip( ρ(r), 1 − ϵ, 1 + ϵ). RPM is optimized using 
+
+LGRPO = − Er
+
+h
+
+min 
+
+
+
+ρ(r)A(r), ¯ρ(r)A(r)i 
+
++ βD KL (πψ ∥ πref ) .
+
+(7) Training samples subsets without replacement, whereas in-ference recomputes RPM priorities at each step and applies deterministic Top-K selection. 
+
+## Experiments 
+
+Experimental Setup 
+
+Datasets. We evaluate D2R2 on Norman19 and VCC-H1(H1). Norman19 is a Perturb-seq dataset of gene over-expression perturbations in K562 cells, containing 287 per-turbation conditions, including 131 combinatorial perturba-tions (Norman et al. 2019). VCC-H1 is the H1 human embry-onic stem cell benchmark from the Virtual Cell Challenge, containing approximately 400,000 single cells across 300 CRISPRi perturbation targets (Roohani et al. 2025). Nor-man19 uses a held-out-combination split to test generaliza-tion to unseen perturbation combinations, whereas H1 uses a held-out-cell split to evaluate large-scale response recon-struction under the observed perturbation distribution. The two benchmarks therefore cover complementary evaluation regimes. 
+
+Baselines. Generative models form the primary compar-ison group: SAMS-VAE (Bereket and Karaletsos 2023), Cell Flow (Klein et al. 2025), Squidiff (He et al. 2026), and scDFM (Yu et al. 2026), covering VAE-based, flow-based, diffusion-based, and distribution-level approaches. We also compare with the perturbation-response predic-tor Biolord (Piran et al. 2024) and the virtual-cell model STATE (Adduri et al. 2025). All methods use matched splits, preprocessing, and evaluation; implementation details are provided in the Appendix. 
+
+Metrics. Following PerturBench (Wu et al. 2024), we eval-uate differential expression using Pearson ∆, Cos. LogFC, and Cos. LogFC Rank. These metrics measure expression changes relative to control cells, testing whether the model recovers the transcriptional programs activated or suppressed by a perturbation; Cos. LogFC Rank additionally measures whether responses to different perturbations remain distin-guishable. For absolute expression, Cos. PCA measures cen-troid agreement between predicted and observed cells, testing whether the overall post-perturbation cellular state is recon-structed. Sym. KL further evaluates agreement between cell-population distributions, capturing response heterogeneity beyond the centroid. Metric details are provided in the Ap-pendix. 
+
+Main Results 
+
+Table 1 shows that D2R2 ranks first across all metrics on Norman19 and leads in most metrics on H1. In par-ticular, it leads all three differential-expression metrics on both benchmarks, demonstrating that it accurately captures perturbation-induced transcriptional changes while preserv-ing the distinctions among responses to different perturba-tions. For absolute expression, D2R2 achieves the best cen-troid agreement on Norman19 and remains competitive on H1, indicating effective reconstruction of the overall post-perturbation cellular state. Its strong Sym. KL results further show that this agreement extends beyond the centroid to the cell-population distribution. Beyond the aggregate results, Fig. 3 compares the per-perturbation distributions of Pearson ∆ and Cos. LogFC on Norman19. D2R2 shifts both distributions toward higher response similarity, indicating that its gains are consistent across perturbations. Table 1: Main results on Norman19 and H1. All methods are evaluated over five independent training runs using seeds 
+
+{0, 1, 2, 3, 42 }, and results are reported as mean ± standard deviation. For D2R2, MDDM checkpoint is fixed across runs, while RPM is independently trained for each seed. Metrics are grouped by differential and absolute expression. Best and second-best results are bolded and underlined, respectively. 
+
+Differential Expression Absolute Expression Dataset Method Pearson ∆ ↑ Cos. LogFC ↑ Cos. LogFC Rank ↓ Cos. PCA ↑ Sym. KL ↓
+
+Norman19 SAMS-VAE (NeurIPS 2023) 0.553 ±0.079 0.560 ±0.043 0.028 ±0.010 0.251 ±0.042 50.888 ±4.215 
+
+Biolord (Nat. Biotechnol. 2024) 0.404 ±0.069 0.388 ±0.051 0.046 ±0.010 0.035 ±0.016 0.526 ±0.040 
+
+STATE (NeurIPS 2025) 0.467 ±0.020 0.379 ±0.020 0.525 ±0.017 -0.009 ±0.039 0.273 ±0.014 
+
+Cell Flow (bioRxiv 2025) 0.489 ±0.077 0.373 ±0.066 0.329 ±0.013 0.084 ±0.066 0.207 ±0.024 
+
+Squidiff (Nat. Methods 2025) 0.291 ±0.001 0.226 ±0.002 0.427 ±0.007 0.110 ±0.000 2.861 ±0.019 
+
+scDFM (ICLR 2026) 0.526 ±0.010 0.313 ±0.015 0.379 ±0.008 0.264 ±0.032 0.390 ±0.034 
+
+D2R2 (Ours) 0.706 ±0.004 0.724 ±0.006 0.024 ±0.006 0.703 ±0.009 0.148 ±0.007 
+
+H1 SAMS-VAE (NeurIPS 2023) 0.262 ±0.017 0.231 ±0.016 0.192 ±0.028 0.319 ±0.042 40.638 ±3.679 
+
+Biolord (Nat. Biotechnol. 2024) 0.201 ±0.008 0.159 ±0.008 0.063 ±0.007 0.151 ±0.010 0.240 ±0.018 
+
+STATE (NeurIPS 2025) 0.253 ±0.012 0.178 ±0.006 0.095 ±0.006 0.378 ±0.029 0.272 ±0.016 
+
+Cell Flow (bioRxiv 2025) 0.042 ±0.016 0.028 ±0.009 0.493 ±0.013 0.014 ±0.009 0.089 ±0.006 
+
+Squidiff (Nat. Methods 2025) 0.046 ±0.000 0.049 ±0.012 0.368 ±0.032 -0.008 ±0.005 8.435 ±0.372 
+
+scDFM (ICLR 2026) 0.069 ±0.004 0.038 ±0.009 0.421 ±0.029 0.029 ±0.010 0.390 ±0.025 
+
+D2R2 (Ours) 0.271 ±0.002 0.541 ±0.004 0.001 ±0.000 0.358 ±0.001 0.229 ±0.002 Squidiff scDFM Biolord STATE Cell Flow SAMS-VAE D2R2      
+
+> -1.00 -0.50 0.00 0.50 1.00 1.50
+> Score
+> **** *** *** *** ***
+> Pearson
+> Squidiff scDFM Biolord STATE Cell Flow SAMS-VAE D2R2
+> -0.50 0.00 0.50 1.00 1.50
+> Score
+> *** *** *** *** *** ***
+> Cos. LogFC
+
+Figure 3: Violin plots showing the distribution of evaluation metrics across perturbations in Norman19. Mann-Whitney 
+
+U test, * P < 0.05, *** P < 0.001. 
+
+Generation-Order Ablation 
+
+To isolate the effect of generation order, we compare dif-ferent orders. Table 2 reports a controlled ablation in which every configuration uses the same frozen MDDM and gener-ation budget; the only difference is which masked genes are selected at each step. 
+
+Model uncertainty does not identify a useful gener-ation order. Overall, model-uncertainty-based strategies provide little guidance for organizing gene generation. Al-though some uncertainty orders improve individual metrics, these gains are often accompanied by substantial deterio-ration elsewhere. For example, prioritizing low-confidence genes improves Pearson ∆ and Cos. PCA but worsens Cos. LogFC and perturbation discriminability, suggesting that lo-cal uncertainty does not identify genes that provide useful context for subsequent generation. 
+
+Our biological prior provides a strong directional gen-eration scaffold. The biological-prior ordering introduced in D2R2 improves most metrics over Random, with only a modest decrease in Cos. LogFC, showing that regulatory structure alone provides an effective scaffold for gene gener-ation. Further, reversing the prior order causes every metric to fall below Random, revealing that following regulatory dependencies in the wrong direction is actively detrimental rather than merely uninformative. Thus, the prior contributes not merely by imposing structure, but by organizing genera-tion along a predictive regulatory direction. 
+
+RPM turns static prior into perturbation-specific gen-eration policies. Even with random initialization, RPM improves multiple metrics over Random, showing that response-level reinforcement learning can discover useful generation orders. With biological initialization, RPM con-verts the fixed prior into perturbation-specific policies that improve all three perturbation-effect metrics, with only mod-Table 2: Generation-order ablation on Norman19. All methods use the same frozen MDDM. Random averages multiple random orders. Cells show score and relative performance gain over Random, with signs aligned so that positive always indicates improvement; for Cos. LogFC Rank and Sym. KL, this corresponds to relative error reduction. Orange intensity indicates a positive gain. Percentages are computed before rounding. 
+
+Order Pearson ∆ ↑ Cos. LogFC ↑ Cos. LogFC Rank ↓ Cos. PCA ↑ Sym. KL ↓
+
+Random 0.623 (ref.) 0.720 (ref.) 0.032 (ref.) 0.597 (ref.) 0.183 (ref.) 
+
+Model-Uncertainty Orders 
+
+Confidence high 0.590 ( −5.3%) 0.537 ( −25 .4%) 0.030 ( +5 .2%) 0.353 ( −40 .9%) 0.410 ( −124 .4%) Confidence low 0.672 ( +7 .9%) 0.522 ( −27 .5%) 0.068 ( −114 .1%) 0.640 ( +7 .2%) 0.203 ( −11 .0%) Entropy high 0.624 ( +0 .2%) 0.452 ( −37 .2%) 0.073 ( −130 .9%) 0.564 ( −5.6%) 0.206 ( −12 .5%) Entropy low 0.591 ( −5.1%) 0.538 ( −25 .3%) 0.030 ( +5 .2%) 0.355 ( −40 .5%) 0.399 ( −118 .5%) 
+
+Biological-Prior Orders 
+
+Biological prior 0.706 ( +13 .4%) 0.703 ( −2.3%) 0.027 ( +14 .4%) 0.699 ( +17 .0%) 0.119 ( +35 .0%) 
+
+Reversed prior 0.573 ( −8.1%) 0.533 ( −26 .0%) 0.064 ( −101 .8%) 0.509 ( −14 .7%) 0.197 ( −7.5%) 
+
+Adaptive RPM Policies (GRPO) 
+
+RPM (random init.) 0.677 ( +8 .6%) 0.734 ( +2 .0%) 0.026 ( +19 .0%) 0.675 ( +13 .1%) 0.186 ( −1.6%) RPM (bio init.) 0.711 ( +14 .2%) 0.723 ( +0 .5%) 0.020 ( +35 .8%) 0.693 ( +16 .1%) 0.138 ( +24 .5%) 
+
+est trade-offs in centroid- and population-level agreement. 
+
+Biological Analysis 
+
+RPM preserved the generation prioritization of regula-tory genes. As shown in Fig. 4a, regulatory genes were strongly enriched at early generation steps and declined thereafter, whereas the proportion of regulated genes pro-gressively increased across steps. This result suggests that RPM tends to establish upstream regulatory context before generating downstream responses. 
+
+RPM prioritizes perturbation-specific TFs to earlier generation steps. Next, we test whether RPM cap-tures perturbation-specific regulatory rewiring. Perturbation-specific TFs are those inactive in unperturbed cells but ac-quire regulatory activity after perturbation (details in the Ap-pendix). We quantify the RPM-induced change in generation priority as ∆Order = Order Bio -prior − Order RPM , where a positive value indicates that RPM generates the gene earlier. In Norman19, perturbation-specific TFs exhibit significantly higher ∆Order than non-specific TFs (Fig. 4b), demonstrat-ing that RPM preferentially advances perturbation-specific regulators. 
+
+RPM-promoted genes capture perturbation-specific transcription responses. Finally, we found that RPM-promoted genes (genes with ∆Order > 0) were predom-inantly perturbation-responsive. As shown in Fig. 4c, RPM-promoted genes captured most perturbation-specific differ-entially expressed (DE) genes, and this pattern was consis-tent across all perturbations. RPM-promoted genes were also strongly enriched in cell-cycle-related pathways (see the Ap-pendix), a major axis of perturbation response, especially given that many perturbations in Norman19 directly affect the proliferative state of cell. By prioritizing genes that char-acterize the perturbed cell state, RPM provides informative context for predicting the expression of later-generated genes. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 020 40 60 80 100 Proportion (%)   
+
+> Steps
+> (a) Gene Composition Across Generation Steps
+> Regulatory genes Regulated genes Specific TFs Non-specific TFs 600
+> 400
+> 200
+> 0200 400 600 Order
+> ***
+> (b)
+> RPM-promoted genes RPM-unpromoted genes 0.0 0.2 0.4 0.6 0.8 1.0 Fraction of DE genes captured  ***
+> (c)
+
+Figure 4: Biological analysis. (a) Proportions of regulatory and regulated genes across generation steps under the RPM-refined generation order. (b) Boxplot comparing ∆Order be-tween perturbation-specific TFs and non-specific TFs. Mann-Whitney U test, P = 1 .6 × 10 −15 . (c) Boxplot showing the fraction of DE genes whose generation order was promoted by RPM or remained unpromoted. Each dot represents one perturbation, and paired fractions from the same perturbation are connected by lines. Paired Wilcoxon test, P = 1 .7×10 −9.
+
+## Conclusion 
+
+We introduced D2R2, a framework that makes gene gen-eration order explicit in single-cell perturbation prediction. MDDM progressively generates masked expression tokens, while RPM initializes the ordering policy from biological prior and adapts it to each perturbation through reinforce-ment learning. Across Norman19 and H1, D2R2 ranks first across all metrics on Norman19 and leads in most metrics on H1. Controlled ablations show that biologically informed ordering is more effective than random and uncertainty-based strategies. Biological analyses further reveal that RPM preserves upstream regulatory context while prioritizing perturbation-specific regulators and responsive genes. 
+
+## References 
+
+Adduri, A. K.; Gautam, D.; Bevilacqua, B.; Imran, A.; Shah, R.; Naghipourfar, M.; Teyssier, N.; Ilango, R.; Nagaraj, S.; Dong, M.; et al. 2025. Predicting cellular responses to pertur-bation across diverse contexts with State. BioRxiv , 2025–06. Austin, J.; Johnson, D. D.; Ho, J.; Tarlow, D.; and Van Den Berg, R. 2021. Structured denoising diffusion mod-els in discrete state-spaces. Advances in neural information processing systems , 34: 17981–17993. Bahdanau, D.; Brakel, P.; Xu, K.; Goyal, A.; Lowe, R.; Pineau, J.; Courville, A.; and Bengio, Y. 2016. An actor-critic algorithm for sequence prediction. arXiv preprint arXiv:1607.07086 .Bereket, M.; and Karaletsos, T. 2023. Modelling cellular perturbations with the sparse additive mechanism shift vari-ational autoencoder. Advances in Neural Information Pro-cessing Systems , 36: 1–12. Bunne, C.; Roohani, Y.; Rosen, Y.; Gupta, A.; Zhang, X.; Roed, M.; Alexandrov, T.; AlQuraishi, M.; Brennan, P.; Burkhardt, D. B.; et al. 2024. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell ,187(25): 7045–7063. Bunne, C.; Stark, S. G.; Gut, G.; Del Castillo, J. S.; Levesque, M.; Lehmann, K.-V.; Pelkmans, L.; Krause, A.; and Rätsch, G. 2023. Learning single-cell perturbation responses using neural optimal transport. Nature methods , 20(11): 1759– 1768. Chang, H.; Zhang, H.; Jiang, L.; Liu, C.; and Freeman, W. T. 2022. Maskgit: Masked generative image transformer. In 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 11315–11325. Cui, H.; Wang, C.; Maan, H.; Pang, K.; Luo, F.; Duan, N.; and Wang, B. 2024a. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. Na-ture methods , 21(8): 1470–1480. Cui, Z.; Xu, T.; Wang, J.; Liao, Y.; and Wang, Y. 2024b. Geneformer: Learned gene compression using transformer-based context modeling. In ICASSP 2024-2024 IEEE Inter-national Conference on Acoustics, Speech and Signal Pro-cessing (ICASSP) , 8035–8039. IEEE. Dixit, A.; Parnas, O.; Li, B.; Chen, J.; Fulco, C. P.; Jerby-Arnon, L.; Marjanovic, N. D.; Dionne, D.; Burks, T.; Ray-chowdhury, R.; et al. 2016. Perturb-Seq: dissecting molecu-lar circuits with scalable single-cell RNA profiling of pooled genetic screens. cell , 167(7): 1853–1866. Freimer, J. W.; Shaked, O.; Naqvi, S.; Sinnott-Armstrong, N.; Kathiria, A.; Garrido, C. M.; Chen, A. F.; Cortez, J. T.; Greenleaf, W. J.; Pritchard, J. K.; et al. 2022. Systematic discovery and perturbation of regulatory genes in human T cells reveals the architecture of immune networks. Nature Genetics , 54(8): 1133–1144. He, S.; Zhu, Y.; Tavakol, D. N.; Ye, H.; Lao, Y.-H.; Zhu, Z.; Xu, C.; Chauhan, S.; Garty, G.; Tomer, R.; et al. 2026. Squid-iff: predicting cellular development and responses to pertur-bations using a diffusion model. Nature methods , 23(1): 65–77. Klein, D.; Fleck, J. S.; Bobrovskiy, D.; Zimmermann, L.; Becker, S.; Palma, A.; Dony, L.; Tejada-Lapuerta, A.; Huguet, G.; Lin, H.-C.; et al. 2025. CellFlow enables gen-erative single-cell phenotype modeling with flow matching. 
+
+bioRxiv , 2025–04. Lotfollahi, M.; Wolf, F. A.; and Theis, F. J. 2019. scGen predicts single-cell perturbation responses. Nature methods ,16(8): 715–721. Lutz, I. D.; Wang, S.; Norn, C.; Courbet, A.; Borst, A. J.; Zhao, Y. T.; Dosey, A.; Cao, L.; Xu, J.; Leaf, E. M.; et al. 2023. Top-down design of protein architectures with rein-forcement learning. Science , 380(6642): 266–273. Nie, S.; Zhu, F.; Du, C.; Pang, T.; Liu, Q.; Zeng, G.; Lin, M.; and Li, C. 2025a. Scaling up Masked Diffusion Mod-els on Text. In The Thirteenth International Conference on Learning Representations .Nie, S.; Zhu, F.; You, Z.; Zhang, X.; Ou, J.; Hu, J.; Zhou, J.; Lin, Y.; Wen, J.-R.; and Li, C. 2025b. Large language diffusion models. arXiv preprint arXiv:2502.09992 .Norman, T. M.; Horlbeck, M. A.; Replogle, J. M.; Ge, A. Y.; Xu, A.; Jost, M.; Gilbert, L. A.; and Weissman, J. S. 2019. Ex-ploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science , 365(6455): 786–793. Olivecrona, M.; Blaschke, T.; Engkvist, O.; and Chen, H. 2017. Molecular de-novo design through deep reinforcement learning. Journal of cheminformatics , 9(1): 48. Piran, Z.; Cohen, N.; Hoshen, Y.; and Nitzan, M. 2024. Disentanglement of single-cell data with biolord. Nature Biotechnology , 42(11): 1678–1683. Qian, L.; Dong, Z.; and Guo, T. 2025. Grow AI virtual cells: three data pillars and closed-loop learning. Cell Research ,35(5): 319–321. Ranzato, M.; Chopra, S.; Auli, M.; and Zaremba, W. 2015. Sequence level training with recurrent neural networks. arXiv preprint arXiv:1511.06732 .Roohani, Y.; Huang, K.; and Leskovec, J. 2024. Predicting transcriptional outcomes of novel multigene perturbations with GEARS. Nature Biotechnology , 42(6): 927–935. Roohani, Y. H.; Hua, T. J.; Tung, P.-Y.; Bounds, L. R.; Yu, F. B.; Dobin, A.; Teyssier, N.; Adduri, A.; Woodrow, A.; Plosky, B. S.; et al. 2025. Virtual Cell Challenge: Toward a Turing test for the virtual cell. Cell , 188(13): 3370–3374. Runge, F.; Stoll, D.; Falkner, S.; and Hutter, F. 2018. Learning to design RNA. arXiv preprint arXiv:1812.11951 .Settles, B. 2009. Active learning literature survey. Shao, Z.; Wang, P.; Zhu, Q.; Xu, R.; Song, J.; Bi, X.; Zhang, H.; Zhang, M.; Li, Y.; Wu, Y.; et al. 2024. Deepseekmath: Pushing the limits of mathematical reasoning in open lan-guage models. arXiv preprint arXiv:2402.03300 .Shu, H.; Zhou, J.; Lian, Q.; Li, H.; Zhao, D.; Zeng, J.; and Ma, J. 2021. Modeling gene regulatory networks using neural network architectures. Nature Computational Science , 1(7): 491–501. Song, B.; Liu, D.; Dai, W.; Mcmyn, N. F.; Wang, Q.; Yang, D.; Krejci, A.; Vasilyev, A.; Untermoser, N.; Loregger, A.; et al. 2025. Decoding heterogeneous single-cell perturbation responses. Nature cell biology , 27(3): 493–504. Tang, W.; Liu, R.; Wen, H.; Dai, X.; Ding, J.; Li, H.; Fan, W.; Xie, Y.; and Tang, J. 2023. A general single-cell anal-ysis framework via conditional diffusion generative models. 
+
+bioRxiv , 2023–10. Theodoris, C. V.; Xiao, L.; Chopra, A.; Chaffin, M. D.; Al Sayed, Z. R.; Hill, M. C.; Mantineo, H.; Brydon, E. M.; Zeng, Z.; Liu, X. S.; et al. 2023. Transfer learning enables predictions in network biology. Nature , 618(7965): 616–624. Vaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.; Jones, L.; Gomez, A. N.; Kaiser, Ł.; and Polosukhin, I. 2017. Attention is all you need. Advances in neural information processing systems , 30. Wu, Y.; Wershof, E.; Schmon, S. M.; Nassar, M.; Osiński, B.; Eksi, R.; Yan, Z.; Stark, R.; Zhang, K.; and Grae-pel, T. 2024. Perturbench: Benchmarking machine learn-ing models for cellular perturbation analysis. arXiv preprint arXiv:2408.10609 .You, J.; Liu, B.; Ying, Z.; Pande, V.; and Leskovec, J. 2018. Graph convolutional policy network for goal-directed molec-ular graph generation. Advances in neural information pro-cessing systems , 31. Yu, C.; Wang, C.; Liao, B.; and Wu, T. 2026. scdfm: Distri-butional flow matching model for robust single-cell pertur-bation prediction. arXiv preprint arXiv:2602.07103 .Yuan, B.; Shen, C.; Luna, A.; Korkut, A.; Marks, D. S.; Ingraham, J.; and Sander, C. 2021. CellBox: interpretable machine learning for perturbation biology with application to the design of cancer combination therapy. Cell systems ,12(2): 128–140. Appendix 
+
+## Background of Virtual Cell 
+
+Cell, the fundamental functional unit of life, is a complex en-tity. The intricate cellular behaviors emerge from highly coor-dinated interactions among genes, proteins, metabolites, and signaling pathways across multiple biological scales (Yang et al. 2025). Understanding how these molecular systems col-lectively determine cellular responses to environmental stim-uli and perturbations has long been a central goal in biology and medicine. However, the complexity, heterogeneity, and context dependency of cellular systems make comprehensive experimental characterization extremely challenging. To better understand and predict cellular behaviors, re-searchers have increasingly turned toward the construction of virtual cell models to simulate, predict, and steer cell behav-ior (Adduri et al. 2025; Bereket and Karaletsos 2023; Bunne et al. 2023; Cui et al. 2024a; He et al. 2026; Klein et al. 2025). The overarching vision of virtual cell modeling is to create predictive and mechanistic representations of cellular sys-tems that can simulate how cells respond to perturbations, transition across developmental dynamics, and reorganize regulatory programs under varying biological conditions. Bunne et al. (Bunne et al. 2024) proposed the definition of Artificial Intelligence Virtual Cell (AIVC), which is a multi-scale foundation model that learns universal repre-sentations of biological entities across molecular, cellular, and tissue scales. Within this framework, cellular systems are represented through learned embeddings derived from multi-modal biological measurements, including genomic sequences, transcriptomics, proteomics, imaging, and spatial omics data. These representations can then be manipulated by neural network-based “virtual instruments” that simulate cellular transitions, perturbation responses, and developmen-tal dynamics. In essence, the virtual cell paradigm seeks to transform cellular biology into a programmable compu-tational system capable of both predictive simulation and mechanistic inference. The development of virtual cells has substantial scientific and clinical significance. Accurate virtual cell systems could enable large-scale in silico experimentation that would oth-erwise be prohibitively expensive or technically infeasible in physical laboratories. Furthermore, virtual cells may provide a unified computational framework for studying how molec-ular interactions collectively give rise to emergent cellular phenotypes across diverse biological contexts. Such systems have the potential to accelerate functional genomics, uncover regulatory mechanisms underlying development and disease, guide therapeutic target discovery, and improve precision medicine through patient-specific response prediction. The rapid development of high-throughput experimental techniques has significantly advanced progress in virtual cell modeling. CRISPR-based perturb-seq (Dixit et al. 2016), perturbation proteomics (Qian et al. 2024), and single-cell imaging (Chandrasekaran et al. 2024) now allow researchers to measure cellular states at unprecedented scale and resolu-tion. In particular, datasets generated from genetic and chem-ical perturbation experiments (Heumos et al. 2025) provide paired observations of pre- and post-perturbation cellular states, offering valuable resources for learning cellular re-sponse dynamics. Driven by advances in experimental technologies, artifi-cial intelligence has become a central methodology for vir-tual cell modeling. Given an initial cell state together with perturbation conditions, existing approaches aim to gener-ate the corresponding post-perturbation cellular response. Current efforts mainly focus on perturbation-response pre-diction using transcriptomic measurements like scRNA-seq, since gene expression profiles provide scalable, information-rich representations of cellular states and are currently the most widely available modality for large-scale perturbation datasets. Existing approaches typically formulate virtual cell modeling as a conditional generative learning problem. Vari-ational autoencoders (Bereket and Karaletsos 2023), trans-former architectures (Adduri et al. 2025), graph neural net-works (Roohani, Huang, and Leskovec 2024), and more re-cently diffusion-based generative models (He et al. 2026) are commonly employed to learn the mappings between per-turbations and transcriptomic responses. These models aim to capture the high-dimensional structure of cellular states while generalizing across unseen perturbations, cell types, and biological conditions. Despite rapid progress, building reliable virtual cell sys-tems remains an open challenge. Cellular systems exhibit complex nonlinear regulatory interactions, dynamic rewiring of gene regulatory networks, substantial biological hetero-geneity, and strong context dependency across developmen-tal and disease states (Yang et al. 2025). Moreover, current models often prioritize predictive accuracy while lacking mechanistic interpretability and biologically grounded gen-eration processes. Future virtual cell systems must not only generalize across modalities and perturbations, but also sup-port mechanistic reasoning, uncertainty estimation, and bio-logically faithful simulation of cellular dynamics (Wei et al. 2026). Developing deep learning architectures that can effec-tively integrate biological priors with generative modeling therefore remains a critical direction for future virtual cell research. 
+
+## Experimental Details 
+
+Datasets, Preprocessing, and Splits 
+
+For both Norman19 and H1, we retain the top 1000 highly variable genes and keep their identities fixed throughout to-kenization and generation. Binning statistics are fitted on training data and reused for validation and test examples. Control cells provide the reference expression used to form perturbation-induced changes. Norman19 contains 287 perturbation conditions, includ-ing 131 combinatorial conditions. We use the combination-prediction split with splitter seed 42; held-out combinations are reserved for evaluation. H1 uses the benchmark’s saved held-out-cell split. The dataset split is fixed across repeated runs, and the test split is used only for final evaluation. Evaluation Metrics 
+
+Following the PerturBench protocol cited in the main pa-per, metrics are computed for each perturbation condition and then averaged across evaluation conditions. Let ˆyp, yp,and yctrl denote the predicted, observed, and control mean-expression profiles for condition p.
+
+• Pearson ∆ is the Pearson correlation between ˆyp − yctrl 
+
+and yp − yctrl .
+
+• Cos. LogFC is the cosine similarity between predicted and observed log 2 fold-change vectors relative to control, using a pseudocount of 0.1. 
+
+• Cos. LogFC Rank ranks the matched observed perturba-tion against the other conditions by LogFC cosine simi-larity. Lower values indicate better perturbation-level dis-crimination. 
+
+• Cos. PCA is the cosine similarity between predicted and observed condition centroids after projection into the ref-erence PCA space. 
+
+• Sym. KL is the symmetrized KL divergence between pre-dicted and observed cell populations in the same reference PCA space. Lower values indicate closer distributional agreement. 
+
+Baseline Protocol 
+
+Comparison protocol. We designed the comparison so that methods differ in model design rather than in the data or evaluator. All methods use the same 1000-gene pre-diction space, perturbation and control annotations, train-ing/validation/test partitions, and held-out test conditions. Predicted cells from every method are converted to the same AnnData schema and evaluated by the same PerturBench-compatible code, with the same reference controls, reference PCA space, condition aggregation, and metric definitions. No method-specific metric implementation or test-set post-processing is used. We preserve model-specific input representations and training procedures from the released implementations rather than forcing all methods into the discrete representation used by D2R2. For methods integrated into the benchmark (SAMS-VAE, Biolord, and Cell Flow), we use its unified data-loading and training interfaces. For standalone meth-ods, including STATE, Squidiff, and scDFM, we adapt only the input/output interface required by the common split and evaluator. Model selection and early stopping use validation behavior only; test metrics are computed after model selec-tion. Early stopping or a fixed training horizon follows the corresponding implementation, because an identical num-ber of updates is not comparable across VAE, Transformer, diffusion, and flow-based objectives. 
+
+D2R2 Configuration 
+
+The denoising predictor uses 50 expression bins and a 12-layer Transformer with hidden dimension 768, 12 attention heads, and a SwiGLU intermediate dimension of 3072. We use RMSNorm and attention and path dropout of 0.1. Nor-man19 uses 64 control tokens and two perturbation tokens, whereas H1 uses one control token and four perturbation Table 3: Model-specific configurations used for the baseline methods.               
+
+> Method Configuration SAMS-VAE Latent size 128; batch 256; dropout 0.4; learning rate 3.03 ×
+> 10 −5
+> Biolord Latent size 512; batch 1000; dropout 0.4; learning rate 1.67 ×
+> 10 −4
+> STATE Hidden size 768; eight Transformer layers; 12 attention heads; learning rate 10 −4
+> Cell Flow Batch 2000; hidden size 2048 with three layers; learning rate
+> 10 −5
+> Squidiff Three layers; batch 64; learning rate 10 −4; EMA 0.9999 scDFM Hidden size 512; batch 32; learning rate 10 −5
+
+Table 4: MDDM training configuration. Dataset-specific val-ues are reported as Norman19 / H1. 
+
+Parameter Value Batch size 128 Optimizer AdamW Weight decay 10 −2
+
+Learning rate (Norman19 / H1) 10 −4 / 5 × 10 −4
+
+Warmup fraction 0.01 Gradient clipping 1.0 Precision bfloat16 mixed EMA decay 0.998 
+
+tokens. At inference time, generation proceeds for 20 steps and updates 50 genes per step, with an MDDM sampling temperature of 1.0. 
+
+MDDM training. We first train the denoising predictor with the masked-token objective described in the main paper. The optimization settings are summarized in Table 4; the dataset-specific learning rate is selected on the validation split. 
+
+GRPO training. After MDDM training, its parameters re-main fixed while the RPM is optimized with the GRPO ob-jective defined in the main paper. Each group contains four generation rollouts for the same example, and the resulting group-relative advantages are used for one clipped policy update. The complete optimization settings are given in Ta-ble 5. 
+
+Selection of bin representative values. We explored two strategies for mapping generated discrete tokens back to con-tinuous expression values: assigning each sampled token the midpoint of its corresponding bin, and taking the pos-terior expectation over all bin midpoints. The expectation-based readout produced similar or slightly better perfor-mance on mean-profile metrics, but substantially degraded distribution-sensitive metrics such as MMD-PCA and Sym. KL, likely because averaging across bins reduces the vari-ability of the generated cell population. We therefore use the bin-midpoint readout throughout our experiments. This map-ping is deterministic and introduces no additional trainable parameters. Table 5: GRPO training configuration for RPM optimization.                
+
+> Parameter Value Batch size 96 Group size 4Optimizer AdamW Learning rate 3×10 −6
+> Weight decay 10 −4
+> Warmup fraction 0.01 Precision bfloat16 mixed Gradient clipping 1.0 GRPO clipping threshold 0.15 KL coefficient 0.05 Optimization iterations 1Update cycles 50
+
+Repeated Runs and Statistical Protocol 
+
+The split is fixed across runs. The five reported seeds are 
+
+{0, 1, 2, 3, 42 }; they control training randomness, includ-ing initialization, data shuffling, and stochastic optimization, rather than dataset construction. Results in the main-results table are mean ± sample standard deviation over five inde-pendent runs. For D2R2, the MDDM checkpoint is fixed and the adaptive RPM branch is independently initialized and optimized for each seed. The generation-order ablation likewise fixes the MDDM and the 20-step generation budget so that only the selection policy changes. Lower-is-better metrics are sign-reversed when reporting paired improvements so that a positive difference always de-notes improvement. These condition-level intervals are dis-tinct from the training-seed standard deviations in the main table. 
+
+Compute Environment 
+
+Experiments were run under Ubuntu 22.04 with Python 3.10, CUDA 12.4, PyTorch 2.6, Lightning 2.6, and Scanpy 1.11 on NVIDIA A100 80GB PCIe GPUs. MDDM training and RPM optimization use bfloat16 mixed precision. Metric computa-tion uses the PerturBench-compatible evaluation implemen-tation released with the code. 
+
+## Biological Analysis 
+
+Analysis of regulatory-gene composition across generation steps. 
+
+We inferred a cell-type-specific gene regulatory network (GRN) from unperturbed control cells using DeepSEM (Shu et al. 2021). We then assigned the 1,000 genes generated by D2R2 to two mutually exclusive categories: regulatory genes, defined as genes with at least one outgoing edge in the GRN, and the remaining genes are defined as regulated genes. This classification yielded 303 regulatory genes and 697 regulated genes. For each generation step, we calculated the proportion of generated genes in each category and plot-ted these proportions across steps. 
+
+Comparison of ∆Order between perturbation-specific and non-specific TFs. 
+
+In this analysis, we identified perturbation-specific transcrip-tion factors (TFs) from DoRothEA regulon activity (Garcia-Alonso et al. 2019) using perturbation-versus-control expres-sion changes. DoRothEA regulons were restricted to TF-target pairs represented among the genes modeled by D2R2.For each perturbation, we calculated the z-scored expres-sion change of each gene and tested whether the changes across each TF’s target genes deviated significantly from the background distribution. The resulting P values were ad-justed using the Benjamini–Hochberg procedure. TFs with an 
+
+FDR < 0.1 were classified as perturbation-specific, whereas all remaining tested TFs were classified as non-specific. For each TF, we calculated ∆Order as its biological-prior order minus its RPM-refined order. Thus, ∆Order > 0 indicates that RPM moved the TF to an earlier generation step. We compared ∆Order between the two groups using a one-sided Mann–Whitney U test. 
+
+Analysis of ∆Order among differentially expressed genes. 
+
+Genes with ∆Order > 0 were defined as RPM-promoted genes, whereas those with ∆Order ≤ 0 were defined as RPM-unpromoted genes. For each perturbation, we per-formed differential expression analysis against unperturbed control cells using scanpy.tl.rank_genes_groups .The top 100 genes with the largest absolute differential ex-pression scores were defined as DE genes for that perturba-tion. Then, we calculated the fractions of DE genes classified as RPM-promoted and unpromoted, and compared the paired fractions across perturbations using a one-sided Wilcoxon signed-rank test. 
+
+Gene set enrichment analysis (GSEA) of ∆Order .
+
+Gene set enrichment analysis was performed on the averaged 
+
+∆Order across perturbations using gseapy.prerank 
+
+with Reactome Pathways 2024. A positive normalized en-richment score (NES) indicates enrichment among genes with higher ∆Order , corresponding to genes promoted ear-lier by RPM. 
+
+## The Results of GSEA Analysis 
+
+As shown in Fig. 5, the RPM-promoted genes are strongly enriched in cell-cycle-related pathways, a major axis of per-turbation response. (a) (b) Figure 5: GSEA analysis using the ∆Order values of all genes as the ranking metric. The GSEA analysis shows that RPM-promoted genes are enriched in cell cycle pathway (a) and G2-M transition pathway (b). 
+
+## References 
+
+Adduri, A. K.; Gautam, D.; Bevilacqua, B.; Imran, A.; Shah, R.; Naghipourfar, M.; Teyssier, N.; Ilango, R.; Nagaraj, S.; Dong, M.; et al. 2025. Predicting cellular responses to pertur-bation across diverse contexts with State. BioRxiv , 2025–06. Bereket, M.; and Karaletsos, T. 2023. Modelling cellular perturbations with the sparse additive mechanism shift vari-ational autoencoder. Advances in Neural Information Pro-cessing Systems , 36: 1–12. Bunne, C.; Roohani, Y.; Rosen, Y.; Gupta, A.; Zhang, X.; Roed, M.; Alexandrov, T.; AlQuraishi, M.; Brennan, P.; Burkhardt, D. B.; et al. 2024. How to build the virtual cell with artificial intelligence: Priorities and opportunities. Cell ,187(25): 7045–7063. Bunne, C.; Stark, S. G.; Gut, G.; Del Castillo, J. S.; Levesque, M.; Lehmann, K.-V.; Pelkmans, L.; Krause, A.; and Rätsch, G. 2023. Learning single-cell perturbation responses using neural optimal transport. Nature methods , 20(11): 1759– 1768. Chandrasekaran, S. N.; Cimini, B. A.; Goodale, A.; Miller, L.; Kost-Alimova, M.; Jamali, N.; Doench, J. G.; Fritchman, B.; Skepner, A.; Melanson, M.; et al. 2024. Three million im-ages and morphological profiles of cells treated with matched chemical and genetic perturbations. Nature Methods , 21(6): 1114–1121. Cui, H.; Wang, C.; Maan, H.; Pang, K.; Luo, F.; Duan, N.; and Wang, B. 2024a. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. Na-ture methods , 21(8): 1470–1480. Dixit, A.; Parnas, O.; Li, B.; Chen, J.; Fulco, C. P.; Jerby-Arnon, L.; Marjanovic, N. D.; Dionne, D.; Burks, T.; Ray-chowdhury, R.; et al. 2016. Perturb-Seq: dissecting molecu-lar circuits with scalable single-cell RNA profiling of pooled genetic screens. cell , 167(7): 1853–1866. Garcia-Alonso, L.; Holland, C. H.; Ibrahim, M. M.; Turei, D.; and Saez-Rodriguez, J. 2019. Benchmark and integration of resources for the estimation of human transcription factor activities. Genome research , 29(8): 1363–1375. He, S.; Zhu, Y.; Tavakol, D. N.; Ye, H.; Lao, Y.-H.; Zhu, Z.; Xu, C.; Chauhan, S.; Garty, G.; Tomer, R.; et al. 2026. Squid-iff: predicting cellular development and responses to pertur-bations using a diffusion model. Nature methods , 23(1): 65–77. Heumos, L.; Ji, Y.; May, L.; Green, T. D.; Peidli, S.; Zhang, X.; Wu, X.; Ostner, J.; Schumacher, A.; Hrovatin, K.; et al. 2025. Pertpy: an end-to-end framework for perturbation anal-ysis. Nature Methods , 1–10. Klein, D.; Fleck, J. S.; Bobrovskiy, D.; Zimmermann, L.; Becker, S.; Palma, A.; Dony, L.; Tejada-Lapuerta, A.; Huguet, G.; Lin, H.-C.; et al. 2025. CellFlow enables gen-erative single-cell phenotype modeling with flow matching. 
+
+bioRxiv , 2025–04. Qian, L.; Sun, R.; Aebersold, R.; Bühlmann, P.; Sander, C.; and Guo, T. 2024. AI-empowered perturbation proteomics for complex biological systems. Cell Genomics , 4(11). Roohani, Y.; Huang, K.; and Leskovec, J. 2024. Predicting transcriptional outcomes of novel multigene perturbations with GEARS. Nature Biotechnology , 42(6): 927–935. Shu, H.; Zhou, J.; Lian, Q.; Li, H.; Zhao, D.; Zeng, J.; and Ma, J. 2021. Modeling gene regulatory networks using neural network architectures. Nature Computational Science , 1(7): 491–501. Wei, Z.; Wang, Y.; Gao, Y.; Wang, S.; Li, P.; Si, D.; Gao, Y.; Wu, S.; Li, D.; Dong, K.; et al. 2026. Benchmarking al-gorithms for generalizable single-cell perturbation response prediction. Nature Methods , 23(2): 451–464. Yang, T.; Wang, Y.-Y.; Ma, F.; Xu, B.-H.; and Qian, H.-L. 2025. Build the virtual cell with artificial intelligence: a perspective for cancer research. Military Medical Research ,12(1): 4.

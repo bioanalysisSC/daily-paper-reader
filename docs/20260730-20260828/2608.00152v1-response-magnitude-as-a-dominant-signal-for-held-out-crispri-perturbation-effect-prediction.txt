@@ -1,0 +1,832 @@
+Title: Response Magnitude as a Dominant Signal for Held-Out CRISPRi Perturbation Effect Prediction
+
+URL Source: https://arxiv.org/pdf/2608.00152v1
+
+Published Time: Tue, 04 Aug 2026 00:10:01 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Response Magnitude as a Dominant Signal for Held-Out CRISPRi Perturbation Effect Prediction 
+
+Mehrdad Shoeibi 
+
+University of Central Florida 
+
+Mehrdad.Shoeibi@ucf.edu 
+
+Niloofar Yousefi 
+
+University of Central Florida 
+
+Niloofar.Yousefi@ucf.edu 
+
+## Abstract 
+
+Predicting the magnitude of a CRISPRi perturbation’s transcriptomic effect on held-out target genes is an important open problem in single-cell biology. Recent work has documented that simple baselines often match or exceed deep perturbation predictors on related protocols [Ahlmann-Eltze et al., 2025, Wu et al., 2025, Mejia et al., 2025]. We study this phenomenon on the Virtual Cell Challenge (VCC) benchmark [Roohani et al., 2025] under a strict held-out target-gene split, identify the specific low-dimensional signal that drives the gap, and characterize how it transfers across cell types. The target is the log Anderson–Darling distance from non-targeting controls, which is strongly predictable from four deterministic scalar functions of the 2,000 -dimensional input. A deep MLP encoder with direct access to the full input collapses toward the marginal training mean ( R2 = +0 .082 ±
+
+0.010 ), and standard remedies (tail-weighted regression, label-density smoothing, post-hoc calibration, cross-cell-type pretraining, an inductive-bias gate) do not close the gap. A linear regression on the four magnitude scalars alone reaches 
+
+R2 = +0 .208 , exceeding the strongest x-only classical model ( +0 .190 ); removing row-level magnitude collapses the latter to +0 .062 ± 0.008 ; and a Random Forest on the input plus the four scalars reaches R2 = +0 .370 ± 0.004 , substantially exceeding our deep proof-of-concept encoder ( MAG -SPSM , R2 = +0 .225 ±
+
+0.004 ). Two pre-specified controls—a row-shuffle and substitution by four i.i.d. Gaussian features—attribute the magnitude gain to per-row alignment rather than added dimensionality. Under zero-shot transfer to two external CRISPRi screens, evaluated against a target-gene endpoint rebuilt from single-cell data so that source and target score the same quantity, magnitude-only predictors are nonnegative and usually resolved-positive, whereas expression-only predictors are negative or unresolved. Exposing magnitude to the deep encoder improves transfer over its expression-only counterpart by a resolved margin in both screens ( ∆ρ = +0 .117 
+
+and +0 .086 ), yet the encoder does not outperform a four-scalar linear regression on the same features in either screen. We also find that the Anderson–Darling column distributed with these screens measures transcriptome-wide response breadth rather than target-gene effect strength, so evaluating transfer against it scores a different outcome. 
+
+## 1 Introduction 
+
+Predicting the transcriptomic response of a cell to a genetic perturbation is a central problem in computational single-cell biology, with applications to target discovery, drug repurposing, and synthetic biology [Dixit et al., 2016, Replogle et al., 2022b, Lotfollahi et al., 2019, Roohani et al., 2024]. The hardest variant of this problem, and the one emphasized by recent benchmarks such as the Virtual Cell Challenge (VCC) [Roohani et al., 2025], is held-out target-gene generalization: train on one set of perturbations, evaluate on a disjoint set whose identities have not been seen during training. Foundation-model approaches such as scGPT [Cui et al., 2024] and Geneformer [Theodoris et al., arXiv:2608.00152v1 [cs.LG] 31 Jul 2026 2023] have advanced single-cell representation learning, yet on the strict held-out target-gene split studied here, even strong stable-prediction encoders collapse predictions toward the marginal training mean and fail to recover the high- and low-effect tails. 
+
+This paper. We study held-out target-gene generalization on VCC. Recent work has documented that simple baselines often match or exceed deep perturbation predictors on related protocols [Ahlmann-Eltze et al., 2025, Wu et al., 2025, Csendes et al., 2025, Bendidi et al., 2024]; our contribution is more specific: we identify the low-dimensional signal that drives this gap and quan-tify how it transfers across cell contexts. The target is the log Anderson–Darling distance from non-targeting controls, which is strongly predicted by four deterministic scalar functions of the 
+
+2,000 -dimensional input, m(x) = ( ¯|x|, ∥x∥2/√d, ∥x∥∞, σ (x)) . Yet a deep MLP encoder with direct access to x collapses toward the marginal training mean ( R2 = +0 .082 ± 0.010 ), while a linear regression on m(x) alone reaches +0 .208 and a Random Forest on [x; m(x)] reaches 
+
++0 .370 ± 0.004 . Five plausible remedies for tail collapse do not close the gap, and row-normalizing 
+
+x collapses the strongest classical baseline from +0 .190 to +0 .062 , isolating row-aligned magnitude as the dominant component. Under zero-shot transfer to two external screens the same asymmetry appears: expression-only models are negative or unresolved under transfer, whereas magnitude-only models are nonnegative and usually resolved-positive. Explicit magnitude exposure is necessary but not sufficient—individual model families change verdict between screens—and across both screens no deep encoder we tested outperforms a four-scalar linear regression on the same features. 
+
+What is and is not surprising about magnitude. Because the target is the log Anderson–Darling distance between each perturbed profile and the matched NT control, response magnitude is in principle informative of the label by construction. The relationship between magnitude and the label is not the surprising part of this paper; recent work has likewise observed that simple baselines compete with deep perturbation predictors [Ahlmann-Eltze et al., 2025, Wu et al., 2025]. What is specific to this paper is (i) which signal drives the gap on the held-out target-gene split—response magnitude rather than directional patterns, isolated by pre-specified shuffle and i.i.d. Gaussian controls; (ii) that a Random Forest on the same input augmented with magnitude beats every deep architecture we tried by a substantial margin ( +0 .370 vs. +0 .225 ); and (iii) that under cross-cell transfer explicit magnitude exposure is helpful but not sufficient—the model class and how it consumes the signal also matter. The diagnostic claim is about which signal models exploit and under which evaluation protocols, not about whether the simple-baseline phenomenon exists; that is established in prior work. 
+
+Contributions. This paper is a diagnostic study within the recent linear-baseline and mode-collapse literature [Ahlmann-Eltze et al., 2025, Wu et al., 2025, Mejia et al., 2025]. Within that lineage, our contributions are: 1. Identification of response magnitude as the specific signal. On the VCC held-out target-gene benchmark, four scalar magnitude statistics of x predict the label nearly as well as the full 
+
+2,000 -dimensional input under classical models ( R2 = +0 .208 vs. +0 .190 ). Removing row-level magnitude (row-normalizing x) collapses the strongest classical baseline to R2 = +0 .062 ,isolating row-aligned response magnitude as the dominant recoverable signal under this split. 2. Attribution to per-row alignment. Two pre-specified controls (row shuffling, four i.i.d. Gaussian features) both return performance to baseline within seed noise, and a population-level argument shows that any augmentation independent of the input cannot improve over the Bayes predictor on the input alone (App. C). The gain is therefore attributable to per-row dependence, not to added dimensionality or capacity. 3. MLP-encoder representational failure. Although fm(x) is a deterministic function of the input, a deep MLP with direct access to that input fails to recover it in held-out prediction (R2 = +0 .082 ± 0.010 vs. +0 .208 for a four-feature linear model), and an architecture sweep over normalization, dropout, width, and a hand-designed scale shortcut does not rescue it (App. Q). The diagnosis is scope-limited to the MLP family we tested. 4. Model class changes how the magnitude signal is exploited. A Random Forest on x plus four magnitude statistics reaches R2 = +0 .370 ± 0.004 , substantially outperforming our deep 
+
+> MAG
+
+-SPSM proof of concept ( +0 .225 ± 0.004 ). The dominant diagnostic is therefore not specific to any single deep architecture in the MLP family. 25. Endpoint comparability across screens. The Anderson–Darling column distributed with the Replogle screens is strongly consistent with a transcriptome-wide differential-expression gene count rather than a target-gene effect size, and is only weakly associated with the latter within a screen ( ρ = 0 .17 –0.40 ). Transfer evaluated against it therefore scores a different outcome from the one models are trained on. 6. Cross-screen magnitude–direction asymmetry. Rebuilding the target-gene endpoint from single-cell data for two external screens, magnitude-only predictors transfer positively while expression-only predictors do not. Exposing magnitude to a deep encoder improves transfer over its expression-only counterpart in both screens ( ∆ρ = +0 .117 and +0 .086 ), yet no deep encoder we tested beats a four-scalar linear regression. To our knowledge this asymmetry has not been documented in prior linear-baselines literature. 7. Magnitude-anchored residual prediction (secondary). MAG-Anchor decomposes the prediction into a MAG-LINEAR-initialized magnitude anchor and a gated residual branch, improving over 
+
+> MAG
+
+-SPSM on VCC ( R2 = +0 .268 ± 0.011 ). Random Forest on [x; fm] remains stronger in-distribution. We treat it as supporting evidence for the diagnostic, not as a new state-of-the-art predictor (App. D). 
+
+## 2 Related work 
+
+Perturbation prediction. SPSM -style stable-prediction models descend from stable-prediction methods in causal inference [Kuang et al., 2018, Shen et al., 2018] adapted to single-cell data. Recent perturbation prediction methods include CPA [Lotfollahi et al., 2023], GEARS [Roohani et al., 2024], and pretrained foundation models such as scGPT [Cui et al., 2024], Universal Cell Embeddings [Rosen et al., 2026], and Geneformer [Theodoris et al., 2023]. Many existing evaluations either pool across target-gene splits or use a held-out-pair setting; the strict disjoint target-gene split used here is more demanding, and our analysis is complementary: rather than proposing a new architecture we ask which features any model class needs to exploit on this split. 
+
+Linear baselines and mode collapse in perturbation prediction. A recent line of work documents that deep and foundation-model perturbation predictors frequently fail to outperform simple baselines. Ahlmann-Eltze et al. [2025] compared five foundation models and two deep architectures against linear baselines on Adamson, Norman, and Replogle, and found that none consistently outperformed the linear model on unseen-perturbation prediction; for held-out perturbations the deep models often failed to outperform predicting the unconditional training mean. They additionally show that a linear model with perturbation embeddings pretrained on Replogle K562 transfers across cell lines to RPE1 (and vice versa), establishing that cross-cell-line transfer with linear models is feasible. Wu et al. [2025] introduced PerturBench with covariate-transfer benchmarks across cell lines on Srivatsan20 and Jiang24, and identified mode collapse—predictions concentrating in a narrow region of output space—as a recurring failure mode, with simple baselines (Latent Additive, Decoder-Only) often matching or exceeding more complex autoencoder models. Csendes et al. [2025] found that a mean baseline exceeded scGPT and scFoundation [Hao et al., 2024] on post-perturbation Pearson( ∆), and Bendidi et al. [2024] reported that PCA-based baselines remained competitive with transcriptomics foundation models. Mejia et al. [2025] addressed mode collapse on the loss side by introducing DEG-weighted MSE as a training objective with calibrated negative and positive baselines. Our work is in this lineage but contributes a more specific diagnosis on a distinct protocol. Where prior work establishes the broader phenomenon, we (i) isolate response magnitude as the specific low-dimensional signal the deep encoders fail to recover, with pre-specified shuffle and i.i.d. Gaussian controls plus a population-level argument that attribute the gain to per-row alignment rather than added dimensionality (Sec. 5.2, App. C); (ii) report a cross-cell magnitude–direction asymmetry under zero-shot transfer to two external screens, in which expression-only models transfer with negative or unresolved Spearman while magnitude-only models transfer positively (Sec. 6.3); and (iii) show that the endpoint distributed with those screens measures a different quantity from the one models are trained on, and rebuild a common endpoint for the comparison (Sec. 6.2). The evaluation uses the held-out target-gene split of the Virtual Cell Challenge [Roohani et al., 2025], distinct from the covariate-transfer splits of Wu et al. [2025] and the unseen-perturbation splits of Ahlmann-Eltze et al. [2025]. 3Imbalanced regression and tail prediction. Deep imbalanced regression frameworks include La-bel Distribution Smoothing (LDS) and Feature Distribution Smoothing [Yang et al., 2021], Balanced MSE [Ren et al., 2022], density-based reweighting [Steininger et al., 2021], and label-distribution-aware margin losses [Cao et al., 2019]. We instantiate LDS-weighted and tail-weighted variants as baselines (Sec. 4); both fail in our setting and we discuss why in Sec. 7. 
+
+Distribution shift and rank objectives. Cell-type transfer is a distribution shift between domains with distinct gene-expression baselines. Standard OOD techniques such as IRM [Arjovsky et al., 2019], GroupDRO [Sagawa et al., 2020], REx [Krueger et al., 2021], and the WILDS benchmark family [Koh et al., 2021] address related but distinct shifts and are complementary. Our use of magnitude as a deliberately low-dimensional, coordinate-permutation-invariant summary is con-ceptually allied with norm- and energy-based detection [Hendrycks and Gimpel, 2017, Liu et al., 2020] and norm-aware embeddings [Wang et al., 2017]. The MAG -R ANK extension (App. I) uses a margin-based pairwise rank loss in the spirit of LambdaRank-family approaches [Burges et al., 2005, Cao et al., 2007, Hadsell et al., 2006]. 
+
+## 3 Problem setup and notation 
+
+Data. The Virtual Cell Challenge (VCC) corpus [Roohani et al., 2025] consists of CRISPRi (dCas9– KRAB) [Gilbert et al., 2014] Perturb-seq [Dixit et al., 2016] screens in H1 human embryonic stem cells (H1 hESC), organized into 48 experimental batches indexed by b ∈ B . Each row i corresponds to a (batch, target-gene) pair (bi, g i) with feature vector xi ∈ Rd and scalar label yi ∈ R≥0.Features are log1p-normalized mean expression deltas relative to the NT-control mean of batch bi,restricted to the d = 2 ,000 highly variable genes (HVGs) selected on the train split. The label is 
+
+yi = log(1 + max {0, A 2 
+
+> bi,g i
+
+}), where A2 
+
+> b,g
+
+is the two-sample Anderson–Darling statistic [Scholz and Stephens, 1987] between the log1p expression of gene g in cells perturbed at g within batch b
+
+and in non-targeting controls from the same batch; the AD statistic is computed on the target-gene column only, and xi enters as predictor input only (App. V). The set of target genes is partitioned disjointly into Gtr , Gval , and Gte of sizes 140 , 49 , and 93 , giving 5,740 training, 2,052 validation, and 
+
+3,972 test rows. 
+
+Task and metrics. Given (bi, xi) for a test row, predict yi. We report pooled test R2 = 1 −P
+
+> i
+
+(yi − ˆyi)2 P 
+
+> i
+
+(yi − ¯yte )2, seed-level mean ± standard deviation across independent training runs (default: seeds {0, 1, 2}; MAG-Anchor uses five seeds), Spearman rank correlation, and per-quintile bias E[ˆ y − y | q(y)] . All reported standard deviations use sample standard deviation with the n − 1
+
+denominator ( ddof=1 ). 
+
+Cross-dataset shift. For external transfer we use two Replogle CRISPRi (dCas9–KRAB) Perturb-seq screens [Replogle et al., 2022b,a]: RPE1 and K562-essential. Features are mapped into the VCC HVG namespace by gene symbol, recovering 1,430 of 2,000 HVGs ( 71 .5% coverage); the 570 
+
+unmapped coordinates are imputed as zero in the log1p-delta space, the value an unperturbed cell takes in the VCC delta pipeline. For each screen we rebuild the label from single-cell data using the definition above, so that source and target are scored on the same quantity—the Anderson–Darling column distributed with the Replogle release measures something else (Sec. 6.2). We never train on either screen and never use target-side statistics for preprocessing. A 1,430 -HVG training control was run against the distributed endpoint and is reported as a legacy sensitivity analysis (App. O); it is not evidence for the rebuilt endpoint. 
+
+## 4 Diagnosing the failure of standard remedies 
+
+Baseline failure mode. The SPSM V4 baseline, a stable-prediction MLP encoder with a within-context stability loss and a relation loss (App. G), achieves test pooled R2 = +0 .0824 ± 0.0100 
+
+across three seeds. Its predictions exhibit a hallmark of mean collapse: test prediction standard deviation is bσˆy = 0 .240 versus target standard deviation σyte = 0 .81 , and the three-seed mean per-quintile bias is monotonically structured ( +1 .093 on Q1, −0.696 on Q5). We use “mean collapse” rather than “mode collapse” [Wu et al., 2025] because in our scalar-regression setting predictions 40 1 2 3 4 5 6              
+
+> y= log 1p(Anderson-Darling)
+> 0100 200 300 400 500
+> count
+> (a) VCC label distribution
+> train (n = 5740) test (n = 3972) Q1 vs Q1 Q5 vs Q5 Q5 vs Q1
+> Comparison
+> 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+> AUROC (test)
+> (b) Magnitude beats direction (LogReg AUROC)
+> raw x (2000-D) normalized x (2000-D)
+> x2only (1-D)
+> mean |x|only (1-D) top-10 PCs
+> Q1 Q2 Q3 Q4 Q5
+> True-y quintile
+> 0.75
+> 0.50
+> 0.25
+> 0.00 0.25 0.50 0.75 1.00
+> Mean (y y) [test]
+> (c) Per-quintile bias (regression to mean)
+> SPSM baseline MAG-SPSM
+
+Figure 1: Diagnostic. Response-magnitude statistics correlate with the per-row label; the baseline encoder collapses predictions toward the marginal training mean. concentrate around the marginal training mean specifically, rather than at one of multiple modes of a multimodal output distribution. 
+
+Five remedies that fail or stall. We instantiated five plausible corrections under a matched protocol (full numerical results in Table 8, Appendix): (i) an inductive-bias bilevel gate failed both pre-specified tests of gate behavior; (ii) cross-cell-type pretraining on Replogle followed by VCC fine-tuning crashed performance ( R2 = −0.181 ); (iii) a deployable post-hoc tail correction worsened val R2 by −0.046 vs. the single-seed uncorrected SPSM V4 baseline used in that phase (absolute val R2 = −0.192 ); (iv) a tail-weighted MSE in the spirit of Balanced MSE [Ren et al., 2022] produced ∆R2 of at most +0 .0075 ; (v) LDS-weighted MSE [Yang et al., 2021] worsened R2 at both bandwidths tested. The shared failure mode of (iv) and (v) is informative: reweighting alone does not fix prediction-range collapse, because the reweighted predictor still maps inputs through an encoder lacking direct information about a sample’s response magnitude . This motivates exposing magnitude as a feature, not as a loss. 
+
+The magnitude axis. A pre-specified diagnostic suite (App. A) identified that the mean absolute value of x correlated strongly with y (Spearman ∼ 0.40 ) and that prediction failures concentrated at low values of this proxy; tail rows are linearly separable along the magnitude axis but the baseline encoder collapses predictions to a narrow window centered on ¯ytr (Fig. 1). 
+
+## 5 Magnitude features and the proof-of-concept encoder 
+
+Magnitude features. For x ∈ Rd with components x1, . . . , x d, define the magnitude map m :
+
+Rd → R4 by 
+
+m(x) = 1
+
+d
+
+X
+
+j
+
+|xj |
+
+| {z }
+
+m1: mean |x|
+
+,
+
+ 1
+
+d
+
+X
+
+j
+
+x 2
+
+j
+
+1/2
+
+| {z }
+
+m2: ℓ2/√d
+
+, max 
+
+j |xj |
+
+| {z }
+
+m3: ℓ∞
+
+,
+
+ 1
+
+d
+
+X
+
+j
+
+(xj − ¯x)21/2
+
+| {z }
+
+m4: σ(x)
+
+!
+
+. (1) We z-score m component-wise using training-set statistics to obtain fm(x). All four statistics are coordinate-permutation invariant; m1, m 2, m 3 are coordinate-wise sign-flip invariant; m4 is invariant under translations along 1. These invariances emphasize how much the cell responded rather than which genes responded, and are the property that, we will argue, makes magnitude a more shift-stable summary across cell types. 
+
+Three baselines built from fm. We use fm in three ways: (i) MAG -L INEAR , a four-feature linear regression ˆy = w⊤fm(x) + b; (ii) classical methods on x, x/∥x∥2, fm, or [x; fm] (Sec. 6.1); and (iii) 
+
+MAG -SPSM (below) as a proof of concept that the same signal can be exposed to a deep encoder. 
+
+MAG -SPSM (proof of concept). MAG -SPSM concatenates x with fm(x) to form x+ = [ x; fm(x)] ∈
+
+R2004 and feeds it to an MLP encoder fθ : R2004 → R128 (three hidden layers of width 256 , ReLU, 5LayerNorm, no architectural dropout) followed by a linear head. The objective is 
+
+Ltotal = LMSE + λstab Lstab + λrel Lrel , (2) where Lstab and Lrel are the SPSM stability and relation losses (App. G; λstab = λrel = 0 .5, inherited unchanged). Training schedule and optimizer are in App. G; model selection is by validation R2.
+
+> MAG
+
+-SPSM is not the strongest model in this paper; the strong-baseline audit (Sec. 6.1) shows that classical tree ensembles on the same input outperform it by a large margin. We retain MAG -SPSM as the simplest deep-architecture verification that magnitude is recoverable when supplied explicitly, and as the substrate for the causal controls in Sec. 5.2. 
+
+5.1 Magnitude-anchored residual prediction 
+
+Motivated by the diagnostic finding that response magnitude is a cross-cell-stable signal, we briefly in-troduce MAG-Anchor , a secondary deep architecture that decomposes the predicted perturbation effect into a direct magnitude anchor and a gated residual correction: ˆy = gϕ(fm(x)) + α h θ ([ x; fm(x)]) ,where the anchor branch gϕ is a linear layer initialized from MAG-LINEAR, the residual branch hθ
+
+is a small MLP, and α is a learnable gate. Full architectural details, hyperparameters, and ablations are deferred to App. D; we treat MAG-Anchor as supporting evidence for the diagnostic, not as a new state-of-the-art predictor. 
+
+5.2 The role of per-row alignment 
+
+The controls above rest on a simple population-level argument: if an augmenting block M ⋆ is independent of (X, Y ), then E[Y | X, M ⋆] = E[Y | X], so no measurable predictor using (X, M ⋆)
+
+can improve over the Bayes predictor on X alone under squared loss. This yields two consequences we test directly: (a) replacing fm(xi) by four i.i.d. N (0 , I 4) features makes the augmenting block independent of (xi, Y i) by construction; (b) a row-shuffled augmentation preserves the marginal distribution of fm but breaks row-specific information about Yi. Any R2 gain from concatenating the four scalars must therefore arise from per-row dependence on xi (App. C). 
+
+## 6 Experiments 
+
+Implementation. The deep SPSM and MAG -SPSM models share the SPSM V4 backbone (App. G); MAG-Anchor uses a separate two-branch architecture with MSE on ˆy (App. D). Hyperparameters, optimizer settings, and compute details are listed in App. F and App. G; we report mean ± std over seeds {0, 1, 2} (MAG-Anchor uses five seeds). 
+
+6.1 Strong classical baselines reveal magnitude as the dominant axis 
+
+We test whether the magnitude effect is specific to the deep SPSM architecture or a more general property of held-out target-gene prediction. We evaluated five classical methods (Ridge, ElasticNet, Random Forest, HistGradientBoosting, k-NN) on four feature sets: the full x, the row-normalized di-rection x/∥x∥2 (DIRECTION -ONLY ), fm alone ( MAG -ONLY ), and the concatenation [x; fm] (X+MAG ). All preprocessing used training-split statistics; the four magnitude features are pre-specified before any model training. Five hypotheses were pre-specified before the experiment was run; we report all five verdicts in App. A. The result (Table 1) reframes the interpretation of the deep model. (i) Four magnitude scalars match the full input. Ridge on MAG -ONLY reaches +0 .187 , only 0.003 below the strongest classical model on x (HistGradientBoosting, +0 .190 ± 0.006 ); MAG -L INEAR reaches +0 .208 . Four scalars carry approximately as much held-out predictive signal as the full 2,000 -dimensional vector under this split. 
+
+(ii) Removing magnitude collapses performance. Row-normalizing x reduces the strongest classical model from +0 .190 to +0 .062 ± 0.008 . All linear methods become strongly negative on DIRECTION -
+
+> ONLY
+
+. (iii) Combining the two outperforms the deep encoder. Random Forest on [x; fm] reaches 
+
++0 .370 ± 0.004 and HistGradientBoosting reaches +0 .365 ± 0.008 , both substantially exceeding our deep MAG -SPSM encoder ( +0 .225 ± 0.004 ). Direction combined with explicit magnitude adds ∼
+
+0.18 R2 that tree ensembles, but not our deep encoder, exploit. The diagnostic that response magnitude is the dominant recoverable signal is therefore not specific to a single MLP-encoder configuration; whether attention-based, set-equivariant, or foundation-model encoders behave similarly is left to 6Table 1: Strong classical baselines on the VCC held-out target-gene test set (mean ± std, three seeds; Ridge and ElasticNet are deterministic at the displayed precision). Removing row-level magnitude (DIR , x/∥x∥2) sharply reduces performance, while concatenating x with the four magnitude statistics (X+M) enables tree ensembles to substantially outperform MAG -SPSM .                                                 
+
+> Method xonly Direction only Magnitude only x+ magnitude Ridge −0.306 −0.319 +0 .187 −0.107
+> ElasticNet −0.247 −0.252 +0 .175 −0.037
+> Random Forest +0 .090 ±0.004 −0.062 ±0.003 −0.042 ±0.005 +0.370 ±0.004
+> HistGradientBoosting +0.190 ±0.006 +0.062 ±0.008 +0 .054 ±0.047 +0 .365 ±0.008
+> k-NN ( k=10 )−1.124 −2.256 −0.041 −1.000
+> SPSM (deep) +0 .082 ±0.010 (no magnitude features)
+> MAG -SPSM (deep, ours) +0 .225 ±0.004 (deep proof-of-concept; uses [x;fm])
+> MAG -L INEAR +0 .208 (four-feature linear regression on fm)
+
+future work. The Random Forest result on [x; fm] is robust across reasonable RF hyperparameter choices (App. R). 
+
+6.2 The external endpoint is a different quantity 
+
+Evaluating transfer requires that the training and evaluation datasets score the same quantity. The Replogle Perturb-seq releases include an Anderson–Darling column. We first examine whether it represents the same quantity as the endpoint of Sec. 3; our analysis indicates that the two are distinct. We attempted to reconstruct the distributed column from the Replogle single-cell data using the defi-nition of Sec. 3—a two-sample Anderson–Darling comparison between perturbed and non-targeting cells at the target gene—under eight pre-declared variants spanning aggregation, transformation, input matrix, and control definition. No variant reproduced it; the closest reached Pearson 0.335 and Spearman 0.268 (App. J). The distributed column is instead strongly consistent with a transcriptome-wide differential-expression gene count. Candidate significant-gene counts are rank-monotone with it ( ρ = 0 .96 –0.98 ), a Benjamini–Hochberg-corrected count reaches Pearson 0.986 , and a detection-count null is rejected. Absolute values are not reproduced—our closest reconstruction runs roughly 1.6× larger—so the upstream preprocessing, threshold, control set, and gene universe remain unresolved, and we do not claim to have reconstructed it. The two endpoints quantify different things: ours measures target-gene-specific effect strength, the distributed column the breadth of a transcriptome-wide response. Their within-screen associations are weak—construct-level Spearman 0.165 in RPE1, 0.301 in K562-essential, 0.396 in the K562 genome-wide screen—and the scale disparity between the two label sets ( σy = 0 .758 versus 2.750 )is a property of the statistics rather than of the datasets. This matters beyond our own evaluation: a cross-dataset comparison that trains on a target-gene effect size and evaluates against the distributed Replogle column is measuring response breadth, not effect strength on the perturbed gene. We therefore rebuild the target-gene endpoint from single-cell data for two external screens and evaluate transfer against it. For completeness we also report association with the distributed endpoint (App. L); because both are evaluated on the same predictions from the same trained models, the difference between them isolates the effect of the outcome definition. 
+
+6.3 Cross-screen transfer on a common endpoint Endpoint construction. For a construct targeting gene g, the endpoint is the definition of Sec. 3 applied to each external screen. Because the Anderson–Darling statistic grows with sample size, we fix the subsample sizes at the VCC medians ( 27 perturbed and 788 control cells), draw 25 times with pre-specified seeds, and take the median; this removes systematic sample-size differences between screens, though the estimators are not thereby identical. Eligibility requires those cell counts and an unambiguous target-to-feature mapping, yielding 1,932 constructs in RPE1 ( 86 .2% coverage) and 
+
+1,903 in K562-essential ( 96 .6% ). Diagnostics are in App. K. 7Table 2: Zero-shot transfer to two external screens on a common target-gene endpoint. Entries are construct-level Spearman correlations between each VCC-trained prediction and the harmonized endpoint. Verdicts follow a pre-specified rule: Pos if the 95% target-gene cluster-bootstrap interval lies wholly above zero, Neg if wholly below, Inc if it includes zero; an inconclusive verdict is not evidence of absent transfer. Panel A families are evaluated per seed and averaged ( 3 seeds for HistGB and RF, 1 for Ridge). Panel B predictors have a single training seed, so their intervals are conditional on it. Feature sets: x expression only, fm magnitude only, [x; fm] both. Interval widths are not comparable across screens: the two evaluations differ in cluster structure (Sec. 6.3). Full intervals in App. M.                                                                       
+
+> RPE1 K562-essential Model Features ρVerdict ρVerdict
+> Panel A: classical families, seed-averaged
+> Ridge x−0.091 Neg +0 .009 Inc Ridge fm+0 .097 Pos +0 .133 Pos Ridge [x;fm]−0.068 Neg −0.043 Inc HistGB x−0.116 Neg −0.211 Neg HistGB fm+0 .009 Inc +0 .160 Pos HistGB [x;fm]−0.038 Inc +0 .018 Inc RF x−0.105 Neg −0.218 Neg RF fm+0 .053 Pos +0 .178 Pos RF [x;fm]−0.018 Inc +0 .166 Pos
+> Panel B: deep and magnitude-only predictors
+> SPSM baseline —−0.050 Neg −0.070 Neg
+> MAG -SPSM —+0 .067 Pos +0 .016 Inc
+> MAG -L INEAR fm+0 .057 Pos +0 .147 Pos
+
+Evaluation. Models trained only on VCC are evaluated zero-shot, with the HVG mapping and VCC-side normalization of Sec. 3 and no target-side calibration. We evaluate twelve prediction objects: nine classical model × feature-set families and three deep or magnitude-only predictors. MAG-Anchor is omitted here; see App. N. Evaluation sets, metrics, bootstrap procedure, and decision rules were fixed before any value was computed. Uncertainty is a paired cluster bootstrap resampling target genes, so constructs sharing a target are resampled together. 
+
+Magnitude transfers; expression direction does not. The pattern of Table 2 is consistent across both screens. Every magnitude-only classical family is resolved-positive in K562-essential, and two of three are positive in RPE1. Every expression-only family is negative or unresolved in both, as is the deep SPSM baseline. Exposing magnitude to the deep encoder improves transfer over that baseline by a resolved margin in both screens: ∆ρ = +0 .117 [+0 .079 , +0 .155] in RPE1 and +0 .086 [+0 .042 , +0 .130] in K562-essential. In these two evaluations, positive rank transfer is concentrated in response-amplitude summaries rather than in the expression-direction features learned by the tested models. 
+
+The deep encoder does not outperform a linear magnitude model. The deep encoder does not outperform a four-scalar linear regression on the same magnitude features in either screen. In K562-essential MAG -L INEAR is resolvedly better ( ∆ρ = −0.131 , [−0.187 , −0.074] ); in RPE1 the two are indistinguishable ( +0 .011 , [−0.030 , +0 .053] ). Two objects also change verdict between screens in opposite directions: MAG -SPSM is positive in RPE1 and unresolved in K562-essential, while Random Forest on [x; fm]—the strongest in-distribution model—is unresolved in RPE1 and positive in K562-essential. Transfer behavior at the level of individual model families is screen-dependent even where the group-level pattern is not. 
+
+Scope. The two evaluations differ in cluster structure—at most three constructs per target gene in RPE1 versus two in K562-essential, both over 1,811 genes—so interval widths are not mechanically comparable between screens. Three of the twelve objects have a single training seed, so their intervals reflect target-gene sampling conditional on that seed. Pooled R2 is negative throughout because predictions produced on one outcome scale are not calibrated to another; rank association is the interpretable quantity here. 86.4 MAG-Anchor results 
+
+Across five seeds, MAG-Anchor reaches VCC test R2 = +0 .268 ± 0.011 , improving over MAG - 
+
+> SPSM
+
+(+0 .225 ± 0.004 ) but remaining below Random Forest on [x; fm] (+0 .370 ± 0.004 ). Three pre-specified controls—eval-time row shuffling, train-time row shuffling, and random-Gaussian replacement of fm—collapse the gain in each case, so the improvement depends on correctly aligned per-row magnitude features rather than on added capacity. Full results, the residual-branch ablation, and the controls are in App. D and Table 4. 
+
+## 7 Discussion and limitations 
+
+What this paper claims. The central claim is diagnostic: on the disjoint target-gene split of VCC, the predictive signal is dominated by a low-dimensional response-magnitude axis. Across the tested classical families and MLP-based encoders, removing explicit magnitude degrades in-distribution performance and yields negative or inconclusive external rank transfer, whereas magnitude-based predictors give the most stable rank signal. The deep MAG -SPSM encoder benefits from magnitude in-distribution but does not outperform MAG -L INEAR under transfer. We do not claim a new representation-learning method or a replacement for scGPT [Cui et al., 2024], Geneformer [Theodoris et al., 2023], or GEARS [Roohani et al., 2024]. 
+
+Why magnitude appears more stable than learned direction. The magnitude features are coordinate-permutation- and (for m1, m 2, m 3) sign-flip invariant, sensitive to overall response scale rather than to which genes respond. These are function-level invariances and do not by themselves imply distributional stability; transfer to two external screens is the empirical evidence that the stability holds under those shifts. The deep encoder, by contrast, appears to rely on source-specific directional patterns. Held-out target-gene performance should therefore not be read as evidence of cross-context robustness without external evaluation. Foundation-model scope and an alternative reading of the diagnostic are in App. T. 
+
+Limitations. Cross-screen evidence comes from two target screens and a single source, so the pattern is established under two shifts rather than a range of them. Individual model families change verdict between screens, and the deep encoder’s advantage over a linear magnitude model is unresolved in one screen and negative in the other; we therefore state the transfer claim at the level of feature groups rather than individual architectures. The construction of the endpoint distributed with the external screens remains unresolved (Sec. 6.2). Further limitations are in App. U. 
+
+Conclusion. The predictive signal on this benchmark is dominated by a low-dimensional response-magnitude axis that the MLP-based deep encoders tested here do not exploit reliably, and pre-specified controls attribute the gain to per-row alignment rather than added dimensionality. Under zero-shot transfer to two external screens, scored on a rebuilt target-gene endpoint, expression-only models are negative or inconclusive under rank transfer whereas magnitude-only models are usually resolved-positive, and no deep encoder we tested beats a four-scalar linear regression. These results argue for models that explicitly separate response magnitude from expression direction rather than assuming a deeper encoder recovers both under shift. 
+
+## References 
+
+Constantin Ahlmann-Eltze, Wolfgang Huber, and Simon Anders. Deep-learning-based gene pertur-bation effect prediction does not yet outperform simple linear baselines. Nature Methods , 22(8): 1657–1661, 2025. doi: 10.1038/s41592-025-02772-6. Martín Arjovsky, Léon Bottou, Ishaan Gulrajani, and David Lopez-Paz. Invariant risk minimization. 
+
+arXiv preprint arXiv:1907.02893 , 2019. Ihab Bendidi, Shawn Whitfield, Kian Kenyon-Dean, Hanene Ben Yedder, Yassir El Mesbahi, Em-manuel Noutahi, and Alisandra K. Denton. Benchmarking transcriptomics foundation models for perturbation analysis: One PCA still rules them all. In NeurIPS Workshop on AI for New Drug Modalities (AIDrugX) , 2024. 9Chris Burges, Tal Shaked, Erin Renshaw, Ari Lazier, Matt Deeds, Nicole Hamilton, and Greg Hullender. Learning to rank using gradient descent. In Proceedings of the 22nd International Conference on Machine Learning (ICML) , pages 89–96, 2005. doi: 10.1145/1102351.1102363. Kaidi Cao, Colin Wei, Adrien Gaidon, Nikos Aréchiga, and Tengyu Ma. Learning imbalanced datasets with label-distribution-aware margin loss. In Advances in Neural Information Processing Systems (NeurIPS) , 2019. Zhe Cao, Tao Qin, Tie-Yan Liu, Ming-Feng Tsai, and Hang Li. Learning to rank: from pairwise approach to listwise approach. In Proceedings of the 24th International Conference on Machine Learning (ICML) , pages 129–136, 2007. doi: 10.1145/1273496.1273513. Gerold Csendes, Gema Sanz, Kristóf Z. Szalay, and Bence Szalai. Benchmarking foundation cell models for post-perturbation RNA-seq prediction. BMC Genomics , 26(1):393, 2025. Haotian Cui, Chloe Wang, Hassaan Maan, Kuan Pang, Fengning Luo, Nan Duan, and Bo Wang. scgpt: toward building a foundation model for single-cell multi-omics using generative ai. Nature Methods , 21(8):1470–1480, 2024. doi: 10.1038/s41592-024-02201-0. Atray Dixit, Oren Parnas, Biyu Li, Jenny Chen, Charles P. Fulco, Livnat Jerby-Arnon, Nemanja D. Marjanovic, Danielle Dionne, Tyler Burks, Raktima Raychowdhury, et al. Perturb-seq: Dissecting molecular circuits with scalable single-cell rna profiling of pooled genetic screens. Cell , 167(7): 1853–1866.e17, 2016. doi: 10.1016/j.cell.2016.11.038. Luke A. Gilbert, Max A. Horlbeck, Britt Adamson, Jacqueline E. Villalta, Yuwen Chen, Evan H. Whitehead, Carla Guimaraes, Barbara Panning, Hidde L. Ploegh, Michael C. Bassik, Lei S. Qi, Martin Kampmann, and Jonathan S. Weissman. Genome-scale CRISPR-mediated control of gene repression and activation. Cell , 159(3):647–661, 2014. doi: 10.1016/j.cell.2014.09.029. Raia Hadsell, Sumit Chopra, and Yann LeCun. Dimensionality reduction by learning an invariant mapping. In IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , 2006. Minsheng Hao, Jing Gong, Xin Zeng, Chiming Liu, Yucheng Guo, Xingyi Cheng, Taifeng Wang, Jianzhu Ma, Le Song, and Xuegong Zhang. Large-scale foundation model on single-cell transcrip-tomics. Nature Methods , 21(8):1481–1491, 2024. doi: 10.1038/s41592-024-02305-7. Dan Hendrycks and Kevin Gimpel. A baseline for detecting misclassified and out-of-distribution examples in neural networks. In International Conference on Learning Representations (ICLR) ,2017. Pang Wei Koh, Shiori Sagawa, Henrik Marklund, Sang Michael Xie, Marvin Zhang, Akshay Bal-subramani, Weihua Hu, Michihiro Yasunaga, Richard Lanas Phillips, Irena Gao, et al. Wilds: A benchmark of in-the-wild distribution shifts. In Proceedings of the 38th International Conference on Machine Learning (ICML) , pages 5637–5664. PMLR, 2021. David Krueger, Ethan Caballero, Jörn-Henrik Jacobsen, Amy Zhang, Jonathan Binas, Dinghuai Zhang, Rémi Le Priol, and Aaron Courville. Out-of-distribution generalization via risk extrapolation (rex). In International Conference on Machine Learning (ICML) , PMLR, pages 5815–5826, 2021. Kun Kuang, Peng Cui, Susan Athey, Ruoxuan Xiong, and Bo Li. Stable prediction across unknown environments. In Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining , pages 1617–1626, 2018. Weitang Liu, Xiaoyun Wang, John D. Owens, and Yixuan Li. Energy-based out-of-distribution detection. In Advances in Neural Information Processing Systems (NeurIPS) , volume 33, pages 21464–21475, 2020. Mohammad Lotfollahi, F. Alexander Wolf, and Fabian J. Theis. scgen predicts single-cell perturbation responses. Nature Methods , 16(8):715–721, 2019. doi: 10.1038/s41592-019-0494-8. Mohammad Lotfollahi, Anna Klimovskaia Susmelj, Carlo De Donno, Leon Hetzel, Yuge Ji, Ignacio L. Ibarra, Sanjay R. Srivatsan, Mohsen Naghipourfar, Riza M. Daza, Beth Martin, et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular Systems Biology ,19(6):e11517, 2023. doi: 10.15252/msb.202211517. 10 Gabriel M. Mejia, Henry E. Miller, Francis J. A. Leblanc, Bo Wang, Brendan Swain, and Lucas Paulo de Lima Camillo. Diversity by design: Addressing mode collapse improves scRNA-seq perturbation modeling on well-calibrated metrics. In Proceedings of the Workshop on Generative AI for Biology at the 42nd International Conference on Machine Learning , volume 267 of PMLR ,2025. Jiawei Ren, Mingyuan Zhang, Cunjun Yu, and Ziwei Liu. Balanced mse for imbalanced visual regression. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2022. Joseph M. Replogle, Reuben A. Saunders, Angela N. Pogson, Jeffrey A. Hussmann, Alexander Lenail, Alina Guna, Lauren Mascibroda, Eric J. Wagner, Karen Adelman, Gila Lithwick-Yanai, Nika Iremadze, Florian Oberstrass, Doron Lipson, Jessica L. Bonnar, Marco Jost, Thomas M. Norman, and Jonathan S. Weissman. “Mapping information-rich genotype-phenotype landscapes with genome-scale Perturb-seq” replogle et al. 2022 processed Perturb-seq datasets, 2022a. Includes K562 genome-scale, K562 essential, and RPE1 essential Perturb-seq AnnData files, in pseudo-bulk and cell-level form. We use the RPE1 and K562-essential pseudo-bulk and raw single-cell releases. Joseph M. Replogle, Reuben A. Saunders, Angela N. Pogson, Jeffrey A. Hussmann, Alexander Lenail, Alina Guna, Lauren Mascibroda, Eric J. Wagner, Karen Adelman, Gila Lithwick-Yanai, Nika Iremadze, Florian Oberstrass, Doron Lipson, Jessica L. Bonnar, Marco Jost, Thomas M. Norman, and Jonathan S. Weissman. Mapping information-rich genotype-phenotype landscapes with genome-scale Perturb-seq. Cell , 185(14):2559–2575.e28, 2022b. doi: 10.1016/j.cell.2022.05.013. Yusuf Roohani, Kexin Huang, and Jure Leskovec. Predicting transcriptional outcomes of novel multigene perturbations with gears. Nature Biotechnology , 42(6):927–935, 2024. doi: 10.1038/ s41587-023-01905-6. Yusuf H. Roohani, Tony J. Hua, Po-Yuan Tung, Lexi R. Bounds, Feiqiao B. Yu, Alexander Dobin, Noam Teyssier, Abhinav Adduri, Alden Woodrow, Brian S. Plosky, Reshma Mehta, Benjamin Hsu, Jeremy Sullivan, Chiara Ricci-Tam, Nianzhen Li, Julia Kazaks, Luke A. Gilbert, Silvana Konermann, Patrick D. Hsu, Hani Goodarzi, and Dave P. Burke. Virtual cell challenge: Toward a Turing test for the virtual cell. Cell , 188(13):3370–3374, 2025. doi: 10.1016/j.cell.2025.06.008. Yanay Rosen, Yusuf Roohani, Ayush Agrawal, Leon Samotorˇ can, Tabula Sapiens Consortium, Stephen R. Quake, and Jure Leskovec. Universal cell embedding provides a foundation model for cell biology. Nature , 2026. doi: 10.1038/s41586-026-10689-z. Advance online publication. Shiori Sagawa, Pang Wei Koh, Tatsunori B. Hashimoto, and Percy Liang. Distributionally robust neural networks for group shifts: On the importance of regularization for worst-case generalization. In International Conference on Learning Representations (ICLR) , 2020. F. W. Scholz and M. A. Stephens. K-sample anderson-darling tests. Journal of the American Statistical Association , 82(399):918–924, 1987. doi: 10.1080/01621459.1987.10478517. Zheyan Shen, Peng Cui, Kun Kuang, Bo Li, and Peixuan Chen. Causally regularized learning with agnostic data selection bias. In Proceedings of the 26th ACM International Conference on Multimedia , pages 411–419, 2018. doi: 10.1145/3240508.3240577. Michael Steininger, Konstantin Kobs, Padraig Davidson, Anna Krause, and Andreas Hotho. Density-based weighting for imbalanced regression. Machine Learning , 110(8):2187–2211, 2021. doi: 10.1007/s10994-021-06023-5. Christina V. Theodoris, Ling Xiao, Anant Chopra, Mark D. Chaffin, Zeina R. Al Sayed, Matthew C. Hill, Helene Mantineo, Elizabeth M. Brydon, Zexian Zeng, X. Shirley Liu, and Patrick T. Ellinor. Transfer learning enables predictions in network biology. Nature , 618(7965):616–624, 2023. doi: 10.1038/s41586-023-06139-9. Feng Wang, Xiang Xiang, Jian Cheng, and Alan L. Yuille. Normface: l2 hypersphere embedding for face verification. In Proceedings of the 25th ACM International Conference on Multimedia , pages 1041–1049, 2017. doi: 10.1145/3123266.3123359. 11 Yan Wu, Esther Wershof, Sebastian M. Schmon, Marcel Nassar, Bła˙ zej Osi´ nski, Ridvan Eksi, Zichao Yan, Rory Stark, Kun Zhang, and Thore Graepel. PerturBench: Benchmarking machine learning models for cellular perturbation analysis. In Advances in Neural Information Processing Systems Datasets and Benchmarks Track , 2025. Yuzhe Yang, Kaiwen Zha, Ying-Cong Chen, Hao Wang, and Dina Katabi. Delving into deep imbalanced regression. In International Conference on Machine Learning (ICML) , PMLR, pages 11842–11851, 2021. 
+
+## A Pre-specified hypotheses for the strong-baseline audit 
+
+The five hypotheses below were written in the experiment report before the corresponding scripts were run; we have no formal external preregistration, but each hypothesis is dated in the project log preceding the run. We report each verdict honestly. H1 Classical models on x alone will not clearly beat MAG -L INEAR . Verdict: supported. Best x-only model (HistGradientBoosting, R2 = +0 .190 ) is below MAG -L INEAR (+0 .208 ) and within 0.003 
+
+of Ridge on MAG -ONLY (+0 .187 ); no x-only classical model exceeds MAG -L INEAR by a margin larger than seed noise. H2 DIRECTION -ONLY will perform worse than x-only and MAG -ONLY . Verdict: supported. Best 
+
+> DIRECTION
+
+-ONLY (+0 .062 ) is well below both anchors. H3 Linear methods on MAG -ONLY will approximately reproduce MAG -L INEAR . Verdict: supported. 
+
+Ridge on MAG -ONLY reaches +0 .187 (≥ +0 .180 pre-specified threshold). H4 Tree ensembles on X+MAG may match or beat MAG -SPSM . Verdict: clearly beats. Random Forest on X+MAG reaches +0 .370 ± 0.004 , exceeding MAG -SPSM by ∆ ≥ +0 .140 across all three seeds. H5 If a non-deep model on X+MAG clearly beats MAG -SPSM , the paper should be reframed as diagnostic discovery rather than method paper. Verdict: triggered. The reframing applied to this paper is the consequence of H5. 
+
+## B Pre-specified hypotheses for the legacy distributed-endpoint transfer 
+
+This appendix records the original K562 transfer experiment scored against the distributed Replogle endpoint. It is retained for provenance and endpoint-sensitivity analysis; it is not evidence for the rebuilt target-gene endpoint of Table 2. T1 Ridge on MAG -ONLY will reproduce the existing MAG -L INEAR transfer ( R2 ≈ +0 .12 , ρ ≈
+
++0 .32 ). Verdict: pipeline matches anchor; Ridge mag-only attains R2 = +0 .029 , ρ = +0 .173 ,and MAG -L INEAR reproduces the +0 .121 , +0 .315 anchor exactly. 
+
+T2 Tree ensembles on x-only will transfer negatively or near zero. Verdict: supported. HistGB and RF on x-only both transfer with R2 < −0.10 and ρ < −0.37 .T3 Tree ensembles on MAG -ONLY will transfer with positive Spearman but possibly negative R2 from poor leaf calibration on the cross-cell shift. Verdict: supported. RF on MAG -ONLY : R2 = +0 .114 ,
+
+ρ = +0 .346 .T4 Trees on X+MAG may transfer positively (T4a) or preserve only Spearman (T4b) or fully overfit (T4c). Verdict: T4a holds for Random Forest ( R2 = +0 .037 , ρ = +0 .314 ); T4b holds for HistGradientBoosting ( R2 = −0.035 , ρ = +0 .070 ); T4c does not occur. 
+
+## C Per-row alignment: full population-level argument 
+
+In the population view, let M ⋆ be an auxiliary random vector with the same marginal distribution as 
+
+fm(X) but independent of (X, Y ). Then the Bayes predictor with access to (X, M ⋆) coincides with the Bayes predictor with access to X alone: 
+
+E[Y | X, M ⋆] = E[Y | X].
+
+By the optimality of conditional expectation under squared loss, no measurable predictor using 
+
+(X, M ⋆) can improve over the Bayes risk achieved by E[Y | X] in squared loss. This yields 12 Table 3: Causal verification (seed 0). Both shuffled-magnitude (per-row alignment broken) and four random Gaussian features (independent of input by construction) return performance to baseline within seed noise, in agreement with the population-level argument of this appendix. 
+
+Arm Test R2 Spearman Q1 bias Q5 bias 
+
+> BASELINE
+
+-MSE (no fm) +0 .0768 +0 .399 +1 .061 −0.735 
+
+> MAG
+
+-SPSM (4 magnitude features) +0.2224 +0.576 +0 .918 −0.580 
+
+> SHUFFLED
+
+-MAGNITUDE (per-row π random) +0 .0712 +0 .402 +1 .191 −0.592 
+
+> RANDOM
+
+-FEATURE (four N (0 , 1) ) +0 .0869 +0 .377 +1 .144 −0.660 
+
+Table 4: VCC in-distribution results and transfer to Replogle K562 scored against the dis-tributed Anderson–Darling endpoint. The Replogle columns therefore measure association with a transcriptome-wide response-breadth statistic, not with the target-gene endpoint of Sec. 3; see Sec. 6.2 and App. L. Mean ± std across seeds ( ddof=1 ); n varies by model. MAGAnchor-x is the residual ablation in which the residual branch receives only x.                                                                             
+
+> Model VCC R2VCC ρRepl. R2Repl. ρInterpretation SPSM baseline +0 .082 ±0.010 +0 .392 ±0.006 −0.162 −0.435 negative ρ
+> MAG-SPSM +0 .225 ±0.004 +0 .592 ±0.014 −0.101 −0.109 negative ρ
+> MAG-LINEAR +0 .208 +0 .605 +0 .121 +0 .315 positive ρ
+> MAGAnchor-x +0 .200 ±0.014 +0 .564 ±0.005 −0.052 ±0.028 +0 .034 ±0.039 residual-only ablation RF (x + mag) +0 .370 ±0.004 +0 .688 ±0.005 +0 .037 ±0.003 +0 .314 ±0.009 strongest VCC; positive ρ
+> MAG-Anchor +0 .268 ±0.011 +0 .621 ±0.005 +0 .130 ±0.030 +0 .341 ±0.056 positive ρon this endpoint
+
+two consequences we test directly: (a) replacing fm(xi) by four i.i.d. N (0 , I 4) features makes the augmenting block independent of (xi, Y i) by construction; (b) under a row-shuffled augmentation 
+
+xπi = [ xi; fm(xπ(i)) ] with π a uniformly random permutation independent of the data, the augment-ing block preserves the marginal distribution of fm but no longer carries row-specific information about Yi. The shuffled-magnitude and random-feature controls of Sec. 5.2 are finite-sample diagnos-tics of this principle: they preserve dimensionality and marginal scale while breaking row-specific alignment with the label. Crucially, any R2 gain from concatenating the four scalars must therefore arise from their per-row dependence on xi, not from added input dimensionality, scale, or noise diversity. We do not promote this observation to a formal theorem; its role is to motivate the two pre-specified experimental controls (row-shuffling and i.i.d. Gaussian features) reported in Sec. 5.2. 
+
+Per-row alignment: empirical controls (Table 3). We instantiated three additional arms at seed 0
+
+(otherwise identical training): (i) BASELINE -MSE : SPSM V4 with no magnitude features ( x+ = x); (ii) SHUFFLED -MAGNITUDE : MAG -SPSM but with per-row correspondence between xi and fm
+
+broken by a uniformly random permutation π; (iii) RANDOM -FEATURE : MAG -SPSM but with the magnitude block replaced by four i.i.d. N (0 , 1) features. The result (Table 3) is unambiguous: both controls return performance to baseline within seed noise. Shuffling removes the gain entirely (∆ = −0.151 vs. MAG -SPSM ); four random Gaussian features fail to recover any gain. Under shuffling, fm(xπ(i)) ⊥⊥ (xi, y i) in the sample limit, so the augmenting block carries no information about yi.
+
+## D MAG-Anchor: full architecture, hyperparameters, and controls 
+
+Architecture. MAG-Anchor decomposes the predicted perturbation effect into a direct magnitude anchor and a gated residual correction: 
+
+ˆy = gϕ(fm(x)) + α h θ ([ x; fm(x)]) , (3) where fm(x) ∈ R4 is the standardized magnitude vector defined in Eq. 1. The anchor branch 
+
+gϕ(fm) = w⊤fm + b is a single linear layer with w ∈ R4, b ∈ R; its weights are warm-started from a sklearn LinearRegression fitted on (fm, y ) and remain trainable thereafter (no freezing). The residual branch hθ is a small MLP with layers din → 256 → 128 → 1, ReLU activations, and architectural dropout p=0 .1 after each ReLU; no LayerNorm or BatchNorm is used. This dropout setting applies only to the MAG-Anchor residual branch; the SPSM /MAG -SPSM backbone 13 Table 5: Per-row magnitude alignment is load-bearing for MAG-Anchor. Shuffling or replacing the magnitude block collapses VCC performance and removes positive association with the legacy distributed endpoint; random Gaussian magnitude features produce anti-correlated Replogle transfer. All controls are direct ablations of the trained MAG-Anchor (xmag) recipe. Mean ± std across 3 seeds (base MAG-Anchor: 5 seeds).                                            
+
+> Configuration VCC R2Replogle ρ∆vs base MAG-Anchor
+> MAG-Anchor (base) +0 .268 ±0.011 +0 .341 ±0.056 —eval-shuffled magnitude −0.476 ±0.014 −0.041 ±0.039 −0.744 R2,−0.382 ρ
+> train-shuffled magnitude −0.032 ±0.030 −0.117 ±0.137 −0.301 R2,−0.458 ρ
+> random Gaussian magnitude −0.007 ±0.011 −0.517 ±0.021 −0.275 R2,−0.858 ρ
+
+Table 6: Sensitivity analysis for MAG-Anchor. We tested freezing the magnitude anchor at MAG-LINEAR weights, adding a small residual penalty λres ∈ { 0.01 , 0.1}, and combining both. All variants are statistically indistinguishable from the base MAG-Anchor within seed noise (Replogle ρ
+
+differences <0.02 ). We pre-declared adoption thresholds of ∆ρ> +0 .04 or seed-variance reduction 
+
+>30% ; neither was met. We therefore report the simpler base MAG-Anchor in the main paper. Mean 
+
+± std across n seeds.                                              
+
+> Variant Configuration nVCC R2Replogle ρ
+> MAG-Anchor (base) trainable anchor, no penalty 5+0 .268 ±0.011 +0 .341 ±0.056
+> frozen anchor, no penalty 3+0 .277 ±0.017 +0 .354 ±0.079
+> trainable, λres =0 .01 3+0 .276 ±0.013 +0 .337 ±0.074
+> trainable, λres =0 .13+0 .286 ±0.010 +0 .347 ±0.076
+> frozen + λres =0 .15+0 .280 ±0.017 +0 .356 ±0.051
+
+(App. G) uses dropout p=0 . For the headline MAGAnchor-xmag the residual input is [x; fm] ∈ R2004 
+
+(din = 2004 ); for the MAGAnchor-x ablation the residual input is x alone ( din = 2000 ). The scalar gate α is parameterized as α = softplus( ρ) with ρinit = ln(e 0.1 − 1) , so αinit = 0 .1 exactly and 
+
+α ∈ (0 , ∞) throughout training. This design preserves a direct pathway from magnitude features to the output while allowing the residual branch to learn corrections from both the expression vector and the magnitude summary. 
+
+Training hyperparameters. Unless otherwise stated, MAG-Anchor uses a trainable anchor, no residual penalty, Adam with learning rate 10 −3 and weight decay 10 −5, batch size 64 , 25 training epochs, and checkpoint selection by validation R2. Frozen-anchor and residual-penalty variants are evaluated only as sensitivity checks (App. E). 
+
+Per-row alignment is load-bearing (controls). We report three pre-specified controls on the MAG-Anchor recipe to test whether its gain depends on per-row magnitude alignment or merely on added input dimensionality (Table 5). In the eval-shuffled control, we train MAG-Anchor normally but permute fm(x) across rows at evaluation time; VCC R2 collapses from +0 .268 to −0.476 , and Replogle Spearman falls from +0 .341 to −0.041 . In the train-shuffled control, fm(x) is permuted across training rows, causing VCC performance to collapse to R2 = −0.033 and eliminating positive transfer. Replacing the magnitude vector with random Gaussian features also fails, yielding near-zero VCC performance and anti-correlated Replogle transfer ( ρ = −0.517 ). All three controls confirm that MAG-Anchor’s gain depends on correctly aligned per-row magnitude features and is not a generic capacity effect. 
+
+## E MAG-Anchor sensitivity analysis 
+
+Pre-declared adoption thresholds. Before running our five-seed confirmation, we pre-declared two thresholds for adopting any architectural complication beyond the base MAG-Anchor formulation: (i) the more complex variant must improve mean Replogle Spearman by at least one combined standard error, approximately +0 .04 ; or (ii) it must reduce the seed-level standard deviation of Replogle Spearman by at least 30% . We tested a frozen-anchor plus residual-penalty variant against the base MAG-Anchor over five seeds. The mean Replogle Spearman improved by only +0 .015 , below the 14 +0 .04 threshold, and the seed-level standard-deviation reduction was only 8.8% , below the 30% 
+
+threshold. We therefore report the base MAG-Anchor in the main paper and treat frozen-anchor and residual-penalty variants as sensitivity checks. 
+
+## F Classical-baseline hyperparameters 
+
+• Ridge: Ridge(alpha=1.0) .• ElasticNet: ElasticNet(alpha=0.001, l1_ratio=0.5, max_iter=10000) .• Random Forest: RandomForestRegressor(n_estimators=200, max_depth=20, min_samples_leaf=2, n_jobs=8, random_state=seed) .• HistGradientBoosting (XGBoost fallback): default sklearn HistGradientBoostingRegressor 
+
+with max_iter=500, learning_rate=0.05, max_depth=6, random_state=seed , early stopping on validation with patience 20. • k-NN: KNeighborsRegressor(n_neighbors=10, weights="distance") .For linear models and k-NN, features are standardized using training-split mean/std exclusively; for tree models, raw features are used (with the four magnitude features z-scored regardless of model). 
+
+## G SPSM V4 backbone and loss formulas 
+
+The SPSM V4 backbone is a three-layer MLP encoder with hidden width 256 , ReLU activations, and LayerNorm; architectural dropout is p = 0 (no active dropout regularization). The encoder produces a 128 -dimensional representation zi = fθ (x+ 
+
+> i
+
+). The total objective combines a prediction loss with two SPSM regularizers, Ltotal = LMSE + λstab Lstab + λrel Lrel , with λstab = λrel = 0 .5, both inherited from the SPSM V4 backbone unchanged. 
+
+Stability loss. The stability term is a Gaussian-kernel maximum-mean-discrepancy (MMD) penalty on encoder features across the experimental Flex batches that co-occur within the same SGD mini-batch; no stochastic input perturbation, dropout-perturbed forward pass, or input noising is used. Concretely, for an SGD minibatch I of size B = 64 , let B(I) = {bi : i ∈ I} denote the set of experimental Flex batches represented in I, and let Zb(I) = {zi : i ∈ I , b i = b} collect the encoder outputs from rows of batch b. The stability loss averages the squared MMD across all unordered pairs of co-represented batches: 
+
+Lstab = 2
+
+|B (I)| (|B (I)| − 1) 
+
+X
+
+> b,b ′∈B (I)
+> b<b ′
+
+MMD 2
+
+> κ
+
+(Zb(I), Z b′ (I)) ,
+
+where κ is a Gaussian kernel whose bandwidth is set by the median heuristic on the in-minibatch pairwise distances (computed under no_grad ). For each SGD minibatch I, B(I) denotes the experi-mental batches represented in that minibatch. The sampler constructs context-stratified minibatches so that each represented batch contributes enough rows for the MMD pairs in the stability loss below to be well-defined. 
+
+Relation loss. The relation loss is a soft-Spearman ranking penalty applied to the scalar predictions 
+
+ˆy across pairs of experimental batches that co-occur in the same minibatch; it does not use a learnable projection on z and does not enter the labels yi (labels enter only through LMSE ). For an SGD minibatch I, we construct a small set P of matched context-pairs by iterating over unordered pairs of distinct Flex batches (b, b ′) ∈ B (I) × B (I) and, for each pair, taking the first applicable of three tiers: tier 1 (weight w = 1 .00 ) matches rows with the same target-gene identifier shared between b
+
+and b′; tier 2 (weight w = 0 .50 ) matches rows with the same auxiliary cluster index, paired greedily; tier 3 (weight w = 0 .25 ) takes k=1 nearest neighbors in an auxiliary u-space. On VCC, only tier 1 contributes informative matches, so in practice P contains pairs of Flex batches with at least one shared target gene, aligned by target gene. Each matched pair p ∈ P yields two aligned prediction vectors ˆy(p) 
+
+> a
+
+, ˆy(p) 
+
+> b
+
+∈ Rmp and a weight wp. With soft ranks erk(v; τ ) = P 
+
+> ℓ̸=k
+
+sigmoid  (vk − vℓ)/τ ,15 the soft-Spearman correlation 
+
+eρ(a, b; τ ) = 
+
+P
+
+> k
+
+(erk(a) − er(a))( erk(b) − er(b)) 
+
+qP
+
+> k
+
+(erk(a) − er(a)) 2 P
+
+> k
+
+(erk(b) − er(b)) 2
+
+,
+
+the relation loss is 
+
+Lrel =
+
+P 
+
+> p∈P
+
+wp
+
+ 1 − eρ(ˆ y(p) 
+
+> a
+
+, ˆy(p) 
+
+> b
+
+; τ )P 
+
+> p∈P
+
+wp
+
+, τ = 0 .1.
+
+Lrel thus drives the model to produce a consistent rank order of predictions across pairs of experi-mental batches in the same minibatch. 
+
+Optimization. Adam at lr 10 −3, weight decay 10 −5, batch size 64 , 25 epochs; HVG selection on the training split only; magnitude z-score statistics from the training split only; model selection by validation R2.
+
+Architecture overview (visual). Figure 2 summarizes the MAG -SPSM pipeline. The four magnitude statistics m(x) defined in Eq. (1) are z-scored using VCC training statistics to obtain fm(x) ∈ R4,then concatenated with the d=2 ,000 -dimensional log1p delta input x to form x+ ∈ R2004 , which is fed to the SPSM V4 backbone and a linear head. The same backbone, the same losses, and the same optimizer are used for the SPSM baseline (which receives only x) and for MAG -SPSM (which receives 
+
+x+); the only difference is whether the four magnitude features are exposed to the encoder. x: delta features (d = 2,000 HVGs)     
+
+> m(x): 4 magnitude
+> features ( z-scored) Concat
+> x+2004 SPSM V4 encoder MLP Linear head y
+
+MAG-SPSM architecture                 
+
+> Four magnitude statistics : m1= | x|m2=x2/dm3=xm4=(x)
+> z-score with VCC train statistics only concatenate to xfeed to SPSM V4 backbone
+
+Figure 2: MAG -SPSM architecture. The expression delta vector x (d=2 ,000 HVGs) is concatenated with the four z-scored magnitude features fm(x) = ( |x|, ∥x∥2/√d, ∥x∥∞, σ (x)) to form x+ ∈
+
+R2004 , which is passed through the SPSM V4 encoder MLP (three hidden layers of width 256 , ReLU, LayerNorm, no architectural dropout) and a linear head. All z-score statistics use VCC training data exclusively. 
+
+## H Magnitude statistics on Replogle 
+
+For the primary 2,000 -HVG transfer evaluation, each Replogle row x(R) is first embedded into the VCC HVG namespace by zero-imputing the 570 VCC-only coordinates missing from Replogle. The magnitude statistics m(x(R)) are then computed using Eq. (1) over this 2,000 -dimensional vector, including the zero-imputed entries. In the HVG-coverage controls (App. O), by contrast, models are trained and evaluated directly in the 1,430 shared-HVG subspace. We then z-score using VCC training statistics μtr , σtr (Sec. 5), preserving the strict zero-shot constraint. The Replogle z-scored magnitudes have empirical means roughly +0 .8 σtr to +1 .9 σtr relative to the VCC training baseline, and component-wise standard deviations 1.6× to 2.4× wider, reflecting the larger feature scale of the Replogle release. The deep MAG -SPSM sees these as out-of-distribution; the linear baseline, having no encoder, does not suffer the same OOD penalty. 16 Visualizing the failure mode on Replogle. Figure 3 contrasts the predicted-versus-true scatter of the SPSM baseline and MAG -L INEAR on the Replogle K562 test set. The SPSM baseline, trained on the expression vector alone, collapses its predictions to a narrow band centered near the VCC training-label mean ( ˆy ≈ 4) and is anti-correlated with the distributed Replogle breadth endpoint (R2 = −0.161 , ρ = −0.435 ): high- and low-effect perturbations are predicted similarly, and the rank order is reversed under cell-type shift. MAG -L INEAR , a four-feature linear regression on fm(x),expands its prediction range and recovers a positive monotone relationship to the same distributed breadth endpoint ( R2 = +0 .121 , ρ = +0 .315 ). The contrast illustrates the legacy-endpoint failure mode that motivated the harmonized analysis of Sec. 6.3: the expression-only encoder transfers negatively, whereas an explicit magnitude summary transfers positively, even though both models share the same training data and target. 
+
+Optimization, training schedule, and compute. All deep models (SPSM, MAG-SPSM, MAG-Anchor) use Adam at learning rate 10 −3 with weight decay 10 −5, batch size 64 , and 25 training epochs. The loss (2) applies to SPSM /MAG -SPSM ; MAG-Anchor uses MSE on ˆy. HVG selection and all z-score statistics use the VCC training split exclusively. All deep experiments fit on a single TITAN RTX 24 GB GPU; classical baselines were run on CPU. Classical baselines use 
+
+scikit-learn defaults (detailed in App. F). 0 2 4 6 8 10      
+
+> True y (Replogle log1p AD)
+> 0246810
+> Predicted ŷ (a) SPSM baseline (anti-correlated) R²=-0.161, ρ=-0.435
+> ideal
+> 0246810
+> True y (Replogle log1p AD) (b) Magnitude-only LR (positive) R²=+0.121, ρ=+0.315
+> ideal
+> Failure mode on Replogle K562 (cell-type shifted)
+
+Figure 3: Failure mode on Replogle K562 (cell-type shifted), zero-shot from VCC. (a) The SPSM 
+
+baseline’s predictions collapse to a narrow band near the VCC training-label mean and are anti-correlated with the distributed Replogle breadth endpoint ( R2 = −0.161 , ρ = −0.435 ). (b) MAG -LINEAR (four-feature linear regression on fm(x)) expands the prediction range and recovers a positive monotone relationship to the held-out label ( R2 = +0 .121 , ρ = +0 .315 ). 
+
+## I Additional results: ablations, rank extension, and negative results 
+
+Single-feature and leave-one-out ablation of MAG -SPSM . We performed a complete single-feature and leave-one-out (LOO) ablation of the four magnitude features at seed 0 (Table 7). Across the four single-feature variants, the VCC test R2 ranges from +0 .095 (single ∥x∥2) to +0 .128 (single |x|), all well below the full 4-feature MAG -SPSM at +0 .222 . Across the four leave-one-out variants, the test R2 ranges from +0 .137 (drop max |x|) to +0 .230 (drop ∥x∥2); the latter is the best LOO arm and is within 0.008 of the full 4-feature model, while removing max |x| costs 0.086 , indicating that 
+
+max |x| contributes the most among the four magnitude features. 
+
+> MAG
+
+-R ANK : a small rank-margin extension of MAG -SPSM . MAG -R ANK adds a margin-based pairwise rank loss Lrank = 1
+
+> |P|
+
+P 
+
+> (i,j )∈P
+
+max(0 , α −sign( yi −yj )·(ˆ yi − ˆyj )) over within-batch close-call pairs, with α = 0 .1, in-batch close-call pairs dropped at εy = 0 .05 , and weight λrank = 0 .1. The 3-seed test R2 rises to +0 .2396 ±0.0078 , a paired improvement over MAG -SPSM of +0 .0142 ±0.0040 .Spearman is statistically unchanged; we report MAG -R ANK as a small reproducible extension and 17 Table 7: Magnitude feature ablation on VCC test (seed 0). ∆ vs full = R 2 minus full 4-feature MAG-SPSM. Bold marks the best leave-one-out variant. 
+
+Variant Test R 2 ∆ vs base ∆ vs full Spearman SPSM baseline (no MAG) +0 .0768 +0 .0000 −0.1456 +0 .3986 
+
+MAG-SPSM (full 4) +0 .2224 +0 .1456 +0 .0000 +0 .5763 
+
+only m1 (mean |x|) +0 .1278 +0 .0510 −0.0946 +0 .4987 
+
+only m2 (scaled ℓ2) +0 .0950 +0 .0181 −0.1274 +0 .4557 
+
+only m3 (max |x|) +0 .1269 +0 .0501 −0.0955 +0 .4406 
+
+only m4 (std) +0 .1001 +0 .0233 −0.1223 +0 .4531 
+
+drop m1 +0 .1986 +0 .1218 −0.0238 +0 .5730 
+
+drop m2 +0 .2303 +0 .1535 +0 .0079 +0 .5884 
+
+drop m3 +0 .1365 +0 .0597 −0.0859 +0 .5084 
+
+drop m4 +0 .2084 +0 .1316 −0.0140 +0 .5784 
+
+Table 8: Additional negative and weak baselines, all evaluated on VCC unless noted. 
+
+Method Metric Value Verdict IGA bilevel gate H1 Mann-Whitney p 0.380 both hypotheses fail H2 Spearman ρ 0.103 weak association Replogle → VCC pretrain VCC test R2 (DWP+pretr.) −0.181 cell-type mismatch Post-hoc tail correction (deployable) VCC val R 2 ∆ −0.046 prediction range collapsed; abs. R 2 =
+
+−0.192 , ∆ vs. the corresponding single-seed baseline Tail-weighted MSE ( γ=1 ) VCC test R2 ∆ +0 .0075 below pre-specified threshold LDS-weighted MSE ( σ=2 ) VCC test R2 ∆ −0.100 degrades performance LDS-weighted MSE ( σ=1 ) VCC test R2 ∆ −0.068 degrades performance 
+
+do not promote it as a contribution. The strong-baseline result of Sec. 6.1 dominates this gain by an order of magnitude. 
+
+Per-quintile bias. MAG -SPSM reduces per-quintile bias most sharply at the tails (Q1 bias from 
+
++1 .093 to +0 .918 ; Q5 bias from −0.696 to −0.580 ), consistent with the diagnostic that magnitude features expand the prediction range. The remaining ∼ 60% of the per-quintile bias is not closed by MAG -SPSM , motivating the strong-baseline audit (Sec. 6.1) and the cross-dataset experiment (Sec. 6.3). 0.00 0.05 0.10 0.15 0.20 0.25        
+
+> VCC test R2(seed 0)
+> SPSM baseline single x2
+> single std(x) single max|x| single mean|x| drop max|x| drop mean|x| drop std(x) drop x2
+> MAG-SPSM (full 4) +0.077 +0.095 +0.100 +0.127 +0.128 +0.136 +0.199 +0.208 +0.230 +0.222
+> Magnitude feature ablation (Phase 9D)
+> baseline (+0.077) full 4 (+0.222)
+
+Figure 4: Single-feature and leave-one-out ablations of the four magnitude features. All four behave as a redundant low-dimensional summary on this split. 18 Table 9: Dataset statistics. Both use CRISPRi perturbation; differ in cell line, biological-row unit, and feature normalization. 
+
+VCC Replogle K562 (essential) Source Virtual Cell Challenge Replogle et al. 2022 (Cell) Cell type H1 hESC (stem) K562 (CML) Perturbation CRISPRi (dCas9-KRAB) CRISPRi (dCas9-KRAB) Train / Val / Test rows 5,740 / 2,052 / 3,972 — (held-out test only) Non-NT rows used (test) 3,972 2,176 Unique target genes 282 (all splits) 2,057 Train/Val/Test target-gene split 140 / 49 / 93 ( disjoint ) —Feature dim ( dx used) 2,000 (HVG) 8,563 full; 1,430 in HVG Feature normalization log1p ∆ vs per-batch NT pre-z-scored log1p change Feature std (post-HVG) 0.085 0.161 (∼ 1.9×)Label log1p(AD) per (batch, gene) log1p(AD) per (pert, prom) Label range [0 , 5.72] [0 , 8.71] 
+
+Label mean (std) 4.23 (0 .81) 3.99 (2 .75) 
+
+Per-row biological unit (batch × gene) pseudobulk (pert, prom) batch-aggregated Target-gene overlap with VCC — 68 / 282 (24.1%) 
+
+Table 10: Comparison of all methods tested. VCC test R 2 shown as mean ± std (3 seeds) for verified methods; single-seed for negative results. Replogle K562 shows seed-0 cross-dataset transfer. Replogle columns are scored against the distributed endpoint (Sec. 6.2).                                                                     
+
+> Method VCC test R 2Replogle R 2Status Notes SPSM V4 baseline +0 .0824 ±0.0100 −0.162 verified nseeds =3
+> MAG-SPSM +0.2253 ±0.0040 −0.101 verified nseeds =3
+> MAG-Rank ( λ=0 .1)+0 .2396 ±0.0078 —extension paired ∆= + 0 .0142 ±0.0040
+> MAG-3feature +0 .2320 ±0.0162 —extension higher seed variance Magnitude-only LR +0 .2082 (1 seed) +0.121 linear baseline 4-feature linear reg.
+> Negative / failed methods
+> IGA bilevel gate — (gate test) —failed H1 p=0 .380 , H2 ρ=0 .10
+> Replogle pretrained encoder −0.181 (DWP) —failed cell-type mismatch Post-hoc tail correction −0.192 †—failed deployable ∆ = −0.05
+> †VCC val (n=2052), single-seed; ∆vs uncorrected single-seed SPSM V4 base (R 2=−0.146 ). Tail-weighted MSE +0 .0843 (best) —weak ∆= + 0 .0075
+> LDS-weighted MSE −0.0233 —failed σ=2 ,∆= −0.100
+
+Failed and weak methods (full table). All methods compared (consolidated). 
+
+## J Endpoint provenance for the distributed Replogle column 
+
+Reconstruction attempt. We tested whether the Anderson–Darling column distributed with the Replogle releases can be reproduced from the corresponding single-cell data under the definition of Sec. 3. Using RPE1, where both the distributed column and single-cell counts are available, we selected 30 constructs by a deterministic rule—sorted by the stored value, binned into ten equal-frequency strata, three per stratum—and computed the two-sample Anderson–Darling statistic at each target gene’s own column under eight pre-declared variants: aggregation (pooled across batches; per-batch then unweighted mean, count-weighted mean, or median), transform (raw statistic; 
+
+log 1 p(max(0 , ·)) ), input matrix (raw counts; normalized expression), and control sample (non-targeting cells pooled globally; restricted to the same batch). No variant reproduced the distributed values. The closest was per-batch median on normalized expression with globally pooled controls, reaching Pearson 0.335 and Spearman 0.268 with normal-ized RMSE 0.30 . We classify the outcome as divergent: the distributed column is not a target-gene Anderson–Darling effect size under any tested construction. 
+
+What the column is instead. The distributed values are integer-valued and bounded well below the gene count in every screen ( [0 , 6036] , [0 , 5547] , and [0 , 5528] for K562-essential, RPE1, and K562 19 genome-wide), which is consistent with a per-perturbation count over genes. We therefore computed transcriptome-wide per-gene Anderson–Darling statistics for ten deterministically selected constructs and compared eight pre-declared count definitions against the stored values: counts of genes with statistic above zero, above 1.0, or above 2.0; counts with p < 0.05 or p < 0.01 , uncorrected or after Benjamini–Hochberg correction; and a detection-count null. All count candidates were rank-monotone with the stored column ( ρ = 0 .96 –0.98 ). The Benjamini– Hochberg-corrected count at q < 0.05 on normalized expression reached Pearson 0.986 ; the detection-count null was rejected, being constant at 8,749 . The fitted slope was approximately 0.60 : our reconstruction runs roughly 1.6× the stored value. The exact upstream preprocessing, significance threshold, control set, and tested gene universe therefore remain unresolved, and we do not claim to have reconstructed the column. We note that scipy.stats.anderson_ksamp floors its reported significance level at 0.001 and caps it at 0.25 , which makes any threshold-based count sensitive to implementation detail. 
+
+Association with the target-gene endpoint. Within each screen, the distributed column and the rebuilt target-gene endpoint are only weakly associated at construct level: Spearman 0.165 [0 .118 , 0.211] in RPE1, 0.301 [0 .257 , 0.343] in K562-essential, and 0.342 [0 .322 , 0.362] at target level in the K562 genome-wide screen. The two endpoints capture largely distinct aspects of perturbation effect. 
+
+## K Harmonized endpoint construction 
+
+Protocol. The subsample sizes are the medians of the VCC distribution: 27 perturbed cells per row and 788 non-targeting cells per batch. For each eligible construct we draw 27 perturbed cells without replacement from its pooled cells and 788 non-targeting cells without replacement from the pooled control set, compute the log1p Anderson–Darling statistic at the target gene’s column, and repeat 25 
+
+times with pre-specified seeds. The endpoint is the median across draws; we also record the mean, standard deviation, interquartile range, and 5th and 95 th percentiles. Quantiles use numpy.quantile 
+
+with linear interpolation throughout. Eligibility requires at least max(20 , 27) perturbed cells, at least max(200 , 788) pooled control cells, an unambiguous mapping from target gene to exactly one feature column, and a verified one-to-one join between the bulk and single-cell artifacts. 
+
+Coverage. Against the constructs used in the corresponding transfer evaluation, coverage is 1,932 
+
+of 2,242 (86 .2% ) for RPE1 and 1,903 of 1,970 (96 .6% ) for K562-essential. Exclusions are dominated by target genes absent from the feature namespace rather than by insufficient cells. 
+
+Resampling spread. The ratio of the median within-construct interquartile range to the between-construct standard deviation is 0.174 at construct level and 0.184 at target level for RPE1, and 0.236 
+
+and 0.258 for K562-essential. Within-construct resampling variation is therefore small relative to between-construct variation in both screens. 
+
+Pooled-scale comparison. A naive pooled construction using all eligible cells, without subsampling, correlates with the matched-size endpoint at Spearman 0.884 [0 .871 , 0.895] in RPE1 and 0.874 [0 .860 , 0.886] in K562-essential. Rank agreement is strong but not exact: matching the subsample size changes some rankings, which is why we fix it rather than pooling. 
+
+Control-matching sensitivity. Restricting control cells to the same batch as the perturbed cells, rather than pooling globally, is possible for 43 constructs in RPE1 and 194 in K562-essential under a minimum of ten perturbed and fifty control cells per batch. Where computable, the batch-matched endpoint correlates with the pooled-control endpoint at Spearman 0.910 in RPE1 and 0.973 in K562-essential. Batch structure is not consequential for this endpoint in the subsets where the comparison is well powered. We note that the batch variable available in these releases is a technical grouping whose status as an independent experimental replicate is not established by the accompanying metadata. 20 Table 11: Zero-shot transfer from VCC (H1 hESC, train) to Replogle K562 (test) for all model families. Stochastic methods report mean ± std over three seeds. Magnitude-only classical models and tree ensembles on x plus magnitude transfer with positive Spearman, while expression-only classical and deep models have negative Spearman against this legacy distributed endpoint. Explicit magnitude exposure is not sufficient by itself: Ridge on x plus magnitude and the deep MAG-SPSM encoder both transfer negatively despite explicit magnitude input. Bold marks the empirical Pareto frontier between in-distribution VCC R2 and Replogle Spearman.                                                                                    
+
+> Model VCC test R2Replogle R2Replogle Spearman
+> Deep models
+> SPSM baseline +0 .082 −0.162 −0.435
+> MAG -SPSM (proof of concept) +0 .225 −0.101 −0.109
+> Classical, xonly
+> Ridge −0.306 −0.523 −0.198
+> HistGradientBoosting +0 .190 ±0.006 −0.134 ±0.011 −0.375 ±0.037
+> Random Forest +0 .090 ±0.004 −0.102 ±0.002 −0.431 ±0.010
+> Classical, magnitude only (4 features)
+> MAG -L INEAR +0 .208 +0.121 +0 .315
+> Ridge, magnitude only +0 .187 +0 .029 +0 .173
+> HistGradientBoosting +0 .054 ±0.047 +0 .065 ±0.019 +0 .261 ±0.043
+> Random Forest −0.042 ±0.005 +0 .114 ±0.008 +0.346 ±0.008
+> Classical, xplus magnitude
+> Ridge −0.107 −0.716 −0.185
+> Random Forest +0 .370 ±0.004 +0 .037 ±0.003 +0 .314 ±0.009
+> HistGradientBoosting +0 .365 ±0.008 −0.035 ±0.017 +0 .070 ±0.074
+
+## L Transfer against the distributed endpoint 
+
+For completeness we report association between the same archived predictions and the Anderson– Darling column distributed with the Replogle releases. Because Sec. 6.2 establishes that this column measures transcriptome-wide response breadth rather than target-gene effect strength, these values are not estimates of the same outcome as Table 2 and should not be compared to it directly. 
+
+Endpoint sensitivity. Evaluating one prediction vector against both endpoints on the same construct subset isolates the effect of the outcome definition. On K562-essential, the difference ρtarget-gene −
+
+ρbreadth is positive for every expression-only family and for the deep SPSM baseline, reaching +0 .371 ,and negative for every magnitude-carrying family and for MAG -L INEAR , reaching −0.151 . The two endpoints reward different model behavior: predictors that track target-gene effect strength score worse against a breadth endpoint, and conversely. 
+
+An earlier reading of these numbers. Evaluated against the distributed endpoint alone, transfer to RPE1 appears qualitatively opposite to transfer to K562—Random Forest on [x; fm] reaches 
+
+ρ = +0 .314 on K562 and −0.397 on RPE1. Under the rebuilt target-gene endpoint the two screens instead show the same group-level pattern (Table 2). We report both because the discrepancy is itself informative about what the distributed endpoint measures, not because the two evaluations are interchangeable. 
+
+## M Full intervals for cross-screen transfer 
+
+Table 2 reports point estimates and verdicts. The corresponding 95% intervals come from a paired cluster bootstrap over target genes with B = 10 ,000 replicates and a pre-specified seed. Each replicate samples target-gene clusters with replacement; a cluster drawn more than once contributes all of its constructs once per occurrence; and the same draw is applied jointly to every prediction, every seed, and every contrast within that replicate, so that paired comparisons share resampling noise. 21 Table 12: HVG-coverage control for K562 transfer. Mean ± sample standard deviation over three seeds.                   
+
+> Training namespace VCC test R2K562 Spearman ρ
+> 2,000 VCC HVGs +0 .370 ±0.004 +0 .314 ±0.009 1,430 shared HVGs +0 .340 ±0.002 +0 .377 ±0.010
+
+For the nine classical families the metric is computed per seed and averaged, with the averaging repeated inside each replicate; for the three single-seed predictors the metric comes from the one archived prediction vector, so the interval reflects target-gene sampling conditional on that seed. No replicate was discarded for an undefined correlation in either screen. The two evaluations differ in cluster structure: RPE1 has 1,932 constructs over 1,811 target genes with at most three constructs per gene, and K562-essential has 1,903 over 1,811 with at most two. Interval widths are therefore not mechanically comparable across screens. 
+
+## N MAG-Anchor and external transfer 
+
+MAG-Anchor is evaluated in-distribution on VCC (Sec. 6.4) but does not appear in Table 2. The per-construct prediction vectors required to evaluate it against a rebuilt endpoint were not retained for the external screens; only aggregate metrics were. Since our transfer evaluation re-scores stored predictions rather than retraining, and no stored MAG-Anchor prediction exists to validate a reconstruction against, we exclude it rather than introduce an unvalidated refit into the comparison. This is an availability constraint, not a selection based on outcome. 
+
+## O HVG-coverage control 
+
+To test whether the legacy K562 distributed-endpoint transfer result is explained by the 2,000 -to-
+
+1,430 HVG dimension drop, we reran the RF [x; fm] baseline using only the 1,430 HVGs shared between VCC and Replogle K562. The shared genes were selected deterministically by gene name in VCC HVG order, without using Replogle target labels or outcomes. Magnitude features were recomputed from the 1,430 -dimensional inputs and z-scored using VCC training statistics only. Across three seeds with the same RF hyperparameters as the main experiment ( nest =200 ,
+
+max depth =20 , min leaf =2 ), the 1,430 -HVG control achieved VCC test R2 = +0 .340 ± 0.002 and K562 transfer Spearman ρ = +0 .377 ± 0.010 (Table 12). This passes our pre-specified robustness rule ( ρ ≥ +0 .20 ) and shows that, when transfer is scored against the distributed endpoint , the positive K562 rank association is not explained by the missing 570 HVGs alone. The in-domain VCC R2 decreases relative to the 2,000 -HVG result ( +0 .370 ± 0.004 ), as expected from the reduced feature set, but cross-cell rank transfer is preserved. 
+
+Pre-specified HVG-coverage control: x-only models. We additionally pre-specified a symmetric x-only counterpart of the control above to test whether the negative cross-cell transfer of expression-only models is a feature-truncation artifact rather than a direction-vs-magnitude phenomenon. The pre-registration committed four hypotheses with PASS/WARN/FAIL thresholds and the consequent paper-text edits before any model was trained in the pre-registration file committed to the project repository. We trained Ridge, Random Forest, HistGradientBoosting, and the deep SPSM V4 baseline on x alone restricted to the same 1,430 shared HVGs, three seeds each, with hyperparameters frozen at their main-paper values. Three-seed mean K562 Spearman values were: Ridge ρ = −0.229 ,Random Forest ρ = −0.407 ± 0.003 , HistGradientBoosting ρ = −0.305 ± 0.019 , and SPSM V4 baseline ρ = −0.389 ± 0.007 . All four pre-specified hypotheses passed: H1 (every x-only classical model retains negative mean Spearman) passed with the largest value at Ridge −0.229 ; H2 ( x-only deep baseline mean ρ < +0 .05 ) passed at −0.389 ; H3 (best magnitude-aware minus best x-only 
+
+ρ gap on the 1,430 -HVG sub-space ≥ +0 .20 ) passed with gap +0 .607 (+0 .377 vs −0.229 ); and H4 (within-VCC |∆R2| ≤ 0.030 relative to the 2,000 -HVG baselines) passed with worst-case 
+
+|∆R2| = 0 .011 for Ridge. Per the pre-specified decision rule, the legacy distributed-endpoint x-only negative-transfer pattern is robust to feature truncation and the magnitude–direction asymmetry holds on the shared-HVG sub-space. 22 Scope. Per-construct prediction vectors from this control were not retained, so it cannot be re-scored against the rebuilt target-gene endpoint without an unvalidated refit. We therefore treat it as a legacy distributed-endpoint sensitivity analysis and do not use it to support Table 2. 
+
+## P Bootstrap confidence intervals for key comparisons 
+
+As a robustness analysis of the central comparisons in the paper, we computed row-level paired bootstrap 95% confidence intervals ( B = 10 ,000 resamples, RNG seed 42 , percentile method) for three pre-specified comparisons. The summary is in Table 13. (C5) Random Forest on [x; fm] versus 
+
+> MAG
+
+-SPSM on VCC test pooled R2, paired across the same three seeds: median ∆R2 = +0 .145 ,
+
+95% CI [+0 .127 , +0 .163] , sign-stable in 100% of resamples ( STRONG ). (C7) MAG -L INEAR versus HistGradientBoosting on x-only on VCC test R2 against the mean of three HistGB seeds: median 
+
+∆R2 = +0 .012 , 95% CI [−0.009 , +0 .032] (WEAK ). (C8) MAG -L INEAR versus the SPSM baseline on K562 Spearman ρ, row-resampled with no seed component: median ∆ρ = +0 .750 , 95% CI 
+
+[+0 .700 , +0 .800] (STRONG ). Table 13: Row-level paired bootstrap 95% confidence intervals for three pre-specified comparisons. 
+
+B = 10 ,000 resamples, RNG seed 42 , percentile method. Sign-stability is the fraction of bootstrap resamples in which the sign of the paired difference matches the median.                                
+
+> ID Comparison Metric Median ∆95% CI C5 RF [x;fm]vs. MAG -SPSM (VCC) R2+0 .145 [+0 .127 ,+0 .163]
+> C7 MAG -L INEAR vs. HistGB x-only (VCC) R2+0 .012 [−0.009 ,+0 .032]
+> C8 MAG -L INEAR vs. SPSM baseline (K562) ρ+0 .750 [+0 .700 ,+0 .800]
+
+We do not report per-row bootstrap intervals for comparisons involving MAG-Anchor or for the asymmetric three-seed-vs-one-seed RF– MAG -SPSM K562 comparison. A seed-0 calibration check on regenerated deep-model predictions did not reproduce the original predictions to the pre-specified tolerance; we therefore avoid uncertainty estimates that would mix the original paper predictions with regenerated deep-model outputs. This analysis is reported as supporting uncertainty evidence for the main comparisons, not as a new contribution. 
+
+## Q Architecture controls for x-only MLP 
+
+To test whether the x-only MLP failure to recover the magnitude-like signal is explained by normaliza-tion, dropout, capacity, or the absence of a simple scale-preserving path, we ran an architecture-control audit. We held the data, target, optimizer, and training schedule fixed and varied only the encoder: (B) remove LayerNorm; (C) remove LayerNorm and Dropout; (D) widen the MLP to 1024 hidden units; (E) add a learnable scalar shortcut f (x) = MLP( x) + β · ∥ x∥2/√d with β initialized at 0.Variants (B)–(D) are strictly x-only; variant (E) augments x with the single hand-designed magnitude scalar ∥x∥2/√d (i.e., m2 from Eq. 1) routed through an additive shortcut, so it is the strongest x-with-magnitude-shortcut control we tested. Across three seeds each, no variant crosses VCC test R2 = +0 .150 (best individual seed: wide-no-norm seed 1 at R2 = +0 .034 ); means range from −0.040 ± 0.021 to +0 .016 ± 0.018 (sample standard deviation, ddof=1 ). Per a pre-specified rule (P ARTIAL -R ESCUE if mean R2 ≥ +0 .150 ), the outcome is N O-R ESCUE . The original SPSM 
+
+baseline’s calibration matches the paper’s +0 .082 ± 0.010 exactly. We conclude that the deep x-only MLP failure is not explained by LayerNorm, Dropout, limited capacity, or even a hand-designed magnitude shortcut: even when the network is given direct access to m2 via an additive path, it fails to recover the signal. This audit is reported as a diagnostic robustness analysis covering four common architecture variants and is not exhaustive; activation, optimizer, and skip-connection variants remain untested. 
+
+## R RF hyperparameter robustness 
+
+To test whether the Random Forest result on [x; fm] depends on a narrow hyperparameter choice, we ran a targeted hyperparameter robustness sweep. We held the data, features, and seeds fixed 23 and varied only the RF: paper reference S0 ( nest =200 , max depth =20 , min leaf =2 ); S1 shallower trees ( max depth =10 ); S2 unbounded depth; S3 stronger leaf regularization ( min leaf =5 ); S4 more trees ( nest =500 ); S5 intermediate depth ( max depth =15 ). Across three seeds × six settings ( 18 
+
+fits), VCC test R2 remained in [+0 .361 , +0 .372] and legacy distributed-endpoint K562 Spearman 
+
+ρ in [+0 .309 , +0 .359] (Table 14). Every setting met the pre-specified R OBUST criteria (VCC 
+
+R2 ≥ +0 .330 and K562 ρ ≥ +0 .250 ). The shallower-tree variant S1 gave the highest K562 transfer 
+
+ρ = +0 .359 ± 0.011 (vs. +0 .314 at S0) at a small VCC R2 cost ( −0.009 ), consistent with reduced direction-overfitting; we do not retroactively change the paper’s S0 numbers. We report this sweep as a robustness check and keep the original S0 setting as the paper’s primary RF configuration. Table 14: RF hyperparameter robustness sweep on [x; fm]. Mean ± sample standard deviation across three seeds (ddof=1) for each setting. All settings meet the robustness criterion used for this sweep (VCC R2 ≥ +0 .330 and K562 ρ ≥ +0 .250 ).                                                
+
+> ID Configuration VCC test R2K562 Spearman ρ
+> S0 Paper reference ( nest =200 , depth = 20 , leaf = 2 )+0 .370 ±0.004 +0 .314 ±0.009
+> S1 Shallower trees (depth = 10 )+0 .361 ±0.003 +0 .359 ±0.011
+> S2 Unbounded depth +0 .369 ±0.004 +0 .312 ±0.010
+> S3 Leaf regularization (leaf = 5 )+0 .367 ±0.003 +0 .323 ±0.008
+> S4 More trees ( nest =500 )+0 .372 ±0.003 +0 .316 ±0.009
+> S5 Intermediate depth (depth = 15 )+0 .370 ±0.004 +0 .309 ±0.010
+
+## S Foundation model feasibility analysis 
+
+We evaluated the feasibility of adding single-cell foundation-model baselines (scGPT [Cui et al., 2024], Geneformer [Theodoris et al., 2023], UCE [Rosen et al., 2026], scFoundation [Hao et al., 2024]). Two scientific considerations led us to defer this comparison rather than include it in the present study. First, the closest in-house analog is already on the record as a negative result. We pretrained a small MLP encoder on Replogle K562 and RPE1 single-cell pseudobulks and transferred it to VCC; this configuration is the most direct pretrain-and-transfer test possible with our data and obtained VCC test R2 = −0.181 . Second, our task and the FM pretraining distribution are not directly comparable. The cited FMs are pretrained on raw single-cell counts over full gene vocabularies, whereas the VCC task uses per-perturbation pseudobulk delta features over a 2,000 -HVG subset. Applying a pretrained FM to our inputs without a non-trivial format conversion would evaluate it out-of-distribution from its pretraining regime, and any negative result would be attributable to the format mismatch rather than to the FM hypothesis. The paper’s contribution is the magnitude-signal diagnostic, not FM benchmarking; we therefore leave a fairness-controlled FM comparison to follow-up work that can adopt FM-native input formats. 
+
+## T Additional discussion: MAG -SPSM and MAG-Anchor as a secondary deep method 
+
+Why representation-blind remedies fail. Reweighting losses (Balanced MSE [Ren et al., 2022], LDS [Yang et al., 2021]) leave the encoder’s input representation unchanged and therefore cannot help in our setting: the encoder still maps inputs through a representation that does not expose magnitude. This is the unifying explanation for the failure of the five remedies in Sec. 4 that act on the loss but not on the input representation. 
+
+Foundation models scope. The diagnostic claims of this paper concern the MLP-encoder family we tested and may not generalize to foundation-model-based perturbation predictors. Whether large pretrained single-cell encoders such as scGPT [Cui et al., 2024], Geneformer [Theodoris et al., 2023], and Universal Cell Embeddings [Rosen et al., 2026] recover magnitude when fine-tuned on the disjoint target-gene split, or whether they exhibit the same representational collapse on the high- and low-effect tails, was not evaluated in this study. Compute and preprocessing costs (gene-vocabulary alignment, memory budget for fine-tuning on a single 24 GB GPU) made a defensible foundation-model baseline outside the scope of this submission; this is an important direction for follow-up work. 24 MAG -SPSM as a proof of concept, not the final model. The strong-baseline audit (Sec. 6.1) decisively shows that MAG -SPSM is not the strongest exploiter of the magnitude signal. Random Forest on the same features outperforms it by ∆R2 = +0 .145 in-distribution and by ∆R2 = +0 .138 
+
+on the legacy distributed endpoint under cross-cell transfer. We retain MAG -SPSM in the main text as a diagnostic deep augmentation: the simplest verification that the same magnitude signal can be exposed to a deep encoder, and the substrate for the causal controls in Sec. 5.2. We do not recommend 
+
+> MAG
+
+-SPSM as a final architecture. 
+
+MAG-Anchor as a secondary deep method. The MAG-Anchor results refine, rather than replace, the diagnostic story. The failed MAGAnchor-x ablation shows that exposing magnitude at the output is not enough; the residual branch must also condition on the magnitude summary. Even so, Random Forest on [x; fm] remains stronger in-distribution, so we treat MAG-Anchor as a secondary deep-architecture contribution rather than a replacement for the strongest classical baseline (App. D). 
+
+Two readings of the diagnostic. A reasonable alternative reading of our finding is that mean-collapse arises from optimization or normalization behavior of the deep MLP when the label scale couples to input scale through normalization layers, rather than from a representational property of perturbation prediction per se . The architecture-control analysis in App. Q tests this reading directly: holding the data, target, optimizer, and training schedule fixed and varying only the encoder (no LayerNorm; no LayerNorm and no Dropout; widened to 1024 hidden units; an additive scale-preserving shortcut), no x-only variant crosses VCC test R2 = +0 .150 , well below the +0 .208 
+
+obtained by a four-feature linear regression on fm(x). This empirically disfavors the optimization-only reading within the MLP family we tested, though it does not exclude it for architectures we did not test (set transformers, attention-based encoders, foundation-model fine-tuning). Under both readings, explicit magnitude exposure is the empirical separator between models that recover the magnitude signal and models that collapse, and the practical recommendation is the same—supply magnitude as features rather than rely on the encoder to recover it from the expression vector alone. The diagnostic is therefore most precisely stated as a finding about which models, on the disjoint target-gene split with this label parameterization, exploit a known low-dimensional predictive signal .
+
+## U Additional limitations 
+
+1. The label is magnitude-like by construction. Because the target is the log Anderson–Darling distance from NT, magnitude features are in principle informative. Our claim is not that this relationship is biologically surprising in isolation; it is that direction is fragile under the disjoint target-gene split, that standard encoders fail to exploit magnitude reliably, and that explicit magnitude exposure is the empirical separator under cross-cell transfer. 2. Replogle preprocessing residuals. Replogle K562 uses a different per-row biological unit than VCC ( 1,430 of 2,000 HVGs mapped; feature scales differ by ∼ 1.9×). We align via VCC-side normalization (App. H); residual confounding cannot be fully ruled out. 3. Cross-dataset R2 scale disparity. VCC test, Replogle K562 transfer, and Replogle RPE1 transfer have AD-based labels with substantially different marginal standard deviations (sample std, 
+
+ddof=1 ): VCC σy = 0 .758 , K562 σy = 2 .750 (3.63 × the VCC value), and RPE1 σy = 2 .372 
+
+(3.13 × the VCC value). Since R2 denominators scale with the squared label std, cross-dataset R2
+
+magnitudes are not directly comparable across the three benchmarks; the K562 R2 denominator is approximately 13 .2× the VCC denominator and the RPE1 denominator is approximately 9.8×.Cross-dataset R2 values should therefore be read as within-dataset goodness-of-fit measures, not as a single calibrated quantity transferable from one dataset to the other; rank-based metrics (Spearman ρ) are unaffected by this scale disparity and are the metric we emphasize in cross-cell claims. 4. HVG-coverage confound on cross-cell transfer. Models are trained on the full 2,000 -dimensional VCC HVG namespace. In the primary Replogle K562 transfer evaluation, Replogle rows are embedded into this 2,000 -dimensional namespace by zero-imputing the 570 VCC-only coordinates missing from Replogle. This is a structural input shift that is logically distinct from the biological cross-cell shift. The HVG-coverage control in App. O removes the zero-padding by training and evaluating directly in the 1,430 shared-HVG subspace, and K562 rank association is preserved and slightly higher ( ρ = +0 .377 ± 0.010 vs. +0 .314 ± 0.009 ). This addresses the coverage question 25 only for the legacy distributed-endpoint analysis; the corresponding prediction vectors were not retained, so the control cannot be re-scored against the rebuilt target-gene endpoint without an unvalidated refit. 5. Modest transfer magnitudes. On the distributed Replogle endpoint, the strongest R2 we observe is +0 .121 (MAG -L INEAR ), and the strongest in-distribution-and-transfer combination (RF on 
+
+[x; fm]) reaches R2 = +0 .037 . On the rebuilt target-gene endpoint we report rank association rather than pooled R2, since predictions produced on one outcome scale are not calibrated to another. Magnitude helps transfer but does not solve cross-context generalization. 6. Tree behavior on low-dimensional input. Random Forest on MAG -ONLY has VCC test R2 =
+
+−0.042 but Replogle Spearman +0 .346 ; the negative VCC R2 reflects poor calibration of leaf means rather than absence of signal (the in-distribution Spearman is +0 .555 , and tree predictions are bounded by the training label range). We therefore interpret tree results on MAG -ONLY as evidence of preserved rank association, not as calibrated in-distribution predictors. 7. No exhaustive deep-architecture search. We tested MLP-family encoders only ( SPSM /MAG -SPSM ,MAG-Anchor, and the MAGAnchor-x ablation). Set Transformers, attention-based encoders, foundation-model fine-tuning (scGPT [Cui et al., 2024], Geneformer [Theodoris et al., 2023], UCE [Rosen et al., 2026]), and width/depth sweeps were not evaluated. The conclusion that no deep encoder we tried matches the tree-ensemble baseline is therefore empirical and scope-limited to the MLP family. Within the MLP family, additional architecture controls (no-LayerNorm, no-Dropout, wider, and scale-aware variants) did not recover signal from x-only input (App. Q); a separate feasibility audit of external transformer foundation models concluded that a fairness-controlled comparison would require substantial input-format conversion and is deferred to follow-up work, with proxy evidence (an in-house pretrain-and-transfer experiment that obtained VCC R2 = −0.181 ) and additional details reported in App. S. Whether other architecture families recover magnitude from x alone, or whether the gap to RF on [x; fm] narrows under such architectures, remains an important open question. 8. MAG-Anchor is not state of the art. MAG-Anchor obtains positive H1 → K562 rank association when scored against the legacy distributed endpoint, while also improving over MAG -SPSM in-distribution. It is not, however, the strongest in-distribution predictor. Random Forest on [x; fm]
+
+remains stronger by about +0 .10 VCC test R2. We therefore view MAG-Anchor as a secondary method contribution that operationalizes the diagnostic finding, not as a new state-of-the-art perturbation predictor. 9. Statistical reporting choices and their scope. We report all stochastic results as mean ± sam-ple standard deviation ( ddof=1 ) across seeds, and report paired three-seed deltas for matched-architecture comparisons (e.g., MAG -R ANK vs. MAG -SPSM , ∆R2 = +0 .0142 ± 0.0040 ; App. I). For three central comparisons where reliable per-row predictions are available, we report row-level paired bootstrap 95% confidence intervals on the pooled test set ( nVCC =3 ,972 , nK562 =2 ,176 )in App. P. We do not report formal hypothesis tests, paired Wilcoxon signed-rank statistics, or multiple-comparison corrections across the full method grid; with nseeds ∈{ 3, 5}, such tests would be underpowered for small effects, and we judged that qualitative pattern descriptions are more honest than artificially sharp p-values. The central qualitative findings of the paper do not depend on small-effect comparisons: the gap between Random Forest on [x; fm] (R2 = +0 .370 ± 0.004 )and our deep MAG -SPSM encoder ( +0 .225 ± 0.004 ) is many times the seed-noise envelope of either estimate; the contrast between expression-only models (Spearman ρ ∈ [−0.435 , −0.198] on Replogle K562) and magnitude-aware models (Spearman ρ ∈ [+0 .173 , +0 .346] ) on cross-screen transfer is qualitative rather than marginal; and the harmonized transfer verdicts of Sec. 6.3 are determined by whether a bootstrap interval excludes zero, not by a p-value cutoff. Pairwise deltas with overlapping intervals are flagged as unresolved in the Discussion and in App. T; we do not claim these are statistically distinguishable. A targeted hyperparameter robustness sweep for the RF result is reported in App. R. 
+
+## V Anderson–Darling label construction 
+
+For each row i = ( bi, g i) with experimental Flex batch bi and target gene gi, the regression label is 
+
+yi = log  1 + max {0, A 2 
+
+> bi,g i
+
+},
+
+26 where A2 
+
+> b,g
+
+is the two-sample Anderson–Darling statistic returned by 
+
+scipy.stats.anderson_ksamp [Scholz and Stephens, 1987] applied to two one-dimensional samples: (i) the log1p-normalized expression values of the target gene g in cells perturbed at g
+
+within batch b, and (ii) the log1p-normalized expression values of the same gene g in non-targeting (NT) control cells from the same batch b. The Anderson–Darling test is therefore applied to the 
+
+target-gene column only ; the 2,000 -HVG vector xi is the predictor input and does not enter label construction. Negative AD statistics (rare, possible with the AD null-bias subtraction) are clamped to zero before the log(1 + ·) transform. The same per-row (b, g )-indexed AD label convention is used on Replogle K562 and RPE1 during cross-dataset evaluation, with b playing the role of the Replogle gemgroup-style batch identifier. 27

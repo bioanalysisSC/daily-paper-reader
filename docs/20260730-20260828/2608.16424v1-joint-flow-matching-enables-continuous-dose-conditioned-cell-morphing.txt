@@ -1,0 +1,522 @@
+Title: Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing
+
+URL Source: https://arxiv.org/pdf/2608.16424v1
+
+Published Time: Tue, 18 Aug 2026 01:57:58 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 
+
+Lea Bogensperger 1 , Manuela Merlo 1 , Martin Baumgartner 2 , Michael Krauthammer 1 , and Bernard Ciraulo 2 
+
+> 1
+
+University of Zurich 
+
+{lea.bogensperger,manuela.merlo,michael.krauthammer}@uzh.ch  
+
+> 2
+
+University Children’s Hospital Zurich 
+
+{martin.baumgartner,bernard.ciraulo}@kispi.uzh.ch 
+
+Abstract. Generative modeling has shown increasing promise for pre-dicting cellular perturbation effects under chemical compound treat-ments. Existing approaches either model perturbation as a distribution-to-distribution mapping without explicit concentration handling, or treat concentration as a discrete class label, precluding continuous dose con-trol. We introduce a joint flow matching approach that simultaneously models cell latents and drug concentration via a dual-timestep formu-lation, enabling dose-conditioned single-cell morphing through the in-vertibility of flow matching. The joint formulation induces a monotonic dose-response geometry in latent space and additionally supports con-centration estimation from cell morphology. As proof of concept, we further demonstrate generalization to an unseen dose held out during training. Empirically, our method achieves competitive or improved per-concentration metrics on two compounds compared with representative baselines, while enabling capabilities structurally unavailable to discrete-class methods. 
+
+Keywords: Flow Matching · Cell Perturbation · Dose-Response Mod-eling · Generative Modeling · Cellular Morphology · Fluorescence Mi-croscopy 
+
+## 1 Introduction 
+
+In cellular biology, morphological features often reflect cellular state and func-tion [41]. Optical microscopy is the dominant technique for capturing cellular morphology, commonly through fluorescence labeling and imaging of the protein or cellular compartment of interest [16]. This approach provides rich information on cellular responses to external chemical perturbations. Image-based response characterization is particularly relevant in drug development and drug-response profiling in oncology, where large panels of drugs are screened across a range of concentrations to score compounds or treatment efficacy [40]. Such assays have historically relied on hand-designed morphological features [7, 8]. The scale of 
+
+https://github.com/leabogensperger/joint-flow-matching-cells/ .arXiv:2608.16424v1 [cs.CV] 17 Aug 2026 2 L. Bogensperger et al. 
+
+these experiments has grown substantially with modern automated microscopes, which enable extensive sampling of cellular populations across vast parameter spaces, generating large image collections and, with them, statistically robust characterization of morphological variation [9]. However, cellular populations are typically heterogeneous, and treatments often differ only subtly—whether due to similar chemical composition or fine-grained concentration screening. As a result, the morphologies observed in these experimental settings span a continu-ous space rather than falling into discrete categories, making assessment through classical computer vision approaches challenging [34]. An approach capable of modeling this continuum of morphologies and quantifying dose-dependent mor-phological drift would enable estimation of minimal effective doses and compar-ison of closely related compounds, offering meaningful benefits for compound screening. Recent generative models offer a promising route toward this goal, learning to predict cellular perturbation responses directly from image data [6,28,42,43]. CellFlux [42] and its latent-space extension CellFluxV2 [43] frame the problem as a distribution-to-distribution transformation from control cells to treated cells using flow matching [26, 27], but do not include concentration as a variable in their formulation. IMPA [28] learns compound-level style codes via a Genera-tive Adversarial Network (GAN) [12], again without an explicit concentration representation. PhenDiff [6] does condition on concentration using conditional diffusion models [17], but treats it as a categorical class label, which prevents interpolation to unseen doses and does not capture the continuous nature of dose-response effects. None of these methods jointly models the distribution over cell images and concentration. We introduce a joint flow matching approach for continuous dose-response cell image generation over latent representations of cell images and drug concen-tration (Fig. 1). Our contributions are as follows: 
+
+– We extend latent flow matching to jointly model the distribution p(z, c ) over cell latents and drug concentrations via a dual-timestep formulation. 
+
+– Our method enables dose-conditioned cell morphing by leveraging the invert-ibility of flow matching, matching or exceeding concentration-aware baselines on per-concentration metrics while remaining competitive on concentration-agnostic evaluations. 
+
+– We show that joint modeling induces a monotonic mean dose-response trajec-tory in latent space and improves concentration-specific fidelity over discrete-class baselines. 
+
+– As proof of concept, we hold out one concentration during training and show generation at that unseen dose, a capability structurally unavailable to discrete-class methods. 
+
+## 2 Related Work 
+
+Flow Matching and Latent Generative Models. Diffusion models [17, 36, 37] and flow matching [26, 27] have become state-of-the-art for high-fidelity generative Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 3control cell x                      
+
+> encode
+> latent z1noise z0
+> invert
+> zc∗
+> 1∼p(z|c)
+> flow vθ(·, c ∗)generate latent with c∗
+> joint pθ(z, c )
+> decode
+> cell at dose c∗
+> Continuous dose-response morphing from a single real control cell.
+> control c1c2c3cmax
+> control drug concentration c→cmax
+
+Fig. 1: Joint Flow Matching for continuous dose-response cell image gener-ation. Given a real control cell, our model encodes it into a VAE latent z1, inverts the flow to noise z0, and re-integrates the forward ordinary differential equation (ODE) at target concentrations c⋆ to generate morphed cells across a continuous dose range. The dual-timestep formulation jointly models p(z, c ), enabling continuous concentra-tion control. 
+
+modeling. Latent-space extensions such as Stable Diffusion [11, 31] exploit vari-ational autoencoder (VAE) compression to enable efficient high-resolution gen-eration while maintaining or improving sample quality. Flow matching has also proven effective in medical and cellular imaging domains [4, 6, 42]. Conditional generation is naturally supported within the flow matching framework by con-ditioning the velocity network on auxiliary information, which can further be enhanced at inference via classifier-free guidance (CFG) [18]. Recent joint dif-fusion and flow approaches [2, 25] extend single-modality generation to multiple modalities by introducing a separate timestep per modality. Finally, invertibility is a key property of flow matching that enables image editing through inversion in noise space [13, 32]; recent work also explores inversion-free variants [22]. 
+
+Generative Models of Cellular Perturbation Response. Recent generative models targeting drug-induced morphological changes adopt a variety of architectural and methodological formulation choices. Because paired untreated–treated ob-servations are typically unavailable, generative approaches model control and treated cells as distributions rather than individual correspondences. Flow match-ing enables CellFlux [42] to learn a continuous transformation between these distributions without paired examples. However, without additional constraints, aligning distributions in aggregate may miss subtle biological effects: the model captures broad distributional shifts rather than the specific treatment-induced changes. Its extension CellFluxV2 [43] further moves the setup into a latent space and introduces a two-stage training procedure with noisy interpolants [1]. Neither variant models concentration as an explicit variable in their formula-4 L. Bogensperger et al. 
+
+tion. IMPA [28] and PhenExplain [24] use style-based GANs [12,19] to translate control cells to treated ones via per-perturbation style codes, but neither incor-porates concentration in their formulation. Closest to our setting, PhenDiff [6] employs a class-conditional diffusion model [17,35] with image inversion to trans-late cells between phenotypes, but treats concentration as a discrete class label, preventing continuous dose interpolation. Our method combines latent flow matching (CellFluxV2) with inversion-based editing (PhenDiff), but unlike prior work that treats concentration as a discrete label or ignores it, we jointly model the (image, concentration) distri-bution with a continuous scalar. This enables source-conditioned cell morphing across doses and concentration estimation in a single framework. 
+
+## 3 Method 
+
+Let x ∈ RC×H×W denote a cell image with C = 3 channels and spatial resolution 
+
+H × W = 256 × 256 , associated with a drug concentration c ∈ R≥0 (in μM). A pretrained VAE [21] with encoder E and decoder D maps images to a latent representation z = E(x) ∈ Rdz ×h×w with dz = 4 latent channels and spatial resolution h × w = 32 × 32 , yielding a spatial compression factor of 8×.
+
+3.1 Latent-Space Embedding 
+
+Similar to Latent CellFlux [43], we operate in a compressed latent space to enable efficient generative modeling. We therefore train a VAE with encoder 
+
+Eψ : RC×H×W → Rdz ×h×w and decoder Dψ : Rdz ×h×w → RC×H×W , parameter-ized by ψ. This follows the latent diffusion paradigm [31]: the VAE compresses images to a semantic latent space where the generative model (Sec. 3.2) oper-ates efficiently, and the VAE is frozen for all downstream training. The VAE is trained by minimizing a combination of a structural similarity (SSIM) loss with an ℓ1 pixel error and a Kullback–Leibler divergence aligning the encoder poste-rior qψ (z | x) = N (μψ (x), σ 2 
+
+> ψ
+
+(x)) with a standard normal prior p(z) = N (0 , I ):
+
+LVAE (ψ; x) = α LSSIM (ˆ x, x ) + (1 − α) LL1 (ˆ x, x ) + β D KL (qψ (z | x) ∥ p(z)) , (1) where α, β ∈ R+ weight the individual loss components, ˆx = Dψ (Eψ (x)) is the re-construction, and LSSIM (ˆ x, x ) = 1 −SSIM(ˆ x, x ). The VAE itself is concentration-agnostic, concentration is only used downstream by the flow model (Sec. 3.2). 
+
+3.2 Joint Flow Matching for Dose-Conditioned Generation 
+
+We train one flow model per drug over the joint distribution p(z, c ) of latent images and their corresponding concentration. Similar to PhenDiff [6] which is based on DDIM inversion, we use the invertibility of flow matching. However, we model the concentration as a continuous scalar instead of discrete classes, and further use a joint dual timestep formulation to learn the joint distribution of latent images and their concentrations, which has been successfully done for other multi-modal settings [2, 25]. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 5
+
+Flow Matching Background. Flow matching [26,27] learns a velocity field vθ that transports samples from a simple prior z0 ∼ N (0 , I ) to the data distribution 
+
+z1 ∼ pdata . Training considers the linear interpolation: 
+
+zt = (1 − t)z0 + tz 1, t ∈ [0 , 1] , (2) whose velocity is constant and given by z1 − z0. The conditional flow matching objective regresses the predicted velocity vθ (zt, t ) toward this target: 
+
+LCFM = Ez0,z 1,t ∥vθ (zt, t ) − (z1 − z0)∥22 . (3) Sampling discretizes the ordinary differential equation (ODE) dz t/dt = vθ (zt, t )
+
+into K Euler steps of size ∆t = 1 /K : z(k+1) = z(k) + ∆t v θ (z(k), t (k)) with 
+
+t(k) = k/K , starting from z(0) = z0.
+
+Invertibility. Because sampling is a deterministic ODE, the map from prior to data is invertible: integrating vθ backwards in time from z1 recovers z0:
+
+z0 = z1 −
+
+Z 10
+
+vθ (zt, t ) dt.  (4) This holds provided vθ (·, t, c ) is sufficiently regular in z and no noise is injected at inference. In practice we invert with Euler steps evaluated at the known iterate: 
+
+z(k−1) = z(k) − ∆t v θ
+
+
+
+z(k), t (k)
+
+. (5) 
+
+Joint Formulation with Dual Timesteps. To model the joint distribution p(z, c ),we introduce two independent timesteps , tz for the latent and tc for the concen-tration, inspired by previous works on multi-modal generative learning [2, 25]. The timesteps are sampled uniformly tz , t c ∼ U (0 , 1) .The latent variable  z and the concentration  c are then noised independently according to their respective timesteps: 
+
+ztz = (1 − tz ) z0 + tz z1, z0 ∼ N (0 , I ), z 1 = E(x), (6) 
+
+ctc = (1 − tc) c0 + tc c1, c0 ∼ N (0 , 1) , c 1 = c.  (7) The network predicts velocities for both modalities with vz ∈ Rdz ×h×w and 
+
+vc ∈ R:
+
+(vz , v c) = vθ (ztz , c tc , t z , t c), (8) trained with the joint objective ( λc ∈ R+ balances both terms): 
+
+LCFM (θ) = E(z0,z 1),(c0,c 1),t z ,t c
+
+∥vz − (z1 − z0)∥22 + λc ∥vc − (c1 − c0)∥22
+
+ . (9) 6 L. Bogensperger et al. 
+
+Sampling Modes. The two independent timesteps enable three distinct infer-ence regimes. Joint sampling integrates both tz , t c : 0 → 1 simultaneously to draw new (z, c ) pairs from the learned joint distribution; while beyond the scope of this work, this mode could support downstream tasks such as synthetic data augmentation. Our experiments primarily target dose-conditioned im-age generation , which fixes tc = 1 (target concentration held constant) and integrates tz : 0 → 1 to sample z ∼ p(z | c), followed by decoding via D; this corresponds to our dose-conditioned generation and inversion-based morphing experiments (Sec. 3.3). Conversely, concentration inference fixes tz = 1 (im-age latent held constant) and integrates tc : 0 → 1 to sample c ∼ p(c | z),allowing the model to predict the concentration of a given cell. 
+
+3.3 Inversion-Based Cell Morphing 
+
+The invertibility of flow matching enables cell morphing across drug concen-trations, analogous to inversion-based editing with diffusion [13] and its recent adoption for cellular perturbation via PhenDiff [6]. Given a real control image x,we encode it as z1 = E(x) and integrate the flow backward at the control condi-tioning value c = 0 using K Euler steps with ∆t = 1 /K , with the concentration timestep fixed at tc = 1 , to recover the corresponding noise: 
+
+z(k−1) = z(k) − ∆t v z
+
+
+
+z(k), c control , t z = kK , t c=1 
+
+
+
+, k = K, K −1, . . . , 1, (10) starting from z(K) = z1 and ending at the inverted noise z0 := z(0) . Integrating the forward ODE from the same z0 at a target concentration c⋆ then yields a morphed latent: 
+
+z(k+1) = z(k) + ∆t v z
+
+
+
+z(k), c ⋆, t z = kK , t c=1 
+
+
+
+, k = 0 , 1, . . . , K −1, (11) yielding zc⋆ 
+
+> 1
+
+:= z(K) which is decoded as ˆxc⋆
+
+= D(zc⋆ 
+
+> 1
+
+). Sharing the same z0
+
+across concentrations yields a family of latents that differ only through the con-centration conditioning, producing a morph strip for a single source cell. 
+
+## 4 Experiments 
+
+We evaluate our method on a microscopy imaging dataset of a pediatric brain tumor cell line, spanning a panel of two compounds (C7 and CK-666) at six con-centrations each (five doses plus solvent controls). The VAE is trained jointly on all five compounds in the dataset, providing a shared latent space across drugs (see Sec. 4.5 for an ablation). Per-compound flow matching models are then trained on top of this shared latent space. We compare against three representa-tive baselines from the literature: PhenDiff [6], IMPA [28], and Latent CellFlux (our reimplementation of CellFluxV2 [43]). Main-text experiments focus on C7; corresponding results for CK-666 are provided in the supplementary material. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 7
+
+4.1 Dataset 
+
+Sample. The pediatric brain tumor medulloblastoma cell line model ONS-76 was used to evaluate a panel of compounds selected for their ability to inter-fere with cell migration through modulation of cytoskeletal dynamics, a key biophysical mechanism involved in metastasis [30]. This panel included C7, a small-molecule ligand of FRS2 proposed to disrupt the FRS2–FGFR inter-action [23]; CK-666, an inhibitor of the Arp2/3 complex [14]; famlasertib, a small-molecule inhibitor of the MAP4K family of Ser/Thr kinases [5] [33]; para-nitroblebbistatin, an inhibitor of non-muscle myosin II ATPase activity [20]; Y-27632, a selective ROCK1/2 inhibitor [38]; and DMSO solvent as control. To enable fluorescence live-cell imaging, ONS-76 cells were labeled by lentiviral transduction with LifeAct-EGFP and mCherry-Nuc9. LifeAct-EGFP was used to visualize F-actin, while mCherry-Nuc9 was used to mark the nucleus. 
+
+Microscopy. Widefield fluorescence imaging of both channels was performed on a Nikon Ti2 microscope equipped with a 20× objective and GFP and Cy3 filter sets, using tiled acquisition of 6×6 fields of view per well with 10% overlap (tile size 2424×2424 px, pixel size 0.33 μm/px, 16-bit depth); individual tiles were automatically stitched using Nikon acquisition software. Cells were seeded in imaging-grade glass-bottom 96-well plates, with a minimum of two wells repli-cates per drug and concentration tested. 
+
+Single-cell Dataset Creation. From the stitched tiled images, single-cell crops of 256×256 pixels centered on each detected cell were extracted to build an RGB single-cell image dataset. Cell detection was performed on 10-fold down-scaled images using Cellpose (v4.1.1) with default parameters. For each extracted single-cell image, the green (F-actin) and red (nuclear) channel dynamic ranges were normalized to 8-bit prior to saving, while the blue channel was set to zero. 
+
+Overview. Our modeling setup involves two components: a single VAE trained jointly on the training splits of all five compounds in the dataset, providing a shared latent space; and per-compound flow-matching models trained on top of this latent space. Reported experiments target C7 and CK-666 (see Fig. 5 for some example images); the shared VAE is trained on all available compounds to encourage a general representation of cellular morphology (see Sec. 4.5 for an ablation). 
+
+Data Handling. Regions failing standard image quality checks (e.g., saturation, focus, signal-to-noise) were excluded. Each compound’s images are split into train/validation/test partitions in a 70/15/15 ratio, stratified by concentration to preserve the dose distribution across splits. Image counts per compound (in-cluding shared DMSO controls) are: 25,384 for C7, 25,603 for CK-666, 23,007 for famlasertib, 25,068 for paranitro-blebbistatin, and 25,823 for Y-27632. Since concentrations span multiple orders of magnitude, we use log 10 -transformed val-ues; controls are assigned ccontrol = log 10 (cmin ) − 0.5, where cmin is the smallest non-zero training concentration. 8 L. Bogensperger et al. 
+
+4.2 Settings 
+
+Latent Encoder. Our VAE follows a standard convolutional encoder-decoder design with three downsampling stages (each halving the spatial resolution, base channels 64 doubled per stage) built from ResNet blocks, mapping 3 × 256 × 256 
+
+images to 4 × 32 × 32 latents. The VAE is trained on the training splits of all five drugs and all concentrations for 200 epochs with AdamW (learning rate 
+
+10 −4, batch size 32, warmup ratio 0.05), using loss weights α = 0 .6 (SSIM) and 
+
+β = 10 −7 (KL). 
+
+Flow Model. The velocity network vθ is a U-Net with self-attention at the bottle-neck, base dimension 64, and channel multipliers (1 , 2, 4, 8) across four downsam-pling stages. Both timesteps tz , t c and the concentration scalar c are embedded via small MLPs with nonlinear GELU activations; the two time embeddings are concatenated and combined with the concentration embedding to form the con-ditioning signal injected into each residual block; a small MLP head predicts vc
+
+from the U-Net bottleneck features. We train one model per drug ( Ours joint ,37.8M parameters) for 3000 epochs with AdamW (learning rate 10 −4, batch size 100, EMA decay 0.999), using λc = 0 .5 (chosen empirically). Concentrations are 
+
+log 10 -transformed as described in Section 4.1, see Sec. 4.5 for an ablation. Infer-ence uses K = 200 Euler steps for forward generation and K = 200 for inversion (see Sec. A.5 for an ablation over samplers). For ablation, we additionally train a concentration-conditional variant ( Ours cond. only , 31.5M parameters) with the same U-Net architecture but without the second timestep tc, using classifier-free guidance with dropout probability p = 0 .15 during training and guidance weight 
+
+w = 2 at inference. Concentration conditioning in this variant is injected via Feature-wise Linear Modulation (FiLM) [29], though initial experiments showed standard embedding mechanisms perform comparably. 
+
+Baselines. We compare against three representative methods: Latent CellFlux [42] (31.4M parameters, concentration-agnostic latent flow matching), IMPA [28] (74.4M parameters, pixel-space per-perturbation GAN), and PhenDiff [6] (99.5M parameters, pixel-space DDIM with discrete concentration classes). We use pub-licly available code from PhenDiff and IMPA, both of which operate in pixel space. For CellFluxV2, which operates in latent space, we reimplement the method in our own VAE latent space; we refer to this reimplementation as La-tent CellFlux. We use K = 200 sampling steps for all flow-based methods and PhenDiff-standard DDIM inference for the diffusion baseline. 
+
+Evaluation Metrics. For inversion fidelity , we report peak signal-to-noise ratio (PSNR) and structural similarity (SSIM) [39] on the test set, comparing each real control image against its round-trip reconstruction obtained after inverting the encoded control cell followed by re-generating it using the forward ODE. For distributional fidelity , we compute Fréchet Inception Distance (FID) [15] and Kernel Inception Distance (KID) [3] per concentration and pooled across all concentrations, using Inception-v3 features extracted from all available real Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 9                      
+
+> Table 1: Inversion fidelity for C7 on the test set ( N=100 control cells). ODE steps KPSNR ↑SSIM ↑
+> 10 27 .79 ±2.90.866 ±0.04
+> 25 31 .93 ±3.00.894 ±0.04
+> 50 33 .81 ±3.00.902 ±0.04
+> 100 34 .50 ±3.00.905 ±0.05
+> 200 34 .70 ±3.00.906 ±0.05
+> 500 34 .77 ±3.00.907 ±0.05
+> VAE only 38 .73 ±3.10.913 ±0.05
+
+training images and an equal number of generated cells ( Nreal = Ngen = N ;
+
+N ≈ 850 –1, 250 per dose, N > 5, 000 pooled). Generated cells are obtained by inverting real control cells and forward-integrating at the target concentration, similar to PhenDiff [6]. Because FID is subject to finite-sample bias [10], we report N explicitly and emphasize the unbiased KID estimator alongside FID for robust per-concentration evaluation. 
+
+4.3 Generative Evaluation 
+
+We evaluate our joint flow matching model along three dimensions: round-trip reconstruction fidelity of the inversion pathway, distributional fidelity of gener-ated cells against real observations at each concentration, and morphing quality against baselines. We report the main results on C7 in this section; corresponding results for CK-666 are provided in Sec. A.2. 
+
+Inversion Fidelity. Since dose-conditioned morphing relies on inverting a real control cell into noise before re-integrating the forward ODE at a target concen-tration c∗, we first assess the fidelity of the inversion. Table 1 reports round-trip PSNR and SSIM on 100 control test images for C7 (see Tab. 5 for CK-666), computed by encoding each image to its latent z1, inverting to noise z0 at the control conditioning value, and re-integrating the forward ODE back to the in-put. The metrics are upper-bounded by the VAE’s own reconstruction quality (last row), since part of the observed error comes from the VAE bottleneck rather than the flow inversion itself. Reconstruction quality saturates with in-creasing ODE steps; we adopt K = 200 steps for inversion in all subsequent experiments. Notably, SSIM nearly matches the VAE upper bound, indicating that structural content is well-preserved through the flow round-trip; the larger PSNR gap reflects small pixel-level noise introduced by the ODE discretization, to which pixel-wise metrics are more sensitive than the patch-based SSIM. 
+
+Qualitative Morphing. Figure 2 shows dose-conditioned morphs from our method and baselines that support dose-specific generation. Concentration-agnostic meth-ods (IMPA, Latent CellFlux) formulate perturbation as a distribution-to-distribution 10 L. Bogensperger et al. 
+
+transformation and are not designed to natively represent the subtle morpholog-ical changes characteristic of dose response. Ours (Joint LFM)  control 0.037 M 0.11 M 0.33 M 1 M 3 M      
+
+> PhenDiff IMPA
+> N/A N/A N/A N/A
+> Latent CellFlux
+> N/A N/A N/A N/A
+
+Fig. 2: Qualitative comparison of dose-response morphing for C7. Each row shows a real control cell morphed across concentrations of C7 (columns: 0.037, 0.11, 0.33, 1.0, 3.0 μM). Latent CellFlux and IMPA are shown only at control and morphed dose. Individual samples from concentration-agnostic methods can vary in visual qual-ity across cells. 
+
+Distribution Fidelity. Table 2 reports FID and KID scores for C7 across five concentrations and pooled across the full dose range. To isolate the contribution of joint modeling, we include an ablation without the joint model and hence the second timestep tc (Ours cond. only ). Since Latent CellFlux and IMPA do not natively support dose-specific generation, as both model a single treated-cell distribution per compound, we report their metrics only pooled, as an upper ref-erence on generation quality without concentration awareness. Among methods with explicit concentration modeling, our joint model achieves the best FID and KID at every concentration. While pixel-space IMPA achieves the lowest pooled FID overall (17.58), our joint model closes most of this gap despite operating in latent space. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 11 
+
+Table 2: FID/KID comparison (lower is better) for C7. Per-concentration values shown for methods with explicit concentration modeling; concentration-agnostic baselines (La-tent CellFlux, IMPA) are reported at pooled only, as they do not natively support concentration targeting. Best metrics per column are in bold , second-best underlined. Concentration ( μM) Method Metric 0.037 0.11 0.33 1.0 3.0 Pooled       
+
+> (N=892 ) ( N=1028 ) ( N=868 ) ( N=1040 ) ( N=1270 ) ( N=5098 )
+
+Latent CellFlux [42] † FID — — — — — 25.19 KID — — — — — 1.90 IMPA [28] † FID — — — — — 17.58 
+
+KID — — — — — 0.97 
+
+PhenDiff [6] FID 30.03 29.74 33.22 31.90 34.16 21.53 KID 1.61 1.73 1.73 1.91 2.10 1.68 Ours (cond. only) FID 36.19 30.86 42.63 37.43 38.23 26.57 KID 2.25 1.72 2.93 2.45 2.65 2.10 
+
+Ours (Joint Latent FM) FID 30.02 27.20 27.50 27.85 25.02 18.98 KID 1.58 1.40 1.37 1.39 1.28 1.25  
+
+> †
+
+Latent CellFlux and IMPA do not natively support concentration conditioning; therefore we report their pooled results without concentration awareness. 
+
+4.4 Concentration Controllability 
+
+While distributional metrics such as FID and KID capture overall generation quality, they do not directly assess whether generation is controllable across concentrations. We evaluate controllability along three dimensions: latent-space trajectory, cross-concentration specificity, and generalization to unseen doses us-ing a holdout experiment. 
+
+Latent Space Dose-Response. We sample a fixed noise vector z(0) , integrate the forward ODE at each concentration, and measure latent displacement from the control trajectory. Figure 3 shows the resulting curves and Spearman correlations (n = 100 cells). Our joint model produces a smooth, monotonic dose response (ρ = 1 .00 , p = 0 .003 ), while removing the joint component or modeling con-centration using discrete classes degrades this monotonic behaviour ( ρ = 0 .71 ,
+
+p = 0 .139 and ρ = 0 .89 , p = 0 .042 , respectively). Evaluating individual single-cell trajectories ( n = 100 cells) confirms strong per-cell monotonicity for our joint model with a median ρ = 0 .90 (IQR: 0.70 –1.00 ), outperforming PhenDiff (median ρ = 0 .80 , IQR: 0.50 –0.90 ) and the conditioning-only baseline (median 
+
+ρ = 0 .40 , IQR: 0.30 –0.70 ; Supplementary Fig. 7). 
+
+Concentration Specificity. While the trajectory analysis probes latent geometry, we further evaluate whether this structure translates into controllable generation 12 L. Bogensperger et al. control 0.037 0.11 0.33 1 3Concentration ( M)                    
+
+> 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 Normalized displacement
+> (a) Dose-response trajectory
+> Ours (Joint Latent FM) ( = 1.00 ,p= 0.003 )
+> Ours (cond. only) ( = 0.71 ,p= 0.139 )
+> PhenDiff ( = 0.89 ,p= 0.042 )
+> control 0.037 0.11 0.33 13Concentration ( M)
+> 0.0 0.2 0.4 0.6 0.8 1.0 Normalized displacement
+> = 1.00 ,p= 0.003
+> train: 0.037, 0.11, 1, 3 M
+> (b) Generalization to unseen concentration
+> held-out (0.33 M)
+> trained concs
+
+Fig. 3: Dose-response geometry and generalization to unseen concentrations for C7. Left: Normalized latent displacement from the reference as a function of drug concentration, comparing our joint model, our conditional-only ablation, and PhenDiff. Right: After retraining our joint model with 0.33 μM held out during training (train concentrations: 0.037 , 0.11 , 1.0, 3.0 μM), forward integration at the held-out dose (high-lighted star) yields a monotonic position between its neighbors. 
+
+at each concentration. For each pair (ci, c j ), we compute the KID between the distribution of generated cells conditioned on ci and the distribution of real cells at cj ; a controllable model produces diagonal-dominant matrices where the minimum along each row lies on the diagonal. Results are shown in Fig. 4, including a real-vs-real ceiling. The ceiling shows the task’s inherent difficulty: cells at 3 μM are well-separated from all doses, but low-dose distributions ( 0.037 –
+
+0.33 μM) morphologically overlap even in real data, upper-bounding achievable specificity. Nonetheless, our joint model achieves lower diagonal KID values than PhenDiff at every concentration, indicating closer distributional matching. 
+
+Generalization to Unseen Concentrations. To test whether continuous concen-tration modeling enables interpolation to unseen concentrations, we retrain our joint model on C7 with the middle concentration ( 0.33 μM) held out (train concentrations: 0.037 , 0.11 , 1.0, 3.0 μM). At inference, forward integration at the held-out dose lands at the correct monotonic position between its neighbors in latent space (Fig. 3b, orange star), achieving FID = 33 .66 against real 0.33 μMcells — only ∼ 19% above the mean FID at trained concentrations of the same model ( 28 .20 ). Notably, this out-of-distribution result almost matches PhenDiff (FID = 33 .22 , Tab. 2), a discrete-class baseline that was trained on 0.33 μM. Such continuous-dose generalization is structurally unavailable to discrete-class methods. See Fig. 8 for more held-out concentrations ( 0.11 μM and 1 μM) on C7. 
+
+Concentration Inference. A distinctive capability of our joint formulation is sam-pling from p(c | z) to predict the dose corresponding to a given cell image. Fixing 
+
+tz = 1 and integrating tc : 0 → 1 from a noise sample, we obtain a concentration estimate ˆc. On the test set ( N = 1115 cells across all training doses), we achieve Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 13 0.037 0.11 0.33 13                     
+
+> Real conc ( M)
+> 0.037 0.11 0.33 13
+> Generated conc (  M)
+> 1.58 1.48 1.83 1.38 2.00 1.58 1.40 1.64 1.39 1.96 1.60 1.31 1.37 1.38 1.80 1.77 1.61 1.86 1.39 1.59 3.87 3.55 3.53 2.89 1.28
+
+*****                     
+
+> Ours (Joint LFM)
+> 0.037 0.11 0.33 13
+> Real conc ( M)
+> 0.037 0.11 0.33 13
+> Generated conc (  M)
+> 1.61 1.23 1.12 1.34 1.66 2.50 1.73 1.21 2.09 1.77 3.54 2.64 1.73 2.84 1.73 2.66 2.19 1.92 1.91 1.02 7.17 6.29 5.54 5.65 2.10
+
+*****                     
+
+> PhenDiff
+> 0.037 0.11 0.33 13
+> Real conc ( M)
+> 0.037 0.11 0.33 13
+> Real conc (  M)
+> 0.03 0.14 0.81 0.15 2.37 0.14 0.01 0.33 0.23 1.94 0.81 0.33 -0.02 0.73 1.81 0.15 0.23 0.73 0.01 1.41 2.37 1.94 1.81 1.41 -0.00
+
+*****
+
+> Real ceiling
+
+Fig. 4: Concentration specificity. KID between generated cells conditioned on con-centration ci (rows) and real cells at concentration cj (columns). Diagonals are outlined; red asterisks mark each row’s argmin. Panels (left to right): our joint model, PhenDiff, and the real-vs-real reference ceiling. 
+
+Table 3: VAE training-data ablation on C7. Best values in bold .Concentration ( μM) VAE training Metric 0.037 0.11 0.33 1.0 3.0 Pooled C7-only FID 35.26 33.39 34.37 33.89 31.54 24.84 KID 2.18 2.09 2.14 2.06 2.01 1.94 Multi-drug FID 30.02 27.20 27.50 27.85 25.02 18.98 
+
+KID 1.58 1.40 1.37 1.39 1.28 1.25 
+
+top-1 accuracy of 34 .0% and 68 .0% within ±1 neighboring dose ( 5-class classifica-tion). Accuracy is highest at the extreme concentrations ( 44% at 0.037 μM, 55% 
+
+at 3 μM) and drops at intermediate doses, consistent with the overlapping mor-phological distributions of neighboring low concentrations shown in Fig. 4. For reference, a supervised ResNet-18 classifier trained on the same real data achieves 
+
+48% top-1 and 74 .8% within ±1 neighboring dose, as detailed in Sec. A.4. 
+
+4.5 Ablations 
+
+We perform two ablations on the joint model’s design choices for C7. Table 3 shows that training the VAE on all drugs (our default) yields a more general la-tent representation than training on C7 alone, improving FID and KID at every concentration. Since drug concentrations span multiple orders of magnitude, we condition the flow model on log 10 -transformed values rather than raw concen-trations; Tab. 4 shows that this improves FID and KID at every concentration. 14 L. Bogensperger et al.                             
+
+> Table 4: Concentration-transform ablation on C7. Best values in bold .Concentration ( μM) Conc. transform Metric 0.037 0.11 0.33 1.0 3.0 Pooled Raw ( c)FID 30.27 27.72 29.94 28.50 27.02 20.31 KID 1.61 1.46 1.67 1.46 1.48 1.35
+> log 10 (c)FID 30.02 27.20 27.50 27.85 25.02 18.98
+> KID 1.58 1.40 1.37 1.39 1.28 1.25
+
+## 5 Conclusion 
+
+Conclusion. We introduced joint latent flow matching for continuous dose-conditioned cell morphing, enabling generation at unseen concentrations and estimation of dose from cell morphology. Our joint formulation matches or ex-ceeds baselines on distributional fidelity across two compounds, while producing qualitatively faithful dose-response trajectories. 
+
+Limitations. Our reconstruction fidelity is currently bounded by the frozen VAE bottleneck (Sec. 3.1), which imposes a ceiling on generation quality regardless of the flow model’s capability. Furthermore, concentration inference from single cells (Sec. 4.4) achieves only moderate accuracy, reflecting the inherent pheno-typic variability of morphology at fixed doses. 
+
+Future Work. Replacing the VAE with a stronger encoder-decoder (e.g., the ar-chitecture used in Stable Diffusion LDM [31]) could substantially raise the recon-struction ceiling. A second direction is to extend our framework to a single flow model conditioned jointly on drug identity and concentration, modeling multiple compounds within a unified formulation, e.g., by adopting the drug conditioning mechanism in IMPA [28]. Moreover, our current per-compound models already share a common latent space via the multi-drug VAE, enabling comparative analyses of latent dose-response trajectories across drugs to group compounds by their morphological effect. Finally, downstream validation of generated morphs using a classifier model trained on real images would strengthen the practical utility of our approach for perturbation-based cell morphing. 
+
+## Acknowledgements 
+
+L.B. and M.M. acknowledge funding by the University Research Priority Pro-gram (URPP) Human Reproduction Reloaded of the University of Zurich. L.B. is further supported by the Swiss National Science Foundation under grant 10003518. M.B. and B.C. were supported by the Swiss National Science Foun-dation Sinergia grant CRSII5_202245/1. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 15 
+
+## References 
+
+1. Albergo, M., Boffi, N.M., Vanden-Eijnden, E.: Stochastic interpolants: A unifying framework for flows and diffusions. Journal of Machine Learning Research 26 (209), 1–80 (2025) 2. Bao, F., Nie, S., Xue, K., Li, C., Pu, S., Wang, Y., Yue, G., Cao, Y., Su, H., Zhu, J.: One transformer fits all distributions in multi-modal diffusion at scale. In: International Conference on Machine Learning. pp. 1692–1717. PMLR (2023) 3. Bińkowski, M., Sutherland, D.J., Arbel, M., Gretton, A.: Demystifying mmd gans. arXiv preprint arXiv:1801.01401 (2018) 4. Bogensperger, L., Narnhofer, D., Falk, A., Schindler, K., Pock, T.: Flowsdf: Flow matching for medical image segmentation using distance transforms. International Journal of Computer Vision 133 (7), 4864–4876 (2025) 5. Bos, P.H., Lowry, E.R., Costa, J., Thams, S., Garcia-Diaz, A., Zask, A., Wichterle, H., Stockwell, B.R.: Development of MAP4 Kinase Inhibitors as Motor Neuron-Protecting Agents. Cell Chemical Biology 26 (12), 1703–1715.e37 (2019), http: //dx.doi.org/10.1016/j.chembiol.2019.10.005 
+
+6. Bourou, A., Boyer, T., Gheisari, M., Daupin, K., Dubreuil, V., De Thonel, A., Mezger, V., Genovesio, A.: Phendiff: Revealing subtle phenotypes with diffusion models in real images. In: International Conference on Medical Image Computing and Computer-Assisted Intervention. pp. 358–367. Springer (2024) 7. Bray, M.A., Singh, S., Han, H., Davis, C.T., Borgeson, B., Hartland, C., Kost-Alimova, M., Gustafsdottir, S.M., Gibson, C.C., Carpenter, A.E.: Cell Painting, a high-content image-based assay for morphological profiling using multiplexed fluorescent dyes. Nature Protocols 11 (9), 1757–1774 (2016) 8. Caicedo, J.C., Arevalo, J., Piccioni, F., Bray, M.A., Hartland, C.L., Wu, X., Brooks, A.N., Berger, A.H., Boehm, J.S., Carpenter, A.E., Singh, S.: Cell Painting predicts impact of lung cancer variants. Molecular Biology of the Cell 33 (6), 1–11 (2022) 9. Chandrasekaran, S.N., Cimini, B.A., Goodale, A., Miller, L., Kost-Alimova, M., Jamali, N., Doench, J.G., Fritchman, B., Skepner, A., Melanson, M., Kalinin, A.A., Arevalo, J., Haghighi, M., Caicedo, J.C., Kuhn, D., Hernandez, D., Berstler, J., Shafqat-Abbasi, H., Root, D.E., Swalley, S.E., Garg, S., Singh, S., Carpenter, A.E.: Three million images and morphological profiles of cells treated with matched chemical and genetic perturbations. Nature Methods 21 (6), 1114–1121 (2024) 10. Chong, M.J., Forsyth, D.: Effectively unbiased fid and inception score and where to find them. In: 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 6069–6078. IEEE (2020) 11. Esser, P., Kulal, S., Blattmann, A., Entezari, R., Müller, J., Saini, H., Levi, Y., Lorenz, D., Sauer, A., Boesel, F., et al.: Scaling rectified flow transformers for high-resolution image synthesis. In: Forty-first international conference on machine learning (2024) 12. Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., Bengio, Y.: Generative adversarial networks. Communications of the ACM 63 (11), 139–144 (2020) 13. Hertz, A., Mokady, R., Tenenbaum, J., Aberman, K., Pritch, Y., Cohen-Or, D.: Prompt-to-prompt image editing with cross attention control. arXiv preprint arXiv:2208.01626 (2022) 14. Hetrick, B., Suk Han, M., Nolen, B.: Small Molecules CK-666 and CK-869 Block an Activating Conformational Change to Inhibit Arp2/3 Complex. Biophysical Journal 102 (3), 46a (2012) 16 L. Bogensperger et al. 15. Heusel, M., Ramsauer, H., Unterthiner, T., Nessler, B., Hochreiter, S.: Gans trained by a two time-scale update rule converge to a local nash equilibrium. Advances in neural information processing systems 30 (2017) 16. Hickey, S.M., Ung, B., Bader, C., Brooks, R., Lazniewska, J., Johnson, I.R., Sorv-ina, A., Logan, J., Martini, C., Moore, C.R., Karageorgos, L., Sweetman, M.J., Brooks, D.A.: Fluorescence microscopy—an outline of hardware, biological han-dling, and fluorophore considerations. Cells 11 (1) (2022) 17. Ho, J., Jain, A., Abbeel, P.: Denoising diffusion probabilistic models. Advances in neural information processing systems 33 , 6840–6851 (2020) 18. Ho, J., Salimans, T.: Classifier-free diffusion guidance. arXiv preprint arXiv:2207.12598 (2022) 19. Karras, T., Laine, S., Aila, T.: A style-based generator architecture for generative adversarial networks. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 4401–4410 (2019) 20. Képiró, M., Várkuti, B.H., Végner, L., Vörös, G., Hegyi, G., Varga, M., Málnási-Csizmadia, A.: Para-nitroblebbistatin, the non-cytotoxic and photostable myosin II inhibitor. Angewandte Chemie - International Edition 53 (31), 8211–8215 (2014) 21. Kingma, D.P., Welling, M.: Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114 (2013) 22. Kulikov, V., Kleiner, M., Huberman-Spiegelglas, I., Michaeli, T.: Flowedit: Inversion-free text-based editing using pre-trained flow models. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 19721–19730 (2025) 23. Kumar, K.S., Brunner, C., Schuster, M., Luca, L., Alexandre, K., Shen, G., Jurt, S., Moehle, K., Bruns, D., Grotzer, M., Zerbe, O., Schneider, G., Baumgartner, M.: Discovery of a small molecule ligand of FRS2 that inhibits invasion and tumor growth. Cellular Oncology pp. 331–356 (2023) 24. Lamiable, A., Champetier, T., Leonardi, F., Cohen, E., Sommer, P., Hardy, D., Argy, N., Massougbodji, A., Del Nery, E., Cottrell, G., et al.: Revealing invisible cell phenotypes with conditional generative modeling. Nature Communications 14 (1), 6386 (2023) 25. Li, S., Kallidromitis, K., Gokul, A., Liao, Z., Kato, Y., Kozuka, K., Grover, A.: Omniflow: Any-to-any generation with multi-modal rectified flows. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 13178–13188 (2025) 26. Lipman, Y., Chen, R.T., Ben-Hamu, H., Nickel, M., Le, M.: Flow matching for generative modeling. arXiv preprint arXiv:2210.02747 (2022) 27. Liu, X., Gong, C., Liu, Q.: Flow straight and fast: Learning to generate and transfer data with rectified flow. arXiv preprint arXiv:2209.03003 (2022) 28. Palma, A., Theis, F.J., Lotfollahi, M.: Predicting cell morphological responses to perturbations using generative modeling. Nature Communications 16 (1), 505 (2025) 29. Perez, E., Strub, F., De Vries, H., Dumoulin, V., Courville, A.: Film: Visual rea-soning with a general conditioning layer. In: Proceedings of the AAAI conference on artificial intelligence. vol. 32 (2018) 30. Raudenská, M., Petrláková, K., Juriňáková, T., Leischner Fialová, J., Fojtů, M., Jakubek, M., Rösel, D., Brábek, J., Masařík, M.: Engine shutdown: migrastatic strategies and prevention of metastases. Trends in Cancer 9(4), 293–308 (2023) 31. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., Ommer, B.: High-resolution image synthesis with latent diffusion models. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 10684–10695 (2022) Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 17 32. Rout, L., Chen, Y., Ruiz, N., Caramanis, C., Shakkottai, S., Chu, W.S.: Semantic image inversion and editing using rectified stochastic differential equations. arXiv preprint arXiv:2410.10792 (2024) 33. Schönholzer, M.T., Lin, M.S., Yan, S., Akle, V., Ciraulo, B., Versamento, D., Kopp, L.L., Hochuli, D., Bleiker, T., Welti, A., Neuhauss, S.C., Allalou, A., Baumgart-ner, M.: The cns-penetrant map4k inhibitor famlasertib restrains medulloblastoma dissemination without developmental toxicity. bioRxiv (2026) 34. Serrano, E., Peters, J., Wagner, J., Graham, R.E., Chen, Z., Feng, B.Y., Miranda, G., Kalinin, A.A., Vulliard, L., Tomkinson, J., Mattson, C., Lippincott, M.J., Kang, Z., Sitani, D., Bunten, D., Seal, S., Carragher, N.O., Carpenter, A.E., Singh, S., Marin Zapata, P.A., Caicedo, J.C., Way, G.P.: Progress and new challenges in image-based profiling. Molecular Systems Biology 22 (5), 624–658 (2026) 35. Song, J., Meng, C., Ermon, S.: Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502 (2020) 36. Song, Y., Ermon, S.: Generative modeling by estimating gradients of the data distribution. Advances in neural information processing systems 32 (2019) 37. Song, Y., Sohl-Dickstein, J., Kingma, D.P., Kumar, A., Ermon, S., Poole, B.: Score-based generative modeling through stochastic differential equations. arXiv preprint arXiv:2011.13456 (2020) 38. Uehata, M., Ishizaki, T., Satoh, H., Ono, T., Kawahara, T., Morishita, T., Tamakawa, H., Yamagami, K., Inui, J., Maekawa, M., Narumiya, S.: Calcium sensitization of smooth muscle mediated by a Rho-associated protein kinase in hypertension. Nature 389 (6654), 990–994 (oct 1997), https://www.nature.com/ articles/40187 
+
+39. Wang, Z., Bovik, A.C., Sheikh, H.R., Simoncelli, E.P.: Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing 
+
+13 (4), 600–612 (2004) 40. Way, G.P., Kost-Alimova, M., Shibue, T., Harrington, W.F., Gill, S., Piccioni, F., Becker, T., Shafqat-Abbasi, H., Hahn, W.C., Carpenter, A.E., Vazquez, F., Singh, S.: Predicting cell health phenotypes using image-based morphology profil-ing. Molecular Biology of the Cell 32 (9), 995–1005 (2021) 41. Wu, P.H., Gilkes, D.M., Phillip, J.M., Narkar, A., Cheng, T.W.T., Marchand, J., Lee, M.H., Li, R., Wirtz, D.: Single-cell morphology encodes metastatic potential. Science Advances 6(4), 1–8 (2020) 42. Zhang, Y., Su, Y., Wang, C., Li, T., Wefers, Z., Nirschl, J., Burgess, J., Ding, D., Lozano, A., Lundberg, E., et al.: Cellflux: Simulating cellular morphology changes via flow matching. arXiv preprint arXiv:2502.09775 (2025) 43. Zhang, Y., Su, Y., Wefers, Z., Su, S., Li, H., Li, T., Wang, C., Burgess, J., Lozano, A., Zhou, L., et al.: Cellfluxv2: An image generative foundation model for virtual cell modeling. bioRxiv pp. 2026–01 (2026) 18 L. Bogensperger et al. 
+
+## A Supplementary Material 
+
+A.1 Dataset & Qualitative Real Samples 
+
+Figure 5 shows qualitative samples of the training split for the maximum con-centrations of C7 (top row) and CK-666 (bottom row). C7 CK-666  
+
+> Fig. 5: Qualitative training set samples for ONS76 cell line under compound treatments. Representative real microscopy images of ONS76 cells treated with C7 (top row, 3 μM) and CK-666 (bottom row, 10 μM) from the training split.
+
+A.2 Experimental Results on CK-666 
+
+To assess generalization beyond C7, we evaluate the generative capabilities of our of joint model on a second compound, CK-666. We show quantitative results for inversion fidelity and per-concentration distributional fidelity. 
+
+Inversion Fidelity. Table 5 reports the inversion fidelity for CK-666. Similarly as for C7 (cf. Tab. 1), round-trip reconstruction values are starting to saturate around K = 50 to K = 100 ODE steps. In general, values are lower than on C7, likely because different compounds induce different morphological effects, yielding varying reconstruction difficulty. 
+
+Distribution Fidelity. Table 6 reports FID and KID for CK-666, following the same protocol as the C7 evaluation (Sec. 4.3). Our joint model achieves the best KID at four of five concentrations and the best pooled FID overall, on par with IMPA ( 20 .85 vs. 20 .93 ). It surpasses PhenDiff on FID at three of five concentrations and shows less variation in FID across concentrations, indicating more consistent behavior. The ablation ( Ours cond. only ) is again uniformly worse, confirming that the benefit of joint p(z, c ) modeling is consistent across compounds. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 19                       
+
+> Table 5: Inversion fidelity on CK-666 ( N=100 control cells). ODE steps KPSNR ↑SSIM ↑
+> 10 22 .27 ±3.20.815 ±0.06
+> 25 22 .93 ±4.00.830 ±0.06
+> 50 23 .48 ±4.20.838 ±0.06
+> 100 23 .50 ±4.30.839 ±0.06
+> 200 23 .45 ±4.30.839 ±0.06
+> 500 23 .39 ±4.30.838 ±0.06
+> VAE only 38 .73 ±3.10.913 ±0.05
+
+A.3 Additional Results on UW228 
+
+As a proof of concept for the broader applicability of our approach, we apply our joint model to a second cell line (UW228) on the same two compounds (C7 and CK-666). Qualitative morphs (Fig. 6) preserve source-cell identity while pro-ducing subtle dose-conditioned variations for both compounds. Quantitatively as shown in Tab. 7, per-concentration FID and KID stay in a narrow band (FID ∈ [26 .3, 30 .3] , KID ∈ [1 .17 , 1.55] ), and pooled FID is comparable to the ONS76 C7 result reported in the main text (Sec. 4.3) as well as ONS76 CK-666 result reported in A.2, indicating that our method transfers across cell lines without further tuning. A thorough quantitative evaluation with all comparison methods as well as a controllability evaluation remains subject to future work. 
+
+A.4 Extended Concentration Controllability & Analysis Per-Sample Dose-Response Distributions In Sec. 4.4, we studied the latent-space dose response averaged over n = 50 samples per method, showing the monotonic behavior of our joint model. Figure 7 extends this to the per-sample level, showing the distribution of latent displacements underlying Fig. 3. The dashed lines mark the concentration-averaged displacement for each method, confirming that our joint model produces the smoothest monotonic mean tra-jectory across concentrations. In contrast, the conditional-only ablation shows a near-constant mean plateau at low and intermediate doses, only responding at the highest concentration, while PhenDiff exhibits a monotonic mean trend be-tween the two. Per-sample distributions overlap substantially across neighboring doses for all methods, consistent with the intrinsic phenotypic heterogeneity at fixed concentrations. 
+
+Dose-Response Geometry for Unseen Concentrations To complement the hold-out experiment demonstrated in Sec. 4.4 with a middle concentration (0.33 μM) held out on C7, we additionally repeat the same experiment with two additional concentrations held out separately ( 0.11 μM and 1 μM). The resulting dose-response geometries can be seen in Fig. 8, indicating clear monontonic 20 L. Bogensperger et al. 
+
+Table 6: FID/KID comparison (lower is better) for CK-666. Best metrics per column are in bold , second-best underlined. Concentration ( μM) Method Metric 0.625 1.25 2.5 5.0 10.0 Pooled       
+
+> (N=1015 ) ( N=1033 ) ( N=1062 ) ( N=1012 ) ( N=956 ) ( N=5078 )
+
+Latent CellFlux [42] † FID — — — — — 21.48 KID — — — — — 1.60 IMPA [28] † FID — — — — — 20.93 KID — — — — — 1.23 
+
+PhenDiff [6] FID 39.88 28.82 35.60 30.72 31.33 22.70 KID 2.58 1.52 2.20 1.72 1.60 1.76 Ours (cond. only) FID 43.59 42.43 40.31 45.21 55.70 36.28 KID 3.01 2.76 2.69 3.05 3.78 2.87 
+
+Ours (Joint Latent FM) FID 26.76 29.26 27.31 27.84 31.99 20.85 
+
+KID 1.39 1.49 1.43 1.49 1.72 1.40  
+
+> †
+
+Latent CellFlux and IMPA do not natively support concentration conditioning; therefore we report their pooled results without concentration awareness. 
+
+behaviour for 0.33 μM and 1 μM and a monotonic position that slightly exceeds the succeeding one for 0.11 μM, likely due to the fact that lower concentrations are harder to discriminate. 
+
+Concentration Classification & Supervised Baseline We train a super-vised ResNet-18 for multi-class classifications of C7-treated ONS76 cells, provid-ing a supervised ceiling for the concentration estimation task (Sec. 4.4). Table 8 shows the classification accuracy averaged over the 5-class task, whereas Tab. 9 and Fig. 9 show the per-concentration accuracy as well as the full confusion matrices. The supervised ceiling of 48 .0% confirms the inherent difficulty of the task, particularly at intermediate doses where real distributions morphologically overlap (cf. Fig. 4). Our unsupervised p(c | z) estimator recovers a substantial share of this ceiling and outperforms the supervised baseline at the lowest con-centration ( 0.037 μM: 44 .3% vs. 31 .8% ), suggesting the continuous concentration formulation enforces sensitivity to subtle low-dose morphologies. 
+
+A.5 Method Ablations & Latency Benchmarks Concentration Loss Weight ( λc) Sensitivity Table 10 reports FID and KID for three values of the concentration-loss weight λc ∈ { 0.1, 0.5, 1.0} on C7. Our chosen value ( λc = 0 .5) achieves the best or second-best result at every concentration and metric, confirming that the paper’s setting is robust and not sensitive to precise tuning. Doubling λc to 1.0 uniformly degrades performance, Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 21                                       
+
+> Table 7: FID and KID for UW228 (our joint model). Metrics are within a narrow range per compound and pooled values match those reported on ONS76 in the main text. C7 Concentration ( μM) 0.037 0.11 0.33 1.0 3.0 Pooled FID 27.09 26.34 27.27 28.71 29.28 18.79 KID 1.32 1.24 1.34 1.26 1.36 1.25 CK-666 Concentration ( μM) 0.625 1.25 2.5 5.0 10.0 Pooled FID 26.61 27.09 27.53 30.30 27.01 19.34 KID 1.27 1.17 1.28 1.55 1.25 1.26
+> Table 8: Concentration classification accuracy on C7. Best values in bold .Method Top-1 ±1neighbor Joint FM p(c|z)34.0% 68.0% ResNet-18, real →real 48.0% 74.8%
+
+suggesting that over-weighting the concentration flow objective harms the pri-mary latent-space generation task; reducing to 0.1 marginally improves fidelity at the lowest concentration but is otherwise worse. Concentration estimation accuracy (Sec. 4.4) does not strictly correlate with generation quality: λc = 0 .1
+
+achieves marginally higher top-1 accuracy (36.0% vs. 34.0%), while λc = 0 .5
+
+achieves higher ±1 neighbor accuracy (68.0% vs. 66.7%). 
+
+Sampler & ODE Integration Schemes To complement the inversion fidelity results for C7 in Sec. 4.3, we perform an ablation on the sampler choice. While all primary experiments use standard Euler integration, we evaluate higher-order alternatives: a second-order Heun solver and a fourth-order Runge-Kutta (RK4) scheme across the same step counts. Table 11 presents the resulting roundtrip PSNR and SSIM values. At moderate step counts ( K ∈ { 25 , 50 }), Heun and RK4 yield slight gains in reconstruction quality over Euler; however, performance across all three solvers saturates as step count increases ( K ≥ 100 ). Given that latent roundtrip fidelity saturates and higher-order solvers yield negligible gains                     
+
+> Table 9: Per-concentration accuracy on C7. Best values in bold .Concentration ( μM) 0.037 0.11 0.33 1.0 3.0 Joint FM p(c|z)44.3% 24.1% 21.5% 20.7% 54.6% ResNet-18 (real →real) 31.8% 53.9% 14.5% 48.8% 79.2%
+
+22 L. Bogensperger et al. control 0.037 M 0.11 M 0.33 M 1 M 3 M          
+
+> control 0.625 M1.25 M2.5 M5M10 M
+> C7 CK-666
+
+Fig. 6: Qualitative dose-response morphs on the UW228 cell line for two compounds (C7 and CK-666), generated by our joint model. Each row shows a real control cell (leftmost column) morphed to successive concentrations. 
+
+beyond K ≥ 100 steps, all subsequent forward generation experiments in this work are conducted using standard Euler integration. 
+
+Sampling Times Table 12 reports sampling latencies on a single NVIDIA GeForce RTX 4090 (batch size 8, 10 trials) using the default evaluation pipelines from Sec. 4.3. Our joint model performs VAE encoding, ODE inversion, concentration-conditioned sampling, and VAE decoding, whereas pixel-space baselines (Phen-Diff, IMPA) skip VAE transformations. The elevated latencies of our conditional model and Latent CellFlux are due to CFG, which doubles the per-step neural network forward evaluations. While diffusion- and flow-based models split their compute between inversion and forward generation, PhenDiff’s main bottleneck is working directly in pixel space rather than a compressed latent space. In con-trast, IMPA relies on a single feed-forward pass, making it by far the fastest method. Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing 23 0.037 0.11 0.33 1 3Concentration ( M) 
+
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00 Normalized displacement 
+
+> Ours (Joint Latent FM) Ours (cond. only) PhenDiff
+
+Fig. 7: Per-cell dose-response distributions. Violin plots of normalized latent dis-placement (pixel-space for PhenDiff) from the reference at each concentration; dashed lines connect the concentration means. Normalization per method by the maximum concentration-averaged displacement. control 0.037 0.11 0.33 1 3Concentration ( M)                            
+
+> 0.0 0.2 0.4 0.6 0.8 1.0 Normalized displacement  = 0.94 ,p= 0.014
+> train: 0.037, 0.33, 1, 3 M
+> held-out ( 0.11 M)
+> held-out (0.11 M)
+> trained concs
+> control 0.037 0.11 0.33 13Concentration ( M)
+> = 1.00 ,p= 0.003
+> train: 0.037, 0.11, 1, 3 M
+> held-out ( 0.33 M)
+> held-out (0.33 M)
+> trained concs
+> control 0.037 0.11 0.33 13Concentration ( M)
+> = 1.00 ,p= 0.003
+> train: 0.037, 0.11, 0.33, 3 M
+> held-out ( 1.0 M)
+> held-out (1 M)
+> trained concs
+
+Fig. 8: Dose-response geometry for unseen concentrations in C7. After re-training our joint model with 0.11 , 0.33 , or 1 μM held out during training (panels left to right, respectively), forward integration at the held-out dose (highlighted star) gen-erally interpolates between neighboring concentrations, closely following the expected monotonic trend. 
+
+Table 10: Ablation over λc on C7. Best values in bold .Concentration ( μM) 
+
+λc Metric 0.037 0.11 0.33 1.0 3.0 Pooled 0.1 FID 29.83 28.52 30.15 29.95 26.16 20.42 KID 1.56 1.51 1.62 1.58 1.41 1.37 0.5 FID 30.02 27.20 27.50 27.85 25.02 18.98 
+
+KID 1.58 1.40 1.37 1.39 1.28 1.25 
+
+1.0 FID 31.48 28.21 28.91 30.41 25.66 20.32 KID 1.73 1.51 1.51 1.67 1.33 1.38 24 L. Bogensperger et al. 0.037 0.11 0.33 13                                             
+
+> Predicted Concentration ( M)
+> 0.037 0.11 0.33 13
+> True Concentration (  M)
+> 0.44 0.25 0.17 0.08 0.05 0.38 0.24 0.19 0.14 0.05 0.34 0.26 0.22 0.13 0.05 0.35 0.16 0.17 0.21 0.12 0.12 0.05 0.07 0.22 0.55
+> Joint FM p(cz)
+> 0.037 0.11 0.33 13
+> Predicted Concentration ( M)
+> 0.037 0.11 0.33 13
+> True Concentration (  M)
+> 0.32 0.35 0.07 0.20 0.05 0.21 0.54 0.02 0.15 0.08 0.26 0.32 0.14 0.16 0.10 0.13 0.16 0.04 0.49 0.18 0.04 0.04 0.01 0.12 0.79
+> ResNet-18, real real
+
+Fig. 9: Confusion matrices for 5-class concentration prediction in C7. Left: 
+
+Confusion matrix of our joint flow matching model p(c | z), showing that lower and intermediate concentrations in particular are harder to discriminate, confirming the findings in Sec. 4.4. Right: The corresponding supervised ResNet-18 baseline yields better results at 0.11 μM, 1 μM, and 3 μM, but performs worse at 0.037 μM and 0.33 μM.
+
+Table 11: Inversion fidelity comparison across ODE integration schemes on the C7 test set ( N =100 control cells). PSNR ↑ SSIM ↑
+
+Steps K Euler Heun RK4 Euler Heun RK4 10 27 .79 ±2.9 27 .31 ±2.1 27 .14 ±2.1 0.866 ±0.04 0.873 ±0.04 0.872 ±0.04 
+
+25 31 .93 ±3.0 32 .09 ±2.6 32 .00 ±2.6 0.894 ±0.04 0.900 ±0.04 0.900 ±0.04 
+
+50 33 .81 ±3.0 33 .99 ±2.8 33 .97 ±2.8 0.902 ±0.04 0.906 ±0.05 0.906 ±0.05 
+
+100 34 .50 ±3.0 34 .65 ±2.9 34 .65 ±2.9 0.905 ±0.05 0.907 ±0.05 0.907 ±0.05 
+
+200 34 .70 ±3.0 34 .81 ±3.0 34 .81 ±3.0 0.906 ±0.05 0.907 ±0.05 0.907 ±0.05 
+
+500 34 .77 ±3.0 34 .81 ±3.0 34 .81 ±3.0 0.907 ±0.05 0.907 ±0.05 0.907 ±0.05 
+
+VAE only 38 .73 ±3.1 0.913 ±0.05 
+
+Table 12: Sampling latency comparison across generative methods and baseline mod-els. Method Batch Latency (ms) ↓ Per-Cell (ms) ↓
+
+Latent CellFlux 4196 .5±8.2 524 .6
+
+IMPA 176 .2±0.3 22 .0
+
+PhenDiff 26189 .5±31 .9 3273 .7
+
+Ours (cond. only) 6367 .3±51 .2 795 .9
+
+Ours (Joint Latent FM) 3237 .7±31 .4 404 .7

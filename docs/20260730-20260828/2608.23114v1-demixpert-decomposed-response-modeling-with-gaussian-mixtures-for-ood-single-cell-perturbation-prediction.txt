@@ -1,0 +1,1744 @@
+Title: DeMixPert: Decomposed Response Modeling with Gaussian Mixtures for OOD Single-Cell Perturbation Prediction
+
+URL Source: https://arxiv.org/pdf/2608.23114v1
+
+Published Time: Tue, 25 Aug 2026 02:26:50 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# DeMixPert: Decomposed Response Modeling with Gaussian Mixtures for OOD Single-Cell Perturbation Prediction 
+
+Jiawen Liu 1, Xuechenxiao Cao 1, Yutong Li 2, Bing Liu 1, Jiaming Liang 1, Tinghe Zhang 2, Xiaoqi Sheng 2, Hongmin Cai 1,2 ∗
+
+> 1
+
+School of Computer Science and Engineering, South China University of Technology, Guangzhou, China 
+
+> 2
+
+School of Future Technology, South China University of Technology, Guangzhou, China 
+
+> *
+
+hmcai@scut.edu.cn 
+
+Abstract 
+
+Predicting transcriptome-wide responses to unseen ge-netic perturbations remains a major computational chal-lenge because accurate prediction requires recovering both perturbation-specific transcriptional shifts and heterogeneous cellular responses. Existing methods often entangle de-terministic response structure with stochastic population-level variation, causing dominant shared patterns to mask weaker perturbation-specific signals and impair distribu-tional modeling. To address these challenges, we propose 
+
+DeMixPert , an approach for De composed response Model-ing with Gaussian Mix tures for Out-Of-Distribution (OOD) single-cell Pert urbation prediction. DeMixPert decomposes perturbation-induced changes into a basal-state-dependent systematic response, a perturbation-specific response, and population-level variation. The systematic component is de-rived from the basal state encoded from control-cell expres-sion, whereas the perturbation-specific component is inferred from pretrained target embeddings for unseen-target general-ization. DeMixPert models population-level variation using a Gaussian prototype Invertible Network and adaptively com-bines reusable Gaussian prototypes according to the basal state and perturbation condition. The resulting mixture is mapped to a condition-specific variation distribution. Sampled variations are integrated with the systematic and perturbation-specific components, followed by joint decoding with the basal state to reconstruct perturbed-cell gene expression. Experimental results show that DeMixPert effectively captures heteroge-neous single-cell perturbation responses and achieves superior performance across unseen-perturbation settings. The source code is made publicly available upon publication. 
+
+Introduction 
+
+Single-cell genetic perturbation profiling couples con-trolled genetic interventions with transcriptome-wide read-outs, enabling cell-resolved characterization of transcrip-tional responses and the regulatory programs underlying them (Adamson et al. 2016; Dixit et al. 2016). Despite its value, the scalability of such profiling is limited by the com-binatorial growth of experimental conditions across pertur-bation targets, cellular states, and biological contexts (Cheng et al. 2026), making exhaustive measurement infeasible. Ac-cordingly, in silico perturbation-response prediction offers a 
+
+> ∗
+
+Corresponding author. Prediction Prediction  
+
+> 𝐀 𝐀 Control Cells Perturbed Cells
+> DeMixPert
+> Population Perturbation Systematic
+> Unified Model
+> Entangled Response
+> Perturbation Response
+> 𝐀 𝐀
+
+Figure 1: Comparison of unified and decomposed response modeling. By separating entangled response components, DeMixPert better preserves perturbation-specific signals and condition-dependent population structure. scalable means of estimating cellular responses under exper-imentally profiled conditions. However, predicting responses under experimentally un-observed conditions involves more than estimating an aver-age perturbation-induced expression shift (Yu et al. 2025). These challenges can be understood through three inter-twined components of perturbation responses, as illustrated in Fig. 1. First, the basal cellular state contributes a sys-tematic component that shapes responses across perturba-tion conditions (Dong et al. 2023; Song et al. 2025). This shared structure should be learned from observed condi-tions and transferred to unseen ones. Second, each pertur-bation condition induces a perturbation-specific transcrip-tional effect that distinguishes its response from those of other interventions (Norman et al. 2019; Replogle et al. 2020). For an unseen perturbation, this effect must be in-ferred from biological relationships with targets observed during training. Third, cells exposed to the same perturba-tion may occupy distinct response subpopulations, whose internal structure and relative abundance vary with cellular state and environmental context (Adamson et al. 2016; Frang-ieh et al. 2021). Consequently, Out-Of-Distribution (OOD) prediction imposes three distinct requirements involving systematic-structure transfer, unseen-target effect inference, and condition-specific population-distribution estimation without direct observations. arXiv:2608.23114v1 [cs.LG] 24 Aug 2026 Existing methods improve perturbation-response predic-tion from different perspectives. Latent-variable approaches represent perturbation responses through state transforma-tions or factorized perturbation components (Lotfollahi et al. 2023). In parallel, Knowledge-guided methods exploit gene representations or biological priors to generalize from lim-ited perturbation observations (Cui et al. 2024). From an-other perspective, population-distribution approaches learn transitions from control to perturbed populations using op-timal transport, set-level distributional objectives, or flow matching (Bunne et al. 2023; Adduri et al. 2025; Yu et al. 2026). Despite substantial advances in response transfer and distributional modeling, most approaches still formulate the full perturbation response as a monolithic prediction target, leaving shared systematic response, perturbation-specific re-sponse, and condition-dependent population-level variation entangled. This limitation is consequential because Systema shows that shared systematic variation can dominate stan-dard evaluation metrics (Viñas Torné et al. 2025). Accord-ingly, accurate OOD prediction requires disentangling basal-state-dependent systematic responses, perturbation-specific responses, and population-level variation. In this paper, we propose DeMixPert , a De composed response framework with Gaussian Mix tures for out-of-distribution single-cell Pert urbation prediction. By decom-posing perturbation responses, DeMixPert assigns shared systematic response, perturbation-specific response, and population variation to separate modules. The basal-state-dependent systematic response is integrated with the perturbation-specific response to define a deterministic re-sponse center. This separation preserves transferable re-sponse structure while preventing shared variation from masking perturbation-specific signals. Subsequently, a Gaus-sian prototype Invertible Network models population-level variation around the response center by adaptively weight-ing reusable Gaussian prototypes according to the basal state and perturbation embedding. The resulting mixture is transformed into a condition-specific variation distribution through an invertible mapping. Finally, sampled variations are added to the response center and decoded together with the basal state to reconstruct post-perturbation gene expres-sion. This design improves response recovery for unseen perturbation targets while preserving perturbation discrim-inability and distributional fidelity. Our main contributions are summarized as follows: 
+
+• We propose DeMixPert, a decomposed response model for OOD single-cell perturbation prediction. DeMix-Pert disentangles deterministic response structure from stochastic cellular heterogeneity and captures condition-specific response distributions using adaptive Gaussian mixtures. 
+
+• We introduce a Gaussian prototype Invertible Network for population-level variation modeling. The invert-ible network uses context-adaptive weights to combine reusable Gaussian mixture prototypes, thereby estimat-ing condition-specific population-variation distributions. 
+
+• Quantitative analyses demonstrate that DeMixPert im-proves OOD perturbation prediction by accurately re-covering perturbation-specific responses while preserv-ing population-level distributional fidelity. 
+
+Related Work 
+
+Genetic Perturbation Prediction 
+
+Existing approaches formulate cellular responses as latent transformations: scGen applies an average shift, whereas CPA factorizes treatment, dose, and covariate contributions (Lotfollahi, Wolf, and Theis 2019; Lotfollahi et al. 2023). For unseen targets, GEARS leverages gene-relation graphs, while GenePert draws on external gene embeddings (Roohani, Huang, and Leskovec 2024; Chen and Zou 2024). To cap-ture heterogeneity in unpaired data, STATE predicts post-intervention cell sets, whereas scDFM learns full condi-tional distributions via flow matching (Adduri et al. 2025; Yu et al. 2026). Systema further reveals that shared system-atic variation can dominate standard metrics and mask target-specific signals (Viñas Torné et al. 2025). Nevertheless, most prior work does not jointly disentangle basal-state-dependent systematic responses, perturbation-specific responses, and condition-dependent population-level variation. 
+
+Gaussian Mixtures and Distribution Modeling 
+
+Gaussian mixture (GM) models provide a flexible represen-tation of complex population structure (McLachlan and Peel 2000), while normalizing flows transform tractable source distributions through invertible mappings (Dinh, Krueger, and Bengio 2014). PerturbNet combines perturbation embed-dings with a conditional invertible network to generate cell-state distributions (Yu et al. 2025). More recently, MixFlow replaces the conventional unimodal Gaussian source with a descriptor-conditioned Gaussian mixture and transports it using conditional flow matching (Rubbi et al. 2026). De-spite improved distributional flexibility, existing approaches still model perturbation responses monolithically, conflat-ing systematic and perturbation-specific effects with residual variation. This entanglement limits component-wise gener-alization and mechanistic interpretation. 
+
+Methodology 
+
+Preliminaries 
+
+In the context of OOD single-cell perturbation prediction, we decompose responses into systematic, perturbation-specific, and population-level components to capture transferable pat-terns and condition-specific heterogeneity. Let D = X0, {Xp}p∈P denote a single-cell genetic perturbation dataset, where P is the set of perturbation conditions, each involving one or more target genes. The control population is defined by X0 = {x0 
+
+> j
+
+∈ RG}N0
+
+> j=1
+
+.
+
+Here, N0 is the number of control cells and G denotes the number of selected genes. For each perturbation condition 
+
+p ∈ P , the corresponding perturbed population is defined by 
+
+Xp = {xpi }Np
+
+> i=1
+
+, where Np is the number of cells observed under perturbation p.Since the control and perturbed populations are unpaired, for each perturbed cell xpi , we randomly sample a con-trol cell x0 
+
+> j
+
+from X0 as its reference and define the per-Forward Generation  
+
+> Perturbation 𝒑
+
+Gaussian Prototype Invertible Network 
+
+> Projection
+> Concatenate
+> Control Expression
+> 𝒂 𝒑
+> 𝒈 𝒊
+
+Gaussian Mixtures     
+
+> 𝓝(𝝁 𝟏 , 𝝈 𝟏 )
+> Gaussian
+> Distribution 2
+> Gaussian
+> Distribution 3
+> Gaussian
+> Distribution K
+> 𝜶 𝒊
+> 𝓝(𝝁 𝟐 , 𝝈 𝟐 )𝓝(𝝁 𝟑 , 𝝈 𝟑 )𝓝(𝝁 𝑲 , 𝝈 𝑲 )
+> Gaussian
+> Distribution 1
+> Mixtures
+> Weights
+> Network
+> 𝒄 𝒊 = 𝒄𝒐𝒏𝒄𝒂𝒕(𝒔 𝒊 , 𝒂 𝒑 )
+> Inverse
+> Projection
+> ෍
+> 𝒌=𝟏 𝑲
+> 𝜶 𝒊𝒌 𝓝(𝒛 𝒊 ∗; 𝝁 𝒌 , 𝒅𝒊𝒂𝒈(𝝈 𝒌 𝟐 ))
+> ෍
+> 𝒌=𝟏
+> 𝑲
+> 𝜶 𝒊𝒌 𝓝(𝝁 𝒌 , 𝒅𝒊𝒂𝒈(𝝈 𝒌 𝟐 ))
+> ⋯
+> ⋯
+> ⋯
+> 𝒛 𝒊 𝒛 𝒊 ∗
+> 𝒓 𝒊 −
+
+⋯ 
+
+> Sample
+> Predicted Expression 𝑿 𝒊 𝒑
+> Expression
+> Decoder
+
+Gaussian Prototype 
+
+Invertible Network 
+
+> 𝒆 𝒑 𝒊
+
+Deterministic Response Center Learning   
+
+> 𝒓 𝒊 −
+> 𝒈 𝒊
+> 𝒂 𝒑
+> 𝑺 𝒊
+> (train only)
+> Foundation
+> Model
+> State
+> Encoder
+> Perturbation
+> Encoder
+> Systematic
+> Encoder
+> Elemwise Addition
+> Input
+> Basal State
+> Systematic Response
+> Perturbation Response
+> Population Variation
+> 𝒑
+> 𝒙 𝒋 𝟎
+> Sample
+> 𝒙 𝒋 𝟎
+> Deterministic
+> Response
+> Center
+> Learning
+> 𝑺 𝒊
+> Projection
+> 𝜺 𝒊 ∗
+> 𝒖 𝒊 𝟎 = 𝒛 𝒊
+> 𝒎 𝟏
+> 𝒖 𝒊,𝑨 𝟏
+> 𝟎
+> 𝒖 𝒊,𝑩 𝟏
+> 𝟎
+> 𝒖 𝒊,𝑨 𝟏
+> 𝟏
+> 𝒖 𝒊,𝑩 𝟏
+> 𝟏
+> 𝒖 𝒊,𝑨 𝟐
+> 𝟏
+> 𝒖 𝒊,𝑩 𝟐
+> 𝟏
+> 𝒖 𝒊,𝑨 𝟐
+> 𝟐
+> 𝒖 𝒊,𝑩 𝟐
+> 𝟐
+> 𝒎 𝟐 𝒖 𝒊,𝑨 𝟑
+> 𝟐
+> 𝒖 𝒊,𝑩 𝟑
+> 𝟐
+> 𝒖 𝒊,𝑨 𝟑
+> 𝟑
+> 𝒖 𝒊,𝑩 𝟑
+> 𝟑
+> 𝒎 𝟑
+> 𝜺 𝒊
+> 𝜺 𝒊 𝒎 𝟒
+
+a. Decompose Response Modeling 
+
+With Gaussian Mixtures 
+
+b.  c. 
+
+> Transformation
+> −𝒐𝒈[෍
+> 𝒌=𝟏 𝑲
+> 𝜶 𝒊𝒌 𝓝(𝒛 𝒊 ∗; 𝝁 𝒌 , 𝒅𝒊𝒂𝒈(𝝈 𝒌 𝟐 ))]
+
+Figure 2: Overview of DeMixPert. (a) The overall workflow of DeMixPert. (b) The architecture of the Deterministic Response Center Learning module. (c) The architecture of the Gaussian prototype Invertible Network. turbation response as ∆xpi = xpi − x0
+
+j . To facilitate sub-sequent response modeling, the expression-space response 
+
+∆xpi is projected into a latent space using an encoder Er :
+
+r∗
+
+i = Er (∆ xpi ) ∈ Rdr . The objective of DeMixPert is to predict a perturbation response ˆri that approximates the tar-get response r∗
+
+i . In DeMixPert, ˆri is modeled as three com-ponents: ˆri = gi + ap + ϵi. Here, gi, ap, and ϵi denote the systematic response, perturbation-specific response, and population-level response variation, respectively. 
+
+Overview 
+
+Fig. 2 outlines the DeMixPert framework. As shown in Fig. 2 (a), the Deterministic Response Center Learning mod-ule takes the perturbation condition and control-cell expres-sion as inputs. The module separates the response into sys-tematic and perturbation-specific components, whose com-bination forms the deterministic response center. Meanwhile, the basal-state and perturbation representations are concate-nated to predict mixture weights, adapting a set of shared Gaussian prototypes to the current cell state and perturba-tion condition. The adapted Gaussian mixture is connected to the Gaussian prototype Invertible Network for population-variation modeling. The forward transformation generates population-level variations from source samples. Conversely, the training-only inverse transformation projects observed target variations into the Gaussian-mixture space. The cor-responding conditional likelihood provides joint supervision for mixture-weight estimation and invertible transformation learning. Generated population-level variations are subse-quently added to the deterministic response center. There-after, the resulting response representation is concatenated with the basal-state representation for expression decoding. 
+
+Deterministic Response Center Learning 
+
+To prevent systematic variation from obscuring perturbation-specific effects, DeMixPert constructs a deterministic re-sponse center by combining separately learned systematic and perturbation-specific responses. The three encoders Es,
+
+Esys , and Epert produce the basal-state representation, sys-tematic response, and perturbation-specific response, respec-tively: si = Es(x0
+
+j ) ∈ Rds , gi = Esys (si) ∈ Rdr , and 
+
+ap = Epert (ep) ∈ Rdr . Here, si summarizes the unper-turbed cellular context and is retained for subsequent vari-ation modeling. The systematic response gi captures basal-state-dependent patterns shared across perturbation condi-tions, whereas ap captures the perturbation-specific response derived from the perturbation embedding ep. We derive ep
+
+from pretrained scGPT representations (Cui et al. 2024) for OOD generalization. The ep provides prior knowledge of bio-logical relationships among genes for inferring perturbation-specific responses without direct observations. Finally, the resulting systematic and perturbation-specific responses are combined to form the deterministic response center: ¯ri = gi + ap ∈ Rdr . The ¯ri denotes the deterministic response pattern jointly specified by the basal cellular state 
+
+si and perturbation target ep in the response latent space Rdr .
+
+Gaussian prototype Invertible Network 
+
+The deterministic response center captures systematic and perturbation-specific responses but not the conditional population-level variation distribution. Accordingly, DeMix-Pert models the remaining population-level variation using a Gaussian prototype Invertible Network. Using the target response r∗
+
+i , the target variation from the deterministic re-sponse center is given by ϵ∗
+
+i = r∗
+
+i − ¯ri ∈ Rdr .
+
+For each perturbation condition, the target variations of its observed cells form samples from the corresponding population-variation distribution. To capture potential varia-tion patterns shared across perturbations, the target variations 
+
+ϵ∗ pooled from all training conditions are modeled using a K-component diagonal Gaussian mixtures: 
+
+qGM (ϵ) = 
+
+> K
+
+X
+
+> k=1
+
+πkN  ϵ; μk, diag( σ2
+
+> k
+
+) , (1) where πk, μk, and diag( σ2
+
+> k
+
+) denote the weight, mean, and diagonal variance of the k-th Gaussian prototype, respec-tively. These parameters are periodically re-estimated from the target variations using the expectation-maximization al-gorithm (Dempster, Laird, and Rubin 1977). Further details are provided in Supplementary Appendix F. The global Gaussian Mixtures provide reusable Gaussian prototypes shared across perturbations. However, the contri-bution of each prototype depends jointly on the basal state and perturbation condition. Accordingly, si and ap are con-catenated to predicts Gaussian prototype weights: 
+
+αi = softmax (MLP(concat( si, a p))) ∈ RK , (2) where concat( ·, ·) denotes concatenation, MLP( ·) denotes a multilayer perceptron, and softmax( ·) normalizes the pre-dicted prototype weights. The conditional Gaussian mixture is then defined as: 
+
+P (z | αi) = 
+
+> K
+
+X
+
+> k=1
+
+αik N  z; μk, diag( σ2
+
+> k
+
+) . (3) The prototype parameters are shared globally, while their contributions are adapted to the condition representation ci.Then, a source variable zi ∼ P (z | αi) is sampled from the conditional mixture and passed through the invertible network Tθ , producing a sample ϵi from the final population-variation distribution: ϵi = Tθ (zi; ci).
+
+Let u(0)  
+
+> i
+
+= zi and uli = Fl
+
+
+
+u(l−1)  
+
+> i
+
+; ci
+
+
+
+∈ Rdr de-note the output of the l-th coupling layer. A binary mask 
+
+ml ∈ { 0, 1}dr partitions the feature dimensions into two complementary index sets, Al and Bl, corresponding to mask values of 1 and 0, respectively, such that Aℓ ∩ Bℓ = ∅,
+
+Aℓ ∪ Bℓ = {1, . . . , d r }. Accordingly, the two input sub-vectors are defined as u(l−1)  
+
+> i,A l
+
+:=  u(l−1) 
+
+> ij
+
+ 
+
+> ∈Al
+
+∈ R|Al|,
+
+u(l−1)  
+
+> i,B l
+
+:=  u(l−1) 
+
+> ij
+
+ 
+
+> j∈Bl
+
+∈ R|Bl|. The u(l−1)  
+
+> i
+
+can be recov-ered by restoring the two subvectors to the positions specified by ml: u(l−1)  
+
+> i
+
+= merge ml
+
+
+
+u(l−1)  
+
+> i,A l
+
+, u (l−1) 
+
+> i,B l
+
+
+
+. Here, merge ml
+
+restores the two subsets to their original feature positions specified by ml. The mask is fixed within each layer but varies across layers, allowing all feature dimensions to be updated. Within the l-th coupling layer, u(l−1)  
+
+> i,A l
+
+remain unchanged and is used to determine the transformation applied to u(l−1)  
+
+> i,B l
+
+.DeMixPert first measures how closely the unchanged features match each Gaussian prototype. The normalized matching weight associated with prototype k is 
+
+γlik =
+
+πkN
+
+
+
+u(l−1)  
+
+> i,A l
+
+; μk,A l , diag 
+
+
+
+σ2
+
+> k,A l
+
+ 
+
+> K
+
+X
+
+> q=1
+
+πq N
+
+
+
+u(l−1)  
+
+> i,A l
+
+; μq,A l , diag 
+
+
+
+σ2
+
+> q,A l
+
+ . (4) In parallel, a layer-specific MLP hl produces prototype modulation coefficients from ci: bli = hl(ci) ∈ RK . Here, γli
+
+captures feature-level prototype matching, whereas bli cap-tures the contribution of each prototype under the current basal-state and perturbation context. The two coefficients are combined to generate the additive shift applied to Bl:
+
+f l(ui,A l , c i) = W l  γli ⊙ bli
+
+ ∈ R|Bl|, (5) where W l ∈ R|Bl|× K is a learnable projection matrix and ⊙ denotes element-wise multiplication. The additive coupling transformation is defined as follows: uli,A l =
+
+ul−1 
+
+> i,A l
+
+, uli,B l = ul−1 
+
+> i,B l
+
++ fl
+
+
+
+ul−1 
+
+> i,A l
+
+, c i
+
+
+
+. The two subsets are then reassembled to obtain the complete output of the 
+
+l-th coupling layer: 
+
+Fl
+
+ ul−1 
+
+> i
+
+; ci
+
+ = uli = merge ml
+
+
+
+uli,A l , u li,B l
+
+
+
+. (6) Since the Al subset remains unchanged, the same shift function can be evaluated during inversion (Dinh, Sohl-Dickstein, and Bengio 2016). The inverse transformation is defined by ul−1 
+
+> i,A l
+
+= uli,A l and ul−1 
+
+> i,B l
+
+= uli,B l − fl
+
+
+
+uli,A l , c i
+
+
+
+.
+
+The recovered subsets are reassembled to obtain the com-plete output of the inverse layer: 
+
+F −1
+
+> l
+
+ uli; ci
+
+ = ul−1 
+
+> i
+
+= merge ml
+
+
+
+ul−1 
+
+> i,A l
+
+, u l−1
+
+> i,B l
+
+
+
+. (7) Each coupling layer is bijective and has a triangular Ja-cobian with unit determinant (Dinh, Krueger, and Bengio 2014). This invertibility maps each target variation back to the Gaussian mixtures. Its likelihood under the source distri-bution supervises the context-dependent prototype weights and the invertible transformation. The corresponding likeli-hood objective is introduced in the training loss. After L coupling layers, the generated variation sample is 
+
+ϵi = Tθ (zi; ci) = FL ◦ · · · ◦ F1(zi; ci) ∈ Rdr . (8) For perturbation condition p, the collection {ϵi : pi = p}
+
+forms samples from its predicted population-level variation distribution. Each sample perturbs the deterministic response center to yield the response latent: ˆri = ¯ ri + ϵi.
+
+Expression Decoder 
+
+The post-perturbation expression is jointly determined by the original cellular context and the perturbation-induced re-sponse. The basal-state representation si captures the cellular context, whereas the predicted response latent ˆri encodes the perturbation effect. The concatenated representation is then decoded to reconstruct post-perturbation gene expression: 
+
+ˆxpi = Dψ (concat( si, ˆri)) . Therein, Dψ denotes the expres-sion decoder. 
+
+Training Objective 
+
+DeMixPert is trained end-to-end to jointly learn the determin-istic response center and condition-specific population-level variation. The total training objective consists of four loss components that supervise response alignment, population-variation likelihood, gene-expression reconstruction, and population-distribution matching. 
+
+Response Alignment Loss. A mean squared error loss is used to align the predicted response latent with its target: 
+
+Lalign = 1
+
+> N
+
+PNi=1 ∥ˆri − r∗ 
+
+> i
+
+∥22 , where N denotes the number of cells in the training batch. 
+
+Population-Variation Likelihood Loss. To learn the condi-tional population-level variation, each target variation is first mapped back to the Gaussian mixtures: z∗ 
+
+> i
+
+= T −1 
+
+> θ
+
+(ϵ∗ 
+
+> i
+
+; ci).
+
+We then minimize its negative log-likelihood under the con-ditional Gaussian mixtures: 
+
+Lgm = − 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+log 
+
+" KX
+
+> k=1
+
+αik N  z∗ 
+
+> i
+
+; μk, diag( σ2
+
+> k
+
+)#
+
+, (9) where, the Lgm jointly supervises the context-dependent pro-totype weights and the invertible transformation. 
+
+Gene-Expression Reconstruction Loss. The reconstruction loss preserves gene expression information by reconstructing the perturbed expression from both the predicted and target responses, while recovering the control expression from a zero-response vector 0 ∈ Rdr :
+
+Lrec = Lmse (Dψ ([ si, ˆri]) , x pi 
+
+> i
+
+) + Lmse (Dψ ([ si, r ∗ 
+
+> i
+
+]) , x pi 
+
+> i
+
+)+ Lmse 
+
+ Dψ ([ si, 0]) , x 0
+
+> j
+
+ ,
+
+(10) where Lmse denotes the mean square error loss. 
+
+Distribution Loss. At the population level, we use energy distance to align the generated and observed expression dis-tributions under each perturbation condition: 
+
+Ldist = 1
+
+|P| 
+
+X
+
+> p∈P
+
+ED ( {ˆxpi }i:pi=p, {xpi }i:pi=p) , (11) where P denotes the set of perturbation conditions and ED( ·)
+
+is the energy distance (Székely and Rizzo 2013). The overall training objective is L = Lalign + λgm Lgm + Lrec + Ldist .
+
+The λgm balances the numerical scale of the negative log-likelihood against the other loss components. All trainable parameters are jointly optimized by minimizing L.
+
+Experiments 
+
+Experimental Setup 
+
+Datasets and preprocessing. We benchmark DeMixPert on four widely used single-cell genetic perturbation datasets. Adamson (Adamson et al. 2016) and Papalexi (Papalexi et al. 2021) contain single-gene perturbations, whereas Norman (Norman et al. 2019) and Replogle (Replogle et al. 2020) involve combinatorial perturbations. All datasets are pro-cessed following a standard single-cell RNA-seq preprocess-ing pipeline. For each dataset, we select 2,048 highly variable genes (HVGs) and additionally retain all perturbation-target genes to define the input gene space. Detailed dataset de-scriptions and statistics are provided in Appendix C. 
+
+Compared methods. We compare DeMixPert against five representative perturbation-response prediction methods: GEARS (Roohani, Huang, and Leskovec 2024), scGPT (Cui et al. 2024), GenePert (Chen and Zou 2024), scDFM (Yu et al. 2026), and STATE (Adduri et al. 2025). These meth-ods span graph learning, pretrained foundation models, ridge regression, conditional flow matching, and set-based Trans-formers. Accordingly, the comparative experiments enable DeMixPert to be evaluated against methods with substan-tially different assumptions and predictive mechanisms. 
+
+Metrics and implementation. Model performance is eval-uated at both the top-100 differentially expressed genes (DEGs) level and the all-gene level. At the top-100 DEG level, we report Common Differentially Expressed Genes (C-DEGs), Energy Distance (E-Dist), Wasserstein Distance (W-Dist), and Mean Squared Error (MSE). At the all-gene level, we report the Differential Expression Score (DES), MSE, Centroid Accuracy (Centroid Acc), and the Perturbation Discrimination Score (PDS) (Wei et al. 2026; Viñas Torné et al. 2025; Roohani et al. 2025). Together, these metrics assess differential-expression recovery, distributional agree-ment, expression error, and perturbation discrimination. Condition-disjoint splits evaluate unseen perturbations. Single-gene datasets use 70%/10%/20% training/valida-tion/test splits. For combinatorial datasets, training includes all single-gene conditions and half of the combinatorial con-ditions, while the remainder is divided equally between val-idation and test sets. Validation selects checkpoints, and results are reported as mean ± standard variation across random seeds. DeMixPert uses PyTorch and AdamW. De-fault and dataset-specific configurations are provided in Ap-pendiX B and H, respectively. 
+
+Quantitative Comparison 
+
+Table 1 summarizes the results for unseen single-gene and combinatorial perturbations. On the single-gene datasets Papalexi and Adamson, DeMixPert substantially improves perturbation-specific and distributional recovery, achieving C-DEGs scores of 22.000 and 10.733, PDS values of 0.904 and 0.947, and the lowest E-Dist values of 0.171 and 0.448, respectively. Although ScDFM obtains the highest DES on Papalexi, its lower C-DEGs and PDS suggest that match-ing response magnitude alone is insufficient to recover perturbation-specific effects. From another direction, perfor-mance on unseen combinatorial perturbations evaluates the ability to preserve interaction-specific effects and general-ize to novel gene combinations. On Norman and Replogle, DeMixPert achieves the highest PDS (0.981 and 0.938) and the lowest E-Dist (0.374 and 0.155). Its C-DEGs score reaches 31.650 on Norman, surpassing STATE’s 21.006, and 12.378 on Replogle, close to the best baseline result of 12.711. Moreover, scGPT’s high Centroid Acc of 0.940 but worst E-Dist of 3.174 on Norman demonstrates that accurate centroid prediction does not guarantee distributional recov-ery. Overall, these results show that DeMixPert generalizes effectively across both perturbation regimes while preserving perturbation specificity and population-level heterogeneity. Dataset Method Top 100 DEGs Level All Gene Level C-DEGs ↑ E-Dist ↓ W-Dist ↓ MSE ↓ DES ↑ MSE ↓ Centroid Acc ↑ PDS ↑
+
+Papalexi 
+
+GEARS 2.280 ± 0.460 0.617 ± 0.218 12.720 ± 0.263 0.065 ± 0.032 0.194 ± 0.115 0.024 ± 0.015 0.240 ± 0.089 0.640 ± 0.049 
+
+scGPT 1.040 ± 0.862 0.208 ± 0.327 3.468 ± 1.159 0.056 ± 0.059 0.077 ± 0.045 0.010 ± 0.011 0.500 ± 0.000 0.623 ± 0.024 
+
+GenePert 5.427 ± 0.889 0.337 ± 0.136 7.011 ± 0.190 0.027 ± 0.012 0.127 ± 0.067 0.004 ± 0.002 0.500 ± 0.000 0.600 ± 0.025 
+
+scDFM 5.560 ± 1.506 1.971 ± 0.582 14.053 ± 0.324 0.274 ± 0.104 0.212 ± 0.099 0.099 ± 0.037 0.200 ± 0.141 0.568 ± 0.095 
+
+STATE 4.760 ± 1.499 0.760 ± 0.214 13.364 ± 0.222 0.072 ± 0.033 0.198 ± 0.107 0.025 ± 0.014 0.160 ± 0.089 0.600 ± 0.000 
+
+DeMixPert 22.000 ± 4.854 0.171 ± 0.088 6.369 ± 0.403 0.008 ± 0.006 0.200 ± 0.129 0.002 ± 0.001 0.720 ± 0.110 0.904 ± 0.046 
+
+Adamson 
+
+GEARS 2.280 ± 0.145 0.563 ± 0.125 9.654 ± 0.217 0.046 ± 0.015 0.313 ± 0.082 0.012 ± 0.003 0.133 ± 0.067 0.605 ± 0.026 
+
+scGPT 4.151 ± 0.131 2.997 ± 0.310 4.936 ± 0.326 0.037 ± 0.014 0.378 ± 0.078 0.005 ± 0.002 0.586 ± 0.079 0.567 ± 0.037 
+
+GenePert 0.063 ± 0.010 0.468 ± 0.174 4.938 ± 0.301 0.031 ± 0.013 0.105 ± 0.038 0.002 ± 0.001 0.533 ± 0.014 0.570 ± 0.025 
+
+scDFM 3.400 ± 1.381 1.355 ± 0.216 10.771 ± 0.628 0.132 ± 0.027 0.278 ± 0.082 0.048 ± 0.007 0.067 ± 0.047 0.539 ± 0.040 
+
+STATE 2.947 ± 0.357 0.820 ± 0.138 10.989 ± 0.169 0.052 ± 0.017 0.280 ± 0.091 0.015 ± 0.003 0.080 ± 0.030 0.534 ± 0.004 
+
+DeMixPert 10.733 ± 5.198 0.448 ± 0.052 5.481 ± 0.113 0.021 ± 0.003 0.153 ± 0.078 0.006 ± 0.001 0.560 ± 0.076 0.947 ± 0.020 
+
+Norman 
+
+GEARS 3.850 ± 0.557 0.855 ± 0.220 6.380 ± 0.234 0.049 ± 0.019 0.334 ± 0.029 0.008 ± 0.002 0.237 ± 0.112 0.802 ± 0.090 
+
+scGPT 6.644 ± 0.627 3.174 ± 0.157 5.627 ± 0.239 0.028 ± 0.007 0.540 ± 0.031 0.004 ± 0.001 0.940 ± 0.013 0.886 ± 0.025 
+
+GenePert 19.181 ± 0.658 1.113 ± 0.154 6.305 ± 0.256 0.078 ± 0.013 0.404 ± 0.022 0.008 ± 0.011 0.639 ± 0.034 0.646 ± 0.033 
+
+scDFM 15.350 ± 3.548 0.711 ± 0.148 7.607 ± 0.464 0.046 ± 0.011 0.389 ± 0.029 0.009 ± 0.003 0.463 ± 0.116 0.890 ± 0.037 
+
+STATE 21.006 ± 5.872 1.341 ± 0.217 7.175 ± 0.177 0.105 ± 0.021 0.354 ± 0.013 0.011 ± 0.002 0.031 ± 0.000 0.524 ± 0.014 
+
+DeMixPert 31.650 ± 11.739 0.374 ± 0.056 6.606 ± 0.269 0.003 ± 0.0002 0.506 ± 0.063 0.003 ± 0.0002 0.750 ± 0.163 0.981 ± 0.005 
+
+Replogle 
+
+GEARS 2.111 ± 0.176 0.448 ± 0.060 12.743 ± 0.114 0.038 ± 0.009 0.189 ± 0.047 0.012 ± 0.002 0.267 ± 0.127 0.669 ± 0.058 
+
+scGPT 6.089 ± 0.755 2.263 ± 0.280 4.302 ± 0.483 0.011 ± 0.004 0.269 ± 0.060 0.002 ± 0.001 0.778 ± 0.125 0.654 ± 0.087 
+
+GenePert 12.533 ± 2.881 0.200 ± 0.047 4.600 ± 0.550 0.002 ± 0.001 0.200 ± 0.047 0.002 ± 0.001 0.558 ± 0.048 0.580 ± 0.008 
+
+scDFM 3.422 ± 1.630 0.802 ± 0.091 13.234 ± 0.272 0.092 ± 0.015 0.202 ± 0.053 0.026 ± 0.004 0.178 ± 0.061 0.588 ± 0.052 
+
+STATE 12.711 ± 3.278 0.510 ± 0.075 13.008 ± 0.107 0.040 ± 0.012 0.207 ± 0.041 0.011 ± 0.002 0.111 ± 0.000 0.548 ± 0.014 
+
+DeMixPert 12.378 ± 4.071 0.155 ± 0.040 5.614 ± 0.156 0.005 ± 0.001 0.227 ± 0.066 0.002 ± 0.000 0.778 ± 0.193 0.938 ± 0.039 
+
+Table 1: Comprehensive evaluation results on four genetic perturbation datasets, reported as mean ± standard variation. ↑ (↓)indicates that higher (lower) values are better. The best result for each metric is marked in bold .
+
+Dataset Variant Top 100 DEGs All Genes C-DEGs 
+
+↑
+
+W-Dist 
+
+↓
+
+Centroid Acc ↑
+
+PDS 
+
+↑
+
+Adamson 
+
+w/o Decomp 10.520 5.927 0.240 0.733 w/o Gene 8.773 5.772 0.267 0.787 w/o Sys 10.400 5.746 0.360 0.846 w/o GM 11.107 5.781 0.280 0.797 
+
+DeMixPert 10.733 5.481 0.560 0.947 Replogle 
+
+w/o Decomp 12.022 5.905 0.244 0.736 w/o Gene 9.733 5.852 0.333 0.760 w/o Sys 11.556 5.832 0.333 0.800 w/o GM 14.356 5.833 0.289 0.773 
+
+DeMixPert 12.378 5.614 0.778 0.938 
+
+Table 2: The results of the ablation study. 
+
+Ablation Study 
+
+We conduct ablation experiments on Adamson and Replogle by comparing the complete model with four ablated vari-ants. The w/o Decomp variant replaces decomposed response modeling with unified modeling. The w/o Gene and w/o Sys variants remove the embedding-derived perturbation-specific effect and the basal-state-dependent systematic re-sponse, respectively. For brevity, w/o GM denotes removal of the entire Gaussian prototype Invertible Network, includ-ing both the GM and the invertible network. The complete results are reported in Table 2. Table 2 shows that DeMixPert leads overall with the low-est W-Dist and highest Centroid Acc/PDS. Removing de-composition lowers Centroid Acc/PDS to 0.240/0.244 and 0.733/0.736 on Adamson/Replogle; removing the systematic component also degrades both, confirming complementary roles in perturbation specificity and transferable basal-state patterns. Removing the embedding-derived perturbation-specific effect reduces C-DEGs from 10.733/12.378 to 8.773/9.733, confirming its importance for unseen perturba-tions. Although w/o GM raises C-DEGs to 11.107/14.356, it worsens all other metrics, showing that the deterministic re-sponse center alone cannot recover population distributions. 
+
+Sensitivity Analysis 
+
+Fig. 3 shows performance changes under different Gaussian prototype numbers K and GM-loss weights λgm relative to the reference setting ( K = 8 , λgm = 0 .01 ). Deviat-ing from K = 8 generally degrades DEG recovery, dis-tribution modeling, and expression reconstruction, whereas larger K improves perturbation identification, indicating a fidelity–separability trade-off. Similarly, increasing λgm im-proves identification but slightly affects other objectives. Overall, the reference setting achieves the best balance. 
+
+Interpretability Analysis 
+
+Two interpretability analyses are conducted to validate two central design principles of DeMixPert: explicit response de-composition and condition-dependent composition of shared Gaussian prototypes. 2 4 6 8 12 16 
+
+K     
+
+> 20 30 Relative change (%)  (a) Number of mixture components 00.005 0.01 0.05 0.1 1
+
+λ𝐀𲀀  
+
+> (b) Weight of the likelihood loss 10 0-10 -20 -30 -40 -50 C-DEGs
+
+E-dist MSE PDS 
+
+> Baseline Baseline
+
+Figure 3: The result of the sensitivity analysis. Positive values indicate improvement and negative values degradation. Adamson               
+
+> Perturbation Response
+> Purity = 0.555
+> Response without Systematic Component
+> Purity = 0.825
+> UMAP1 UMAP1
+> UMAP2 UMAP2
+> ARHGAP22 COPZ1 DDOST P4HB PPWD1 SCYL1 SEC61B SOCS1 SYVN1 TIMM23 TMED10 TMED2 TMEM167A XRN1 YIPF5
+
+Replogle         
+
+> Perturbation Response
+> Purity = 0.308
+> Response without Systematic Component
+> Purity = 0.769
+> UMAP1 UMAP1
+> UMAP2 UMAP2
+> AHCYL1+FDPS ATR+FDPS FDPS+MVD FDPS+NHEJ1 FDPS+PRKDC FDPS+RAD17 FDPS+RRM2B FDPS+SREBF2 HUS1+PMVK
+
+Figure 4: UMAP visualizations of the perturbation response 
+
+r∗ 
+
+> i
+
+(left) and the response after removing the basal-state-dependent systematic component, r∗ 
+
+> i
+
+− gi (right), on the Adamson and Replogle datasets. Points are colored by per-turbation condition, and cluster purity scores quantify the separation among perturbations. Fig. 4 compares representations of predicted response be-fore and after removing the systematic component gi. Cluster purity is applied to assess the separation of basal-state vari-ation from perturbation-associated structure. It investigates whether the basal-state-dependent systematic response inter-feres with perturbation-associated structures in the predicted response space. After removing gi, the responses on both datasets form more compact and clearly separated clusters. Accordingly, cluster purity increases from 0.308 to 0.769 
+
+on Replogle and from 0.555 to 0.825 on Adamson. Since 
+
+gi is computed exclusively from the basal-state representa-tion and is the only component removed in this comparison, these improvements indicate that it introduces variation that is not aligned with perturbation identity. This validates the response decomposition in DeMixPert and improves the dis-crimination of unseen perturbations. Fig. 5 illustrates the relationship between Gaussian proto-type weights and cellular distributions across different per-turbation conditions. For each pair of perturbation condi-0.0 0.5 1.0 1.5 2.0 2.5 3.0   
+
+> Dα(JS divergence; ×10 −4 )
+> 10 20 30 40 50
+> Dε (Energy distance)
+
+Adamson             
+
+> ρ= 0.462
+> Mantel p< 0.001
+> 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+> Dα(JS divergence; ×10 −3 )
+> 246810
+> Dε (Energy distance)
+
+Replogle    
+
+> ρ= 0.512
+> Mantel p< 0.001
+
+Figure 5: The correlation between Prototype-weight diver-gence and perturbation-specific population differences. Pair-wise prototype-weight divergence Dα is compared with population-level distance Dϵ in the Adamson and Replogle datasets. The red curves show the LOWESS-smoothed rela-tionships between Dα and Dϵ.tions, Dα denotes the Jensen–Shannon (JS) divergence (Lin 2002) between their Gaussian prototype weight vectors α,whereas Dϵ denotes the energy distance between their pop-ulation distributions ϵ. Spearman correlation is then used to assess the overall rank association between the two distance matrices (Spearman 1961), and its statistical significance is evaluated using a Mantel-style permutation test (Dietz 1983). Across all pairs of perturbation conditions, significant overall positive rank associations are observed in both the Adamson (ρ = 0 .462 ) and Replogle ( ρ = 0 .512 ) datasets, with Mantel 
+
+p < 0.001 in both cases. The consistency of this associa-tion across the single-gene and combinatorial perturbation datasets indicates that differences in the learned prototype weights are closely associated with variation in perturbation-specific population distributions. These results provide em-pirical support for the effectiveness and interpretability of the Gaussian prototype composition mechanism. 
+
+Conclusion 
+
+In this study, we present DeMixPert, a Gaussian-mixture-based response decomposition framework for OOD single-cell perturbation prediction. DeMixPert disentangles pertur-bation responses into systematic, perturbation-specific, and population-level components, each modeled through a ded-icated mechanism. A Gaussian prototype Invertible Net-work further characterizes cellular heterogeneity through context-adaptive prototype composition. Extensive experi-ments demonstrate accurate recovery of perturbation-specific responses under OOD settings. The adaptive prototype com-position also captures condition-specific population struc-tures, offering a structured interpretation of heterogeneous cellular responses. Acknowledgements 
+
+This work was supported in part by the National Key Research and Development Program of China (2024YFF1206600); in part by Guangdong S&T Programme (2025B0101130001); in part by the National Natural Sci-ence Foundation of China (62325204, 62502161, 62502163); in part by the China Postdoctoral Science Foundation (2025M782912). 
+
+References 
+
+Adamson, B.; Norman, T. M.; Jost, M.; Cho, M. Y.; Nuñez, J. K.; Chen, Y.; Villalta, J. E.; Gilbert, L. A.; Horlbeck, M. A.; Hein, M. Y.; et al. 2016. A multiplexed single-cell CRISPR screening platform enables systematic dissection of the unfolded protein response. Cell , 167(7): 1867–1882. Adduri, A. K.; Gautam, D.; Bevilacqua, B.; Imran, A.; Shah, R.; Naghipourfar, M.; Teyssier, N.; Ilango, R.; Nagaraj, S.; Dong, M.; et al. 2025. Predicting cellular responses to pertur-bation across diverse contexts with State. BioRxiv , 2025–06. Bunne, C.; Stark, S. G.; Gut, G.; Del Castillo, J. S.; Levesque, M.; Lehmann, K.-V.; Pelkmans, L.; Krause, A.; and Rätsch, G. 2023. Learning single-cell perturbation responses using neural optimal transport. Nature methods , 20(11): 1759– 1768. Chen, Y.; and Zou, J. 2024. Genepert: Leveraging genept embeddings for gene perturbation prediction. bioRxiv , 2024– 10. Cheng, J.; Chi, C.; Zhou, J.; Xin, H.; and Xia, J. 2026. PRE-SCRIBE: Predicting Single-Cell Responses with Bayesian Estimation. Advances in Neural Information Processing Sys-tems , 38: 145457–145489. Cui, H.; Wang, C.; Maan, H.; Pang, K.; Luo, F.; Duan, N.; and Wang, B. 2024. scGPT: toward building a foundation model for single-cell multi-omics using generative AI. Na-ture methods , 21(8): 1470–1480. Dempster, A. P.; Laird, N. M.; and Rubin, D. B. 1977. Maxi-mum likelihood from incomplete data via the EM algorithm. 
+
+Journal of the royal statistical society: series B (methodolog-ical) , 39(1): 1–22. Dietz, E. J. 1983. Permutation tests for association between two distance matrices. Systematic Biology , 32(1): 21–26. Dinh, L.; Krueger, D.; and Bengio, Y. 2014. Nice: Non-linear independent components estimation. arXiv preprint arXiv:1410.8516 .Dinh, L.; Sohl-Dickstein, J.; and Bengio, S. 2016. Density estimation using real nvp. arXiv preprint arXiv:1605.08803 .Dixit, A.; Parnas, O.; Li, B.; Chen, J.; Fulco, C. P.; Jerby-Arnon, L.; Marjanovic, N. D.; Dionne, D.; Burks, T.; Ray-chowdhury, R.; et al. 2016. Perturb-Seq: dissecting molecu-lar circuits with scalable single-cell RNA profiling of pooled genetic screens. cell , 167(7): 1853–1866. Dong, M.; Wang, B.; Wei, J.; de O. Fonseca, A. H.; Perry, C. J.; Frey, A.; Ouerghi, F.; Foxman, E. F.; Ishizuka, J. J.; Dhodapkar, R. M.; et al. 2023. Causal identification of single-cell experimental perturbation effects with CINEMA-OT. 
+
+Nature methods , 20(11): 1769–1779. Frangieh, C. J.; Melms, J. C.; Thakore, P. I.; Geiger-Schuller, K. R.; Ho, P.; Luoma, A. M.; Cleary, B.; Jerby-Arnon, L.; Malu, S.; Cuoco, M. S.; et al. 2021. Multimodal pooled Perturb-CITE-seq screens in patient models define mecha-nisms of cancer immune evasion. Nature genetics , 53(3): 332–341. Lin, J. 2002. Divergence measures based on the Shannon entropy. IEEE Transactions on Information theory , 37(1): 145–151. Lotfollahi, M.; Klimovskaia Susmelj, A.; De Donno, C.; Het-zel, L.; Ji, Y.; Ibarra, I. L.; Srivatsan, S. R.; Naghipourfar, M.; Daza, R. M.; Martin, B.; et al. 2023. Predicting cel-lular responses to complex perturbations in high-throughput screens. Molecular systems biology , 19(6): MSB202211517. Lotfollahi, M.; Wolf, F. A.; and Theis, F. J. 2019. scGen predicts single-cell perturbation responses. Nature methods ,16(8): 715–721. McLachlan, G. J.; and Peel, D. 2000. Finite mixture models .John Wiley & Sons. Norman, T. M.; Horlbeck, M. A.; Replogle, J. M.; Ge, A. Y.; Xu, A.; Jost, M.; Gilbert, L. A.; and Weissman, J. S. 2019. Ex-ploring genetic interaction manifolds constructed from rich single-cell phenotypes. Science , 365(6455): 786–793. Papalexi, E.; Mimitou, E. P.; Butler, A. W.; Foster, S.; Bracken, B.; Mauck III, W. M.; Wessels, H.-H.; Hao, Y.; Yeung, B. Z.; Smibert, P.; et al. 2021. Characterizing the molecular regulation of inhibitory immune checkpoints with multimodal single-cell screens. Nature genetics , 53(3): 322– 331. Replogle, J. M.; Norman, T. M.; Xu, A.; Hussmann, J. A.; Chen, J.; Cogan, J. Z.; Meer, E. J.; Terry, J. M.; Riordan, D. P.; Srinivas, N.; et al. 2020. Combinatorial single-cell CRISPR screens by direct guide RNA capture and targeted sequencing. Nature biotechnology , 38(8): 954–961. Roohani, Y.; Huang, K.; and Leskovec, J. 2024. Predicting transcriptional outcomes of novel multigene perturbations with GEARS. Nature Biotechnology , 42(6): 927–935. Roohani, Y. H.; Hua, T. J.; Tung, P.-Y.; Bounds, L. R.; Yu, F. B.; Dobin, A.; Teyssier, N.; Adduri, A.; Woodrow, A.; Plosky, B. S.; et al. 2025. Virtual Cell Challenge: Toward a Turing test for the virtual cell. Cell , 188(13): 3370–3374. Rubbi, A.; Akbarnejad, A.; Sanian, M. V.; Parast, A. Y.; Asadollahzadeh, H.; Amani, A.; Akhtar, N.; Cooper, S.; Bassett, A.; Liò, P.; et al. 2026. MixFlow: Mixture-Conditioned Flow Matching for Out-of-Distribution Gen-eralization. arXiv preprint arXiv:2601.11827 .Song, B.; Liu, D.; Dai, W.; Mcmyn, N. F.; Wang, Q.; Yang, D.; Krejci, A.; Vasilyev, A.; Untermoser, N.; Loregger, A.; et al. 2025. Decoding heterogeneous single-cell perturbation responses. Nature cell biology , 27(3): 493–504. Spearman, C. 1961. The proof and measurement of associ-ation between two things. Székely, G. J.; and Rizzo, M. L. 2013. Energy statistics: A class of statistics based on distances. Journal of statistical planning and inference , 143(8): 1249–1272. Viñas Torné, R.; Wiatrak, M.; Piran, Z.; Fan, S.; Jiang, L.; Te-ichmann, S. A.; Nitzan, M.; and Brbić, M. 2025. Systema: a framework for evaluating genetic perturbation response pre-diction beyond systematic variation. Nature Biotechnology ,1–10. Wei, Z.; Wang, Y.; Gao, Y.; Wang, S.; Li, P.; Si, D.; Gao, Y.; Wu, S.; Li, D.; Dong, K.; et al. 2026. Benchmarking al-gorithms for generalizable single-cell perturbation response prediction. Nature Methods , 23(2): 451–464. Yu, C.; Wang, C.; Liao, B.; and Wu, T. 2026. scdfm: Distri-butional flow matching model for robust single-cell pertur-bation prediction. arXiv preprint arXiv:2602.07103 .Yu, H.; Qian, W.; Song, Y.; and Welch, J. D. 2025. Perturbnet predicts single-cell responses to unseen chemical and genetic perturbations. Molecular Systems Biology , 21(8): 960. Supplementary Appendix Perturbation Embedding Construction 
+
+As stated in the main paper, the perturbation embedding is constructed from pretrained scGPT gene representations (Cui et al. 2024). Let Mp denote the set of target genes named by perturbation condition p, and let em ∈ R512 be the pretrained scGPT embedding of target gene m. We define 
+
+ep = 1
+
+|M p|
+
+X
+
+> m∈M p
+
+em ∈ R512 . (12) For a single-gene perturbation, this reduces to the embedding of that gene. For a combinatorial perturbation, the target-gene embeddings are averaged with equal weight. Conditions whose named target is unavailable in the frozen embedding table are removed before split generation. 
+
+Default Model Configuration 
+
+This section reports the default architecture and optimization configuration shared across all datasets. A summary of the model architecture is provided in Table 4, and dataset-specific training settings are reported in Supplementary Appendix H.                 
+
+> Hyperparameter Value
+> State latent dimension 256 Response latent dimension 128 Perturbation embedding dimen-sion 512 Gaussian components K8Coupling layers L4Condition-network hidden width 256 Prototype temperature 1.0 Optimizer AdamW Learning rate 5×10 −5
+> Weight decay 10 −6
+> Gradient clipping global norm 5.0 Learning-rate scheduler none (constant learning rate)
+
+Default configuration shared across datasets. Dataset-specific batch sizes, evaluation intervals, Gaussian-mixture refresh settings, and training schedules are listed in Supple-mentary Appendix H. 
+
+Dataset Descriptions 
+
+We evaluate DeMixPert on four single-cell genetic pertur-bation datasets, comprising two single-gene perturbation datasets, Adamson and Papalexi, and two combinatorial per-turbation datasets, Norman and Replogle. These datasets cover different perturbation technologies, cellular contexts, and prediction settings. Dataset-specific preprocessing and feature construction are described in Supplementary Ap-pendix D, while the perturbation-level splitting protocol is described in Supplementary Appendix E. 
+
+Adamson. The Adamson dataset was generated us-ing Perturb-seq in K562 cells to characterize transcrip-tional responses associated with the unfolded protein re-sponse (Adamson et al. 2016). Each non-control condition corresponds to a single targeted genetic perturbation. 
+
+Papalexi. The Papalexi dataset was generated using ECCITE-seq in THP-1 cells to measure the transcriptional consequences of CRISPR perturbations targeting immune-regulatory genes (Papalexi et al. 2021). The dataset contains single-gene perturbation conditions. 
+
+Norman. The Norman dataset contains CRISPR activa-tion measurements in K562 cells and was designed to study transcriptional responses and genetic interactions induced by single-gene and combinatorial perturbations (Norman et al. 2019). The formal input uses one shared gene space for all cells and perturbation conditions. 
+
+Replogle. The Replogle dataset contains both single-gene and dual-gene perturbations measured using direct guide-RNA capture technology (Replogle et al. 2020). 
+
+Data Preprocessing 
+
+This section describes data quality control, normalization, gene selection, perturbation embedding construction, and the response reference used in the main-text formulation. All models and metrics operate on the frozen logNor 
+
+expression layer. The feature space is the union of the 2,048 genes selected by expression variability and the perturbation target genes that are available in the dataset. The resulting gene counts are reported in Table 5. Gene selection is per-formed once when constructing each frozen input, before the condition-level split is generated; it is therefore shared by all five seeds and all compared methods. Perturbation embeddings are constructed as defined in Supplementary Appendix A. Following the main text, a control cell x0 
+
+> j
+
+is randomly sampled from the control population for each perturbed cell 
+
+xpi , and the response is defined as 
+
+∆xpi = xpi − x0 
+
+> j
+
+. (13) 
+
+Out-of-Distribution Data Splitting Protocol 
+
+We perform perturbation-level splitting to evaluate general-ization to unseen perturbation conditions. The non-control perturbations assigned to the training, validation, and test sets are mutually disjoint. Control cells are not treated as prediction targets in the split; instead, they are retained as a shared reference population for constructing perturbation responses and evaluating differential expression. 
+
+Single-Gene Perturbation Datasets 
+
+For Adamson and Papalexi, all unique non-control pertur-bation conditions are first sorted and then randomly per-muted using a seed-specific NumPy random number gener-ator. Given N non-control conditions, the numbers assigned to the training and validation sets are computed as 
+
+Ntrain = round(0 .7N ), Nval = round(0 .1N ), (14) and the remaining conditions are assigned to the test set. For datasets with at least three non-control conditions, the implementation ensures that the validation and test sets are non-empty. The resulting conditions within each split are stored in lexicographic order. Symbol Definition 
+
+Problem formulation 
+
+D A single-cell genetic perturbation dataset. 
+
+X0 The population of unperturbed control cells. 
+
+Xp The observed cell population under perturbation condition p.
+
+x0 
+
+> j
+
+, xpi Gene-expression profiles of a control cell and a cell under perturbation p, respectively. 
+
+P, p The set of perturbation conditions and an individual perturbation condition, respectively. 
+
+N0, Np The numbers of control cells and cells under perturbation p.
+
+G The number of selected genes in the expression space. 
+
+π0 The distribution of unperturbed control cells. 
+
+π(· | p) The condition-specific distribution of cells under perturbation p.
+
+fθ The stochastic conditional generator parameterized by θ.
+
+∆xpi The observed expression change defined in the main text, ∆xpi = xpi − x0 
+
+> j
+
+, where x0 
+
+> j
+
+is a randomly sampled control cell. 
+
+Response decomposition 
+
+Es, Er The basal-state encoder and response encoder, respectively. 
+
+si ∈ Rds The basal cellular-state representation of cell i.
+
+r∗ 
+
+> i
+
+∈ Rdr The target response latent encoded from the observed expression change ∆xpi .
+
+ds, dr The dimensions of the basal-state latent and response latent spaces. 
+
+gi The basal-state-dependent systematic response component. 
+
+epi ∈ Rde The pretrained embedding of perturbation condition pi.
+
+de The dimension of the pretrained perturbation embedding. 
+
+api The perturbation-level average response effect derived from epi .
+
+¯ri The deterministic response center, ¯ri = gi + api .
+
+ϵ∗ 
+
+> i
+
+The target cell-specific deviation, ϵ∗ 
+
+> i
+
+= r∗ 
+
+> i
+
+− ¯ri.
+
+Gaussian-prototype residual modeling 
+
+K The number of diagonal Gaussian response prototypes. 
+
+πk , μk , σ2 
+
+> k
+
+The global mixture weight, mean, and diagonal variance of the k-th Gaussian prototype. 
+
+ci The joint condition representation, ci = concat( si, a pi ).
+
+αik The condition-dependent mixture weight of prototype k for cell i.
+
+zi A source variable sampled from the condition-dependent Gaussian mixture. 
+
+Tθ The conditional invertible transformation that maps zi to a cell-specific deviation. 
+
+L The number of additive coupling layers in Tθ .
+
+γ(ℓ) 
+
+> ik
+
+The prototype-matching responsibility of prototype k at coupling layer ℓ.
+
+ϵi The generated stochastic cell-specific deviation. 
+
+ˆri The predicted response latent, ˆri = ¯ ri + ϵi.
+
+Dψ The expression decoder parameterized by ψ.
+
+ˆxpii The predicted post-perturbation expression profile. 
+
+Training objectives 
+
+Lalign The response-latent alignment loss. 
+
+Lgm The Gaussian-mixture negative log-likelihood loss. 
+
+Lrec The expression reconstruction loss. 
+
+Ldist The perturbation-condition-specific distribution matching loss. 
+
+L The overall training objective. 
+
+Table 3: Summary of the notation used in DeMixPert. 
+
+Combinatorial Perturbation Datasets 
+
+For Norman and Replogle, we follow the combinatorial per-turbation protocol of (Wei et al. 2026). All single-gene per-turbation conditions are included in the training set. The dual-gene conditions are randomly permuted, and 
+
+Ndual ,train = round (0 .5Ndual ) (15) dual-gene conditions are assigned to training. If Nremain 
+
+denotes the number of remaining dual-gene conditions, the validation set receives 
+
+Ndual ,val =
+
+ Nremain 
+
+2
+
+
+
+, (16) and all other remaining dual-gene conditions are assigned to the test set. Therefore, when the number of remaining dual-gene conditions is odd, the test set contains one more condition than the validation set. 
+
+Random Seeds and Split Validation 
+
+All methods are evaluated using the same five data-splitting seeds: 
+
+S = {17 , 23 , 29 , 31 , 37 }. (17) For each dataset and random seed, the generated split is saved before model training and reused by DeMixPert and all comparative methods. The implementation explicitly verifies Module Layer dimensions Activation Dropout Norm. 
+
+State encoder G–1024–512–256 SiLU after hidden layers 0.05 LayerNorm after hid-den linear layers Response encoder G–1024–512–128 SiLU after hidden layers 0.05 LayerNorm after hid-den linear layers Systematic predictor 256–512; 3×(512–1024– 512); 512–128 SiLU in blocks 0.05 LayerNorm at each block and output head Anchor predictor 512–512; 3×(512–1024– 512); 512–128 SiLU in blocks 0.05 LayerNorm at each block and output head Condition network 384–256–256; heads 8 and 32 SiLU 0 None Coupling flow 4× additive half-coupling; 
+
+8 → 64 shift map None 0 None Expression decoder 384 → G MLP-based mapping – –
+
+Table 4: Main-text-aligned DeMixPert component summary. Hyphens denote successive linear-layer widths; residual-block repetition is written explicitly.                                                      
+
+> Dataset Source Species Cell line Sequencing Perturbation Cells Control cells Genes Single Dual
+> Adamson (Adamson et al. 2016) Human K562 Perturb-seq CRISPRi 56,998 7,629 2,061 76 0Papalexi (Papalexi et al. 2021) Human THP-1 ECCITE-seq CRISPR knockout 19,340 2,000 2,050 24 0Norman (Norman et al. 2019) Human K562 Perturb-seq CRISPRa 96,994 2,000 2,096 101 125 Replogle (Replogle et al. 2020) Human K562 direct-capture Perturb-seq CRISPRi 26,777 2,000 2,050 33 35
+
+Table 5: Dataset sources and post-filter statistics used in the experiments. “Single” and “Dual” denote non-control perturbation conditions; every dataset additionally contains one shared control condition. 
+
+Ptrain ∩ P val = Ptrain ∩ P test = Pval ∩ P test = ∅. (18) This condition-level separation ensures that the reported performance measures generalization to unseen perturbation conditions rather than memorization of cells from perturba-tions observed during training. 
+
+Gaussian-Prototype EM Updates 
+
+This section describes the initialization, expectation-maximization procedure, and periodic refresh strategy of the Gaussian response prototypes. 
+
+Residual population. The Gaussian mixture model is fit-ted to training residuals only. With model parameters fixed in evaluation mode, the implementation computes 
+
+ϵ∗ 
+
+> i
+
+= Er (∆ xpi ) − ¯ri (19) for every non-control training cell. At most the dataset-specific number of residuals in Table 7 is sampled uniformly without replacement. Residual extraction and mixture fitting use no_grad ; consequently, the EM updates are not differ-entiated through. 
+
+Initialization. For K = 8 , a seeded random permutation of the N residuals is generated and the first K residual vectors initialize the component means. The mixture weights are ini-tialized uniformly, πk = 1 /K . Every component receives the same feature-wise population variance, with ϵcov = 10 −5:
+
+σ2(0)  
+
+> kj
+
+= max 
+
+(
+
+1
+
+N
+
+> N
+
+X
+
+> i=1
+
+ ϵ∗ 
+
+> ij
+
+− ¯ϵ∗
+
+> j
+
+2 , ϵ cov 
+
+)
+
+. (20) The covariance is diagonal; no full-covariance or tied-covariance parameter is estimated. 
+
+E step. At EM iteration t, let v(t) 
+
+> kj
+
+= max( σ2( t) 
+
+> kj
+
+, ϵ cov ).Responsibilities are computed in log space: 
+
+ℓ(t) 
+
+> ik
+
+= log max( π(t) 
+
+> k
+
+, 10 −12 )
+
+− 12
+
+> dr
+
+X
+
+> j=1
+
+(ϵ∗ 
+
+> ij
+
+− μ(t) 
+
+> kj
+
+)2
+
+v(t)
+
+> kj
+
+− 12
+
+> dr
+
+X
+
+> j=1
+
+h
+
+log v(t) 
+
+> kj
+
++ log(2 π)
+
+i
+
+, (21) 
+
+γ(t) 
+
+> ik
+
+= exp 
+
+h
+
+ℓ(t) 
+
+> ik
+
+− LSE Km=1 ℓ(t)
+
+> im
+
+i
+
+, (22) where LSE denotes log-sum-exp. M step. Let N (t) 
+
+> k
+
+= max( P 
+
+> i
+
+γ(t) 
+
+> ik
+
+, 10 −8). The update is 
+
+π(t+1)  
+
+> k
+
+= N (t)
+
+> k
+
+N , (23) 
+
+μ(t+1)  
+
+> k
+
+= 1
+
+N (t)
+
+> k
+
+X
+
+> i
+
+γ(t) 
+
+> ik
+
+ϵ∗ 
+
+> i
+
+, (24) 
+
+σ2( t+1)  
+
+> kj
+
+= max 
+
+(
+
+1
+
+N (t)
+
+> k
+
+X
+
+> i
+
+γ(t)
+
+> ik
+
+
+
+ϵ∗ 
+
+> ij
+
+− μ(t+1) 
+
+> kj
+
+2
+
+, ϵ cov 
+
+)
+
+.
+
+(25) The variance floor is the covariance regularizer; no additional Wishart, entropy, or Dirichlet penalty is used in EM. 
+
+Iteration and convergence. The mean log-likelihood computed in the E step, 
+
+Q(t) = 1
+
+N
+
+X
+
+> i
+
+LSE Kk=1 ℓ(t) 
+
+> ik
+
+(26) is monitored once per EM iteration. EM stops when |Q (t) −Q(t−1) | < 10 −4 or after the dataset-specific maximum num-ber of iterations in Table 7, whichever occurs first. 
+
+Empty and near-empty components. Responsibilities are soft, and the effective count is lower-bounded by 10 −8.Therefore, a near-empty component remains finite and is not deleted, merged, or randomly reinitialized. If fewer than K
+
+residual samples are available, the refresh routine leaves the previous mixture parameters unchanged rather than silently reducing K.
+
+Refresh schedule and numerical stability. The Gaussian mixture model is initialized once at epoch 0 and refreshed after every dataset-specific number of training epochs using newly recomputed residuals. The refresh seed is the run seed at epoch 0 and run_seed+epoch thereafter. EM is per-formed in float32 on CPU and the resulting weights, means, and variances replace non-trainable model buffers. Besides the variance and effective-count floors, all mixture normal-ization uses log-sum-exp, Gaussian log-probabilities use a minimum variance of 10 −6 at training/inference, and sam-pling applies the same 10 −6 floor before the square root. Conditional mixture weights are produced with softmax; fixed global weights are clamped to 10 −8 before taking log-arithms. 
+
+Baseline References and Code 
+
+Table 6 lists the paper and official code repository for each comparison method used in the main paper. We omit repository-specific implementation details here and refer readers to the corresponding public releases. 
+
+Dataset-Specific Hyperparameters 
+
+This section reports the dataset-specific training, validation, and Gaussian-prototype refresh settings used in the experi-ments. Method Paper Official code           
+
+> GEARS https://www.nature.com/articles/s41587-023-01905-6 https://github.com/snap-stanford/GEARS scGPT https://www.nature.com/articles/s41592-024-02201-0 https://github.com/bowang-lab/scGPT GenePert https://www.biorxiv.org/content/10.1101/2024.10.27.620513v1 https://github.com/zou-group/GenePert scDFM https://openreview.net/forum?id=QSGanMEcUV https://github.com/AI4Science-WestlakeU/scDFM STATE https://www.biorxiv.org/content/10.1101/2025.06.26.661135v1 https://github.com/ArcInstitute/state
+
+Table 6: Paper and official code links for the five comparison methods used in the main experiments. 
+
+## Dataset LR Cell batch Max epochs Eval int. EM int. EM samples EM iter. K
+
+## Adamson 5×10 −5 1024 5000 1000 1000 5000 15 8Papalexi 5×10 −5 4096 5000 100 100 50,000 50 8Norman 5×10 −5 16,384 5000 200 200 20,000 20 8Replogle 5×10 −5 1024 5000 200 100 30,000 50 8
+
+Table 7: Dataset-specific optimization and Gaussian-mixture refresh configuration. “Cell batch” is the number of non-control cells in one optimizer update; gradient accumulation is not used. “Int.” is measured in training epochs. For every dataset, λalign = λrec = λdist = 1 and 
+
+λgm = 0 .01 . The Gaussian mixture model is also refreshed at epoch 0, so an EM interval of 100 denotes updates at epochs 0, 100 , 200 , . . . .
+
+Additional Experimental Results 
+
+This section reports the sensitivity analysis of DeMixPert. The complete ablation results are already reported in the main paper; the module-level definitions and forward-path changes are provided in Supplementary Appendix J and are not duplicated as a second figure here. 
+
+Ablation Details and Evaluation Metrics 
+
+Ablation Implementation Details 
+
+The main paper defines four ablated variants: 
+
+• w/o Decomp replaces the explicit three-part decomposi-tion ˆri = g(si)+ a(epi )+ ϵi with a unified response map-ping. The response is no longer represented by separately parameterized systematic, target-specific, and population components. 
+
+• w/o Gene removes the embedding-derived target-specific response by setting a(epi ) = 0. Hence ¯ri = g(si);the pretrained embedding-derived deterministic response branch is absent. 
+
+• w/o Sys removes the basal-state-dependent systematic re-sponse by setting g(si) = 0, yielding ¯ri = a(epi ). The state encoder remains active because si is still used by the condition network and expression decoder. 
+
+• w/o GM removes the entire Gaussian-Prototype Invert-ible Network, including both the Gaussian mixture and the invertible network. No GMM is fitted, no EM re-fresh is performed, no coupling transform is applied, and 
+
+ϵi = 0. The prediction therefore reduces to the determin-istic response center, ˆri = g(si) + a(epi ). The inapplica-ble likelihood term λgm Lgm is disabled. The ablation comparison is conducted on Adamson and Replogle. Each variant is independently initialized and re-trained rather than produced by post-hoc masking of a trained complete model. Architecture-specific operations and their associated losses are disabled only when inapplicable to the corresponding variant. 
+
+Evaluation Protocol and Metric Definitions 
+
+We evaluate each test perturbation condition independently and then macro-average the resulting scores across test con-ditions. Let Xp ∈ RNp×G and bXp ∈ R bNp×G denote the observed and predicted expression matrices under perturba-tion condition p, respectively. Their population-level mean expression vectors are 
+
+μp = 1
+
+NpNp
+
+X
+
+> i=1
+
+xpi , bμp = 1
+
+bNp
+
+> bNp
+
+X
+
+> i=1
+
+bxpi . (27) We denote the mean expression vector of the observed control population by μ0.
+
+Top-100 DEG Metrics Top-100 DEG selection. For each perturbation condition 
+
+p, genes are ranked by comparing the observed perturbed cells with the observed control cells using the Wilcoxon rank-sum test. Let Strue  
+
+> p
+
+denote the 100 highest-ranked genes. The same procedure is applied to the predicted perturbed cells and the observed control cells to obtain Spred  
+
+> p
+
+. The observed set 
+
+Strue  
+
+> p
+
+is used as the evaluation gene space for MSE, E-Dist, and W-Dist at the top-100 DEG level. Common differentially expressed genes (C-DEGs). C-DEGs measures the number of overlapping genes between the top-100 DEG sets obtained from the observed and predicted populations: 
+
+C-DEGs p = Strue  
+
+> p
+
+∩ S pred  
+
+> p
+
+. (28) The score ranges from 0 to 100 , with a higher value indi-cating better recovery of the perturbation-responsive genes. The values reported in the main table may be non-integers because the condition-level counts are macro-averaged. 
+
+Mean squared error (MSE). For a gene set S, the population-level MSE is defined as 
+
+MSE p(S) = 1
+
+|S| 
+
+X
+
+> g∈S
+
+ bμpg − μpg
+
+2 . (29) At the top-100 DEG level, we use S = Strue  
+
+> p
+
+. A lower value indicates more accurate recovery of the mean perturbation response. 
+
+Energy distance (E-Dist). Energy distance evaluates the discrepancy between the complete predicted and observed cell populations. Let bx, bx′ be independent samples from the predicted distribution and x, x′ be independent samples from the observed distribution. Energy distance is defined as 
+
+E-Dist p = 2 E [∥bx − x∥2] − E [∥bx − bx′∥2]
+
+− E [∥x − x′∥2] . (30) For the top-100 DEG result, all expression vectors are re-stricted to Strue  
+
+> p
+
+. Lower E-Dist indicates better agreement between the predicted and observed distributions. The code uses the empirical V-statistic 
+
+2d( bXp, X p) − d( bXp, bXp) − d(Xp, X p), (31) where each bar is the mean of the complete pairwise Euclidean-distance matrix, including its zero diagonal for within-population terms. The result is clamped below at zero. Each population is subsampled without replacement to at most 2,000 cells with a fixed condition-index seed. 
+
+Wasserstein distance (W-Dist). W-Dist measures the optimal-transport cost between the empirical predicted and observed cell distributions. Using the squared Euclidean ground cost, it is calculated as 
+
+W-Dist p =
+
+X
+
+> i,j
+
+γ⋆ij bxpi − xpj
+
+> 22
+
+
+
+> 1/2
+
+, (32) where γ⋆ denotes the transport coupling returned by the shared optimal-transport implementation. W-Dist is eval-uated on Strue  
+
+> p
+
+, and a lower value indicates greater dis-tributional similarity. The primary backend is Pertpy Distance with the Wasserstein metric; no additional cell subsampling is applied. If Pertpy is unavailable, the released fallback computes an entropically regularized Sinkhorn cost with ε = 0 .08 and 35 iterations and reports the square root of the non-negative cost. 
+
+All-Gene Metrics Differential Expression Score (DES). For each perturba-tion p, significant DEGs are identified separately from the observed and predicted populations relative to the same ob-served control population. We use the Wilcoxon rank-sum test with Benjamini–Hochberg correction and an adjusted 
+
+p-value threshold of 0.05 . Let Dtrue  
+
+> p
+
+and Dpred  
+
+> p
+
+denote the resulting significant gene sets. When the predicted set contains more genes than the ob-served set, it is truncated to the |D true  
+
+> p
+
+| genes with the largest absolute log-fold changes. Denoting the resulting predicted set by eDpred  
+
+> p
+
+, DES is 
+
+DES p =
+
+Dtrue  
+
+> p
+
+∩ eDpred 
+
+> p
+
+Dtrue 
+
+> p
+
+. (33) Conditions with no significant observed DEGs are excluded from the DES average. A higher DES indicates more accurate recovery of statistically significant perturbation-responsive genes. 
+
+All-gene MSE. All-gene MSE uses the same definition as above, but is calculated over the complete frozen gene space rather than Strue  
+
+> p
+
+.
+
+Centroid accuracy. For every test perturbation, we com-pare its predicted population centroid with the observed cen-troids of all test perturbations: 
+
+CA p = 1
+
+
+
+arg min 
+
+> q∈T
+
+∥bμp − μq ∥2 = p
+
+
+
+, (34) where T is the set of test perturbation conditions. The final centroid accuracy is the mean of CA p across conditions. A higher value means that predicted populations preserve condition-specific identities more accurately. 
+
+Perturbation Discrimination Score (PDS). The main comparison table denotes this metric as PDS. The L1-based implementation below evaluates whether the predicted re-sponse of condition p is most similar to the corresponding observed response rather than to another test perturbation. We first define the predicted and observed perturbation-effect vectors as 
+
+bδp
+
+= bμp − μ0, δq = μq − μ0. (35) For every pair (p, q ), the directly perturbed target genes of both conditions are excluded, producing the comparison gene set Gp,q . The L1 distance is 
+
+dp,q = X
+
+> g∈G p,q
+
+bδpg − δqg . (36) Let rp be the rank of dp,p among {dp,q : q ∈ T } in ascending order. The condition-level score is 
+
+PDS p = 1 − rp − 1
+
+|T | . (37) The final score is averaged across all test perturbations. A higher PDS indicates better discrimination between different perturbation responses. Ties are resolved deterministically by the lexicographic condition name. If target-gene removal would eliminate the entire feature space, the implementation falls back to all genes. This L1-based quantity may be named 
+
+PDS-L1 in evaluator artifacts, but it is reported as PDS in the main paper. 
+
+Aggregation protocol. Across the five seeds defined in Supplementary Appendix E, the main table reports the arith-metic mean and sample standard deviation ( ddof = 1 ) across these five trials. DES conditions with no significant observed genes are represented by NaN and omitted from the DES macro-average. The per-condition evaluation caps are 64, 512, 256, and 256 cells for Adamson, Papalexi, Norman, and Replogle, respectively. All methods are evaluated using the same frozen evaluation implementation. 
+
+Reproducibility Details 
+
+Software environment. DeMixPert is implemented in Python and PyTorch. Data processing and evaluation use AnnData, Scanpy, NumPy, pandas, and SciPy. 
+
+Random seeds. The five split seeds defined in Supplemen-tary Appendix E are also used for model initialization. For every run, the Python, NumPy, PyTorch, and CUDA random-number generators are initialized using the corresponding seed. 
+
+Model selection. Model selection is performed exclusively on the validation set. Specifically, the checkpoint with the lowest macro-averaged top-100 DEG MSE on the validation perturbation conditions is selected. The test set is evaluated only after checkpoint selection and is never used for model selection or hyperparameter tuning. The same checkpoint-selection rule is applied to every random seed. 
+
+Details of the Interpretability Experiments 
+
+Separability of the Decomposed Response Representation 
+
+We first examined whether the response decomposition iso-lates perturbation-specific information from variation driven by the basal cell state. For a perturbed cell i, the response representation was obtained from the expression difference between the perturbed cell xi and its paired control cell ci:
+
+r∗ 
+
+> i
+
+= Enc response (xi − ci). (38) The model decomposes this representation as 
+
+r∗ 
+
+> i
+
+≈ gi + ap + ϵi, (39) where gi denotes the systematic response associated with the basal cell state, ap is the perturbation-specific anchor for perturbation p, and ϵi captures cell-level residual variation. The systematic component is predicted from the latent state of the paired control cell: 
+
+si = Enc state (ci), gi = fsys (si). (40) To assess the effect of removing state-driven variation, we compared the following two response representations: 
+
+rraw  
+
+> i
+
+= r∗ 
+
+> i
+
+, (41) 
+
+rspecific  
+
+> i
+
+= r∗ 
+
+> i
+
+− gi. (42) The second representation removes the systematic com-ponent predicted from the basal cell state while retaining the perturbation-specific anchor and cell-level residual variation. 
+
+Experimental protocol. All analyses used the most recent baseline checkpoint selected according to validation perfor-mance ( best.pt ). Checkpoints selected using test perfor-mance ( best_test.pt ), as well as checkpoints from sen-sitivity or ablation experiments, were not used. We evaluated the Adamson and Replogle datasets using five random seeds: 
+
+S = {17 , 23 , 29 , 31 , 37 } . (43) For each dataset–seed combination, the analysis was re-stricted to perturbations in the test split. To prevent pertur-bations with larger cell populations from disproportionately influencing the clustering results, we randomly sampled an equal number of cells from every test perturbation. For every sampled cell, we computed the raw response la-tent r∗ 
+
+> i
+
+, the control-state latent si, and the corresponding sys-tematic response gi. The specific response was subsequently obtained as r∗ 
+
+> i
+
+− gi.Within each dataset–seed combination, the raw and spe-cific response representations were concatenated when fit-ting a StandardScaler . The resulting common scaling transformation was then applied to both representations. This ensured that the raw and specific responses were evaluated using the same feature scaling. K-means clustering was performed separately on the stan-dardized raw and specific representations. The number of clusters was set equal to the number of held-out perturba-tions: 
+
+K = # {test perturbations }. (44) The resulting cluster assignments were evaluated against the ground-truth perturbation labels using the following met-rics: 
+
+• Adjusted Rand Index (ARI): agreement between the inferred clustering and the true perturbation partition, ad-justed for chance. 
+
+• Normalized Mutual Information (NMI): normalized information shared by the inferred cluster assignments and the ground-truth perturbation labels. 
+
+• Purity: the proportion of correctly assigned cells when each cluster is labeled according to its most frequent ground-truth perturbation. 
+
+• Silhouette score: the compactness and separation of the inferred clusters in the response latent space. All quantitative metrics were computed directly in the stan-dardized, high-dimensional response latent space. UMAP projections were used only for visualization and were not used for clustering or metric calculation. Higher ARI, NMI, purity, and silhouette scores for rspecific 
+
+> i
+
+than for rraw  
+
+> i
+
+indicate that subtracting gi removes basal-state-driven variation and makes the perturbation-specific response structure more separable. 
+
+Association Between Prototype Weights and Residual Population Differences 
+
+We next investigated whether the Gaussian prototype weights learned by the model reflect genuine differences between perturbation-specific residual cell populations. Specifically, we tested whether perturbation pairs with more dissimi-lar prototype-weight profiles also exhibit more dissimilar residual-response distributions. For perturbation p under control-cell state si, the mixture weights over the eight Gaussian prototypes are given by 
+
+αi,p = softmax ( hmix ([ si, a p])) , (45) where ap is the perturbation embedding and αi,p ∈ R8
+
+contains the corresponding prototype weights. For each perturbation, we computed its average prototype-weight profile: 
+
+¯αp = 1
+
+M
+
+> M
+
+X
+
+> i=1
+
+αi,p = 1
+
+M
+
+> M
+
+X
+
+> i=1
+
+softmax ( hmix ([ si, a p])) ,
+
+(46) where M is the number of control cells used to calculate the profile. Importantly, the same set of M control cells was used for every perturbation within a dataset–seed combination. This control ensures that differences between the profiles ¯αp are attributable to the perturbations rather than to differences in basal cell-state composition. 
+
+Experimental protocol. We used the validation-selected baseline checkpoint ( best.pt ). The main visualization was generated using the training split for Adamson seed 23 and Replogle seed 29. For each pair of perturbations (p, q ), prototype-weight dis-similarity was quantified using Jensen–Shannon divergence: 
+
+Dα(p, q ) = JS (¯ αp, ¯αq ) . (47) We then derived the observed residual response for every perturbed cell. The encoded response was 
+
+r∗ 
+
+> i
+
+= Enc response (xi − ci), (48) and the residual response was calculated by subtracting the systematic response and perturbation anchor: 
+
+ϵ∗ 
+
+> i
+
+= r∗ 
+
+> i
+
+− (gi + ap) . (49) Let Ep denote the collection of residual-response vectors associated with perturbation p. To prevent differences in cell counts from biasing the population-distance estimates, we sampled the same number of residual cells for every per-turbation. Specifically, we used 30 cells per perturbation for Adamson seed 23 and 51 cells per perturbation for Replogle seed 29. The balanced sampling procedure was independently re-peated 20 times. For each repetition t, the distance between the residual populations of perturbations p and q was quan-tified using Energy Distance: 
+
+ED 
+
+
+
+E(t) 
+
+> p
+
+, E (t)
+
+> q
+
+
+
+. (50) The final residual-population distance was calculated by averaging over the 20 sampling repetitions: 
+
+Dϵ(p, q ) = 120 
+
+> 20
+
+X
+
+> t=1
+
+ED 
+
+
+
+E(t) 
+
+> p
+
+, E (t)
+
+> q
+
+
+
+. (51) The Adamson training split contained 53 perturbations and therefore yielded 
+
+53 2
+
+
+
+= 53 × 52 2 = 1 ,378 (52) unique perturbation pairs. The Replogle training split con-tained 51 perturbations and yielded 
+
+51 2
+
+
+
+= 51 × 50 2 = 1 ,275 (53) unique pairs. Each perturbation pair contributed one ob-servation of the form 
+
+(Dα(p, q ), D ϵ(p, q )) . (54) We quantified the association between the two distance matrices by computing Spearman’s rank correlation over their upper-triangular elements: 
+
+ρ = Spearman (upper( Dα), upper( Dϵ)) . (55) Because pairwise distances are not statistically indepen-dent, significance was assessed using a Mantel-style permu-tation test rather than the conventional p-value returned by a standard Spearman correlation test. In each permutation, the perturbation labels of Dα were randomly reordered by jointly permuting its rows and columns, while Dϵ was kept fixed. Spearman’s ρ was then recomputed. This procedure was repeated 5,000 times, and the resulting permutation dis-tribution was used to calculate the empirical p-value. The resulting associations were Adamson, seed 23: ρ = 0 .462 , pMantel < 0.001 ,
+
+(56) Replogle, seed 29: ρ = 0 .512 , pMantel < 0.001 .
+
+(57) 
+
+Visualization. For each dataset, the prototype-weight heatmap displays perturbations as rows and the eight Gaus-sian prototypes as columns. Each heatmap entry represents 
+
+¯αp,k , (58) namely the average weight assigned by perturbation p
+
+to Gaussian prototype k. Perturbations were ordered by hierarchical clustering according to the similarity of their prototype-weight profiles. The distance-association panel displays Dα(p, q ) against 
+
+Dϵ(p, q ) for all perturbation pairs. Because of the large num-ber of overlapping observations, the pairs were visualized using a hexagonal-binning density plot. A LOWESS curve was added to show the overall trend. This curve was used only as a visual guide and did not contribute to the statistical significance test. The figure reports only Spearman’s ρ and the Mantel permutation p-value. The significant positive associations demonstrate that per-turbations with more dissimilar prototype-weight profiles also tend to have more dissimilar residual cell populations. Thus, the learned Gaussian mixture weights are not arbitrary internal coefficients but encode interpretable, perturbation-specific population structure. 
+
+Construction of Sensitivity Scores 
+
+To summarize metrics with different scales and optimization directions in the sensitivity analysis presented in the main pa-per, we convert each metric into a direction-aligned percent-age change relative to the selected configuration, K = 8 and 
+
+λgm = 0 .01 . Let xm(p) denote the five-seed mean of metric 
+
+m under parameter setting p, and let xref  
+
+> m
+
+denote its value under the selected configuration. The transformed score is computed as 
+
+∆m(p) = 
+
+
+
+100 
+
+ xm(p)
+
+xref 
+
+> m
+
+− 1
+
+
+
+, if metric m is higher-is-better ,
+
+100 
+
+
+
+1 − xm(p)
+
+xref 
+
+> m
+
+
+
+, if metric m is lower-is-better .
+
+(59) The higher-is-better metrics are C-DEGs, DES, Centroid Ac-curacy, and PDS-L1, whereas E-Dist, W-Dist, and MSE are lower-is-better. We then obtain each curve by taking the unweighted arithmetic mean of its constituent transformed metrics. Specifically, DEG recovery averages C-DEGs and DES; Distribution averages top-100 E-Dist, top-100 W-Dist, and all-gene E-Dist; Expression error averages top-100 MSE and all-gene MSE; and Perturbation ID averages Centroid Accuracy and PDS-L1. All-gene E-Dist is used only as an auxiliary distributional measure in the sensitivity analysis and is not included in the primary benchmark table. It is computed using the same energy-distance definition over the complete input gene space. Consequently, positive values in-dicate improvement over the selected configuration, negative values indicate degradation, and the selected configuration corresponds to 0% . During each sensitivity analysis, one hy-perparameter is varied while all remaining settings are held fixed.

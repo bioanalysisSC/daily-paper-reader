@@ -1,0 +1,904 @@
+Title: HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer's disease loci
+
+URL Source: https://arxiv.org/pdf/2608.05002v1
+
+Published Time: Thu, 06 Aug 2026 01:12:31 GMT
+
+Number of Pages: 40
+
+Markdown Content:
+# HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer’s disease loci 
+
+## Jichun Xie 
+
+Department of Biostatistics and Bioinformatics, Duke University Department of Mathematics, Duke University 
+
+jichun.xie@duke.edu 
+
+Abstract 
+
+Sequence-to-function models predict molecular phenotypes from complete sequence windows. At genome-wide association study loci, however, the prevailing design per-turbs only the lead variant on the reference genome, even though the lead is often correlated with nearby variants through linkage disequilibrium. This single-variant perturbation implicitly fixes all linked alleles at their reference-genome states and may therefore create an uncommon or unobserved population haplotype. We study this input-construction problem at 38 Alzheimer’s disease loci. We introduce HaploPerturb, which uses phased ROS/MAP genotypes or the European 1000 Genomes panel to fit a fixed-margin latent Gaussian factor model and rank partner configurations conditional on each lead allele. The leading public-panel construction agrees with the donor-panel construction at all loci under a strict linkage-disequilibrium threshold and 36 of 37 loci under a broader threshold after restricting to shared partners. Known-truth sim-ulations show exact recovery of the dominant configuration under strong linkage dis-equilibrium and expose persistent residual correlation under a misspecified one-factor model. In an AlphaGenome benchmark against cell-type-specific ROS/MAP eQTLs, broader-set public-panel haplotypes yield microglial enrichment of 2.07 (95% whole-locus bootstrap percentile interval 1.48–3.60), compared with 1.43 (0.69–2.29) for a lead-only edit. Empirical-mode and LD-sign backgrounds yield 2.20 (1.60–3.64), with no detectable advantage or loss relative to the HaploPerturb top configuration. Thus population-informed sequence construction matters in this application, while the choice among reasonable leading haplotype rules is less consequential than the choice between a haplotype and a lead-only reference background. 
+
+1arXiv:2608.05002v1 [stat.AP] 5 Aug 2026 Keywords: linkage disequilibrium; Gaussian copula; factor model; sequence-to-function model; expression quantitative trait locus. 
+
+# 1 Introduction 
+
+Sequence-to-function models predict molecular phenotypes from a complete DNA sequence. At a genome-wide association study (GWAS) locus, however, the usual input changes only the lead variant on the reference genome. Every linked allele is silently left at its reference state. The resulting sequence is easy to generate, but it need not represent a haplotype carried by the population being studied. This is not a detail internal to the prediction model: Enformer, Borzoi and AlphaGenome read long genomic windows, so changing the surrounding allelic background can change the predicted effect even when the model, output track and lead allele are held fixed [Avsec et al., 2021, Linder et al., 2025, Avsec et al., 2026]. The problem is concrete in Alzheimer’s disease. Its GWAS loci contain long and some-times dense linkage-disequilibrium (LD) blocks, and functional interpretation increasingly uses cell-type specific sequence predictions. Existing benchmarks compare models, tasks and evaluation sets [Huang et al., 2023, Sasse et al., 2023, Feng et al., 2025, De Almeida et al., 2025], but usually take the supplied perturbation as given. We ask a prior question: after fixing either allele of an Alzheimer’s disease lead variant, which partner-allele configuration should be written into the prediction window? A useful answer must be population-informed, computationally feasible at loci with thousands of partners, and explicit about uncertainty when a finite panel cannot resolve exact high-dimensional haplotypes. We analyze 38 lead variants from the Wightman et al. GWAS [Wightman et al., 2021], using phased genotypes from ROS/MAP and the European 1000 Genomes panel. Our frame-work, HaploPerturb, models high-LD partners with a fixed-margin latent Gaussian factor model. Conditioning on either lead allele yields a distribution over partner configurations; an exact factor-space sampler discovers candidates, which are then ranked by HaploPerturb probability. We compare the HaploPerturb construction with three prespecified inputs: the observed conditional mode, a background based only on the sign of lead–partner LD, and the usual single-lead edit on GRCh38. AlphaGenome RNA predictions are benchmarked against cell-type specific ROS/MAP cis -eQTLs from paired whole-genome and single-nucleus RNA sequencing [Fujita et al., 2024]. Three applied findings organize the paper. First, after high-LD selection, one factor cap-tures most latent variance, and leading HaploPerturb configurations are observed frequently even though lower-ranked exact haplotypes are sparsely repeated in the finite panels. Con-trolled simulations confirm that finite panel size, rather than evidence of zero population 2probability, explains many absent lower configurations. Second, the leading public- and donor-panel constructions agree at all loci under the strict partner threshold and at 36 of 37 loci under the broader threshold after comparison on shared partners. Third, in the broader arm, population-informed public-panel backgrounds improve microglial eQTL rank-ing relative to a lead-only edit. The HaploPerturb, empirical-mode and LD-sign backgrounds perform similarly; the evidence supports haplotype-aware input construction, not superiority of the factor model over every simple top-one rule. Astrocyte and excitatory-neuron analyses show no corresponding enrichment, a result that may reflect prediction accuracy, biosam-ple correspondence, eQTL power or the RNA summary rather than any single limitation of AlphaGenome. Statistically, HaploPerturb supplies more than a single heuristic background: it defines the conditional estimand, supports several ranked or averaged inputs, and provides diag-nostics and candidate-coverage checks for difficult loci. Scientifically, holding AlphaGenome fixed isolates a previously hidden analysis choice and shows that it changes prioritization across established Alzheimer’s disease loci. Section 2 introduces the data and partner arms; Sections 3–4 define and estimate the conditional model; Section 5 validates the construction empirically and by simulation; Section 6 reports the Alzheimer’s disease eQTL application; and Section 7 gives implementation guidance, limitations and extensions. 
+
+# 2 Data overview 
+
+Our pipeline starts from the 38 Alzheimer’s disease GWAS lead variants reported by Wight-man et al. [2021]. For each lead, the 1000 Genomes European panel defines its phased LD partners; ROS/MAP supplies cohort genotypes and the eQTL benchmark; and Al-phaGenome predicts the regulatory effects of the resulting sequence contrasts. Throughout, each locus identifier contains four colon-separated fields: chromosome, 1-based GRCh38 po-sition, GRCh38 reference allele and alternate allele. For example, 17:46062125:A:C denotes an A-to-C variant at position 46,062,125 on chromosome 17. 
+
+Reference haplotype panel The 1000 Genomes Project 30 × high-coverage GRCh38 release contains 3 ,202 individuals: the 2 ,504 mutually unrelated individuals from Phase 3 and 698 additional relatives [Byrska-Bishop et al., 2022, Clarke et al., 2012]. Its European superpopulation contains 633 individuals from CEU, FIN, GBR, IBS and TSI. The nested unrelated European panel contains 503 individuals. The legacy lead–partner screen used all 633 individuals. For each GWAS lead, candidate variants were taken from an approximately ±524-kb window, after requiring the stored 1000 3Genomes annotations MAF EUR ,unrel ≥ 0.01 and HWE EUR ≥ 10 −6. PLINK 2 --r-phased 
+
+then used the two observed phased alleles from each individual, for 1 ,266 haplotypes in total. If Xhj ∈ { 0, 1} is PLINK’s allele indicator for variant j on haplotype h, the lead–candidate statistic was the squared sample Pearson correlation 
+
+br 20j =
+
+" P1266  
+
+> h=1
+
+(Xh0 − X0)( Xhj − Xj )
+
+{P1266  
+
+> h=1
+
+(Xh0 − X0)2 P1266  
+
+> h=1
+
+(Xhj − Xj )2}1/2
+
+#2
+
+.
+
+Reversing the allele coding at either variant changes the sign of br0j but not br 20j , so partner selection is intentionally sign-blind. The query stage stored pairs with br 20j ≥ 0.1. The resulting locus–partner manifests were kept fixed. All alternate-allele frequencies, signed phased correlations, haplotypes and factor-model fits reported downstream were recomputed on the nested 503 unrelated individuals, giving 1 ,006 phased haplotypes. 
+
+GWAS loci and partner arms The 38 GWAS leads define 38 sequence windows. All were observed and variable in the 503-person 1000 Genomes European panel. We compare two partner thresholds to assess how the size of the retained LD structure affects haplotype construction; signed br0j determines allelic alignment after the partner set is selected by br 20j .
+
+• Arm A , r2 ≥ 0.8: 27 windows carry at least one partner, 1 ,918 partners in all, and 
+
+17:46062125:A:C is the lead variant with the largest partner set ( k = 1 ,285 partners). This window is the only one with p = k + 1 exceeding the n = 1 ,006 haplotypes it is estimated from. 
+
+• Arm B , r2 ≥ 0.5: 37 windows carry at least one partner, 4 ,350 partners in all, and 
+
+17:46062125:A:C is the lead variant with the largest partner set ( k = 2 ,693 partners). Figure 1 shows the largest partner set and the counts at the remaining loci. Loci without a partner at a given threshold reduce to a single-lead-variant flip and do not require the construction in Section 3. 
+
+ROS/MAP genotypes and benchmark eQTLs ROS/MAP serves two roles: donor genotypes provide the primary cohort-specific factor-model fit [Bennett et al., 2018], and cell-type cis -eQTLs provide the benchmark. After comparing the ROS/MAP manifest with 1000 Genomes, we found that not every selected partner was available in ROS/MAP. Arm A misses 45 partners across 5 /27 loci; Arm B misses 152 partners across 12 /37 loci. The ROS/MAP fits omitted unavailable partners; none was imputed or replaced using a 1000 Genomes haplotype. 4For eQTL mapping, Fujita et al. [2024] paired whole-genome-sequencing genotypes with dorsolateral-prefrontal-cortex single-nucleus RNA-seq profiles from the same 424 ROS/MAP participants, totaling approximately 1.5 million nuclei. We obtained the full summary statistics through AD Knowledge Portal/Synapse record syn52335732 and use the astro-cyte, excitatory-neuron and microglial files. We focus on these three cell types because the predefined panel of 40 AlphaGenome biosamples contains corresponding tracks or usable surrogates for them; the other Fujita cell types have no appropriate proxy in that panel. Within each cell type, Fujita et al. tested common variants within 1 Mb of a gene’s tran-scription start site. Their two-step correction first Bonferroni-adjusted each gene’s small-est nominal SNP P value for the number of cis-SNPs tested for that gene, then applied the Benjamini–Hochberg procedure to those gene-wise values at a 5% FDR. They set the eSNP nominal-P threshold to the largest nominal P value among the resulting significant gene–SNP pairs; the released significant by 2step FDR column records this call. This is a useful benchmark because it supplies published, multiplicity-controlled cell-type-specific associations based on paired genotypes and measured expression, defined independently of AlphaGenome and our ranking scores. A locus–gene pair is benchmark-positive only if a variant–gene pair within the same AlphaGenome input window carries this indicator. Be-cause the factor-model fit and benchmark both use ROS/MAP, the comparison is within cohort rather than an independent replication. 
+
+# 3 HaploPerturb construction by low-rank factorization 
+
+## 3.1 The perturbation problem 
+
+Let X = ( X0, . . . , X k) ∈ { 0, 1}k+1 denote the perturbed haplotype, where X0 is the lead variant, and Xj with j ∈ [k] are partner variants. For any j ∈ { 0} ∪ [k], let Xj = 1 code the alternate allele and Xj = 0 code the reference allele with respect to the GRCh38 primary assembly. Querying a sequence-to-function model requires three choices: which partners enter the perturbation, which allele each carries, and what background sequence surrounds them. Section 2 specifies the partner sets. We use the GRCh38 primary assembly as the surrounding background to facilitate practical use, with its implications and alternatives discussed in Section 7. Selecting the partner alleles is the statistical problem studied in this section. Define the conditional law Pr  X1 = x1, . . . , X k = xk X0 = s, s ∈ { 0, 1}. (1) 5Our goal is to find the haplotypes whose conditional probability ranks at the top of it. Both values of s are of interest because an analyst may wish to perturb the lead to either allele. Hereafter, HaploPerturb refers to the fitted conditional distribution together with the procedure used to discover candidates, evaluate their probabilities and report their ordering. A HaploPerturb rank is a configuration’s position in that ordering; HaploPerturb top one is the leading configuration, and HaploPerturb top L uses the first L configurations. 
+
+## 3.2 A latent Gaussian model with low-rank factors 
+
+We model X through a latent Gaussian vector, the standard Gaussian-copula device for correlated binary data [Nelsen, 2006, Xue-Kun Song, 2000, Inouye et al., 2017]. Let pj ∈ (0 , 1) be the alternate-allele frequency of variant j in the reference population represented by the panel and set 
+
+Z = ( Z0, . . . , Z k)⊤ ∼ N k+1 (0 , R), Xj = 1{Zj > τ j }, τj = Φ −1(1 − pj ), (2) where R is a correlation matrix, Φ and ϕ are the standard normal distribution and density functions, and 1{·} is the indicator. Collect the thresholds into τ = ( τ0, . . . , τ k)⊤, so that (2) reads X = 1{Z > τ } coordinatewise. Then Pr( Xj = 1) = pj exactly, so the model reproduces the reference-population allele frequencies without further calibration. Write 
+
+p = k+1 for the number of variants, and index the panel’s phased haplotypes by i = 1 , . . . , n ,so Xij is the allele of variant j on haplotype i; a panel of n/ 2 individuals contributes n
+
+haplotypes. Enumerating (1) directly is infeasible — the support has 2 k points and k could reach hundreds, thousands, or more here. Fortunately, our empirical analysis showed that R
+
+usually has a low-rank factor structure: 
+
+Zij = b⊤ 
+
+> j
+
+fi + εij , fi ∼ N q(0 , I q), εi ∼ N p(0 , D), D = diag( ψ0, . . . , ψ k), (3) with fi the common factor, bj ∈ Rq the jth row of a loading matrix B ∈ Rp×q, εi independent of fi, and ψ = ( ψ0, . . . , ψ k)⊤ the vector of residual variances, so D = diag( ψ). Requiring unit variance at every variant, 
+
+∥bj ∥2 + ψj = 1 for every j = 0 , 1, . . . , k, (4) which is p separate scalar constraints, keeps Z a correlation and gives 
+
+R = BB ⊤ + D. (5) 6Two properties matter later: 
+
+• BB ⊤ + D is positive semi-definite at every parameter value; and 
+
+• B is identified only up to an orthogonal transformation. Write O(q) = {Q ∈ Rq×q :
+
+Q⊤Q = Iq}. If f ∼ N q(0 , I q) then Qf ∼ N q(0 , QQ ⊤) = Nq(0 , I q), so replacing ( B, f )by ( BQ, Q ⊤f ) leaves Bf and hence the law of X unchanged. This costs nothing: every quantity we report — BB ⊤, ψ, the thresholds, haplotype probabilities and their ranking — is invariant under O(q). Note that O(q) includes reflections as well as proper rotations, and it is the reflections that matter below. We adopt (3) because, at any q, the variants are independent conditionally on the factor, 
+
+qj (f ) := Pr  Xij = 1 | fi = f  = Φ b⊤ 
+
+> j
+
+f − τj
+
+pψj
+
+!
+
+. (6) Equation (6) runs from the factor to the alleles; the construction needs it in both directions. Write the lead’s conditional likelihood at either allele as 
+
+ℓ0(f ; s) := Pr  Xi0 = s | fi = f  = q0(f )s1 − q0(f ) 1−s, s ∈ { 0, 1}.
+
+Combining this with the prior fi ∼ N q(0 , I q), conditioning on the lead reweights the factor by Bayes’ rule, 
+
+p f | Xi0 = s = ϕq(f ) ℓ0(f ; s)
+
+π0(s) , π0(s) = Pr( Xi0 = s) = p s 
+
+> 0
+
+(1 − p0)1−s, (7) Given the factor the partners are still independent, by (6), so for either allele of the lead Pr  X = x | X0 = s =
+
+Z
+
+> Rq
+
+p f | X0 = s kY
+
+> j=1
+
+qj (f )xj 1 − qj (f ) 1−xj df, s ∈ { 0, 1}. (8) The 2 k sum in (1) has become a q-dimensional integral, and Section 3.3 describes how we search its high-probability configurations. The lead enters (8) only through the weight 
+
+p(f | X0 = s): the partner factors are the same functions of f at both values of s. This is why the two conditionings give genuinely different laws over the partners rather than complements of one another, and why both must be constructed separately when both perturbations are of interest. At q = 1 each bj is a scalar, so its sign is meaningful — at q > 1 it is a vector and no sign exists. The following proposition says the loading vector is then determined up to that 7sign alone, fixes it by orienting the factor on the lead, and identifies what the sign means. 
+
+Proposition 1 (Identifiability at one factor) . Take q = 1 in (3) and let the admissible parameter space be 
+
+Θ = (b, τ ) ∈ Rp × Rp : ψj = 1 − b2 
+
+> j
+
+∈ (0 , 1] for every j ,
+
+so that all thresholds are finite and every marginal satisfies 0 < Pr( Xj = 1) < 1. Let L(b, τ )
+
+denote the induced law of X. For (b, τ ) and (b′, τ ′) both in Θ:(i) L(−b, τ ) = L(b, τ );(ii) if at least three coordinates of b are non-zero and L(b′, τ ′) = L(b, τ ), then τ ′ = τ and 
+
+b′ = ±b;(iii) if in addition b0̸ = 0 , the normalization b0 > 0 selects a unique representative, and for every partner j̸ = 0 with bj̸ = 0 , sign( bj ) = sign( R0j ).
+
+Part (i) says the choice of sign is free. Part (ii) says nothing further is left to choose. Part (iii) is why the normalization is worth stating: it makes the loading sign equal to sign( R0j ), the sign of the latent correlation between partner j and the lead. A positive value means variant j’s alternate allele travels with the lead’s alternate allele, a negative value that it travels with the lead’s reference allele. Supplementary Note 3 gives the proof, using the strict monotonicity of the bivariate-normal probability in its correlation parameter [Plackett, 1954]. 
+
+3.2.1 A working parameterization. 
+
+Constraint (4) makes ( B, τ ) awkward to optimize directly; dividing the probit argument by 
+
+pψj absorbs it exactly. Put 
+
+aj = bj
+
+pψj
+
+∈ Rq, βj = − τj
+
+pψj
+
+∈ R, so qj (f ) = Φ  a⊤ 
+
+> j
+
+f + βj
+
+. (9) The map back is closed form: ψj = (1 + ∥aj ∥2)−1, bj = aj
+
+pψj , τj = −βj
+
+pψj , and ∥bj ∥2 +
+
+ψj = 1 holds identically. The likelihood contributed by one observed haplotype xi ∈ { 0, 1}p
+
+is then 
+
+L xi; a, β  =
+
+Z
+
+> Rq
+
+ϕq(f )
+
+> k
+
+Y
+
+> j=0
+
+qj (f )xij 1 − qj (f ) 1−xij df, (10) with ϕq the Nq(0 , I q) density. The reparameterization is what makes (10) tractable to max-imize: (4) is absorbed rather than imposed, so no repair step is needed to keep the latent 8variances at one. The parameterization is not, however, unconstrained in practice. Nothing above prevents 
+
+∥aj ∥ → ∞ , which is ψj → 0: variant j becomes a deterministic function of the factor, and the likelihood can approach its supremum on that boundary. Fitting therefore imposes a floor ψj ≥ ψmin > 0, which by the map back is the norm-ball constraint ∥aj ∥2 ≤ ψ−1min − 1. 
+
+## 3.3 Finding high-probability haplotypes 
+
+Ranking (8) directly would require 2 k probability integrals. At k = 20, one list already re-quires more than a million evaluations, and our largest locus has thousands of partners. We therefore consider two strategies for constructing a smaller set of plausible high-probability haplotypes before evaluating their HaploPerturb probabilities: model-guided conditional sampling and deterministic enumeration of factor-space modes. The two strategies use the same HaploPerturb conditional law but make different compromises. Sampling searches broadly and scales to large loci and multiple factors, at the cost of random candidate dis-covery and probabilistic rather than deterministic coverage. Factor-space enumeration is reproducible and computationally efficient when the number of regions is small, but its candidate set is structurally restricted and becomes impractical as the factor dimension increases. Neither strategy by itself guarantees the global top-L haplotypes. 
+
+3.3.1 Model-guided conditional sampling 
+
+The sampling algorithm is easiest to see at q = 1. Unit latent variance gives Z0 ∼ N (0 , 1). To condition on a chosen lead state s, draw Z0 from this normal distribution truncated to (τ0, ∞) when s = 1 or to ( −∞ , τ 0] when s = 0. Given Z0 = z0, draw the scalar factor from 
+
+f | Z0 = z0 ∼ N (b0z0, ψ 0), then draw the partners independently as Xj ∼ Bernoulli {qj (f )}.This produces an independent draw from (8) in O(p) time. The same construction extends directly to any q. The factor update becomes 
+
+f | Z0 = z0 ∼ N q
+
+ b0z0, I q − b0b⊤
+
+> 0
+
+ ,
+
+after which the p − 1 partners remain conditionally independent. A Cholesky factor of the 
+
+q×q conditional covariance costs O(q3) once, and each draw then costs O(pq ). Supplementary Note 2, Section 2.1 gives the full algorithm and proof. The sequential construction above is an ancestral sampler. By drawing Z0, then f , and then the partner alleles, it samples from Pr( X = x | X0 = s) without enumerating the 2 k
+
+partner configurations or storing their probabilities. This gives sampling its principal advan-9tage: it can discover configurations differing at many partners, even when the factor-space partition is too large to enumerate. It also extends without a change in principle from one factor to several. Its advantage over uniform bit sampling is candidate-discovery efficiency, not a lower cost per draw. For a fixed configuration x with HaploPerturb probability π,the expected waiting time is 1 /π draws. Under uniform sampling over the partner alleles, the same configuration has probability 2 −k and expected waiting time 2 k. Configurations that are probable under the allele frequencies and LD represented by HaploPerturb therefore recur sooner and rise naturally to the top of the frequency table. The corresponding limitation is that candidate discovery is random. A finite run can miss a relevant configuration, especially when probability mass is spread across many nearly unique haplotypes, and repeated runs require a fixed seed and the same random-number-consumption order for exact reproducibility. Increasing the number of draws reduces but does not eliminate this risk. Sampling frequencies also contain Monte Carlo error, so they should not determine the final ordering when HaploPerturb probabilities can be evaluated directly. For each lead state, we retained the 50 configurations with the largest sample counts. We then evaluated each retained configuration’s HaploPerturb probability in (8) by Gauss– Legendre numerical integration: the latent-factor integral was approximated by a repro-ducible weighted sum at 1 ,024 fixed nodes, with 2 ,048 nodes used to refine the final ordering (Supplementary Note 2, Section 2.3). Thus sampling determines which candidates are con-sidered, whereas deterministic probability evaluation determines their reported order. We used this hybrid strategy for all reported lists, which are based on q = 1 fits. Candidate sam-pling extends directly to q > 1; deterministic rescoring is the limiting step because product Gauss–Legendre quadrature scales as O(pG q). 
+
+3.3.2 Deterministic factor-space enumeration 
+
+The alternative strategy exploits the geometry of the fitted HaploPerturb factor model. Its principal advantages are reproducibility and economy: it uses no random draws, and at q = 1 it reduces an exponential configuration space to a short, ordered path through the binary hypercube. Here each loading is a scalar bj , ψj = 1 − b2 
+
+> j
+
+, and the conditionally most probable allele at factor value f is 
+
+x∗ 
+
+> j
+
+(f ) = 1{bj f > τ j }, tj = τj /b j when bj̸ = 0 , (11) where tj is the partner’s breakpoint. A partner with bj̸ = 0 changes state exactly once as f
+
+crosses tj ; a partner with bj = 0 is constant. Sorting the breakpoints partitions the line into 10 at most k + 1 intervals, and one interior point per interval visits every conditional mode. Enumerating these modes costs O(p log p) rather than 2 k, before probability scoring. For general q, the same coordinate-wise maximization at a fixed factor value gives 
+
+x∗(f ) = argmax 
+
+> x∈{ 0,1}k
+> k
+
+Y
+
+> j=1
+
+qj (f )xj {1 − qj (f )}1−xj , x∗ 
+
+> j
+
+(f ) = 1{b⊤ 
+
+> j
+
+f > τ j }. (12) Sweeping the factor space therefore produces the finite candidate set 
+
+C = x∗(f ) : f ∈ Rq , (13) whose members are conditionally optimal somewhere in factor space. Conditional optimality at one f does not, however, guarantee a high integrated probability in (8). We therefore first score C, let ˆ x = argmax x∈C Pr( X = x | X0 = s), and expand the search to 
+
+C+ = C ∪ ˆx(j) : j = 1 , . . . , k , ˆx(j) = ˆ x with coordinate j flipped . (14) At q = 1, C traces a path through the binary hypercube and contains only two of the k one-variant neighbors of an interior mode; adjoining every one-variant flip repairs this immediate omission. This exposes the strategy’s central limitation: it searches configurations that are locally optimal somewhere in factor space, not all configurations having large integrated probability. A haplotype that is never a conditional mode may nevertheless accumulate substantial probability over a broad range of factor values. Supplementary Note 2, Section 2.2 gives the geometry and algorithms. For q > 1, the signs in (12) change across the k hyperplanes Hj = {f : b⊤ 
+
+> j
+
+f = τj }. Their regions enumerate C, with 
+
+|C| ≤ 
+
+> q
+
+X
+
+> i=0
+
+ki
+
+
+
+= O(kq) = O(pq) for fixed q. (15) Thus the q = 1 breakpoint sort generalizes to exact region enumeration whenever pq is small enough. Its favorable O(p log p) scaling at one factor does not persist with increasing q:the number of regions grows as O(pq), before their probabilities are scored. Moreover, the word “exact” applies only to enumerating the conditional modes. The expanded set C+ still excludes configurations that differ from ˆ x at two or more partners and therefore need not contain the global top L. Supplementary Note 2, Section 2.2 gives observed examples in which omitted configurations outrank members of C+.11 3.3.3 Choosing between the strategies 
+
+Deterministic enumeration is attractive at q = 1 and moderate p, where the breakpoint ordering is fast, transparent and exactly reproducible. It is useful for inspecting the fitted HaploPerturb model’s geometry and for generating a compact candidate set without tuning a simulation size. It is less attractive when q > 1 or p is large, because the region count grows as O(pq), and it can miss high-integrated-probability configurations that are not conditional modes or their one-partner neighbors. Model-guided sampling is preferable when the deterministic region count is large or when candidates separated by several partner flips must be discoverable. Its computational cost grows linearly in p per draw and only modestly with q, but the number of draws required depends on how concentrated the conditional distribution is. If a haplotype has HaploPerturb probability π, the probability that N independent draws miss it is (1 − π)N . The binomial union bound used in Section 5.2 converts this fact into a prespecified probabilistic coverage check for the reported top-ten lists; a list that fails the check is reported only as a high-probability candidate list. The two strategies are therefore complementary rather than interchangeable. Factor-space enumeration supplies a deterministic, interpretable search when its region count is manageable; conditional sampling supplies broader discovery when enumeration is restric-tive or computationally prohibitive. Both still require probability evaluation to compare candidates on the target scale in (8). Product quadrature with G nodes per factor di-mension costs O(pG q) for each retained candidate (Supplementary Note 2, Section 2.3), so rescoring ultimately limits both approaches at higher rank. Neither finite sampling nor the 
+
+C+ search supplies an unconditional global top-L guarantee. For the present analyses, we chose sampling for candidate discovery and fixed-node quadrature for final ranking because the same procedure applies across loci of widely varying size and admits an explicit coverage check. 
+
+# 4 Model parameter estimation 
+
+The object we want is the conditional law (1), whose top-ranked configurations are the haplotypes to be queried, and under the model of Section 3.2 that law is a function of the parameters alone: given ( B, τ ) the residual variances follow from (4) as ψj = 1 − ∥ bj ∥2,the latent vector is N  0, BB ⊤ + D, and thresholding at τ returns the law of X. Ranking haplotypes therefore requires nothing beyond ( B, τ ). Our primary estimator fixes the marginal thresholds before estimating dependence. Let 12 mj = Pni=1 Xij and use the Jeffreys-corrected frequency and corresponding threshold 
+
+epj = mj + 12
+
+n + 1 , eτj = Φ −1(1 − epj ). (16) The correction keeps the threshold finite at rare variants; when 0 < m j < n its difference from the empirical frequency is O(n−1). Under the working parameterization (9), fixing 
+
+τj = eτj makes the intercept a function of the loading, 
+
+βj (aj ) = −eτj
+
+q
+
+1 + ∥aj ∥2, ηj (f ; aj ) = a⊤ 
+
+> j
+
+f + βj (aj ) = a⊤ 
+
+> j
+
+f − eτj
+
+q
+
+1 + ∥aj ∥2.
+
+Let A = ( a0, . . . , a k)⊤ ∈ R(k+1) ×q denote the working-scale loading matrix for the q-factor model. For a prespecified uniqueness floor ψmin > 0, put Amin = pψ−1min − 1. The fixed-margin marginal maximum-likelihood estimator is 
+
+bAq = arg max  
+
+> ∥aj∥≤ Amin , j =0 ,...,k n
+
+X
+
+> i=1
+
+log 
+
+Z
+
+> Rq
+
+ϕq(f )
+
+> k
+
+Y
+
+> j=0
+
+Φ{(2 Xij − 1) ηj (f ; aj )} df. (17) Throughout, a tilde denotes a fixed plug-in quantity computed from the marginal allele counts, whereas a hat denotes a quantity obtained from the fitted HaploPerturb model or from a subsequent optimization. The thresholds are not re-estimated in (17); consequently, their values in the fitted HaploPerturb model satisfy bτj = eτj . The map following (9) gives 
+
+bψj = (1 + ∥baj ∥2)−1 and bbj = baj
+
+q bψj . Thus the HaploPerturb model has a valid correlation matrix and reproduces the estimated allele frequencies by construction, while estimating de-pendence under the Gaussian-threshold likelihood rather than by treating allelic correlations as latent correlations. The integral in (17) is concentrated differently for different observed haplotypes, espe-cially when a uniqueness is near its floor. We therefore integrate around each haplotype’s posterior factor mode. If 
+
+hi(f ) = −12 f⊤f +
+
+> k
+
+X
+
+> j=0
+
+log Φ {(2 Xij − 1) ηj (f ; aj )} ,
+
+write bfi(A) = arg max f hi(f ; A) and Hi(A) = −∇ 2hi{ bfi(A); A}. At each likelihood-and-score evaluation for the reported q = 1 fits, we collapsed identical observed haplotypes and retained their multiplicities. For each distinct pattern and the current loading parameters, we found the conditional factor mode bfi(A) by Newton iteration with backtracking and computed its positive curvature Hi(A). We then evaluated the pattern’s likelihood contribution by 13 one-dimensional posterior-adaptive Gauss–Hermite quadrature at nodes 
+
+fim = bfi(A) + um
+
+pHi(A),
+
+weighting that contribution by the pattern’s multiplicity. We maximized the resulting observed likelihood under the uniqueness constraint, using deterministic spectral starts and successively refined quadrature. The 1000 Genomes work-ing correlation supplied only the starting values for the ROS/MAP optimization; the fixed margins and likelihood were computed entirely from ROS/MAP. We retained the converged start with the largest refined observed likelihood. Supplementary Note 1, Sections 1.1–1.3 specify the optimizer, starting vectors, quadrature sequence, tolerances and reporting checks. 
+
+# 5 Constructing high-probability haplotypes for 1000 Genomes and ROS/MAP 
+
+## 5.1 Does one factor suffice? 
+
+We first ask whether the one-factor model used by the conditional sampler and probability scorer accounts for most of the latent allelic variance. For a q-factor HaploPerturb fit with correlation bRq = bBq bB⊤ 
+
+> q
+
++ bΨq, define 
+
+[PVA( q) = tr( bBq bB⊤ 
+
+> q
+
+)tr( bRq) = 1
+
+p
+
+> p
+
+X
+
+> j=1
+
+∥bbj,q ∥2 = 1 − 1
+
+p
+
+> p
+
+X
+
+> j=1
+
+bψj,q , (18) where the last two equalities use the unit diagonal of bRq, and hence tr( bRq) = p. This is the fraction of total latent variance assigned to the common factors. We estimated HaploPerturb at q = 1 separately from the 445 ROS/MAP donors (890 phased haplotypes) and the 503 unrelated 1000 Genomes EUR individuals (1 ,006 phased haplotypes), under both partner-selection rules. In Arm A ( r2 ≥ 0.8, 27 loci), [PVA(1) ranged from 97 .95% to 99 .00% in ROS/MAP (median 98 .73%) and from 92 .34% to 99 .00% in 1000 Genomes (median 98 .72%). In Arm B ( r2 ≥ 0.5, 37 loci), it ranged from 92 .60% to 99 .00% in ROS/MAP (median 97 .01%) and from 80 .50% to 98 .99% in 1000 Genomes (median 96 .74%); see Figure 2. Arm A has higher PVA because its stricter LD threshold retains partners whose alleles track the lead more uniformly, making their shared dependence closer to a one-factor structure. Using the 90% reference threshold shown in Figure 2, 127 of the 128 cohort-by-arm locus fits exceeded the threshold; all 128 exceeded 80%. The sole value 14 below 90% was the largest Arm B locus, 17:46062125:A:C , whose 2 ,693 partners produced 
+
+[PVA(1) = 80 .50% in 1000 Genomes. Because a high PVA does not by itself establish off-diagonal fit, we also check the fit on the scale the construction consumes: the correlation between the binary alternate-allele indicators. Two p × p correlation matrices are compared at each cohort–locus fit. The first, 
+
+bRX , is empirical — the Pearson correlation of the indicators Xj across that cohort’s own phased haplotypes, over the p variants included in the fit; Supplementary Note 1, Section 1.4 gives its full definition. The second, bRX, 1, is what the one-factor HaploPerturb model implies for those same indicators, computed from the HaploPerturb parameter estimates alone through the joint probability Pr  Xj = 1 , X ℓ = 1  = Φ 2
+
+ −eτj , −eτℓ; bb⊤ 
+
+> j
+
+bbℓ
+
+,
+
+with Φ 2(·, ·; ρ) the standard bivariate normal upper-orthant probability at latent correlation 
+
+ρ, converted to a correlation between the two Bernoulli indicators using the fixed margins Pr( Xj = 1) = Φ( −eτj ) = epj . The same supplementary section gives the quadrature calcula-tion and the limits on how the comparison may be read. Both are correlation matrices, so both have unit diagonal and the whole discrepancy is off-diagonal: 
+
+bEX = bRX − bRX, 1, diag  bEX
+
+ = 0.
+
+Nor can it be marginal misfit, since the margins are held fixed at the empirical frequencies; it is pairwise dependence alone. We report the root mean square of the p(p − 1) /2 distinct entries of bEX ,
+
+\RMSE X (1) = 
+
+(
+
+2
+
+p(p − 1) 
+
+X
+
+> j<ℓ
+
+bE 2
+
+> X,jℓ
+
+)1/2
+
+=
+
+bEX F
+
+pp(p − 1) , (19) The median of \RMSE X (1) was similar in all four analyses: 0.075 in ROS/MAP Arm A (range 0 .043–0 .129), 0 .071 in ROS/MAP Arm B ( < 0.001–0 .172), 0 .072 in 1000 Genomes Arm A (0 .044–0 .234), and 0 .072 in 1000 Genomes Arm B ( < 0.001–0 .341); see Figure 2B. For scale, the median fraction of squared off-diagonal correlation reproduced, 1 −
+
+P 
+
+> j<ℓ
+
+bE 2
+
+> X,jℓ
+
+P 
+
+> j<ℓ
+
+bR2
+
+> X,jℓ
+
+,
+
+was 99 .31%–99 .44% across the four cohort–arm groups. The group minima were 98 .33% and 95 .04% in ROS/MAP Arms A and B, and 94 .16% and 85 .72% in 1000 Genomes Arms A and B. The largest residual again occurred at 17:46062125:A:C in 1000 Genomes Arm B. 15 Supplementary Figure 1 shows its empirical, HaploPerturb-implied and residual correlation matrices: the positive residual blocks identify dependence that the one-factor approximation underestimates at this deliberately worst-fitting public-panel locus. Together, the PVA and residual checks support q = 1 as a fast working approximation for the present construction. Low rank should not be conflated with sparse loadings. We therefore examined the estimated HaploPerturb latent-scale magnitudes |bbj | in the public 1000 Genomes analysis (Supplementary Figure 2). Using seff = ( P 
+
+> j
+
+bb2 
+
+> j
+
+)2/ P 
+
+> j
+
+bb4 
+
+> j
+
+as the effective number of loading rows, seff /p had minimum/median 0 .994 /1.000 in Arm A and 0 .957 /0.999 in Arm B. Col-lecting 90% of P 
+
+> j
+
+bb2 
+
+> j
+
+required a median 91 .4% and 90 .0% of the variants, respectively, and the sorted magnitudes showed no separation into a near-zero group and an active group. Thus the one-factor HaploPerturb model is low rank but its factor is shared broadly across the selected variants; row sparsity is not supported by this diagnostic. This does not by itself prove that every sparse-PCA estimator will fit poorly, because that also depends on its target and tuning, but it removes empirical support for adopting sparse loadings as a modeling assumption here. 
+
+## 5.2 Empirical validation of HaploPerturb rankings 
+
+To evaluate whether the HaploPerturb rankings identify haplotypes that occur in phased data, we examined two reported lists for every cohort, arm and locus: one conditional on the lead variant carrying its reference allele, X0 = 0, and one conditional on its alternate allele, 
+
+X0 = 1. Each list contains up to ten configurations ordered by HaploPerturb probability; when fewer than ten configurations are possible after fixing the lead allele, the list is complete. Section 3.3 and Supplementary Note 2, Sections 2.1, 2.3 and 2.4 describe how the lists were constructed, ranked and checked. All lists passed the prespecified coverage check except the alternate-conditioned 1000 Genomes Arm B list at 17:46062125:A:C ; results for that list therefore describe high-probability candidates rather than a certified global top ten. We evaluated each generated haplotype against the phased data by its empirical condi-tional probability 
+
+bPemp (x | X0 = s) = 
+
+Pni=1 1{Xi = x, X i0 = s}
+
+Pni=1 1{Xi0 = s} , s ∈ { 0, 1}. (20) Here “empirical probability” means the observed frequency among the cohort’s phased hap-lotypes that carry the same lead state used to generate the list: 1 ,006 total phased haplotypes in 1000 Genomes and 890 in ROS/MAP before conditioning. In particular, a value of zero means that the exact generated haplotype was not observed in this finite panel; it does not 16 establish that the haplotype has zero population probability. This limitation becomes con-sequential as the number of variants grows, because exact high-dimensional haplotypes are sparsely repeated. The HaploPerturb rank-one haplotype was observed at every locus for both lead states. Under X0 = 0, its median empirical conditional probability was 0 .955 and 0 .802 in 1000 Genomes Arms A and B and 0 .967 and 0 .802 in ROS/MAP Arms A and B. Under X0 = 1, the corresponding medians were 0 .931, 0 .668, 0 .936, and 0 .656. Observation became less frequent down both HaploPerturb lists. At rank two, the reference-conditioned candidate was observed at 55 .6% and 67 .6% of 1000 Genomes Arm A and B loci and at 63 .0% and 64 .9% of ROS/MAP Arm A and B loci; the alternate-conditioned fractions were 70 .4%, 81 .1%, 70 .4%, and 83 .8%, respectively. By rank ten all eight fractions were between 4 .3% and 17 .4% (Figure 3C–D). Although the individual lower-ranked haplotypes were rarely observed, their cumulative empirical coverage increased monotonically. The top ten reference-conditioned haplotypes covered a median 0 .976 and 0 .928 of the empirical conditional mass in 1000 Genomes Arms A and B and 0 .979 and 0 .934 in ROS/MAP. Under X0 = 1, the corresponding median coverages were 0 .959, 0 .907, 0 .973, and 0 .918. The ordering nevertheless contains information. For X0 = 0, the median within-locus Spearman correlation between HaploPerturb probability and empirical frequency was 0 .580 and 0 .657 in 1000 Genomes Arms A and B and 0 .651 and 0 .636 in ROS/MAP. For X0 =1, the medians were 0 .705, 0 .679, 0 .777, and 0 .649. All 256 cohort-by-arm-by-lead-state locus correlations were positive. The candidate-level 1000 Genomes points and their binned trends show the same positive association directly (Figure 3E–F), while retaining the many exact zeros produced by finite-panel sampling. Results were consistent in both cohorts: haplotypes assigned higher HaploPerturb ranks were generally observed more often. Many exact haplotypes below rank two were not observed in either cohort, as expected when a limited number of chromosomes is sampled from a large set of possible haplotypes. The finite cohort data thus support the HaploPerturb ordering, but provide too little information to assess the accuracy of the HaploPerturb probabilities for lower-ranked haplotypes. 
+
+## 5.3 Cross-cohort portability of HaploPerturb constructions 
+
+To test whether a public reference panel could supply the sequence backgrounds without donor-specific genotypes, we compared the independently estimated 1000 Genomes and ROS/MAP HaploPerturb lists at every matched arm, locus, and lead state. No model was refitted for this comparison. Let P (c) 
+
+> ℓ
+
+denote the partner coordinates modeled at locus 
+
+ℓ in cohort c ∈ { 1KG , RM }. Because 1000 Genomes defined the requested partner set and 17 ROS/MAP omitted unavailable variants, P (RM)  
+
+> ℓ
+
+⊆ P (1KG)  
+
+> ℓ
+
+. We first separated loci with iden-tical partner sets from loci with fewer partners in ROS/MAP. At loci with identical sets, we compared haplotypes over all modeled partners. At loci with different sets, we projected both haplotypes onto the shared coordinates Cℓ = P (1KG)  
+
+> ℓ
+
+∩ P (RM)  
+
+> ℓ
+
+= P (RM)  
+
+> ℓ
+
+before comparing them. Thus missingness in ROS/MAP was not counted as allelic agreement or disagreement. Let x(c) 
+
+> ℓsrj
+
+be the allele assigned to partner j at HaploPerturb rank r, conditional on lead state s. For corresponding ranks, we computed the Hamming distance and its partner-normalized form 
+
+dℓsr = X
+
+> j∈Cℓ
+
+1
+
+n
+
+x(1KG) 
+
+> ℓsrj
+
+̸ = x(RM) 
+
+> ℓsrj
+
+o
+
+, δℓsr = dℓsr 
+
+|Cℓ|. (21) Rank one was the primary comparison. For the top-five and top-ten lists, we also computed the exact intersection divided by the size of the smaller list after projection. To describe near matches without penalizing a change in rank, each configuration was matched to its nearest configuration in the other cohort by Hamming distance, in both directions. These comparisons use only HaploPerturb sequence configurations and do not use the Fujita eQTL labels. Table 1: Agreement of HaploPerturb high-probability haplotypes estimated from 1000 Genomes and ROS/MAP. A rank-one pair compares the two cohorts at one locus and lead state. When partner sets differ, all identity and distance calculations use only shared coordinates. Missing-partner entries give the median and range among loci with different sets. The top-ten shared fraction is the median across locus–state comparisons of the exact intersection divided by the smaller projected list size. The final column summarizes the pooled bidirectional Hamming distances to the nearest configuration in the other cohort as median [95th percentile, maximum].                                      
+
+> Arm Partner sets Loci Missing partners Rank one exact Top ten shared Top-ten nearest d
+> ASame 22 044 /44 0.85 0 [1 ,37] ADifferent; shared only 51 [1 ,40] 10 /10 0.79 0 [1 ,13] BSame 25 050 /50 0.90 0 [1 ,75] BDifferent; shared only 12 1 [1 ,132] 23 /24 0.84 0 [1 ,2,560]
+
+Because the partner set does not depend on the conditioned lead state, partner availability is counted once per arm–locus. The partner sets were identical at 22 /27 Arm A loci and 25 /37 Arm B loci (Table 1). Among the remaining loci, ROS/MAP lacked 45 Arm A partners across five loci and 152 Arm B partners across 12 loci. The median number missing was one in both arms, with ranges of 1–40 and 1–132, respectively. When the partner sets were identical, all 44 /44 Arm A and 50 /50 Arm B rank-one haplotype pairs were identical. After projection onto shared partners at loci with different sets, all 10 /10 Arm A pairs and 23 /24 Arm B pairs were identical. Equivalently, both 18 members of the rank-one contrast agreed at all 27 Arm A loci and at 36 /37 Arm B loci. The only exception was the alternate-state comparison at 17:46062125:A:C : all 2 ,561 shared partners differed. This is the previously identified diffuse Arm B locus whose 1000 Genomes alternate-state list was not certified as a global top ten, so the exception cannot be separated from instability in that candidate search. The lower-ranked lists were less often identical, but generally contained the same or neighboring configurations. Across locus–state comparisons, the median exact shared frac-tion of the top-ten lists was 0 .85 and 0 .90 at Arm A and B loci with identical partner sets, and 0 .79 and 0 .84 after projection at loci with different sets. In all four strata, the median nearest-configuration Hamming distance was zero and its 95th percentile was one partner. The corresponding 95th percentiles of the normalized distance δ were 0 .056, 0 .080, 0 .033, and 0 .067, respectively. The tails were much wider, however, particularly at the diffuse chro-mosome 17 locus (Table 1). Thus the leading HaploPerturb sequence contrast was highly portable on coordinates observed in both cohorts, whereas the ordering and composition of lower-ranked candidates were less stable. This agreement alone does not establish equal AlphaGenome effects or eQTL enrichment, which will be explored in Section 6.2. 
+
+## 5.4 Two simple strategies for assigning partner alleles and their performance on 1000 Genome data 
+
+We compare two simple strategies, empirical conditional-mode and LD-sign , with our pro-posed HaploPerturb rank-one strategy. The empirical conditional-mode strategy uses the observed phased haplotypes directly. It retains only lead allele to either 0 or 1, counts how often each complete combination of partner alleles occurs, and then chooses the most frequent combination. If several combinations have the same maximum count, a fixed coordinate-order convention selects one of them. The LD-sign strategy examines each partner variant separately. If the lead and partner alternate-allele indicators are positively correlated, the partner is assigned the same reference-or-alternate state as the specified lead allele; if they are negatively correlated, the partner is assigned the opposite state. If the correlation is exactly zero, the strategy uses the more frequent partner allele among panel haplotypes carrying the specified lead allele, choosing the reference allele if those counts are also tied. Both simpler strategies equaled the HaploPerturb rank-one configuration in all 54 /54 Arm A locus-state comparisons and in 73 /74 Arm B comparisons. There were no tied empirical modes and no zero-correlation fallbacks. The sole exception was the alternate-conditioned Arm B comparison at 17:46062125:A:C . There the empirical-mode and LD-sign 19 configurations were identical to one another and to HaploPerturb rank two; the empirical configuration occurred on 6 of the 256 phased haplotypes carrying the alternate lead allele. Both differed from the reported HaploPerturb rank-one candidate at all 2,693 partners. 
+
+## 5.5 Systematic evaluation of when the three strategies differ 
+
+To determine systematically whether and when the three strategies select different partner-allele configurations, we constructed simulations in which the population haplotype distribu-tion was known. For each setting, we identified the true most-probable partner-allele config-uration conditional on the lead allele and asked whether it was recovered by HaploPerturb, the empirical conditional-mode and LD-sign strategies. We varied four features expected to affect their performance: allele frequency, dependence structure, number of partners and reference-panel size. The design crossed two lead-frequency classes, three data-generating dependence settings, three partner counts and three panel sizes (Figure 4). Rare lead frequencies were drawn log-uniformly from 0 .5% to 5%, whereas common lead frequencies were drawn uniformly from 5% to 40%. In every population, half of the partners were rare under the same log-uniform distribution and half were common under the same uniform distribution. The partner counts were 2 2, 2 5 and 2 8, and the panel sizes were 500, 1,000 and 2,000 phased haplotypes. The three dependence settings were high latent dependence generated by a one-factor model, moderate latent dependence generated by a one-factor model, and high latent dependence generated by a two-factor model but analyzed with the production one-factor model. These labels refer to latent dependence: with mixed allele frequencies, high latent correlation need not produce uniformly high observed r2.For each lead-frequency, dependence and partner-count setting, we generated 30 popula-tion distributions. From each population, we simulated one master panel of 2,000 haplotypes and used its first 500 and first 1,000 haplotypes as the two smaller panels. Thus all three panel sizes were drawn from the same population, and increasing the panel size added infor-mation without changing the true most-probable configuration. We estimated the one-factor HaploPerturb model separately in each panel and applied all three selection strategies for both lead states, giving 1,620 HaploPerturb fits and 3,240 lead-state comparisons. The main comparison focuses on X0 = 1, where sampling a rare alternate allele is most difficult. If a panel contained no haplotype with X0 = 1, the empirical conditional-mode strategy was recorded as unavailable; it was not replaced by a fallback or counted as an error. We there-fore report unavailability separately from recovery error among panels in which the strategy was available. 20 The certified search used to obtain the population and HaploPerturb top-ten lists was tested at five partner counts: k = 4 , 8, 12 , 32 , 256. At k = 4 , 8, 12, its lists matched com-plete enumeration for every combination of the three partner counts, three data-generating dependence settings and two lead states (3 × 3 × 2 = 18 tests). At k = 32 , 256, complete enumeration was infeasible. For every combination of the two partner counts, three de-pendence settings and two lead states (2 × 3 × 2 = 12 tests), the search ended only after every remaining branch had either been evaluated or shown by its probability upper bound to be unable to reach the current top-ten cutoff. Thus no unevaluated configuration could enter the returned top ten under the quadrature approximation. In the reported simulation, all 3,240 population searches and all 3,240 HaploPerturb searches produced certified lists; all 2,160 four-partner population and HaploPerturb searches also passed their exhaustive checks, including two cases with non-unique ordering at the top-ten cutoff. Supplementary Note 4 gives the complete construction and search-validation details. The three strategies separated most clearly when the alternate lead allele was rare. The empirical conditional-mode strategy was usually available: only one of the 270 rare-lead populations had no alternate-bearing haplotype at n = 500 and n = 1 ,000, and every population had at least one by n = 2 ,000 (Supplementary Figure 3). Its main failure was instead that the complete partner configuration was too sparsely repeated to reveal the population mode. For rare leads, empirical-mode error declined only from 76 .7% to 43 .3% with 32 partners and from 93 .3% to 74 .4% with 256 partners as the panel grew from 500 to 2,000. At 256 partners, empirical modes were commonly tied and remained far from the population mode in Hamming distance (Supplementary Figure 4). The LD-sign strategy also failed in many rare-lead settings, but for a different reason. It requires an estimable lead–partner correlation for every partner. At n = 500, all required signs were available in only 78 /90 rare-lead panels with 32 partners and 46 /90 with 256 partners because some sampled variants were monomorphic. Among evaluable 32-partner panels, its error was 55 .1%, 52 .8% and 53 .3% at n = 500, 1,000 and 2,000, respectively. The strategy sometimes succeeded in a favorable setting, but a pairwise sign does not use the allele-frequency margins and does not ensure that the separately assigned partner alleles form the most probable joint configuration. HaploPerturb avoided both of these finite-panel failure modes: it neither required an exact complete configuration to recur nor relied on every sample correlation sign being defined. It was available in all rare-lead panels. Its error declined from 30 .0% to 14 .4% with 32 partners and from 31 .1% to 1 .1% with 256 partners as the panel grew from 500 to 2,000. At n = 2 ,000, these errors were substantially below the corresponding empirical-mode errors of 43 .3% and 74 .4%. Thus HaploPerturb provided the most stable and reliable construction 21 across the high-dimensional rare-lead settings. The same high-dimensional sparsity affected empirical modes for common leads: at 256 partners their error declined only from 94 .4% to 73 .3%, whereas HaploPerturb-mode error declined from 40 .0% to 8 .9%. With only four partners, however, the HaploPerturb and empirical modes were usually similarly accurate. HaploPerturb also depends on an adequate low-rank representation. Under deliberately misspecified two-factor truth with a common lead and 32 partners, HaploPerturb-mode error was 36 .7%, 43 .3% and 50 .0% at the three panel sizes. More data cannot remove bias from an inadequate factor structure, so residual-correlation di-agnostics remain necessary (Supplementary Figure 5). The simulation therefore supports HaploPerturb when complete haplotypes are sparse, especially for rare leads, while also mo-tivating model-adequacy checks before treating its first-ranked configuration as definitive. 
+
+# 6 Cell-type-specific eQTL recovery for Alzheimer’s disease 
+
+## 6.1 ROS/MAP donor-derived haplotype analysis 
+
+We next ask whether the constructed contrasts recover cell-type-specific eQTLs. For each arm, locus ℓ, gene g, AlphaGenome biosample c, HaploPerturb rank r, and lead state s, let 
+
+Eg be the union of the gene’s annotated exonic bases and let Y (s) 
+
+> ℓgcr
+
+be the mean predicted RNA signal over Eg. Overlapping exons are counted once, introns are excluded, and a gene is retained only when its complete exon union lies inside the 1.05-Mb AlphaGenome input window. Full transcript counts are called by AlphaGenome and reported there; the 1,000-bp terminal-exon summary is a sensitivity analysis reported in Supplementary Figure 6. The cell types with a defensible mapping to the experimental benchmark are astrocytes (AlphaGenome astrocyte), excitatory neurons (glutamatergic neuron), and microglia (CD14-positive monocyte, explicitly a myeloid proxy). We do not aggregate across these biosamples. The rank-one and average-top-L effects, for L ∈ { 5, 10 }, are 
+
+D(1)  
+
+> ℓgc
+
+= log {1 + Y (1) 
+
+> ℓgc 1
+
+} − log {1 + Y (0) 
+
+> ℓgc 1
+
+}, (22) 
+
+D(L) 
+
+> ℓgc
+
+= log 
+
+(
+
+1 + R−1
+
+> ℓ1LRℓ1L
+
+X
+
+> r=1
+
+Y (1) 
+
+> ℓgcr
+
+)
+
+− log 
+
+(
+
+1 + R−1
+
+> ℓ0LRℓ0L
+
+X
+
+> r=1
+
+Y (0) 
+
+> ℓgcr
+
+)
+
+, (23) where RℓsL = min( L, number available). We report rank one, average top five, and average top ten separately. 22 Single-lead-variant comparator To separate the value of a HaploPerturb background from the value of changing the GWAS lead alone, we make a second, sequence-level com-parison using the same AlphaGenome version, output tracks, 1.05-Mb input windows and complete-exon-union summaries. Let Gℓ be the GRCh38 sequence in the window centered at lead ℓ, whose reference and alternate alleles are aℓ0 and aℓ1. The single-lead sequences are 
+
+SSL ,0 
+
+> ℓ
+
+= Gℓ, SSL ,1 
+
+> ℓ
+
+= Gℓ with only aℓ0 replaced by aℓ1 at the lead position . (24) Every partner allele therefore remains GRCh38 in both sequences. No ROS/MAP genotype or HaploPerturb partner configuration enters this comparator. A lead appearing in both arms is predicted only once; the Arm A and Arm B labels are attached afterward according to whether that lead’s window passes the corresponding partner-selection rule. If Y SL ,s ℓgc is the resulting complete-exon-union RNA prediction, its effect and ranking score are 
+
+DSL  
+
+> ℓgc
+
+= log {1 + Y SL ,1 
+
+> ℓgc
+
+} − log {1 + Y SL ,0 
+
+> ℓgc
+
+}, T SL  
+
+> ℓgc
+
+= |DSL 
+
+> ℓgc
+
+|. (25) The HaploPerturb scores are defined on the same scale, T (L) 
+
+> ℓgc
+
+= |D(L) 
+
+> ℓgc
+
+| for L ∈ { 1, 5, 10 }.Thus the strategy comparison changes the input sequence but not the predictor, RNA track, gene summary or effect transformation. For each arm and cell type, the comparison universe U is the intersection of locus–gene pairs covered by both AlphaGenome strategies and genes tested by Fujita et al. A pair is positive when Fujita et al. report a two-step-FDR-significant variant–gene association whose variant lies in the same AlphaGenome input window. Write M = |U| , Zℓg ∈ { 0, 1} for this truth indicator, and K = P 
+
+> (ℓ,g )∈U
+
+Zℓg . For strategy h ∈ { top1 , top5 , top10 , SL }, let Ch be the K pairs with largest T hℓgc . The matched-count enrichment is 
+
+dEnr h = K−1 P 
+
+> (ℓ,g )∈C h
+
+Zℓg 
+
+K/M = MK2
+
+X
+
+> (ℓ,g )∈C h
+
+Zℓg . (26) We resample whole lead windows with replacement 10,000 times and recompute M , K, the top-K sets and all four enrichments in every draw. We report the 2.5th and 97.5th percentiles of each bootstrap distribution as a 95% whole-locus bootstrap percentile interval. The same sampled windows are used for every strategy, so the bootstrap distribution of dEnr h − dEnr h′
+
+is paired and preserves within-window dependence in both scores and truth. The main-text comparison is prespecified for the microglial proxy. Supplementary Note 5 gives the resampling algorithm and seeds. AlphaGenome is deterministic, so its contrast has no sampling standard error. Our 23 inferential unit is instead the lead window: the whole-locus bootstrap in equation (26) quantifies how the enrichment changes across the available loci. The complete-transcript benchmark identifies a microglial ranking signal most clearly in Arm B (Figure 6). In Arm A, the common universe contains M = 176 locus–gene pairs, of which K = 37 are Fujita-positive. Single-lead, HaploPerturb-top-one, HaploPerturb-top-five and HaploPerturb-top-ten rankings recover 11, 13, 12 and 12 positives, respectively. The estimated enrichments are 1 .41, 1 .67, 1 .54 and 1 .54; their corresponding 95% whole-locus bootstrap percentile intervals are [0 .61 , 2.19], [0 .95 , 2.73], [0 .89 , 2.42] and [0 .95 , 2.44]. Each enrichment interval includes the null value of one, and each 95% paired bootstrap interval for the difference between two strategies includes the null value of zero. In Arm B, M = 251 and K = 44. Single lead recovers 11 positives, for enrich-ment 1 .43 [0 .65 , 2.28]; HaploPerturb top one recovers 17, for 2 .20 [1 .57 , 3.47]; HaploPerturb top five recovers 19, for 2 .46 [1 .67 , 3.61]; and HaploPerturb top ten recovers 18, for 2 .33 [1 .63 , 3.43]. All three HaploPerturb intervals exclude one, whereas the single-lead interval includes one. Moreover, the paired HaploPerturb-minus-single-lead differences exclude zero: 0.78 [0 .22 , 1.88] for top one, 1 .04 [0 .27 , 2.07] for top five and 0 .91 [0 .16 , 1.95] for top ten. Differences among the three HaploPerturb summaries all include zero; in particular, top-ten minus top-five is −0.13 [ −0.54 , 0.34]. Thus Arm B supports enrichment attributable to HaploPerturb backgrounds but does not distinguish how many leading HaploPerturb con-figurations should be averaged. Complete-transcript and terminal-exon results across all three cell types are reported in Supplementary Figure 6. In the microglial analysis, restricting the AlphaGenome scores to the terminal-exon region produced the same general pattern as the complete-transcript analysis: HaploPerturb strategies tended to have higher enrichment than the single-lead strategy. However, every 95% paired bootstrap interval for a HaploPerturb-minus-single-lead difference included zero, so the terminal-exon analysis does not provide clear evidence that the HaploPerturb strategies outperform the single-lead strategy. The complete-transcript summary provided stronger evidence in this dataset, but the comparison does not establish that it is generally more powerful. In addition, neither the astrocyte nor excitatory-neuron analysis shows positive enrichment: no 95% interval lies wholly above one under either region definition. This lack of enrichment may reflect limited AlphaGenome accuracy for these cell types, but it could also arise from imperfect correspondence between the available AlphaGenome tracks and the Fujita cell types, limited eQTL power, or the chosen RNA-summary regions. 24 6.2 1000 Genomes reference-panel haplotype analysis 
+
+We next ask whether donor-specific whole-genome sequencing is necessary for the enrich-ment result. We replace the ROS/MAP-derived HaploPerturb backgrounds in Section 6.1 with HaploPerturb backgrounds estimated from the 503-person 1000 Genomes EUR panel in Section 5.2. For every arm, locus, lead state and HaploPerturb rank, the public-panel configuration is written onto the same 1.05-Mb GRCh38 window and submitted to the same AlphaGenome model. We then use the same RNA tracks, complete gene-level exon unions and log-one-plus contrast in equation (23). The resulting public-panel scores T (L, 1KG)  
+
+> ℓgc
+
+,
+
+L ∈ { 1, 5, 10 }, therefore differ from the donor-panel scores only in the panel used to estimate the HaploPerturb backgrounds. When fewer than L configurations are available under either lead state, both analyses average the complete smaller paired support. The comparison is restricted to the intersection of locus–gene pairs covered by all six HaploPerturb panel-by-rank strategies—ROS/MAP and 1000 Genomes top one, top five and top ten—the single-lead strategy, and the Fujita tested set. The Fujita two-step-FDR indicator and the definition of a positive locus–gene pair are unchanged from Section 6.1. Within each arm and cell type, every strategy calls the top K scores in this common universe, where K is the number of Fujita-positive pairs. We resample whole lead windows 10,000 times and use the same sampled windows for both panels and all ranks. The direct comparison at rank summary L is 
+
+b∆(L) 
+
+> c
+
+= dEnr (L) 
+
+> c, 1KG
+
+− dEnr (L)
+
+> c, RM
+
+, L ∈ { 1, 5, 10 }, (27) with percentile intervals taken from the paired bootstrap differences. This design asks whether the public reference panel preserves the ROS/MAP eQTL-ranking enrichment, not whether the two panel-specific HaploPerturb models assign identical probabilities to each haplotype. The common comparison universe remained the same as in Section 6.1: Arm A contained 
+
+M = 176 locus–gene pairs and K = 37 Fujita positives, whereas Arm B contained M =251 and K = 44. In Arm A, the 1000 Genomes top-one, top-five and top-ten rankings recovered 13, 10 and 14 positives, giving enrichments 1 .67 [0 .95 , 2.76], 1 .29 [0 .73 , 2.30] and 1.80 [1 .14 , 2.64], respectively (Figure 7C). The corresponding ROS/MAP enrichments were 1.67, 1 .54 and 1 .54 (Supplementary Figure 7A). The paired 1000 Genomes-minus-ROS/MAP differences were 0 .00 [0 .00 , 0.18], −0.26 [ −0.54 , 0.13] and 0 .26 [ −0.14 , 0.60] (Figure 7A). Thus none excludes zero. Although the public-panel top-ten interval excludes one, its paired difference from the single-lead enrichment is 0 .39 [ −0.20 , 1.23], so Arm A does not establish an advantage over the single-lead perturbation. 25 In Arm B, the 1000 Genomes top-one, top-five and top-ten rankings recovered 16, 18 and 19 positives. Their enrichments were 2 .07 [1 .49 , 3.56], 2 .33 [1 .49 , 3.59] and 2 .46 [1 .61 , 3.62]; all three intervals exclude one (Figure 7D). The corresponding ROS/MAP enrichments were 2.20, 2 .46 and 2 .33 (Supplementary Figure 7B), and the paired public-minus-donor differ-ences were −0.13 [ −0.33 , 0.36], −0.13 [ −0.58 , 0.18] and 0 .13 [ −0.44 , 0.55] (Figure 7B). Again, none excludes zero. Relative to the single-lead enrichment of 1 .43, however, the public-panel advantages were 0 .65 [0 .23 , 1.92], 0 .91 [0 .17 , 2.01] and 1 .04 [0 .24 , 2.08], all excluding zero. We also compared public-panel HaploPerturb top one with the empirical-mode and LD-sign strategies from Section 5.4, reusing the existing AlphaGenome predictions for the iden-tical sequence or its mapped HaploPerturb rank. No new model query was needed. The comparison used the same locus–gene universe and a single paired whole-locus bootstrap across HaploPerturb top one, empirical mode, LD sign and single lead. Figure 7C–D places those microglial results beside HaploPerturb top five and top ten, and Supplementary Fig-ure 8 reports the four-strategy comparison across all three cell types. In Arm A microglia the three haplotype-aware strategies are identical and each has enrichment 1 .67 [0 .96 , 2.80], compared with 1 .41 [0 .60 , 2.24] for single lead; their paired advantage of 0 .26 [ −0.44 , 1.42] does not exclude zero. In Arm B, HaploPerturb top one recovers 16 positives and has enrichment 2 .07 [1 .48 , 3.60]. The identical empirical-mode and LD-sign rankings recover 17 and have enrichment 2 .20 [1 .60 , 3.64], whereas single lead recovers 11 and has enrichment 1 .43 [0 .69 , 2.29]. Both haplotype-aware comparisons with single lead exclude zero: 0.65 [0 .23 , 1.89] for HaploPerturb top one and 0 .78 [0 .30 , 1.95] for either simple background. The HaploPerturb minus empirical-mode difference is −0.13 [−0.35 , 0.13]. Thus the factor-model construction does not outperform the simple haplotype backgrounds in this application; instead, all three show that specifying a population-informed haplotype rather than a lead-only reference background changes the microglial ranking. The additional Arm B positive under the empirical-mode and LD-sign rankings is 
+
+KANSL1 at the diffuse chromosome 17 locus, where HaploPerturb rank two replaces the uncertified HaploPerturb rank-one alternate-state background. Across the remaining loci the three haplotype-aware scores are identical. Under HaploPerturb top one, the 16 selected Fujita positives span 12 loci, compared with 11 positives across eight loci under single lead. Haplotype-aware ranking promotes positives at PICALM , CD2AP , CASS4 , and the 
+
+MS4A cluster that the lead-only ranking does not select (Supplementary Table 2). These are confirmations within the Fujita benchmark, not new gene discoveries. Their biological coherence is nonetheless useful: experimental studies have linked the MS4A cluster to soluble TREM2 regulation [Deming et al., 2019], shown that microglial cis-regulatory elements are enriched for AD risk and can be connected to target genes by CRISPR perturbation [Yang 26 et al., 2023], and connected reduced INPP5D function in human microglia to inflammasome activation [Chou et al., 2023]. A descriptive leave-one-locus-out analysis gave HaploPerturb-top-one enrichment be-tween 1 .99 and 2 .46 after removing any single Arm B locus. The largest downward change, to 1.99, followed removal of the MS4A locus 11:60254475:G:A ; removing the unstable chromo-some 17 locus increased enrichment to 2 .46. The aggregate pattern is therefore distributed across loci and is not driven by the one construction failure. Because this diagnostic recom-putes point estimates rather than a new inferential analysis, it should be read as influence assessment, not as a separate replication. The cross-panel haplotype differences are documented in Section 5.3. Despite those differences, the 1000 Genomes-derived sequences preserve the Arm B microglial enrichment and its advantage over a lead-only edit, without a detectable loss relative to sequences constructed from paired ROS/MAP genomes. For these European-ancestry AD loci, this supports using the public panel for eQTL prioritization when donor-specific whole-genome sequencing is unavailable, subject to the public-list certification caveat in Section 5.3. 
+
+# 7 Discussion 
+
+The main practical implication is that the full sequence supplied to a sequence-to-function model should be treated as an analysis choice rather than an invisible preprocessing default. In a lead-only edit, every linked but unedited allele is implicitly fixed to its reference-genome state, thereby specifying a particular joint haplotype that may be rare or absent in the target population. Because a sequence-to-function model reads the entire input window, this hidden choice can change predicted effects and variant rankings even when the prediction model itself is held fixed. The central contribution of our framework is to make the input background explicit and replace an arbitrary reference-based configuration with haplotypes informed by phased population data. A lead-only edit remains a useful comparator, but it should not automatically be regarded as the population-representative input. The reference panel, partner definition, construction method and treatment of all unmodeled bases should therefore be stated explicitly. The haplotype panel should be matched as closely as possible to the ancestry and sam-pling population of the target study. Sufficiently large cohort-specific phased genotypes offer the closest population match, whereas a well-matched public panel is a practical alterna-tive when cohort genotypes are unavailable. Partner thresholds should be selected before downstream prediction and examined through sensitivity analyses, because the present com-parison does not identify an optimal r2 cutoff. A one-factor HaploPerturb fit is a reasonable 27 starting point after high-LD partner selection, but adequacy should be checked using both variance concentration and residual allelic correlation. Loci with p > n , visible residual blocks or diffuse candidate probabilities should be flagged for a richer model or more con-servative reporting. If the HaploPerturb top configuration, empirical conditional mode and LD-sign background agree and only one background is needed, that agreement should be reported and a simpler strategy may suffice. The HaploPerturb distribution remains use-ful when several backgrounds, probability weighting or uncertainty assessment are required. The rank-one background is appropriate when it clearly dominates and candidate coverage is certified; otherwise, several leading backgrounds should be retained. Reports should in-clude the candidate-generation strategy, simulation size and seed, HaploPerturb-probability rescoring method, and coverage check. Downstream strategy comparisons should use the same tested universe, give the underlying positive counts as well as enrichment, and use paired resampling of whole loci. Several alternatives may be preferable in particular settings. Directly using observed phased haplotypes avoids distributional modeling when the reference panel is large enough for exact configurations to recur, but provides poor coverage as the partner dimension grows. Deterministic factor-space enumeration is efficient and reproducible for a one-factor model with moderate p; conditional sampling is more flexible for large loci, multiple factors or can-didates separated by several allele changes, provided discovery coverage is assessed. When one factor leaves structured residual dependence, multi-factor or block-specific models are natural extensions. Finally, the equal top-L averages used here could be compared with HaploPerturb-probability-weighted averages or explicit marginalization over haplotype un-certainty. These summaries target different quantities and should be chosen prospectively rather than selected by their downstream benchmark performance. 
+
+Limitation The analysis covers one disease, 38 loci, predominantly European-ancestry panels and one sequence-to-function model. The partner sets were defined in 1000 Genomes, the molecular benchmark came from ROS/MAP, and the ROS/MAP-derived construction and eQTL truth are therefore not an independent replication. The eQTL analysis evaluates group-level ranking enrichment; it does not discover individual eQTLs, establish causal vari-ants or validate predicted effect directions. Lack of enrichment in astrocytes and excitatory neurons cannot be attributed uniquely to AlphaGenome because biosample correspondence, eQTL power and RNA-summary choice may also contribute. The locus bootstrap captures variation across the sampled GWAS windows but not uncertainty in AlphaGenome, which is deterministic only conditional on a supplied sequence. Reproducibility is further limited by the absence of a permanent identifier for the hosted server-side model. At the construc-28 tion stage, weakly linked and unavailable variants are omitted, lower-ranked haplotypes are poorly resolved by finite panels, and the largest diffuse locus shows that neither a one-factor approximation nor finite candidate sampling is uniformly reliable. The present inputs remain partial haplotypes because HaploPerturb alleles are writ-ten onto GRCh38 while all bases outside the lead and selected partner set remain at the reference state. Haplotype-resolved assemblies from a human pangenome could instead pro-vide a coherent sequence across the full predictor window, including unmodeled alleles and structural variants [Wang et al., 2022]. This would still require statistical selection of a population- or individual-appropriate path and consistent mapping of graph coordinates and annotations to the prediction model. Multi-population analyses should additionally sepa-rate within-ancestry LD from dependence induced by ancestry-specific allele frequencies; ad-mixed genomes require local as well as global ancestry information, and heterogeneous LD may require partially pooled ancestry-specific loadings. Evaluation across additional dis-eases, ancestries, prediction models and independent molecular-trait cohorts will be needed to determine when these more complete constructions improve functional prioritization. 
+
+# Supplementary material 
+
+The supplement contains estimation and diagnostic details; the conditional sampler, candi-date enumeration, probability evaluation and coverage checks; the proof of one-factor iden-tifiability; the known-truth finite-panel validation; the paired whole-locus bootstrap; and additional figures and locus–gene tables. 
+
+# Funding and support 
+
+This work was supported by the National Human Genome Research Institute of the National Institutes of Health under Award Number R01HG012555. The content is solely the respon-sibility of the author and does not necessarily represent the official views of the National Institutes of Health. The author gratefully acknowledges the participants and investigators of the Religious Orders Study, the Rush Memory and Aging Project, the 1000 Genomes Project, and the contributing studies of the AD Knowledge Portal. 
+
+# Data and code availability 
+
+The 38 Alzheimer’s disease lead variants are listed by Wightman et al. [2021]; the article and its supplementary information are available at https://doi.org/10.1038/s41588-0 
+
+29 21-00921-z . The 1000 Genomes 30 × high-coverage GRCh38 release is publicly distributed by the International Genome Sample Resource, with collection metadata at https://www. internationalgenome.org/data-portal/data-collection/1000genomes_30x/ and the chromosome-specific phased VCFs used here available from https://ftp.1000genomes.eb i.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_ 3202_phased_SNV_INDEL_SV/ .The ROS/MAP WGS VCFs used for the donor-genotype analysis are access-controlled at AD Knowledge Portal/Synapse accession syn11724057 (https://www.synapse.org/ Synapse:syn11724057 ). Qualified investigators may request access by following the AD Knowledge Portal data-access procedures; individual-level genotypes cannot be redistributed with this article. The Fujita et al. cell-type-level eQTL summary statistics are available at Synapse accession syn52335732 (https://doi.org/10.7303/syn52335732 ), and the underlying DLPFC single-nucleus RNA-seq data are available under accession syn31512863 
+
+(https://www.synapse.org/Synapse:syn31512863 ), subject to the applicable data-use terms. Two GitHub repositories accompany this paper. The reusable HaploPerturb software, user tutorial and worked examples are available at https://github.com/jichunxie/hap loperturb . The complete paper reproducibility archive is available at https://github.c om/jichunxie/haplotype-reproducibility ; it contains versioned analysis scripts, public-panel manifests, simulation code, seeds, environment records and the sanitized JSON/CSV artifacts underlying the reported results. Code in both repositories is released under the MIT License. Protected donor-level genotypes and hypothesis-level protected prediction results are not included; the reproducibility repository documents the controlled-access stages and the aggregate public reproduction path. 
+
+AlphaGenome predictor and reproducibility AlphaGenome converts each con-structed sequence contrast into a predicted transcriptomic effect. We queried its hosted API [Avsec et al., 2026] with alphagenome 0.4.0 , requesting human RNA SEQ output for 1,048,576-bp (approximately 1.05-Mb) GRCh38 inputs. All perturbation strategies were evaluated using the same AlphaGenome RNA-seq tracks. We recorded the AlphaGenome client version, analysis scripts, requested output type, and track metadata. However, because the hosted API did not report a permanent version identifier for the server-side model, an exact future rerun may depend on whether that model has since been updated. 30 References 
+
+ˇZiga Avsec, Vikram Agarwal, Daniel Visentin, Joseph R Ledsam, Agnieszka Grabska-Barwinska, Kyle R Taylor, Yannis Assael, John Jumper, Pushmeet Kohli, and David R Kelley. Effective gene expression prediction from sequence by integrating long-range in-teractions. Nature methods , 18(10):1196–1203, 2021. doi: 10.1038/s41592-021-01252-x. PMID: 34608324; PMCID: PMC8490152. ˇZiga Avsec, Natasha Latysheva, Jun Cheng, Guido Novati, Kyle R Taylor, Tom Ward, Clare Bycroft, Lauren Nicolaisen, Eirini Arvaniti, Joshua Pan, et al. Advancing regulatory variant effect prediction with alphagenome. Nature , 649(8099):1206–1218, 2026. doi: 10.1038/s41586-025-10014-0. PMID: 41606153; PMCID: PMC12851941. David A Bennett, Aron S Buchman, Patricia A Boyle, Lisa L Barnes, Robert S Wilson, and Julie A Schneider. Religious orders study and rush memory and aging project. Journal of Alzheimer’s disease , 64(s1):S161–S189, 2018. doi: 10.3233/jad-179939. PMID: 29865057; PMCID: PMC6380522. Marta Byrska-Bishop, Uday S Evani, Xuefang Zhao, Anna O Basile, Haley J Abel, Allison A Regier, Andr´ e Corvelo, Wayne E Clarke, Rajeeva Musunuri, Kshithija Nagulapalli, et al. High-coverage whole-genome sequencing of the expanded 1000 genomes project cohort including 602 trios. Cell , 185(18):3426–3440, 2022. doi: 10.1016/j.cell.2022.08.004. PMID: 36055201; PMCID: PMC9439720. Vicky Chou, II Pearse, Richard V., Aimee J. Aylward, Nancy Ashour, Mariko Taga, Gizem Terzioglu, Masashi Fujita, Seeley B. Fancher, Alina Sigalov, Courtney R. Benoit, et al. INPP5D regulates inflammasome activation in human microglia. Nature Communica-tions , 14:7552, 2023. doi: 10.1038/s41467-023-42819-w. PMID: 38016942; PMCID: PMC10684891. Laura Clarke, Xiangqun Zheng-Bradley, Richard Smith, Eugene Kulesha, Chunlin Xiao, Iliana Toneva, Brendan Vaughan, Don Preuss, Rasko Leinonen, Martin Shumway, et al. The 1000 genomes project: data management and community access. Nature methods , 9 (5):459–462, 2012. doi: 10.1038/nmeth.1974. PMID: 22543379; PMCID: PMC3340611. Bernardo P De Almeida, Hugo Dalla-Torre, Guillaume Richard, Christopher Blum, Lorenz Hexemer, Maxence G´ elard, Javier Mendoza-Revilla, Ziqi Tang, Frederikke I Marin, David M Emms, et al. Annotating the genome at single-nucleotide resolution with dna foundation models. Nature Methods , pages 1–15, 2025. doi: 10.1038/s41592-025-02881-2. PMID: 41162646; PMCID: PMC12615259. 31 Yuetiva Deming, Fabia Filipello, Francesca Cignarella, Claudia Cantoni, Simon Hsu, Robert Mikesell, Zeran Li, Jorge L. Del-Aguila, Umber Dube, Fabiana Geraldo Farias, et al. The MS4A gene cluster is a key modulator of soluble TREM2 and Alzheimer’s disease risk. 
+
+Science Translational Medicine , 11(505):eaau2291, 2019. doi: 10.1126/scitranslmed.aau 2291. PMID: 31413141; PMCID: PMC6697053. Haonan Feng, Lang Wu, Bingxin Zhao, Chad Huff, Jianjun Zhang, Jia Wu, Lifeng Lin, Peng Wei, and Chong Wu. Benchmarking dna foundation models for genomic and genetic tasks. 
+
+Nature communications , 16(1):10780, 2025. doi: 10.1038/s41467-025-65823-8. PMID: 41315262; PMCID: PMC12663285. Masashi Fujita, Zongmei Gao, Lu Zeng, Cristin McCabe, Charles C White, Bernard Ng, Gilad Sahar Green, Orit Rozenblatt-Rosen, Devan Phillips, Liat Amir-Zilberstein, et al. Cell subtype-specific effects of genetic variation in the alzheimer’s disease brain. Nature Genetics , 56(4):605–614, 2024. doi: 10.1038/s41588-024-01685-y. PMID: 38514782; PMCID: PMC12288883. Connie Huang, Richard W Shuai, Parth Baokar, Ryan Chung, Ruchir Rastogi, Pooja Kathail, and Nilah M Ioannidis. Personal transcriptome variation is poorly explained by current genomic deep learning models. Nature Genetics , 55(12):2056–2059, 2023. doi: 10.1038/s41588-023-01574-w. PMID: 38036790; PMCID: PMC10703684. David I Inouye, Eunho Yang, Genevera I Allen, and Pradeep Ravikumar. A review of multivariate distributions for count data derived from the poisson distribution. Wiley Interdisciplinary Reviews: Computational Statistics , 9(3):e1398, 2017. doi: 10.1002/wics .1398. PMID: 28983398; PMCID: PMC5624559. Johannes Linder, Divyanshi Srivastava, Han Yuan, Vikram Agarwal, and David R Kelley. Predicting rna-seq coverage from dna sequence as a unifying model of gene regulation. 
+
+Nature Genetics , 57(4):949–961, 2025. doi: 10.1038/s41588-024-02053-6. PMID: 39779956; PMCID: PMC11985352. Roger B Nelsen. An introduction to copulas . Springer, 2nd edition, 2006. R. L. Plackett. A reduction formula for normal multivariate integrals. Biometrika , 41(3–4): 351–360, 1954. doi: 10.1093/biomet/41.3-4.351. Alexander Sasse, Bernard Ng, Anna E Spiro, Shinya Tasaki, David A Bennett, Christo-pher Gaiteri, Philip L De Jager, Maria Chikina, and Sara Mostafavi. Benchmarking of deep neural networks for predicting personal gene expression from dna sequence highlights 32 shortcomings. Nature genetics , 55(12):2060–2064, 2023. doi: 10.1038/s41588-023-01524-6. PMID: 38036778. Ting Wang, Lucinda Antonacci-Fulton, Kerstin Howe, Heather A Lawson, Julian K Lucas, Adam M Phillippy, Alice B Popejoy, Mobin Asri, Caryn Carson, Mark JP Chaisson, et al. The human pangenome project: a global resource to map genomic diversity. Nature , 604 (7906):437–446, 2022. doi: 10.1038/s41586-022-04601-8. PMID: 35444317; PMCID: PMC9402379. Douglas P Wightman, Iris E Jansen, Jeanne E Savage, Alexey A Shadrin, Shahram Bahrami, Dominic Holland, Arvid Rongve, Sigrid Børte, Bendik S Winsvold, Ole Kristian Drange, et al. A genome-wide association study with 1,126,563 individuals identifies new risk loci for alzheimer’s disease. Nature genetics , 53(9):1276–1282, 2021. doi: 10.1038/s41588-021 -00921-z. PMID: 34493870; PMCID: PMC10243600. Peter Xue-Kun Song. Multivariate dispersion models generated from gaussian copula. Scan-dinavian Journal of Statistics , 27(2):305–320, 2000. Xiaoyu Yang, Jia Wen, Han Yang, Ian R. Jones, Xiaodong Zhu, Weifang Liu, Bingkun Li, Claire D. Clelland, Wenjie Luo, Man Ying Wong, et al. Functional characterization of Alzheimer’s disease genetic variants in microglia. Nature Genetics , 55(10):1735–1744, 2023. doi: 10.1038/s41588-023-01506-8. PMID: 37735198; PMCID: PMC10939305. 33 −400 −200 0 200 400 Partner position relative to lead variant (kb) −1.0 −0.5 0.0 0.5 1.0 Signed phased correlation with lead,  rA Lead 17:46062125:A:C and its 2,998 stored LD partners 
+
+Stored only: 0.1 ≤ r2 < 0.5 Arm B only: 0.5 ≤ r2 < 0.8 Arm A: r2 ≥ 0.8 
+
+0 25 50 75 100 125 150 175 Number of lead-linked partner variants 
+
+> 5:151052827:C:T 19:1050875:A:G 14:92472511:G:A 15:63277703:C:T 17:58331728:G:C 2:127133851:A:C 8:144053248:G:A 19:51234736:T:G 10:11676714:A:G 7:143407238:G:C 11:121564878:T:C 19:54313903:C:A 8:27608798:T:C 17:63468418:C:T 19:44908684:T:C 7:100334426:C:T 17:44364976:T:C 4:11013198:A:G 1:207577223:T:C 20:56420643:C:T 17:5066645:C:T 6:32616036:G:A 10:59978394:G:T 11:86089237:G:A 15:58764824:T:A 21:25970679:C:T 19:48710247:G:A 21:26148613:G:T 11:47358789:G:T 19:44946027:T:G 17:49373413:G:A 5:157099320:A:G 6:47584444:A:T 14:52832135:A:G 2:233173931:A:C 7:12229132:A:C 11:60254475:G:A
+
+B Partner counts at the remaining 37 GWAS loci 
+
+Arm B: r2 ≥ 0.5 Arm A: r2 ≥ 0.8 Figure 1: Local phased LD and the number of partner variants retained at each GWAS locus. Arm A retains partners with r2 ≥ 0.8, whereas Arm B uses the broader threshold r2 ≥ 0.5. (A) Local LD around lead variant 17:46062125:A:C in the 1000 Genomes EUR panel. Each point is a candidate partner; horizontal position is distance from the lead and vertical position is the signed phased correlation between alternate-allele indicators. Gray points fall below the Arm B threshold (0 .1 ≤ r2 < 0.5), blue points enter Arm B only (0 .5 ≤ r2 < 0.8), and red points enter both arms ( r2 ≥ 0.8). The vertical dashed line marks the lead, and the horizontal dotted lines mark the signed correlation val-ues corresponding to the two thresholds. This locus contributes 2 ,693 partners to Arm B and 1 ,285 to Arm A. (B) Partner counts for the other 37 GWAS loci, ordered from largest to smallest Arm B count. Blue circles and orange diamonds show the Arm B and Arm A counts, respectively; a gray line connects the two values for the same locus. The chromosome 17 locus shown in (A) is omitted from (B) to keep the remaining counts legible. 34 80 85 90 95 99 ̂                       
+
+> PVA(1) (%) loci, lowest mean PVA at bottom
+> 17:46062125:A:C
+> AArm A: r2≥ 0.8
+> 80 85 90 95 99 ̂
+> PVA(1) (%)
+> 17:46062125:A:C
+> Arm B: r2≥ 0.5
+> 0.0 0.1 0.2 0.3
+> correlation residual RMSE loci, lowest mean PVA at bottom
+> 17:46062125:A:C
+> BArm A: r2≥ 0.8
+> 0.0 0.1 0.2 0.3
+> correlation residual RMSE
+> 17:46062125:A:C
+> Arm B: r2≥ 0.5
+> dashed: 90\% PVA target; residual RMSE: smaller is better ROS/MAP 1000 Genomes EUR
+
+Figure 2: Adequacy of the one-factor HaploPerturb model across loci and co-horts. Columns show Arm A ( r2 ≥ 0.8) and Arm B ( r2 ≥ 0.5). Each horizontal row rep-resents one locus: blue circles show ROS/MAP, orange diamonds show the 1000 Genomes EUR panel, and a gray segment links the two cohort estimates. (A) Proportion of latent variance accounted for by the HaploPerturb factor fit, [PVA(1). The vertical dashed line marks 90%. Values cannot exceed 99% because the estimated uniqueness is constrained by 
+
+ψmin = 0 .01. (B) Off-diagonal correlation-residual RMSE from equation (19), comparing the empirical correlations between phased binary allele indicators with the correlations im-plied by HaploPerturb. Smaller values indicate closer agreement. Within each arm, loci are ordered by their mean PVA across the two cohorts, from lowest at the bottom to highest at the top; the same rows are used in (A) and (B). Each cohort’s statistics use its own phased haplotypes and the variants included in its HaploPerturb fit; partners absent from ROS/MAP are omitted from its comparison. 35 2 4 6 8 10 10 −2                                
+
+> 10 −1
+> 10 0
+> Median HaploPerturb probability
+> ALead state X0= 0 (reference)
+> 1000 Genomes, Arm A 1000 Genomes, Arm B ROS/MAP, Arm A ROS/MAP, Arm B
+> 246810 10 −2
+> 10 −1
+> 10 0
+> BLead state X0= 1 (alternate)
+> 1246810
+> HaploPerturb probability rank
+> 0.0 0.5 1.0
+> Observed at least once  C
+> 1246810
+> HaploPerturb probability rank
+> 0.0 0.5 1.0 D
+> 10 −4 10 −2 10 0
+> HaploPerturb conditional probability
+> 0
+> 10 −3
+> 10 −2
+> 10 −1
+> 1
+> Empirical conditional frequency
+> Median locus ρ(Arm A / B) 1000 Genomes 0.58 / 0.66 ROS/MAP 0.65 / 0.64
+> E
+> 10 −4 10 −2 10 0
+> HaploPerturb conditional probability
+> 0
+> 10 −3
+> 10 −2
+> 10 −1
+> 1
+> Median locus ρ(Arm A / B) 1000 Genomes 0.70 / 0.68 ROS/MAP 0.78 / 0.65
+> F
+
+Figure 3: HaploPerturb probability ranks correspond to empirical haplotype fre-quencies. The left column conditions on the reference lead state ( X0 = 0); the right column conditions on the alternate state ( X0 = 1). Blue denotes 1000 Genomes and orange denotes ROS/MAP; circles with solid lines denote Arm A ( r2 ≥ 0.8), and squares with dashed lines denote Arm B ( r2 ≥ 0.5). (A,B) Median HaploPerturb conditional probability at ranks one through ten. The steep drop after rank one indicates that HaploPerturb probability is concentrated in the leading configuration. (C,D) Proportion of loci at which the candidate at each HaploPerturb rank occurs at least once among phased haplotypes carrying the cor-responding lead allele. The rank-one candidate is observed at every locus, with observation rates generally decreasing at lower ranks. (E,F) HaploPerturb conditional probability versus empirical conditional frequency for individual 1000 Genomes locus–candidate pairs. Solid and dashed blue curves connect mean empirical frequencies within eight equal-count bins of HaploPerturb probability; the gray dotted line marks equality. Text within each panel gives the median within-locus Spearman correlation for Arm A and Arm B in both cohorts. The symmetric-logarithmic vertical scale retains candidates with zero observed frequency while separating small positive frequencies. Candidate-level ROS/MAP frequencies are not dis-played because the underlying donor genotypes are access-controlled; their rank summaries appear in (A–D) and their correlation summaries appear in (E,F). An empirical frequency of zero means that the candidate was not observed in the finite cohort, not that its population probability is zero. 36 Dependence structure High latent, q = 1 
+
+Moderate latent, q = 1 
+
+High latent, q = 2 
+
+> Allele frequencies Lead: rare or common Partners: 50% rare, 50% common Rare: log-uniform 0.5%--5% Common: uniform 5%--40%
+
+Known population conditional law Certified population mode and top ten One 2,000-haplotype master panel Nested panels 500 ⊂ 1,000 
+
+⊂ 2,000 Same population truth Construction strategies HaploPerturb q = 1 mode Empirical mode LD-sign background Compare with truth Availability Exact-mode error Hamming distance 
+
+k = 2 2, 2 5, 2 8 partners; 30 populations per cell; both lead states evaluated Figure 4: Design of the known-truth finite-panel simulation. The design varies lead-allele frequency, partner-allele frequencies, dependence structure, partner count and panel size. Each population supplies one known conditional law and one 2,000-haplotype master panel; the 500- and 1,000-haplotype panels are nested prefixes. The HaploPerturb mode, empirical conditional mode and LD-sign configuration are compared with the certified pop-ulation mode for both lead states. 37 025 50 75 100      
+
+> k= 4 k= 32 k= 256
+
+ARare lead High latent dependence true q = 1      
+
+> k= 4 k= 32 k= 256
+
+BModerate latent dependence true q = 1      
+
+> k= 4 k= 32 k= 256
+
+CHigh latent dependence true q = 2 ; fit q = 1      
+
+> 500 1k 2k 500 1k 2k 500 1k 2k
+
+Phased haplotypes      
+
+> 025 50 75 100
+> k= 4 k= 32 k= 256
+
+DCommon lead      
+
+> 500 1k 2k 500 1k 2k 500 1k 2k
+
+Phased haplotypes      
+
+> k= 4 k= 32 k= 256
+
+E     
+
+> 500 1k 2k 500 1k 2k 500 1k 2k
+
+Phased haplotypes      
+
+> k= 4 k= 32 k= 256
+
+FExact-mode error among panels where the method is available, %    
+
+> HaploPerturb mode Empirical mode LD-sign strategy Open marker: fewer than 30 panels evaluable
+
+Figure 5: Conditional error for alternate-state haplotype construction. (A–C) 
+
+Exact population-mode error for rare leads and (D–F) for common leads, conditional on the displayed method being available. Columns show the three dependence settings; within each panel, groups show 4, 32 and 256 partners and points show 500, 1,000 and 2,000 phased haplotypes. Each point represents 30 populations. An open marker indicates that fewer than 30 were evaluable for that method; no fallback result is included. Empirical-mode unavailability caused by the absence of alternate-lead carriers is shown in Supplementary Figure 3. 38 Arm A Arm B 0.5 1.0 1.5 2.0 2.5 3.0 3.5 
+
+> Matched-count enrichment
+> Microglia proxy
+> HaploPerturb top-ten HaploPerturb top-five HaploPerturb top-one Single lead
+
+Figure 6: Microglial eQTL enrichment from HaploPerturb and single-lead per-turbations. Arm A uses partners with r2 ≥ 0.8 and Arm B uses r2 ≥ 0.5. HaploPerturb top one, top five and top ten summarize AlphaGenome contrasts between high-probability haplotypes carrying opposite lead alleles; the single-lead strategy changes only the lead allele on GRCh38. For each strategy, the K highest-scoring locus–gene pairs are selected, where 
+
+K equals the number of Fujita two-step-FDR-positive pairs in the common evaluation set. Matched-count enrichment is the positive fraction among those selected pairs divided by the positive fraction in the full evaluation set, so the dashed line at one denotes no enrichment. Points are estimates based on complete gene-level exon unions, and error bars are the 2 .5th and 97 .5th percentiles from 10 ,000 whole-locus bootstrap samples. All Arm A intervals cross one. In Arm B, the intervals for all three HaploPerturb summaries lie above one, whereas the single-lead interval crosses one. 39 Top 1 Top 5 Top 10 −0.50 −0.25 0.00 0.25 0.50     
+
+> 1000 Genomes minus ROS/MAP enrichment
+> AArm A
+> Top 1 Top 5 Top 10
+> BArm B
+> HaploPerturb top 1 HaploPerturb top 5 HaploPerturb top 10 Empirical mode LD sign Single lead
+> 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+> Public-panel strategy matched-count enrichment C
+> HaploPerturb top 1 HaploPerturb top 5 HaploPerturb top 10 Empirical mode LD sign Single lead
+> D
+
+Figure 7: Public-panel haplotypes preserve microglial eQTL enrichment and per-form similarly under HaploPerturb and simpler construction strategies. Columns show Arm A ( r2 ≥ 0.8) and Arm B ( r2 ≥ 0.5). (A,B) Paired 1000 Genomes-minus-ROS/MAP enrichment differences for HaploPerturb top-one, top-five and top-ten summaries; positive values favor 1000 Genomes. The panel-specific enrichment estimates underlying these differences are shown in Supplementary Figure 7. (C,D) Enrichment for public-panel HaploPerturb top one, top five and top ten, the empirical conditional mode, the LD-sign background and the single-lead strategy. All scores use complete gene-level exon unions. Error bars are the 2 .5th and 97 .5th percentiles from 10 ,000 whole-locus bootstrap samples. Dashed lines mark difference zero in panels (A,B) and enrichment one in panels (C,D). Every public-minus-donor interval crosses zero. In Arm B, all HaploPerturb and simpler public-panel haplotype intervals lie above one, whereas the single-lead interval crosses one. 40

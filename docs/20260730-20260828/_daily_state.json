@@ -1,0 +1,409 @@
+{
+  "date": "20260730-20260828",
+  "date_label": "2026-07-30 ~ 2026-08-28",
+  "generated_at": "2026-08-28 13:21:16 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.05359v1",
+      "route": "20260730-20260828/2608.05359v1-cascade-an-agentic-regulatory-network-framework-for-patient-data-validated-downstream-perturbation-prediction",
+      "title": "CASCADE: An Agentic Regulatory Network Framework for Patient-Data-Validated Downstream Perturbation Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "智能体框架预测基因扰动后下游转录效应，直接对应基因扰动预测",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.06824v1",
+      "route": "20260730-20260828/2608.06824v1-control-anchored-residual-flow-matching-conditioned-on-gene-geometry-for-virtual-cell-perturbation-modeling",
+      "title": "Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "直接面向虚拟细胞扰动建模，预测未知基因扰动的转录响应",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.16419v1",
+      "route": "20260730-20260828/2608.16419v1-pertmind-eliciting-emergent-biological-reasoning-in-llm-via-reinforcement-learning-on-cellular-perturbation-data",
+      "title": "PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "直接面向基于大语言模型的基因扰动响应预测，利用细胞扰动数据训练",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-07-743481-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-07-743481-v1-slim-a-small-linear-model-with-string-embeddings-for-single-cell-genetic-perturbation-prediction",
+      "title": "SLIM: A small linear model with STRING embeddings for single-cell genetic perturbation prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 10.0,
+      "evidence": "直接利用STRING蛋白网络嵌入预测单细胞基因扰动响应",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2607.28090v1",
+      "route": "20260730-20260828/2607.28090v1-perturbmap-cross-context-transfer-of-single-cell-perturbation-responses",
+      "title": "PerturbMap: Cross-Context Transfer of Single-Cell Perturbation Responses",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "对缺失的单细胞扰动响应进行跨背景迁移预测",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.00152v1",
+      "route": "20260730-20260828/2608.00152v1-response-magnitude-as-a-dominant-signal-for-held-out-crispri-perturbation-effect-prediction",
+      "title": "Response Magnitude as a Dominant Signal for Held-Out CRISPRi Perturbation Effect Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "分析单细胞数据中留出CRISPRi扰动效应预测并揭示主导低维信号",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.01734v1",
+      "route": "20260730-20260828/2608.01734v1-llm-guided-retrieval-for-prediction-of-molecular-perturbation-responses",
+      "title": "LLM-Guided Retrieval for Prediction of Molecular Perturbation Responses",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "利用大语言模型引导检索并聚合相关化合物的实测响应来预测分子扰动响应",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.08430v1",
+      "route": "20260730-20260828/2608.08430v1-human-guided-causal-knowledge-injection-for-virtual-cells",
+      "title": "Human-Guided Causal Knowledge Injection for Virtual Cells",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "通过人类引导的因果知识注入的虚拟细胞建模用于细胞行为预测",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.15288v1",
+      "route": "20260730-20260828/2608.15288v1-d2r2-discrete-diffusion-with-regulation-reinforcement-for-single-cell-perturbation-prediction",
+      "title": "$D^{2}R^{2}$: Discrete Diffusion with Regulation Reinforcement for Single-Cell Perturbation Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "利用离散扩散模型预测基因扰动下的单细胞转录组响应",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.16424v1",
+      "route": "20260730-20260828/2608.16424v1-joint-flow-matching-enables-continuous-dose-conditioned-cell-morphing",
+      "title": "Joint Flow Matching Enables Continuous Dose-Conditioned Cell Morphing",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "预测化合物处理下的单细胞扰动响应，支持连续剂量控制",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.23114v1",
+      "route": "20260730-20260828/2608.23114v1-demixpert-decomposed-response-modeling-with-gaussian-mixtures-for-ood-single-cell-perturbation-prediction",
+      "title": "DeMixPert: Decomposed Response Modeling with Gaussian Mixtures for OOD Single-Cell Perturbation Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "基于高斯混合的分解响应建模，用于分布外单细胞扰动预测",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-04-732812-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-04-732812-v1-a-confound-diagnostic-toolkit-for-in-silico-perturbation-with-single-cell-foundation-models",
+      "title": "A confound-diagnostic toolkit for in silico perturbation with single-cell foundation models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "诊断通过删除单细胞基础模型基因token进行原位扰动时的混杂因素",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-07-743468-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-07-743468-v1-digiara-computationally-designs-plant-mutants-for-resistance-to-microbial-infection-in-arabidopsis",
+      "title": "DigiAra Computationally Designs Plant Mutants for Resistance to Microbial Infection in Arabidopsis",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "模拟遗传扰动的转录效应并筛选候选突变体",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-11-744106-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-11-744106-v1-method-choice-not-biology-determines-in-silico-perturbation-results-a-systematic-evaluation-of-eight-methods-across-four-datasets",
+      "title": "Method Choice, Not Biology, Determines In Silico Perturbation Results: A Systematic Evaluation of Eight Methods Across Four Datasets",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "对单细胞转录组扰动预测方法进行系统评估，直接比较八种方法",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.01669v2",
+      "route": "20260730-20260828/2608.01669v2-cellprism-a-visual-analytics-system-for-exploring-ai-driven-virtual-cells-in-drug-discovery",
+      "title": "CellPrism: A Visual Analytics System for Exploring AI-Driven Virtual Cells in Drug Discovery",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "面向药物发现中AI虚拟细胞模型的基因扰动响应预测与探索",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.05002v1",
+      "route": "20260730-20260828/2608.05002v1-haploperturb-low-rank-copula-construction-of-haplotype-perturbations-improves-sequence-to-function-analysis-of-alzheimers-disease-loci",
+      "title": "HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer's disease loci",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "为GWAS位点的序列-功能模型构建单倍型扰动",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.14293v1",
+      "route": "20260730-20260828/2608.14293v1-conditional-neural-optimal-transport-for-predicting-cellular-phenotypes-from-molecular-structure",
+      "title": "Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过条件神经最优传输预测分子扰动诱导的细胞表型",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.14542v1",
+      "route": "20260730-20260828/2608.14542v1-generation-powered-inference-for-distribution-valued-outcomes",
+      "title": "Generation-Powered Inference for Distribution-Valued Outcomes",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "针对基因扰动预测的分布值输出统计推断框架",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.21349v1",
+      "route": "20260730-20260828/2608.21349v1-perturbrx-learning-treatment-conditioned-latent-transitions-for-patient-drug-response-prediction",
+      "title": "PerturbRx: Learning Treatment-Conditioned Latent Transitions for Patient Drug Response Prediction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "通过治疗条件化潜空间转移进行单细胞药物扰动反应预测",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-03-742524-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-03-742524-v1-riborep-replicate-aware-cross-modal-transformers-for-codon-resolved-ribosome-density-prediction",
+      "title": "RiboRep: Replicate-Aware Cross-Modal Transformers for Codon-Resolved Ribosome Density Prediction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "明确面向扰动响应与分子状态模拟，服务于生物数字孪生",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "2608.22690v1",
+      "route": "20260730-20260828/2608.22690v1-morphoclip-text-supervised-contrastive-learning-for-perturbation-matching-in-cell-painting-images",
+      "title": "MorphoCLIP: Text-Supervised Contrastive Learning for Perturbation Matching in Cell Painting Images",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "利用文本监督对比学习进行遗传扰动的图像-表型匹配",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-07-28-741284-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-07-28-741284-v1-ceno-a-genome-scale-world-model-for-evolutionary-sequence-interpretation-and-programmable-regulatory-design",
+      "title": "CENO: A Genome-Scale World Model for Evolutionary Sequence Interpretation and Programmable Regulatory Design",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "在基因组世界模型中对反事实突变评分并设计调控序列",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-05-06-722433-v2",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-05-06-722433-v2-learning-activator-inhibitor-dynamics-at-the-cell-cortex-with-neural-likelihood-ratio-estimation",
+      "title": "Learning activator-inhibitor dynamics at the cell cortex with neural likelihood ratio estimation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基于神经网络的仿真推断用于细胞皮层激活-抑制动力学",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-03-740213-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-03-740213-v1-variantflux-a-genotype-first-modelling-workflow-for-predicting-the-impact-of-genetic-variations-on-human-metabolism",
+      "title": "VariantFlux: A genotype-first modelling workflow for predicting the impact of genetic variations on human metabolism",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "利用基因组规模代谢建模预测遗传变异对代谢的影响",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-15-745056-v1",
+      "route": "20260730-20260828/biorxiv-10-64898-2026-08-15-745056-v1-boyuegrn-zero-shot-causal-discovery-of-directed-gene-regulatory-networks-from-single-cell-transcriptomes-via-amortized-inference-over-synthetic-structural-causal-models",
+      "title": "BoYueGRN: Zero-shot causal discovery of directed gene regulatory networks from single-cell transcriptomes via amortized inference over synthetic structural causal models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "从单细胞转录组零样本发现因果基因调控网络，为扰动效应建模提供因果结构支撑",
+      "first_seen_at": "2026-08-28 13:21:16 UTC",
+      "updated_at": "2026-08-28 13:21:16 UTC"
+    }
+  ]
+}

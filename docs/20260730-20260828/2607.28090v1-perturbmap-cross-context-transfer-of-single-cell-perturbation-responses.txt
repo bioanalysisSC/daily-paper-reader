@@ -1,0 +1,312 @@
+Title: PerturbMap: Cross-Context Transfer of Single-Cell Perturbation Responses
+
+URL Source: https://arxiv.org/pdf/2607.28090v1
+
+Published Time: Fri, 31 Jul 2026 00:57:09 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# PerturbMap: Cross-Context Transfer of Single-Cell Perturbation Responses 
+
+Panpan Cui 1, Yiqi Liu 2, and Wenhao Sun 3
+
+> 1
+
+School of Advanced Interdisciplinary Sciences, University of Chinese Academy of Sciences 
+
+> 2
+
+Institute of Computing Technology, CAS; University of Chinese Academy of Sciences 
+
+> 3
+
+Hong Kong University of Science and Technology 
+
+Abstract 
+
+Single-cell perturbation atlases rarely measure every intervention in every cellular context: a query perturbation is often observed in one or more source contexts but missing in the recipient context where its effect is needed. Ignoring those measured responses discards query-specific experimental evidence, whereas copying or weakly calibrating them across contexts risks transferring the wrong signal. We propose PerturbMap , which predicts a missing recipient-context effect by combining a recipient-local low-rank base with accepted proposals that transport the same perturbation’s measured source responses through source-to-recipient ridge experts fit on paired training perturbations, with proposal weights determined by route reliability estimated on validation anchors. On the Perturb-CITE-seq melanoma cohort, 
+
+PerturbMap improves full-effect MSE by 4.1% over a recipient-local low-rank base and achieves lower MSE than FedAvg, zero-response, raw-copy, calibrated-copy, and identity-shuffled affine controls. It remains within 2 .82 × 10 −6 MSE of our centralized token-matched pooled reference, which uses a stronger training interface. A condition-mean specificity diagnostic shows the same direction: same-recipient top-10 counterpart retrieval by cosine increases from 74.5% for the low-rank base to 80.5% for PerturbMap .
+
+# 1 Introduction 
+
+Single-cell perturbation screens reveal how genetic interventions reshape transcriptional programs in specific biological contexts [15, 5, 9]. As these screens grow, their missingness becomes more structured rather than less important. A perturbation may be measured in several source contexts but absent from the recipient context where a scientist wants to reason about pathway regulation, cancer-state specificity, or experimental prioritization. In this setting, the source response is not merely side information about the perturbation. It is an experiment on the exact query intervention, observed in a different cellular context. The scientific question is how to reuse that evidence without erasing context. We call this problem source-observed, recipient-unmeasured perturbation response prediction, as shown in Fig. 1. For a query perturbation, model receives one or more control-relative source response vectors and must predict the hidden control-relative response in a recipient context. This setting differs from standard unseen perturbation prediction, where models such as scGen, GEARS and CPA generalize from perturbation and covariate representations [12, 16, 13]. The input is therefore richer than a perturbation identifier but still excludes the recipient outcome. The central technical challenge is selective trust. Directly copying a source response uses the query experiment but assumes away context-specific rewiring. A global multi-source regression can borrow information across observed contexts, but it must share one error model across perturbations whose transfer behavior may differ by gene program and recipient coordinate. 1arXiv:2607.28090v1 [cs.AI] 30 Jul 2026 Fig. 1: Motivation. Uniform late fusion and stacking are strong multi-view alternatives [20], yet they treat all calibrated routes as equally reliable. What is missing is an inference rule that learns directed source-to-recipient response maps and, using only paired training perturbations, decides which routes should influence a sealed query. 
+
+PerturbMap addresses this challenge with train-only reliability-weighted response transport. In the Frangieh evaluation, PerturbMap builds a shared train-only response basis from training effects and trains a recipient-local base predictor in that basis. Each observed source context then defines a ridge expert in the shared coordinate system. Before any held recipient response is opened, a disjoint training-anchor validation split fixes the interpolation strength and reliability of every route. During inference, the query’s measured source responses are propagated through the accepted experts and combined using fixed-route scores. The result is a response-reuse rule whose degrees of freedom are set by training anchors rather than by the identities it is asked to predict. We evaluate this idea on a manifest-backed Frangieh et al. Perturb-CITE-seq cohort with three cellular contexts and five identity-held outer folds [5]. PerturbMap improves full-effect MSE over the registered base predictor, FedAvg without query source-response tokens, calibrated and raw copy, and zero-response prediction, with a significant paired gain versus the base. A centralized token-matched pooled reference remains only marginally better, so train-only reliability weighting recovers nearly the same accuracy without a pooled training interface. 
+
+PerturbMap helps most held identities but not all; a query-adaptive harm-control gate further reduces harm directionally and is reported as an ablation. On a secondary Jiang et al. multi-source Perturb-seq check, reliability weighting also yields a small paired gain over uniform fusion, without using that cohort to choose the Frangieh operating point. This paper makes the following contributions: • We define source-observed, recipient-unmeasured perturbation response prediction as an identity-held test of whether measured source effects can help fill missing recipient effects. • We introduce PerturbMap , a train-only reliability-weighted transport method that maps source response tokens into recipient coordinates and combines accepted routes using validation-residual reliability. • We evaluate a query-adaptive harm-control gate as an ablation, finding directional MSE 2and harm-rate improvements that require stronger validation before becoming a headline contribution. • We evaluate PerturbMap on a manifest-backed multi-context Perturb-CITE-seq cohort with information-matched source-token controls, identity shuffles, paired uncertainty estimates, secondary response-shape diagnostics, and explicit harm-rate reporting. 
+
+# 2 Related Work 
+
+Single-cell perturbation prediction. Perturbation models such as GEARS and CPA predict responses for unseen interventions, combinations, or covariate settings by generalizing from perturbation, covariate, and basal-state representations [16, 13]. Benchmarks further show that perturbation-response prediction contains distinct information regimes [21, 19]. PerturbMap 
+
+studies a source-observed regime: the query perturbation has measured responses in source contexts, and the task is to reuse them to predict an unmeasured recipient-context effect. 
+
+Context transfer and virtual-cell models. Context-transfer and virtual-cell methods model shifts across conditions, including neural optimal transport, conditional transport, and broader virtual-cell predictors [1, 4, 22, 3, 6, 2, 8]. These methods support the premise that context variation is structured, but usually align full cell populations or generate cell-level counterfactuals from descriptors, controls, or pretraining corpora. PerturbMap instead transports condition-level effects for the same query intervention while keeping the recipient outcome sealed. 
+
+Multi-source adaptation and reliability-aware fusion. Federated optimization, domain adaptation, and federated personalization address heterogeneous sources through distributed training or source-invariant/source-aware predictors [14, 17, 7, 18, 11, 10]. Multi-view fusion methods such as averaging or stacking can combine source predictions, but can be brittle when reliability varies by directed source-recipient route. PerturbMap instead uses measured source responses as query-time tokens and calibrates each route on paired training anchors to form a train-only reliability-weighted consensus. 
+
+# 3 Problem Setup 
+
+Condition-level perturbation response. Let c ∈ C denote a cellular context and let p denote a genetic perturbation. On a fixed gene axis of dimension D, the context-local control-relative response is 
+
+yc(p) = E[X | p, c ] − E[X | control , c ] ∈ RD. (1) In the Frangieh et al. evaluation, the empirical response uses the condition mean minus a context-local control mean on the fixed 5,000-gene axis. The prediction target is the full control-relative effect vector, not a cell-level distribution or a perturbation label. This condition-level contract is intentionally narrower than distributional counterfactual generation: it asks whether a missing mean perturbation effect can be completed in an atlas, not whether the full within-condition single-cell state distribution is reproduced. 
+
+Source-observed, recipient-unmeasured queries. For a recipient context r, let Sr ⊆ C \{ r}
+
+denote the observed source contexts; in the Frangieh evaluation, these are the non-recipient contexts. The training identities Itrain have paired responses in the source contexts and in the 3Fig. 2: PerturbMap protocol overview. recipient context. For a held query perturbation q, the available query input is 
+
+Xr(q) = 
+
+> (
+
+{ys(q)}s∈S r , r, 
+
+{(ys(p), y r(p)) }p∈I train 
+
+> s∈S r
+> )
+
+. (2) The held recipient response yr(q) is unavailable until after a sealed prediction has been written. The model output is ̂
+
+yr(q) = Fr ({ys(q)}s∈S r ; Itrain ) . (3) This contract directly tests whether measured source responses of the same perturbation can improve recipient prediction beyond source copying, zero-response nulls, and information-matched fusion baselines. 
+
+Identity-held information boundary. All evaluation splits are by perturbation identity. For each recipient-by-fold prediction, the held identities are excluded from recipient coordinate construction, source-to-recipient map fitting, train-only reliability calibration, and any baseline training. Source responses for held identities remain available only because they are the query measurements in Eq. 3. The scoring program authenticates every sealed prediction artifact before opening any held recipient matrix rows and persists per-condition scores rather than held response vectors. 
+
+# 4 Method 
+
+4.1 Overview 
+
+Fig. 2 summarizes the PerturbMap workflow. PerturbMap predicts a missing recipient response by combining a recipient-local base predictor with source-specific response-transport proposals. The method has four modules. First, it builds train-only response coordinates. Second, it fits a recipient-local low-rank base predictor that does not use query source-response tokens. Third, it fits one regularized source-to-recipient expert per observed source context. Fourth, it uses a disjoint training-anchor validation split to estimate each route’s interpolation strength and global route reliability before predicting held queries. We additionally evaluate a low-capacity query-adaptive gate as a harm-control component. 44.2 Train-Only Response Coordinates 
+
+Let Y tr denote the collection of training response rows available across clients. In the Frangieh implementation, PerturbMap fits a shared rank-K train-only covariance-sketch basis with QR iterations, 
+
+zc(p) = ( yc(p) − μ)U ⊤, D(z) = μ + zU, (4) where μ and U are computed without held recipient rows. This shared basis is the coordinate system used by the recipient-local base predictor, the source response tokens, and the source-to-recipient route maps. Decoded predictions are evaluated on the original full-gene axis, so the low-rank representation is an estimation device rather than a reduced evaluation target. 
+
+4.3 Recipient-Local Base Predictor 
+
+The base predictor br(p) is the model PerturbMap falls back to when source transport is not validated. It predicts response-coordinate coefficients from the perturbation descriptor using a client-local network: LayerNorm, a width-128 linear layer, GELU, and a linear rank-K output head. The decoded prediction is μ + gr(xp)U , where xp is the fixed perturbation descriptor. The network is trained on recipient-train identities with coefficient-space MSE; round selection uses decoded full-effect validation MSE. In Frangieh, xp is not a one-hot perturbation identity. It is the targeted gene’s train-only control descriptor: correlations with the 64 most variable control-anchor genes, plus control mean, standard deviation, and detection frequency. Thus the base has no query-specific perturbation-effect token; the measured source response is the only query-visible effect measurement. The Frangieh run uses rank K = 16, batch size 16, learning rate 10 −3, weight decay 10 −4, three local epochs per round, at most 100 rounds, and validation early stopping with patience 15. 
+
+4.4 Source-to-Recipient Experts 
+
+For a recipient r and source s ∈ S r, the paired training perturbations define source and recipient coordinate matrices Zs and Zr in the shared train-only coordinate system. PerturbMap fits an affine ridge response map by centering the paired coordinates. Let ˜Zs and ˜Zr denote the centered source and recipient matrices. The linear map is 
+
+As→r = arg min  
+
+> A
+
+∥ ˜ZsA − ˜Zr∥2 
+
+> F
+
++ λη s∥A∥2 
+
+> F
+
+, (5) where ηs is the average source-coordinate energy used to scale the ridge penalty; the affine bias is the difference between the recipient anchor mean and the mapped source anchor mean. Given a held query source response ys(q), the uncalibrated expert prediction ts→r(q) is obtained by applying this centered affine map and decoding back to the full-gene axis. This expert uses the actual observed response of the query perturbation in source context s, but it never reads yr(q). 
+
+4.5 Train-Only Reliability Calibration 
+
+Let br(p) be the recipient-local low-rank base prediction for perturbation p and let ts→r(p) be the decoded source-transport prediction from source s to recipient r. On disjoint validation anchors Vr, PerturbMap fits a route-specific interpolation coefficient 
+
+αs→r = clip [0 ,1]  
+
+> ∑
+> p∈V r
+
+⟨yr(p) − br(p), t s→r(p) − br(p)⟩ 
+
+> ∑
+> p∈V r
+
+∥ts→r(p) − br(p)∥22
+
+. (6) The route proposal is 
+
+cs→r(q) = (1 − αs→r)br(q) + αs→rts→r(q). (7) 5Its train-only route score is the relative validation-MSE reduction 
+
+ρs→r = max 
+
+> (
+
+0, 1 − MSE p∈V r (yr(p), c s→r(p)) MSE p∈V r (yr(p), b r(p)) + ϵ
+
+> )
+
+, (8) with ϵ = 10 −12 in the Frangieh implementation. This score is a validation-split route statistic, not a query-level uncertainty bound. 
+
+Query-adaptive harm control. PerturbMap also evaluates a second, low-capacity query-route gate on the same validation anchors. For each validation query p and candidate route s → r,we build a label-free feature vector containing: query distance to recipient-train perturbation de-scriptors; source-response distance to source-train response anchors; source-to-base displacement; source-response norm and sparsity; candidate disagreement across source experts; train-anchor route residual MSE; and the route’s αs→r, ρs→r, and validation support. A regularized logistic model estimates 
+
+πs→r(q) = P
+
+> [
+
+MSE( cs→r(q), y r(q)) 
+
+< MSE( br(q), y r(q)) | ϕs→r(q) 
+
+> ]
+
+(9) using validation-anchor labels only. The harm-control query weight is 
+
+ws→r(q) = ρs→rπs→r(q). (10) The main Frangieh configuration, denoted PerturbMap -GR, uses the global route-reliability aggregate ̂
+
+yr(q) = ∑ 
+
+> s∈A gr
+> r(q)
+
+ρs→r|V s→r|  
+
+> ∑
+> s′∈A gr
+> r(q)
+
+ρs′→r|V s′→r| cs→r(q), (11) where Agr  
+
+> r
+
+(q) is the set of query-available source routes with positive validation reliability, and 
+
+Vs→r ⊆ V r denotes the validation anchors available for route s → r. The predictor falls back to 
+
+br(q) if no source route is accepted. The query-adaptive harm-control ablation, denoted PerturbMap -ADAP, instead uses ̂
+
+yr(q) = ∑ 
+
+> s∈A adap
+> r(q)
+
+ws→r(q)|V s→r|  
+
+> ∑
+> s′∈A adap
+> r(q)
+
+ws′→r(q)|V s′→r| cs→r(q), (12) where Aadap  
+
+> r
+
+(q) is the set of query-available source routes with positive validation reliability and query probability above a validation-selected threshold. The predictor falls back to br(q)if no source route is accepted. We report PerturbMap -ADAP as a directional harm-control ablation because its Frangieh MSE confidence interval versus PerturbMap -GR crosses zero. 
+
+4.6 Split Discipline 
+
+For each Frangieh outer fold, 40 perturbation identities are held out for testing. The 200 supported identities each serve as a held recipient query exactly once in the frozen Frangieh protocol. Recipient counts are 67, 67, and 66 across the three contexts, and the non-recipient contexts provide query-visible source-response tokens. The remaining identities are split into train and a disjoint inner-validation set using the frozen split seed 20,260,718 and validation fraction 0.2. The outer-test recipient response is never used to fit the base predictor, response coordinates, ridge maps, α, ρ, optional query gate, route admission, or source aggregation. Inner-validation identities are used for early stopping, ridge selection, and the reliability quantities in Eq. 6–Eq. 12. All non-recipient contexts for held or validation identities remain available only as source-response tokens. 64.7 Frozen Outer-Fold Inference 
+
+All hyperparameters, folds, source contexts, and comparison methods are frozen before held-test scoring. Each outer-fold job writes a result artifact and a manifest that records the code revision, source-file hashes, input checksum, fold, held identities, and read audit. The scoring program authenticates the manifest before aggregating held recipient effects. This execution boundary is part of the method because it prevents reliability estimates, coordinate choices, ridge selection, or baseline selection from using the target responses they are meant to predict. 
+
+# 5 Experiments 
+
+5.1 Frangieh et al. Multi-Context Evaluation 
+
+The primary evaluation uses the Frangieh et al. multimodal Perturb-CITE-seq melanoma immune-evasion cohort [5]. The processed manifest-backed matrix contains 109,155 cells, 5,000 genes, and three selected cellular contexts: Co-culture, Control, and IFN γ. The frozen support contains 200 shared perturbation identities. 
+
+Identity-held query protocol. Each of the 200 identities is scored exactly once as a held recipient query, with recipient assignment balanced as 67, 67, and 66 across contexts. For a query assigned to recipient r, the two non-recipient contexts provide query-visible source-response tokens, while yr(q) remains sealed until after prediction. The primary score therefore aggregates 200 source-observed, recipient-unmeasured queries rather than a full recipient-by-identity Cartesian product. The evaluation uses five identity-held outer folds of 40 test identities each. Within each fold, the remaining 160 identities are split into train and a disjoint inner-validation set with frozen seed 20,260,718 and validation fraction 0.2. Fitting and selection use only train or validation identities under the split discipline of Sec. 4; held recipient responses are never read. Non-recipient contexts of held or validation identities remain available only as source-response tokens. The run freezes the data artifacts, contexts, identities, folds, rank-16 response coordinates, ridge grid 
+
+{10 −3, 10 −2, 10 −1, 1, 10 }, and PerturbMap -GR aggregation; ridge is chosen by inner-validation MSE, and held effects are scored once. 
+
+Metrics and uncertainty. The primary metric is condition-level full-effect MSE on the fixed 5,000-gene axis. Secondary metrics are top-20 absolute-effect MSE, effect-vector Pearson correlation, and cosine similarity, each computed per identity and then averaged; top-20 genes are selected from the absolute true recipient effect. A win (harm) is a held identity with strictly lower (higher) full-effect MSE than a stated comparator; ties count as neither. On Frangieh the default comparator is LowRank ; on Jiang it is uniform expert fusion. We also report top-20 gene overlap, sign agreement on the true top-20 genes, cosine-based top-10 retrieval relative to 
+
+LowRank , average per-fold communication payload, and five-fold runner wall time. Uncertainty uses outer-fold-stratified paired bootstrap over perturbation identities; we report 95% confidence intervals for selected method-minus-comparator MSE contrasts, and treat aggregate gaps without intervals as descriptive only. 
+
+5.2 Baselines, References, and Ablations 
+
+Comparisons are organized by the claim they test. 
+
+Does the query source response add information? LowRank is the registered recipient-local LowRank predictor sharing the response basis and optimization budget of PerturbMap 
+
+7but receiving no query source-response token. FedAvg is a no-token federated MLP reference outside the low-rank response-coordinate architecture. Zero response is the low-variance null. 
+
+Is the gain due to identity-aligned transport? Raw copy directly transfers source full-gene effects through the same route-admission and aggregation rule as PerturbMap -GR. Calibrated copy replaces the fitted affine map with the identity map in response coordinates while retaining the validation-calibrated interpolation, route admission, and aggregation. Identity-shuffled affine transport keeps the model class and anchor count but applies a route-specific derangement of source–recipient anchor pairings. Two equal-token adapted baselines receive the same query-visible source tokens without directed transport: source-token ridge and a validation-selected two-layer source-token MLP. 
+
+How close is client-local training to a stronger interface? TokPool matches the query-time source token, train-only basis, affine routes, route admission, and source-token policy of PerturbMap , but replaces client-local recipient training with a centrally shared trunk and one linear rank-K head per recipient. It is a performance target rather than an interface-matched baseline; Frangieh tables report its absolute MSE and gap to PerturbMap -GR, not a ∆ against 
+
+LowRank .
+
+Which components and operating points matter? To test whether LowRank is under-powered, we evaluate an RBF kernel low-rank regressor and a validation-selected blend with 
+
+LowRank . We also probe reliability-modulated uncertainty, validation-selected α bounds from {[0 , 1] , [−0.25 , 1.25] , [−0.5, 1.5] , [−1, 2] }, and directed routes capped at 32, 64, or 96 paired train anchors. Reported Frangieh variants are PerturbMap -GR, PerturbMap -ADAP, 
+
+PerturbMap -MAX, PerturbMap -R8, and PerturbMap -R32: PerturbMap -GR uses route-level ρs→r; PerturbMap -ADAP multiplies by the query gate; PerturbMap -MAX selects the accepted route with largest ρ; and the rank variants change only K. Uniform fusion, no-α,and no-ρ are treated as diagnostic operating-point probes, while the Jiang cohort provides the secondary sealed reliability-fusion comparison under richer source support. 
+
+Secondary reliability-fusion check. We report a previously sealed Jiang et al. multi-source Perturb-seq check [9] only to isolate reliability weighting under richer source support. It is an independent frozen protocol: six recipient contexts, five observed sources per recipient, rank-64 coordinates, ridge 1.0, and cross-fitted posterior-consensus reliability. Comparators are uniform expert averaging, out-of-fold expert stacking, and a joint multi-source affine ridge. We denote the Jiang reliability-weighted entry by PerturbMap ; it is not Frangieh PerturbMap -GR. Harm and win rates are relative to uniform fusion. 
+
+5.3 Development Boundary 
+
+Earlier Replogle and SciPlex3 analyses were used only for method development and successor search. They motivate the current response-reuse formulation, but they are not final test evidence for the Frangieh claims in this paper. 
+
+# 6 Results 
+
+6.1 Primary Frangieh Results 
+
+Across 200 identity-held perturbations, measured source responses improve recipient prediction beyond LowRank . Tab. 1 shows that PerturbMap -GR reduces full-effect MSE by 6 .80 ×
+
+10 −5, or 4.1%. The paired 95% confidence interval is [ −1.16 , −0.33] × 10 −4 and excludes zero. 8PerturbMap -GR improves 161 of 200 identities and harms 39 relative to LowRank . Its aggregate MSE is also 3 .66 × 10 −4 to 3 .81 × 10 −4 below the two no-token controls and 5 .6 × 10 −5
+
+to 6 .3 × 10 −5 below the copy and shuffled-affine controls; the shuffled contrast is paired-significant in Tab. 3, while the copy gaps are reported as aggregate MSE differences. These comparisons support the main claim that identity-aligned source responses provide predictive information beyond recipient-only behavior, direct transfer, and marginal calibration. The remaining gap to the stronger centralized TokPool is 2 .82 × 10 −6. PerturbMap -ADAP reduces harm to 32 identities, but its paired confidence interval against PerturbMap -GR includes zero. Method MSE (×10 −3)∆ vs. LowRank 
+
+(×10 −5)
+
+PerturbMap-GR 1.581 −6.80 
+
+PerturbMap -ADAP 1.569 −8.04 
+
+TokPool 1.578 –
+
+LowRank 1.649 0Calibrated copy 1.644 −0.55 Raw copy 1.640 −0.86 Shuffled affine 1.637 −1.20 FedAvg 1.947 +29 .8Zero response 1.961 +31 .2Table 1: Frangieh et al. multi-context evaluation. Fig. 3 summarizes identity-level gains and operating-point sensitivity on Frangieh. The aggregate gain is broad but not uniform across identities, and the ablation panel shows that nearby operating-point differences are much smaller than the gain over LowRank . Tab. 2 tests whether the improvement extends beyond full-effect MSE. PerturbMap -GR reduces top-20 MSE by about 12% against direct-copy controls and by 28–35% against the no-token controls. Pearson and cosine increase by 2.4–2.8 percentage points against direct copy. Harm falls to 19.5%, compared with 49.5% for raw copy and 54.5% for calibrated copy. Thus, source-response transport improves both effect magnitude and response shape while reducing negative transfer relative to copy controls. Additional diagnostics agree: top-20 gene overlap rises from 9.23% to 10.63%, direction agreement rises from 89.73% to 90.75%, and cosine-based top-10 retrieval rises from 74.5% to 80.5% relative to LowRank .
+
+Fig. 3: Identity-level gains and operating-point sensitivity. 9Method Top-20 ( ×10 −2) Pear. Cos. Harm 
+
+PerturbMap -GR 2.85 0.448 0.450 0.195 
+
+PerturbMap -ADAP 2.72 0.449 0.451 0.160 
+
+TokPool 2.83 0.448 0.451 0.220 Calibrated copy 3.27 0.420 0.422 0.545 Raw copy 3.23 0.424 0.426 0.495 Shuffled affine 3.32 0.432 0.435 0.220 FedAvg 3.93 0.191 0.191 –Zero response 4.36 0.000 0.000 –Table 2: Frangieh aggregate metrics. Comparator ∆MSE ( ×10 −5) Wins / 200 
+
+All rows: PerturbMap − GR vs. comparator; CI excludes zero. 
+
+RBF kernel base −5.46 136 Adapt. MLP/kernel −5.72 144 Token ridge −3.51 138 Token MLP −4.00 142 Cap-32 anchors −3.78 138 Cap-64 anchors −1.66 134 Shuffled affine −5.60 128 Table 3: Frangieh method diagnostics. 
+
+6.2 Method Diagnostics and Operating Point 
+
+Tab. 3 probes alternative explanations for the main performance gain. PerturbMap -GR improves over nonlinear recipient-only baselines by 5 .46 × 10 −5 to 5 .72 × 10 −5 MSE and over equal-token ridge/MLP predictors by 3 .51 × 10 −5 to 4 .00 × 10 −5, winning 136–144 of 200 paired identities. The identity-shuffled control is worse by 5 .60 × 10 −5, isolating aligned source-to-recipient pairing. Route support also matters: caps of 32 and 64 anchors significantly degrade MSE. Several variants are statistically tied with PerturbMap -GR (CI includes zero): PerturbMap -ADAP vs. PerturbMap -GR ( −1.23 × 10 −5), uncertainty modulation ( −0.006 × 10 −5), α-extrapolation (−0.020 × 10 −5), the 96-anchor cap ( −0.020 × 10 −5), and raw-copy vs. shuffled (+0 .35 × 10 −5). Tab. 4 measures sensitivity to aggregation and response rank. All three variants remain within 7 .5 × 10 −6 MSE of PerturbMap -GR, which is more than 9 × smaller than the main gain over LowRank . Increasing rank from PerturbMap -R8 to PerturbMap -R32 raises communication from 4.02 to 9.96 MB without a monotonic accuracy gain. These results support robustness to the tested operating points, not superiority of rank 16. Accordingly, the frozen rank-16 configuration remains the headline rather than a post-hoc best variant. It communicates 6.00 MB per fold, and the five folds require 76.4 s of recorded runner wall time. Setting MSE (×10 −3)∆MSE (×10 −5) MB MAX 1.573 −0.75 6.00 R32 1.580 −0.14 9.96 R8 1.575 −0.55 4.02 Table 4: Frangieh ablation summary for PerturbMap variants. ∆MSE is measured relative to 
+
+PerturbMap -GR. 10 6.3 Robustness Across Folds and Contexts 
+
+Tab. 5 tests whether the aggregate result depends on one outer fold. In every fold, PerturbMap -GR remains within 1 .37 × 10 −5 MSE of TokPool . FedAvg and zero response remain worse by 3.05 × 10 −4 to 4 .47 × 10 −4 across the same folds. The main separation therefore persists across held identity partitions rather than a single favorable split. Method F0 ( ×10 −3) F1 F2 F3 F4 
+
+PerturbMap -GR 1.511 1.572 1.564 1.597 1.661 
+
+TokPool 1.511 1.571 1.564 1.598 1.647 FedAvg 1.866 1.917 1.869 2.012 2.069 Zero response 1.891 1.910 1.886 2.044 2.077 Table 5: Frangieh outer-fold MSE. Tab. 6 defines the context boundary of the aggregate claim. Control is the hardest recipient, with MSE 1 .86 × 10 −3, which is 30% above Co-culture. Top-20 MSE varies by only 6 .0 × 10 −4
+
+across recipients, while IFN γ has the highest Pearson and cosine values. The principal context variation is therefore in full-effect magnitude, not in response-shape ordering. Recipient MSE ( ×10 −3) Top-20 ( ×10 −2) Pear. Cos. Co-culture 1.426 2.85 0.443 0.441 Control 1.857 2.89 0.445 0.444 IFN γ 1.463 2.83 0.455 0.466 Table 6: PerturbMap -GR recipient-context metrics. Tab. 7 shows that source routes are not exchangeable under the same split protocol. Validation confidence ranges from 0.015 to 0.093, a 6 .2× difference, and transport reduces validation MSE on all six routes by roughly 1 .0 × 10 −5 to 1 .4 × 10 −4. The strongest route is IFN γ→Co-culture, while routes into Control retain validation MSE near 2 .1 × 10 −3. This motivates route-specific trust scores on Frangieh, while the independent Jiang check separately tests reliability weighting against uniform fusion under richer source. Route α Val. MSE ( ×10 −3) Conf. Base Transport Co-culture →Control 0.75 2.17 2.14 0.015 Co-culture →IFN γ 0.75 1.50 1.36 0.063 Control →Co-culture 0.58 1.24 1.23 0.015 Control →IFN γ 0.77 1.50 1.47 0.019 IFN γ→Co-culture 0.90 1.24 1.11 0.093 IFN γ→Control 0.97 2.17 2.11 0.028 Table 7: PerturbMap -GR source-to-recipient route. 
+
+6.4 Secondary Multi-Source Check 
+
+Fig. 4 isolates reliability weighting in a richer five-source setting under the sealed Jiang protocol rather than Frangieh PerturbMap -GR. Reliability-weighted PerturbMap improves over uniform fusion by 1 .23 × 10 −6 MSE. Its paired 95% confidence interval is [ −2.44 , −0.30] × 10 −6
+
+and excludes zero. It also improves over out-of-fold stacking by 1 .19 × 10 −5. The win rate against uniform fusion is 63.9%, but the 36.1% harm rate relative to uniform fusion rules out a route-universal claim. Jiang therefore provides an independent, sealed reliability-fusion check in a richer setting. 11 2.046 2.058 2.165 2.199    
+
+> 1.95 22.05 2.1 2.15 2.2 2.25 PerturbMap Uniform expert fusion OOF expert stacking Joint source affine ridge
+> MSE ( ×10 -4 )
+
+Fig. 4: Secondary Jiang et al. reliability-fusion check. 
+
+# 7 Discussion 
+
+Claim and limits. The Frangieh evaluation shows that measured source responses can serve as query-time evidence for a missing recipient mean effect. Under a client-local, identity-held interface, PerturbMap -GR improves over LowRank , no-token baselines, and copy or shuffled-affine controls, while remaining close to the stronger centralized TokPool . The claim is source-response reuse under a sealed information boundary, not state-of-the-art virtual-cell prediction or absence of negative transfer: PerturbMap -GR still harms 19.5% of identities relative to LowRank .
+
+Scope and implications. Frangieh most directly supports identity-aligned response transport: copy and shuffled-affine controls separate marginal calibration from paired source-response reuse, and stronger recipient-only or equal-token predictors do not recover the gain. Route heterogeneity motivates source-specific trust, with Jiang providing a secondary reliability-weighted fusion check under richer source support. The evaluation predicts condition-mean effects rather than within-condition single-cell distributions; downstream uses involving state mixtures, rare subpopulations, or distributional distances will require cell-level generators or transport models that preserve the same identity-held source-token boundary. 
+
+# 8 Conclusion 
+
+Single-cell perturbation atlases often miss context–perturbation pairs even when the same intervention has been measured in other contexts. In this paper, we propose PerturbMap , a source-response transport framework that predicts missing recipient-context effects by mapping measured source responses through train-only reliability-weighted source-to-recipient routes. On a Perturb-CITE-seq melanoma immune-evasion evaluation, PerturbMap reduces full-effect MSE from 1 .6490 × 10 −3 to 1 .5809 × 10 −3 relative to a recipient-local base predictor while remaining close to a stronger centralized token-matched reference. 
+
+# References 
+
+[1] Charlotte Bunne, Stefan G. Stark, Gabriele Gut, et al. Learning single-cell perturbation responses using neural optimal transport. Nature Methods , 20(11):1759–1768, 2023. doi: 10.1038/s41592-023-01969-x. 12 [2] Shuizhou Chen, Lang Yu, Kedu Jin, Songming Zhang, Hao Wu, Wenxuan Huang, Sheng Xu, Quan Qian, Qin Chen, Lei Bai, Siqi Sun, and Zhangyang Gao. SCALE: Scalable conditional atlas-level endpoint transport for virtual cell perturbation prediction. arXiv preprint arXiv:2603.17380 , 2026. [3] Changxi Chi, Yufei Huang, Jun Xia, Jiangbin Zheng, Yunfan Liu, Zelin Zang, and Stan Z. Li. Departures: Distributional transport for single-cell perturbation prediction with neural schrödinger bridges. arXiv preprint arXiv:2511.13124 , 2025. [4] Alice Driessen, Benedek Harsanyi, Marianna Rapsomaniki, and Jannis Born. Towards generalizable single-cell perturbation modeling via the conditional monge gap. arXiv preprint arXiv:2504.08328 , 2025. [5] Chris J. Frangieh, Johannes C. Melms, Pratiksha I. Thakore, et al. Multimodal pooled Perturb-CITE-seq screens in patient models define mechanisms of cancer immune evasion. 
+
+Nature Genetics , 53:332–341, 2021. doi: 10.1038/s41588-021-00779-1. [6] Boyang Fu, George Dasoulas, Sameer Gabbita, Xiang Lin, Shanghua Gao, Xiaorui Su, Soumya Ghosh, and Marinka Zitnik. STRAND: Sequence-conditioned transport for single-cell perturbations. arXiv preprint arXiv:2602.10156 , 2026. [7] Yaroslav Ganin, Evgeniya Ustinova, Hana Ajakan, Pascal Germain, Hugo Larochelle, Francois Laviolette, Mario Marchand, and Victor Lempitsky. Domain-adversarial training of neural networks. Journal of Machine Learning Research , 17(59):1–35, 2016. [8] Danning Jiang, Zheming An, Yalong Zhao, and Lipeng Lai. OCOO-T: A simple and scalable virtual cell model for transcriptional perturbation response prediction. arXiv preprint arXiv:2606.12838 , 2026. [9] Longda Jiang, Carol Dalgarno, Efthymia Papalexi, et al. Systematic reconstruction of molecular pathway signatures using scalable single-cell perturbation screens. Nature Cell Biology , 27:505–517, 2025. doi: 10.1038/s41556-025-01622-z. [10] Peter Kairouz, H. Brendan McMahan, Brendan Avent, Aurélien Bellet, Mehdi Bennis, Ar-jun Nitin Bhagoji, Keith Bonawitz, Zachary Charles, Graham Cormode, Rachel Cummings, et al. Advances and open problems in federated learning. Foundations and Trends in Machine Learning , 14(1–2):1–210, 2021. [11] Xiaoxiao Li, Meirui Jiang, Xiaofei Zhang, Michael Kamp, and Qi Dou. FedBN: Federated learning on non-IID features via local batch normalization. In International Conference on Learning Representations , 2021. [12] Mohammad Lotfollahi, F. Alexander Wolf, and Fabian J. Theis. scgen predicts single-cell perturbation responses. Nature Methods , 16:715–721, 2019. doi: 10.1038/s41592-019-0494-8. [13] Mohammad Lotfollahi, Anja Klimovskaia Susmelj, Carlo De Donno, et al. Predicting cellular responses to complex perturbations in high-throughput screens. Molecular Systems Biology , 2023. [14] Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas. Communication-efficient learning of deep networks from decentralized data. In 
+
+Proceedings of the 20th International Conference on Artificial Intelligence and Statistics ,pages 1273–1282, 2017. [15] Joseph M. Replogle, Reuben A. Saunders, Angela N. Pogson, et al. Mapping information-rich genotype-phenotype landscapes with genome-scale perturb-seq. Cell , 185(14):2559–2575.e28, 2022. 13 [16] Yusuf Roohani, Kexin Huang, and Jure Leskovec. Predicting transcriptional outcomes of novel multigene perturbations with GEARS. Nature Biotechnology , 2023. [17] Anit Kumar Sahu, Tian Li, Maziar Sanjabi, Manzil Zaheer, Ameet Talwalkar, and Virginia Smith. Federated optimization in heterogeneous networks. In Proceedings of Machine Learning and Systems , 2020. [18] Baochen Sun and Kate Saenko. Deep CORAL: Correlation alignment for deep domain adaptation. In European Conference on Computer Vision Workshops , 2016. [19] Zhiting Wei, Yiheng Wang, Yicheng Gao, Shuguang Wang, Ping Li, Duanmiao Si, Yuli Gao, Siqi Wu, Danlu Li, Kejing Dong, et al. Benchmarking algorithms for generalizable single-cell perturbation response prediction. Nature Methods , 23(2):451–464, 2026. [20] David H. Wolpert. Stacked generalization. Neural Networks , 5(2):241–259, 1992. doi: 10.1016/S0893-6080(05)80023-1. [21] Yan Wu, Esther Wershof, Sebastian M. Schmon, Marcel Nassar, et al. PerturBench: Benchmarking machine learning models for cellular perturbation analysis. arXiv preprint arXiv:2408.10609 , 2024. [22] Chenglei Yu, Chuanrui Wang, Bangyan Liao, and Tailin Wu. scdfm: Distributional flow matching model for robust single-cell perturbation prediction. arXiv preprint arXiv:2602.07103 , 2026. 14
