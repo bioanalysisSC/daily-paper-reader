@@ -48,17 +48,17 @@
 <section class="dpr-home-dashboard-card dpr-home-report-card">
   <div class="dpr-home-dashboard-header">
     <div>
-      <span class="dpr-home-dashboard-kicker">2026-07-30 ~ 2026-08-28</span>
+      <span class="dpr-home-dashboard-kicker">2026-08-29</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 25 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
     <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>14</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>7</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-28 13:21:16 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-29 03:01:13 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,9 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>本期25篇论文聚焦AI虚拟细胞与扰动预测，两篇满分精读均提出全新细胞扰动建模框架。</p>
-<p>最值得关注CASCADE与Control-Anchored Residual Flow，分别以调控网络和基因几何条件生成实现高精度下游扰动预测；速读中CellPrism可视化系统也适配药物发现场景。</p>
-<p>对普通读者，可跟进这些方法在罕见病靶点筛选和单细胞数据增强上的后续应用，留意算法开源与基准测试结果。</p>
+<p>今日精读5篇、速读7篇，聚焦AI驱动生物系统建模与蛋白质大模型新范式。</p>
+<p>最值得关注9.0分两项：《DigiPhen》提出生物系统预测新范式，《RegimeFormer》构建全局扰动蛋白质模型。</p>
+<p>建议优先精读这两篇高分工作，快速把握AI破解生物扰动的核心思路。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -80,12 +80,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">精读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">14 篇</strong>
+    <strong class="dpr-home-dashboard-count">5 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CASCADE: An Agentic Regulatory Network Framework for Patient-Data-Validated Downstream Perturbation Prediction">CASCADE: An Agentic Regulatory Network Framework for Patient-Data-Validated Downstream Perturbation Prediction</span></li><li><span class="dpr-home-dashboard-paper-title" title="Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling">Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling</span></li><li><span class="dpr-home-dashboard-paper-title" title="PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data">PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="DigiPhen: a new paradigm for building predictive models of biological systems">DigiPhen: a new paradigm for building predictive models of biological systems</span></li><li><span class="dpr-home-dashboard-paper-title" title="RegimeFormer: A Large Protein Model of Global Perturbation Regimes">RegimeFormer: A Large Protein Model of Global Perturbation Regimes</span></li><li><span class="dpr-home-dashboard-paper-title" title="Distributional Extrapolation for Interactions">Distributional Extrapolation for Interactions</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>14</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>5</strong></span></div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-skim-card">
   <div class="dpr-home-dashboard-header">
@@ -93,12 +93,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">11 篇</strong>
+    <strong class="dpr-home-dashboard-count">7 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="CellPrism: A Visual Analytics System for Exploring AI-Driven Virtual Cells in Drug Discovery">CellPrism: A Visual Analytics System for Exploring AI-Driven Virtual Cells in Drug Discovery</span></li><li><span class="dpr-home-dashboard-paper-title" title="HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer&#x27;s disease loci">HaploPerturb: Low-rank copula construction of haplotype perturbations improves sequence-to-function analysis of Alzheimer&#x27;s disease loci</span></li><li><span class="dpr-home-dashboard-paper-title" title="Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure">Conditional Neural Optimal Transport for Predicting Cellular Phenotypes from Molecular Structure</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations">Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations</span></li><li><span class="dpr-home-dashboard-paper-title" title="Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models">Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics">TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>11</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>7</strong></span></div>
 </section>
 </div>
 

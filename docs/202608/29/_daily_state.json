@@ -1,0 +1,201 @@
+{
+  "date": "20260829",
+  "date_label": "",
+  "generated_at": "2026-08-29 03:01:13 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.22079v1",
+      "route": "202608/29/2608.22079v1-digiphen-a-new-paradigm-for-building-predictive-models-of-biological-systems",
+      "title": "DigiPhen: a new paradigm for building predictive models of biological systems",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "平台预测遗传或环境变化对细胞表型的影响，构建细胞数字表示。",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.26586v1",
+      "route": "202608/29/2608.26586v1-regimeformer-a-large-protein-model-of-global-perturbation-regimes",
+      "title": "RegimeFormer: A Large Protein Model of Global Perturbation Regimes",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "大规模蛋白质语言模型预测跨物种基因突变的扰动响应。",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.19849v1",
+      "route": "202608/29/2608.19849v1-distributional-extrapolation-for-interactions",
+      "title": "Distributional Extrapolation for Interactions",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "从单协变量数据外推组合交互效应，可应用于基因扰动响应预测",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-08-743701-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-08-743701-v1-double-machine-learning-with-multi-gene-shared-backgroundfor-causal-inference-in-single-cell-data-grouping-deviation-follows-a-random-walk-and-the-accuracy-compute-trade-off",
+      "title": "Double Machine Learning with Multi-Gene Shared Backgroundfor Causal Inference in Single-Cell Data: Grouping Deviation Follows a Random Walk and the Accuracy-Compute Trade-Off",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-14-744937-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-14-744937-v1-signature-recontextualization-mapping-perturbational-signatures-across-biological-contexts",
+      "title": "Signature Recontextualization: Mapping perturbational signatures across biological contexts",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.24953v1",
+      "route": "202608/29/2608.24953v1-beyond-tokens-probing-higher-order-epistasis-in-learned-protein-representations",
+      "title": "Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "解析蛋白质适应度地形中的高阶上位效应，与功能基因组学中遗传扰动效应研究直接相关",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-21-746174-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-21-746174-v1-decoding-tumour-specific-rewiring-and-synthetic-lethality-through-genome-scale-metabolic-models",
+      "title": "Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "全基因组代谢模型预测合成致死与基因扰动效应",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.21070v1",
+      "route": "202608/29/2608.21070v1-tracingflow-a-simulation-free-trajectory-inference-framework-based-on-second-order-dynamics",
+      "title": "TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "用于动态建模的单细胞轨迹推断框架",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.22627v1",
+      "route": "202608/29/2608.22627v1-a-general-purpose-sensitivity-method-for-multiple-simultaneous-parameter-perturbations-in-stochastic-reaction-networks",
+      "title": "A general-purpose sensitivity method for multiple simultaneous parameter perturbations in stochastic reaction networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "随机反应网络中多参数同时扰动的通用敏感性方法，可用于扰动响应建模",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "2608.25631v1",
+      "route": "202608/29/2608.25631v1-propensity-straight-through-gradients-for-discrete-stochastic-systems",
+      "title": "Propensity Straight-Through Gradients for Discrete Stochastic Systems",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向生物CTMC模型的可微随机模拟，支撑虚拟细胞建模",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-20-745814-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-20-745814-v1-scarless-conditional-sgrnas-via-endogenous-mascrna-processing-enable-rapid-and-temporally-controlled-genome-editing",
+      "title": "Scarless conditional sgRNAs via endogenous mascRNA processing enable rapid and temporally controlled genome editing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "无疤痕条件性sgRNA平台支持时间可控基因组编辑，提升汇合扰动筛选效果",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-20-745973-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-20-745973-v1-symbolic-regression-enables-coarse-grained-model-discovery-of-intracellular-signalling-dynamics",
+      "title": "Symbolic regression enables coarse-grained model discovery of intracellular signalling dynamics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 03:01:13 UTC"
+    }
+  ]
+}

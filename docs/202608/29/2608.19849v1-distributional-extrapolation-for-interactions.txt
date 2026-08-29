@@ -1,0 +1,3108 @@
+Title: Distributional Extrapolation for Interactions
+
+URL Source: https://arxiv.org/pdf/2608.19849v1
+
+Published Time: Fri, 21 Aug 2026 00:41:32 GMT
+
+Number of Pages: 50
+
+Markdown Content:
+# Distributional Extrapolation for Interactions 
+
+## Marin Šola ∗1 , Xinwei Shen 2, and Peter Bühlmann †1 1Seminar for Statistics, ETH Zürich 
+
+> 2
+
+## Department of Statistics, University of Washington 
+
+Abstract 
+
+Predicting combinatorial effects from limited-range observations is a fundamental challenge in many scientific domains, including drug discovery and hyperparameter optimization. We study combinatorial extrapolation, where training data consists of axis-aligned samples with only one active covariate, while test-time inputs involve multiple simultaneously active covariates. We introduce DExtrI, a method for extrapolating interaction effects beyond the support of the training data. We provide theoretical guarantees characterizing when such extrapolation is possible. Empirical results on synthetic and real-world datasets demonstrate that DExtrI successfully generalizes to unseen combinations of covariates. Our approach enables applications such as predicting previously untested drug combinations and improving the efficiency of hyperparameter optimization. 
+
+# 1 Introduction 
+
+Extrapolation beyond the training distribution is a central challenge in science and engineering, arising in applications such as predicting effective drug combinations [23] or silencing genes in genomics. While many modern models achieve strong in-distribution performance, their behavior outside the support of the training data is often unstable and poorly understood [33]. This limitation is particularly severe in settings where acquiring fully combinatorial data is prohibitively expensive or infeasible. In this work, we focus on combinatorial extrapolation, a regression setting in which training data are axis-aligned, meaning that each sample contains only a single active covariate, while test-time inputs involve multiple simultaneously active covariates. This scenario naturally arises in several domains: in drug discovery, one aims to predict combination effects from single-drug responses; in genomics, multi-gene interactions must be inferred from single-gene perturbations; and in hyperparameter optimization of complex models, joint configurations must be predicted from marginal parameter sweeps (see Section 4). Despite their diversity, these problems share a common structure: models are trained on isolated covariate activations but are required to generalize to unseen combinations at test time. In this paper, we introduce DExtrI (Distributional Extr apolation for Interactions), a method that en-ables combinatorial extrapolation over unseen covariate combinations within the Cartesian product of ob-served marginal supports. By modeling a random variable Y ∈ R as a sum of additive components and projection-pursuit regression functions for interactions, and using a pre-additive error structure, DExtrI enables   
+
+> ∗Co-corresponding author: marin.sola@stat.math.ethz.ch
+> †Co-corresponding author: buhlmann@stat.math.ethz.ch
+
+1arXiv:2608.19849v1 [stat.ME] 20 Aug 2026 generative-style extrapolation to unseen covariate combinations. We establish identification results showing that, within an identifiable structural model class, the entire response surface can be recovered from the con-ditional distributions on the axis-aligned training support. As we will illustrate in Section 4, this represents a significant advance over standard machine learning and statistical algorithms based on neural networks, such as regularized empirical risk minimization or the Engression approach [33] for (non-combinatorial) extrapolation, which struggle to generalize to combinatorial extrapolation. 
+
+Figure 1: Combinatorial extrapolation (conceptual): the data available during training is aligned with the axes (blue) and test data (orange) consists of their combinations. The left subplot displays the distribution of input features x1, x 2 for both training (blue) and test (orange) data. The right subplot extends this to 3-dimensional visualization, showing the relationship between x1, x 2, and the target variable y.
+
+## 1.1 Related Work 
+
+In the next subsection, we discuss closely related work while more general connections are given in the following. 
+
+1.1.1 Combinatorial and Compositional Extrapolation 
+
+Our work is directly related to combinatorial and compositional generalization, where the goal is to predict outcomes for novel combinations of features that were not jointly observed during training. Matrix com-pletion and missing-not-at-random formulations address related problems under low-rank or spectral decay assumptions [34], while transductive approaches reformulate extrapolation as an imputation problem within an expanded support [27]. Theoretical work on compositional generalization studies when learned components can be recombined to yield correct predictions on unseen combinations. In particular, recent analyses characterize structural conditions under which such extrapolation is possible, as well as fundamental failure modes when these conditions are violated [14, 22]. In [24], the authors derive optimal statistical performance for regression when modeling the data missingness mechanism with neural networks. 
+
+1.1.2 General relations 
+
+Empirical and theoretical work has shown that extrapolation behavior strongly depends on model structure or inductive bias. For instance, empirical studies in protein engineering demonstrate that different model 2classes, ranging from simple parametric models to deep architectures, can vary substantially in their ability to generalize far beyond the training distribution [12]. Similarly, several works highlight the role of model scale and architecture in determining generalization outside the training support [19, 41, 8]. Another line of research addresses extrapolation through robustness to distributional shifts. Approaches based on risk extrapolation and invariant learning introduce regularization principles designed to reduce sensitivity to domain shifts [25, 21]. Related ideas include anchor regression and invariant risk minimization, which aim to enforce stability across environments [31, 5]. A complementary perspective emphasizes the curse of dimensionality: in high-dimensional settings, most test points lie outside the convex hull of the training data, effectively turning generalization into an extrapolation problem [6, 25, 12]. This viewpoint motivates methods that explicitly target out-of-support prediction, see also [29]. A prominent approach to extrapolation is to model the full conditional distribution rather than only the conditional mean. The engression framework [33] and related distributional regression methods learn con-ditional distributions via proper scoring rules and provide guarantees under structural assumptions on the data-generating process, especially by using pre-additive noise instead of the usual post-additive version. These methods can extrapolate beyond the observed training support due to the pre-additive noise struc-ture, something we crucially exploit in our approach as well. Related approaches include latent-variable and autoencoder-based models [32], which aim to learn representations that generalize beyond observed inputs. While these methods are flexible, they do not impose structure tailored to combinatorial extrapolation from highly constrained training supports with axis-aligned data. 
+
+1.1.3 Positioning of Our Work 
+
+Our contribution is a model class combining the pre-additive noise structure of engression [33] with the ridge representation of interactions used in projection pursuit regression [13, 17]. The pre-additive noise enlarges the range of the index arguments beyond that induced by the covariates alone, which is what makes the axis-aligned design informative about the interaction components. Section 3 shows that the model is thereby identified from axis-aligned data and that the conditional law of Y given X = x is determined on the Cartesian product of the marginal supports; neither conclusion holds for the classical models with post-additive noise, and we briefly discuss some theoretical challenges at the beginning of that section. Section 4 compares the resulting estimator with engression, neural additive models, and empirical risk minimization on synthetic designs, drug combination screens, and hyperparameter optimization benchmarks. 
+
+## 1.2 Outline and Notation 
+
+The paper is organized as follows: Section 2 presents the DExtrI framework and Section 3 its identification and extrapolation theory; Section 4 reports empirical results; and Section 5 concludes. Regarding notation: For a random variable X, we write X d
+
+= ˜X to denote equality in distribution, meaning 
+
+P [X ≤ t] = P [ ˜X ≤ t] for a probability measure P and all t. We denote the α-quantile of a random variable 
+
+X by Qα(X) = inf {x : P [X ≤ x] ≥ α} for X ∼ P . The index support set of βk ∈ Rp is denoted by Bk, in symbols, Bk = {i : βki ̸ = 0 }. Xtr and Xi denote the training support and marginal coverage of Xi, respectively. For x ∈ Rp, ¯ xk ∈ R denotes the argument of the k-th interaction function gk, with ¯ xk = β⊤ 
+
+> k
+
+x + ηk, η k = hk(ε). 
+
+ε is a random variable distributed as N (0 , 1), with cumulative distribution function Φ( t) = 1√2π
+
+∫ t 
+
+> −∞
+
+e−s2/2 ds 
+
+and quantile function Φ −1 : (0 , 1) → R. For a positive integer K, [ K] denotes the set {1, 2, . . . , K }. Ptr 
+
+denotes the distribution of the training data. U [a, b ] denotes the uniform distribution on [ a, b ] and N (μ, σ 2)3the Gaussian distribution with mean μ and variance σ2. PT x and P ˜T x denote the pointwise laws of T (x, ε )and ˜T (x, ε ), respectively. We denote by D the square root of the energy distance as defined in [35]. C[u] := 
+
+{polynomials in u with coefficients in C}.
+
+# 2 The DExtrI Model and Algorithm 
+
+We model the response variable Y ∈ R using an additive structure combined with K interaction components, each represented by a ridge function. For covariates X = ( Xj )pj=1 ∈ Rp, the model is given by 
+
+Y =
+
+> p
+
+∑
+
+> j=1
+
+fj (Xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk(β⊤ 
+
+> k
+
+X + hk(ε)) , (1) where fj , g k, h k : R → R are differentiable univariate functions, βk are coefficient vectors, and ε ∼ N (0 , 1) is independent of X. The same ε is used for all k, which induces dependence among the hk(ε). We always assume that each gk is nonlinear; otherwise, the model reduces to an additive model with the usual post-additive noise, for which combinatorial extrapolation is straightforward but does not permit interactions. An important additional assumption is that ∑Kk=1 gk(β⊤ 
+
+> k
+
+X + hk(ε)) is strictly monotone in ε. We will discuss this assumption below in several places. We refer to hk(ε) (sometimes also written ηk) as pre-additive noise as in [33], since it is added to the argument of the interaction function prior to applying gk. This feature is crucial for extrapolation: it enlarges the effective support of the argument of each gk. For instance, if hk(ε) has full support on R, then the argument 
+
+β⊤ 
+
+> k
+
+X + hk(ε) also spans R, even when β⊤ 
+
+> k
+
+X itself has limited support [33]. Model (1) is related to projection pursuit regression [13, 16] and single-index models [18]. Projection pursuit regression is known to provide flexible function approximation as K increases; thus, moderate values of K > 1already yield a substantially richer function class than single-index models. There are key distinctions though: due to the fact that existing work mentioned above does not consider combinatorial extrapolation, the classical approaches do not need to make a monotonicity assumption. Also, in contrast to (1), these models assume post-additive errors. And finally, we use adjustment with additive functions which enables combinatorial extrapolation with corresponding monotonicity assumptions only for the interaction component: this is a natural separation into parts with no (additive) and with combinatorial interaction, something which also gave better empirical results. We also note that pre-additive noise models have been studied in the context of causal inference [42]. Identifiability results for model (1) are provided in Section 3. To ensure identifiability, constraints must be imposed on the functions fj and gk, for example, by requiring zero mean and including a global intercept term. We also assume that the representation in (1) is minimal in the sense that no two interaction components have the same covariate support. This minimality condition is a structural assumption required for identifiability. Furthermore, as formalized in Assumption A4, each interaction function gk is assumed to depend on at least two covariates, ensuring that it represents a genuine interaction rather than a univariate effect; and finally, we will assume that ∑Kk=1 gk(β⊤ 
+
+> k
+
+X + hk(ε)) is strictly monotone in ε (through hk(ε)), which holds, for example, if each gk and hk is strictly increasing. We note that model (1) with K = 1 is closely related to Engression [33], with an additive function component here replacing the linear component used in Engression. Engression develops the theory of how distributional information permits non-combinatorial extrapolation of a nonlinear function in the univariate setting p = 1. 4In contrast, we consider combinatorial extrapolation from axis-aligned data in the multivariate setting p ≥ 2, with K ≥ 1, and establish identification of the multivariate index directions. 
+
+Some intuition for why model (1) enables combinatorial extrapolation. A crucial component for identifiability from axis-aligned training distributions is given by strict monotonicity of ∑Kk=1 gk(β⊤ 
+
+> k
+
+X + hk(ε)) in ε. Consider for simplicity the following special case of (1) with no additive functions and K = 1: 
+
+Y = g(β⊤X + h(ε)) One can learn the conditional training distribution Ptr (Y |X = x) for all axis-aligned x. For fixed axis-aligned 
+
+x, we can do distributional matching of Ptr (Y |X = x) and g(β⊤x + h(ε)), e.g. matching of all quantiles . When varying across all axis-aligned x within g(β⊤x + h(ε)) and matching with Ptr (Y |X = x), due to the linear argument β⊤x and monotonicity one can then identify β and g (and h) from axis-aligned data. The mathematical details are given in Section 3. In summary, we see that two ingredients are crucial: learning the conditional training distribution Ptr (Y |X = x) for the axis-aligned x and the monotonicity of g(β⊤X + h(ε)). We will ensure the first by optimizing a distributional loss (Section 2.1) and the second by assumption. Obviously, as with projection pursuit regression or single-index models, due to non-linearity of g, we obtain interactions in X, e.g. with g(u) = exp( u). 
+
+Generative interpretation. Model (1) admits a natural generative interpretation of the conditional dis-tribution of Y given X. For any fixed x ∈ Rp, define 
+
+F (x) + G(x, ε ) := 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk
+
+(β⊤ 
+
+> k
+
+x + hk(ε)),
+
+where ε ∼ N (0 , 1) is independent of X. Then 
+
+Y | X = x d
+
+= F (x) + G(x, ε ),
+
+that is, the model specifies the full conditional distribution of Y given X = x via a deterministic transformation of a low-dimensional noise variable. This representation makes the model directly generative: given x, one can sample ε and obtain draws from the conditional distribution Y | X = x. While such a generative view is not unique to our setting, it is particularly convenient here because the noise distribution is fixed and known, and the stochasticity enters through a one-dimensional latent variable passed through smooth transformations. This perspective is central to our estimation approach (see Section 2.1), where we compare conditional dis-tributions rather than point predictions. Moreover, it provides a useful lens for combinatorial extrapolation: once the structural components fj , gk, and hk are learned, the model can generate plausible responses at covariate values outside the training support by propagating the same latent noise ε through the learned transformations. 
+
+## 2.1 Distributional regression via energy score optimization 
+
+Our goal is to estimate the true model components using a flexible parameterization, such as a neural network. The parameters are learned by minimizing the empirical counterpart of the expected energy score, which is 5a strictly proper scoring rule for probability distributions [15]. In the following, we present the population formulation, corresponding to the limit of infinitely many data samples. Let Z ∼ P be a random vector with realization z. The energy score is defined as ES( P, z ) = 12 EP ∥Z − Z′∥ − EP ∥Z − z∥,
+
+where Z, Z ′ i.i.d. 
+
+∼ P , and ∥ · ∥ denotes the Euclidean norm. A higher energy score indicates a better agreement between the observation z and the distribution P . Moreover, the energy score is strictly proper [35, 37], meaning that for any distribution P ′,
+
+EZ∼P [ES( P, Z )] ≥ EZ∼P [ES( P ′, Z )] ,
+
+with equality if and only if P ′ = P . In the univariate case, which is the setting considered here, the energy score coincides with the negative continuous ranked probability score (CRPS). To estimate the conditional distribution, we minimize the negative energy score using samples from a generative model. Specifically, consider the model 
+
+T (X, ε ) = F (X) + G(X, ε ) = 
+
+> p
+
+∑
+
+> j=1
+
+fj (Xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk
+
+(β⊤ 
+
+> k
+
+X + hk(ε)),
+
+where ε ∼ N (0 , 1). The population objective function is given by 
+
+L(T ) = E
+
+[
+
+∥Y − T (X, ε )∥ − 12 ∥T (X, ε ) − T (X, ε ′)∥
+
+]
+
+, (2) where ε, ε ′ i.i.d. 
+
+∼ N (0 , 1), and ( X, Y ) ∼ Ptr denotes the training distribution (e.g., obtained from axis-aligned data). We define the minimizer of (2) over a model class M as ˜T ∈ arg min   
+
+> T∈M
+
+L(T ),
+
+and refer to ˜T as the engression solution . In the population limit, this solution recovers the conditional distribution Ptr (y | x) in the sense of equality in distribution. This is formalized in the following result. 
+
+Lemma 2.1 ([33], Proposition 1) . Let Xtr denote the support of the training distribution Ptr . Assume that there exists a function T ∈ M such that, for all x ∈ X tr , the random variable T (x, ε ) (with ε ∼ N (0 , 1) )follows the conditional distribution Ptr (y | x). Then, any population minimizer ˜T of (2) satisfies 
+
+˜T (x, ε ) ∼ Ptr (y | x)
+
+for PX −a.e. x ∈ X tr .
+
+In other words, minimizing L enforces that ˜T matches the true conditional distribution in law. This property is crucial, as it enables the identification of the structural components of T within the model class M.In the sequel, we assume that ˜T is well-approximated through training and thus effectively attains the minimum of L. By Lemma 2.1, it therefore reproduces the true conditional distribution Ptr (y | x) for PX −almost every 
+
+x ∈ X tr . Finally, M represents a flexible class of generative models; in practice, we choose M as a sufficiently expressive class of neural networks, see "Architecture and implementation" in Section 2.2. 62.2 The DExtrI algorithm 
+
+We now describe the practical implementation of the proposed DExtrI framework, including architectural choices, optimization, and hyperparameter settings. 
+
+Architecture and implementation. All component functions fj , gk, and hk are parameterized using fully connected neural networks. Unless stated otherwise, each hidden layer consists of 100 neurons. The networks representing fj have four layers, while those corresponding to gk are similar, with four layers and a residual connection. 
+
+Optimization. Model parameters are optimized using the Adam algorithm [20] with a fixed learning rate of 10 −4 across all experiments. The batch size is typically set to approximately 1000, which in many settings corresponds to full-batch training. The number of training epochs depends on the experiment: in synthetic settings, models are trained for roughly 300 epochs, whereas in real-data applications training may extend to several thousand epochs. In most cases, we train for approximately 1000 epochs. Empirically, provided the batch size is sufficiently large, we do not observe noticeable overfitting even when training for longer. 
+
+Hyperparameters. Hyperparameter selection is guided by simplicity and empirical robustness. In particular, the number of interaction components K is typically fixed to K = 1, as increasing K rarely leads to substan-tial performance gains. While domain knowledge may motivate alternative choices in specific applications, the method appears largely insensitive to moderate misspecification of this parameter. Importantly, such insensi-tivity is not easily detectable from axis-aligned training data alone and is better assessed through out-of-sample performance, for example via mean squared error on a test set. This observation is consistent with findings in the engression literature [33], where performance is often robust to hyperparameter choices. One possible explanation is the use of the energy score loss, which is substantially different from classical objectives such as squared error. Finally, the proposed framework naturally induces a full conditional distribution through its dependence on the noise variable ε. This enables straightforward estimation of functionals such as the conditional mean and conditional quantiles: ˜μ(x) = Eε[ ˜T (x, ε)] , ˜qα(x) = Qα( ˜T (x, ε)) .
+
+In the finite-sample setting, these quantities are approximated empirically using samples from the learned conditional distribution. Note that the population result in Lemma 2.1 concerns recovery of the conditional distribution on the training support for a minimizer over a chosen model class M. The identifiability and extrapolation results in Section 3 apply when the model components in M satisfy the corresponding assumptions specified there. The neural-network implementation described above does not explicitly enforce all of these assumptions; the same is true for the implementation of the original engression algorithm [33]. 
+
+# 3 Model identifiability and extrapolation properties 
+
+We develop here precise results on identifiability and extrapolation properties, from training data with axis-aligned support. The theoretical problem differs from classical single-index and projection-pursuit models. The covariate sup-port is only a union of coordinate axes and has empty interior, so interaction directions cannot be identified using ordinary multivariate variation or mixed derivatives. In addition, the noise enters inside the nonlinear 7ridge functions, requiring the ridge directions, profiles, and noise transformations to be disentangled jointly from conditional distributions on the restricted support. 
+
+## 3.1 Definition of axis-aligned support 
+
+We consider the combinatorial extrapolation setting, where the training data support of the covariates is 
+
+Xtr =
+
+> p
+
+⋃
+
+> j=1
+
+Xj , with Xj = {te j : t ∈ [aj , A j ]} ⊆ Rp, (3) where ej = (0 , 0, . . . , 0, 1, 0 . . . , 0) ⊤ ∈ Rp denotes the j-th standard basis vector, with the j-th component being 1 and 0 elsewhere; also, [ aj , A j ] ⊂ R are (nonempty) intervals containing zero. That is, the training data lies along the coordinate axis only, see figure 1. The test data support for the covariates is the full product space 
+
+Xtest =
+
+> p
+
+∏
+
+> j=1
+
+[aj , A j ]. (4) 
+
+## 3.2 Identifiability 
+
+Denote by T (X, ε ) the right-hand side of (1). We define the model class as 
+
+M = {T (x, ε ) = F (x) + G(x, ε ) : F ∈ F , G ∈ G }, where 
+
+F = {F : F (x) = 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ) for differentiable f1, . . . , f p
+
+},
+
+G =
+
+{
+
+G : G(x, ε ) = 
+
+> K
+
+∑
+
+> k=1
+
+gk(β⊤ 
+
+> k
+
+x + ηk), ε 7 → G(x, ε ) strictly increasing for every x, 
+
+for gk, h k differentiable 
+
+}
+
+,
+
+Requiring G(x, ·) to be increasing fixes the global orientation of the latent variable. Since ε d
+
+= −ε, the opposite orientation is observationally equivalent under the reflection ε 7 → − ε. We additionally adopt the following normalization for the individual warps; without loss of generality we assume each hk is strictly increasing, meaning, if hk is decreasing, replace ( βk, g k, h k) by ( −βk, g k(−· ), −hk), which leaves gk(β⊤ 
+
+> k
+
+x +
+
+hk(ε)) unchanged. This ensures that each warp hk preserves the ordering of ε.We first give a general definition of identifiability that naturally arises in our model class. 
+
+Definition 3.1. We say the model is identifiable in the model class M = ( F, G) if the following holds. Suppose two parameterizations 
+
+((βk)Kk=1 , (fj )pj=1 , (gk)Kk=1 , (hk)Kk=1 
+
+) and (( ˜βk) ˜Kk=1 , ( ˜fj )pj=1 , (˜ gk) ˜Kk=1 , (˜hk) ˜Kk=1 
+
+),
+
+where (fj , ˜fj )pj=1 ∈ F , (gk, h k)Kk=1 ∈ G , (˜ gk, ˜hk) ˜Kk=1 ∈ G yield the same observational conditional distribution 
+
+Ptr (y | x) for all x ∈ X tr . Then K = ˜K, and there exist constants b1, . . . , b p, γ1, . . . , γ K and nonzero scalars 
+
+8r1, . . . , r K such that for all j ∈ [p] and k ∈ [K] after relabeling 
+
+fj (xj ) = ˜fj (xj ) + bj , gk(¯ xk) = ˜ gk
+
+( 1 
+
+> rk
+
+¯xk
+
+) + γk, hk(ε) = rk ˜hk(ε), βk = rk ˜βk,
+
+where ¯xk = β⊤ 
+
+> k
+
+x + hk(ε). Moreover, ∑Kk=1 γk + ∑pj=1 bj = 0 .
+
+It follows that the support of equivalent models remains the same. That is, denote the k-th support of the true coefficients by 
+
+Bk = supp( βk) = {j; ( βk)j̸ = 0 }, k = 1 , . . . , K. 
+
+For a ˜βk from an equivalent model, identifiability implies that supp( ˜βk) = Bk for all k = 1 , . . . K, 
+
+and for rk in the Definition 3.1 we have that rk = βkj / ˜βkj for any j ∈ B k. In words, the model is identifiable up to the obvious affine or scale indeterminacies (additive constants for the fj , and an additive redistribution among the component functions and per-term rescaling of ( βk, h k) with the corresponding inverse argument rescaling of gk). Under mild initial or normalization-type constraints, the additive constants vanish and the scaling degrees of freedom are fixed. Identifiability is in terms of an alternative model ˜T (·, ·), which can be interpreted as arising from the minimization of the energy score in (2). Moreover, it is assumed that the models specified by the two parametrizations, ( fj )pj=1 , (βk, g k, h k)Kk=1 and ( ˜fj )pj=1 , ( ˜βk, ˜gk, ˜hk) ˜Kl=1 , are observationally equivalent, or T (x, ε ) d
+
+= ˜T (x, ε ) for every x ∈ X tr , and ε ∼ N (0 , 1). 
+
+Assumptions 3.2. We impose the following conditions on every parameterization in the model class M.(A1) Functions. Each gk is continuous and not a polynomial; each fj is continuous. (A2) Warp normalization. Each hk is strictly monotone with median zero, so that hk(0) = 0, and 
+
+hk(ε) → ±∞ as ε → ±∞ .
+
+(A3) Analyticity. Each gk, fj , and hk is real analytic. (A4) Supports. |B k| ≥ 2 for every k, and the supports {B k}Kk=1 are pairwise distinct. (A5) Non-proportional warps. The warps {hk}Kk=1 are pairwise non–proportional. (A6) Distinct growth orders. Any two non-proportional warp functions that occur in parameterizations belonging to M have distinct asymptotic growth orders: for any such h, ˜h,
+
+∣∣∣∣∣
+
+h(ε)
+
+˜h(ε)
+
+∣∣∣∣∣ −→ 0 or 
+
+∣∣∣∣∣
+
+h(ε)
+
+˜h(ε)
+
+∣∣∣∣∣ −→ ∞ as ε → +∞.
+
+(A7) Exponential–polynomial functions. Every gk is an exponential polynomial, 
+
+gk(u) = ∑
+
+> i
+
+pi(u)eμiu,
+
+with pi ∈ C[u], where C[u] = {polynomials in u with coefficients in C}, and distinct μi ∈ R.9A1–A4 are structural and regularity assumptions. Assumption A1 excludes polynomial profiles gk which are known to be unidentifiable without further assumptions [30]. Assumption A2 requires each warp strictly monotone, median-zero, and unbounded. Median-zero is a normalization choice. Assumption A3 is standard for identifiability results of this kind. Assumption A4 requires |B k| ≥ 2, since a single-coordinate interaction is a main effect, and Bk̸ = Bl.Assumption A5 rules out parameterizations containing two proportional warps. In particular, two median-zero affine warps hk(ε) = akε are proportional and hence cannot occur together under A5. The affine-warp regime is treated separately in Section D.5, where the profiles rather than distinct warp growth rates facilitate identification. Assumption A6 is a model-class condition, and in a comparison of two parameterizations it therefore applies to their pooled warps. We note that one can relax the assumption to pairs of warps which belong to two parameterizations from distributionally equivalent models. The identifiability rests on the noise 
+
+ε entering distinct interactions differently. Remark 2 gives an unidentifiable example satisfying A7 but not A6, so A7 alone is insufficient. Remark 3 discusses a counterexample for this setting when functions gk are polynomial. We state the main identifiability result in a general setting. 
+
+Theorem 3.3 (Identifiability) . Suppose that the model class M satisfies Assumptions 3.2. Then, the model is identifiable in the sense of Definition 3.1. 
+
+The proof of Theorem 3.3 is provided in Appendix A. Pinkus [30] studies a similar identification problem under the more permissive assumption that x ranges over a set with nonempty interior, so that mixed partial derivatives of arbitrary order are directly available for recovering the ridge directions βk. When data are observed only on Xtr , however, it is not immediately clear whether the ridge directions can still be disentangled. Some form of the nonlinearity condition A6 is necessary. If the functions hk are affine, two models with distinct supports may induce the same conditional law on Xtr , as discussed in Appendix D.5. Theorem 3.3 analyses the exponential–polynomial profiles. However, identifiability results are not confined to this case; Appendix A shows that they hold for a broader class of interaction profiles. Allowing the interaction functions gk to be polynomial (but nonlinear) requires stronger assumptions, even if the full Xtest were observed, and is related to uniqueness questions for Waring decompositions of symmetric tensors [9]. An example of such a (strong) assumption is discussed in Section D.4 , and a counterexample for our setting is given in Remark 3. Identifiability results form the basis for combinatorial extrapolation, as described next. 
+
+Theorem 3.4 (Extrapolability) . Consider the model (1) with corresponding true T (x, ε )∈ M , where x ∈Xtest ⊃ X tr , see Equations (3) , (4) and ε ∈ R. Consider ˜T ∈ M such that ∀x ∈ X tr , T (x, ε ) d
+
+= ˜T (x, ε ).Such a ˜T is obtained, for example, by a population minimizer of (2) under the conditions of Lemma 2.1 and Corollary A.2 (whose continuity conditions are automatic in M by Remark 1). Furthermore, suppose that the model M is identifiable in the sense of Definition 3.1. Then, 1. for all x ∈ X tr ∪ X test and for all fixed real ε,
+
+T (x, ε ) = ˜T (x, ε ) (deterministic equality) .
+
+2. Moreover, when extrapolating further than Xtest , for x ∈ Rp and for all fixed real ε,
+
+G(x, ε ) = ˜G(x, ε ) + 
+
+> K
+
+∑
+
+> k=1
+
+γk (deterministic equality ) (5) 10 where G(., . ) and ˜G(., . ) are the interaction part of T (., . ) and ˜T (., . ), respectively 
+
+We collect several concise clarifications and consequences of Theorem 3.4. 
+
+Identification and the role of unbounded pre-additive noise. The assumption that each hk(ε) is unbounded above and below (as ε ranges over R) ensures that the argument β⊤ 
+
+> k
+
+x + hk(ε) of each interaction function spans an effectively unbounded range as x varies along coordinate axes and ε varies. Combined with the identifiability condition (Definition 3.1) and the monotonicity of G(x, ·), this yields (5). 
+
+Interpretation of deterministic equality. The deterministic equality in statement 1 has a natural interpretation in generative modeling. When sampling independent noise variables ε, ε ′ ∼ N (0 , 1), it implies that for every 
+
+x ∈ X test ,
+
+T (x, ε ) d
+
+= ˜T (x, ε ′).
+
+Thus, the two models generate identically distributed outputs. 
+
+Placement of the axes. The one-dimensional axes Xj (for the jth component) used for training need not lie at the boundary of the joint support. The result continues to hold as long as each axis provides marginal coverage of the corresponding coordinate, even if it lies in the interior of the support. The key requirement is that the training data span each coordinate marginally, enabling identification of both the univariate components and the interaction functions along these axes. 
+
+# 4 Empirical results across application domains 
+
+We present empirical results on both synthetic and real-world datasets to evaluate the performance of DEx-trI. The section is organized as follows; Section 4.1 describes the baseline models used in our experiments, Sections 4.2 and 4.3 report results on real datasets exhibiting axis-aligned structure, Section 4.4 extends the analysis to datasets that are not strictly axis-aligned but instead concentrate around coordinate axes. Exper-iments on synthetic datasets with known data-generating mechanisms are deferred to Appendix B. 
+
+## 4.1 Baseline methods and architectures 
+
+We compare DExtrI against three baseline approaches: 1. Neural Additive Model (NAM): an additive model that learns separate neural networks for individ-ual features and combines their outputs additively [4]; 2. Empirical Risk Minimization (ERM): a standard feedforward multilayer perceptron trained using mean squared error loss; 3. Engression [33]: a generative regression method that models the conditional distribution using an ensemble of two-layer perceptrons. For a fair comparison, the architectures of ERM and Engression are designed such that their number of pa-rameters approximately matches that of DExtrI. Full architectural specifications and hyperparameter settings are provided in Appendix B.5. 
+
+Low sample size and optimizing the energy score. NAM and ERM are trained by optimizing the Mean Squared Error (MSE), while DExtrI and Engression are trained by minimizing the negative energy score. Empirically, this objective appears surprisingly robust in moderate- and low-sample-size settings. A potential 11 Table 1: Test mse (mean ± std over 10 seeds) on drug combination screens. Bold indicates the method is within 2 ˆ σ/ √10 of the best mean. LM is a single regularized linear regression (no std). 
+
+Dataset DExtrI NAM Engression ERM LM 
+
+O’Neil 1.045 ± 0.042 1.675 ± 0.101 1.477 ± 0.059 2.519 ± 0.031 1.7592 ALMANAC 0.820 ± 0.031 0.731 ± 0.002 0.863 ± 0.015 0.807 ± 0.013 0.8691 reason is that the energy score matches distributions through pairwise distances, avoiding direct optimization of pointwise prediction or likelihood-based losses. In contrast, neural networks trained via empirical risk minimization with standard squared-error or logistic losses may be more prone to overfitting when data are scarce. The results in Table 2 are consistent with this phenomenon: even with only 39 training observations, the neural-network-based methods trained using the energy score exhibit strong performance. 
+
+## 4.2 Axis-aligned real data from drug combination screens 
+
+O’Neil data We evaluate our method on the Merck OncoPolyPharmacology Screen [39], a large-scale drug combination screen measuring the viability of 39 human cancer cell lines under 38 anticancer compounds, spanning 583 pairwise drug combinations across a 4 × 4 concentration grid. Single-agent measurements are available for each compound at approximately 8 concentrations per cell line, yielding 11 ,856 single-drug ob-servations, while the full combination screen produces 358 ,560 dose-response measurements. Each observation reports cell viability relative to an untreated control, where a value of 1 indicates no growth effect and values below 1 indicate cytotoxicity. 
+
+ALMANAC data We consider an experimental setup based on a subset of the ALMANAC collection from DrugCombDB [23] to evaluate combinatorial extrapolation in corresponding drug combination screens. ALMANAC comprises high-throughput measurements of cell viability under drug perturbations across multiple values of concentration. The response variable is percent cell viability normalized to an untreated control (100 = no inhibition; < 100 = reduced viability; > 100 = overgrowth). For both datasets, to assess combinatorial extrapolation, we adopt an axis-aligned data split. The training set consists of axis-aligned experiments, i.e., single-drug concentration sweeps in which exactly one drug is perturbed at a time, yielding clean marginal response curves. For O’Neil, this yields N = 11 ,856 single-agent observations across 38 drugs; for ALMANAC, N = 1 ,363 ,939 single-agent observations across 101 drugs. The test set comprises true combinatorial experiments with multiple simultaneously nonzero drug concentrations, thereby probing interaction effects; for O’Neil the test set contains M = 358 ,560 combination observations, and for ALMANAC M = 2 ,045 ,907. Missing responses are excluded and targets are normalized by the training standard deviation. 
+
+## 4.3 MLP hyperparameter optimization on tabular benchmarks 
+
+We further evaluate combinatorial extrapolation on the mlp benchmark family from HPOBench for tabular data [11], a standardized collection of hyperparameter optimization problems with pre-computed, exhaustively evaluated configuration grids. The benchmark covers eight binary classification tasks drawn from the OpenML 
+
+AutoML benchmark [40]: australian , car , phoneme , vehicle , kc1 , segment , blood_transfusion , and 
+
+credit_g . Each task defines a five-dimensional hyperparameter space; all five hyperparameters are continuous 12 Table 2: Test mse (mean ± std over 10 seeds) on the HPOBench tabular mlp benchmark family. Bold indicates the method is within 2 ˆ σ/ √10 of the best mean. LM is a single regularized linear regression (no std). 
+
+Dataset DExtrI NAM Engression ERM LM 
+
+australian 3.4795 ± 0.1728 3.5753 ± 0.0018 5.3283 ± 0.5796 8.5440 ± 1.1389 7.8936 car 1.2641 ± 0.1026 1.3539 ± 0.0067 2.3852 ± 0.4472 4.0730 ± 0.3778 5.0950 phoneme 1.5743 ± 0.1404 1.9858 ± 0.0161 1.9753 ± 0.5779 3.4248 ± 0.5403 3.1109 vehicle 1.2634 ± 0.0621 1.4437 ± 0.0072 1.6756 ± 0.4406 3.0933 ± 0.5342 2.9708 kc1 1.4146 ± 0.1075 1.8258 ± 0.0112 1.9640 ± 0.2982 2.9794 ± 0.4868 3.1330 segment 1.3022 ± 0.0560 1.3697 ± 0.0041 1.3038 ± 0.4503 2.6107 ± 0.0590 2.0371 blood_transfusion 3.3805 ± 0.3141 3.1196 ± 0.0182 1.8262 ± 0.3681 2.6514 ± 0.2144 2.2050 credit_g 1.6573 ± 0.1264 2.2589 ± 0.0093 2.1006 ± 0.3471 4.0761 ± 0.3632 3.9223 or integer-valued and are fully described in Appendix B.10. The response variable is the validation error rate (one minus validation accuracy), so that lower values indicate better-performing configurations. Each hyperparameter is varied individually across its full grid while the remaining four are held fixed at their respective midpoint values, yielding 39 training observations per benchmark problem. The test set consists of joint configurations, in which all five hyperparameters vary simultaneously; by construction, every test point lies outside the convex hull of the training support (see Appendix B.10 for details). Results are reported in Table 2. DExtrI achieves the lowest test mse on seven of the eight tasks, with particularly pronounced improvements over the baselines on phoneme , kc1 , and credit_g . The single exception is blood_transfusion , where Engression performs best; we attribute this to the unusually flat response surface of that task, which reduces the advantage of modelling interaction effects. We also considered standard linear models, which are often regarded as appropriate in low-sample-size settings. Their performance was roughly comparable to that of ERM. 
+
+## 4.4 Approximately axis-aligned real data 
+
+We consider settings in which covariates are not strictly axis-aligned, but lie close to coordinate axes. That is, the covariates are not required to have exactly nonzero components provided that at most one deviates substantially from a baseline. Across all datasets, we construct a train–test split reflecting this structure. Covariates are first centered and standardized relative to a baseline (e.g., mean or median). The training set consists of approximately axis-aligned samples, defined as those for which all but at most one coordinate lie within a small tolerance of not being axis-aligned. The remaining samples, which exhibit simultaneous deviations in multiple coordinates, form the test set and capture combinatorial effects. The response is scaled using its training-set variance. 
+
+Seoul bike sharing demand The Seoul Bike Sharing dataset [2] contains hourly bike rental counts together with weather and temporal covariates. We use hour of day, temperature, humidity, wind speed, visibility, dew point temperature, and solar radiation as covariates, and log-transform the response (rental count). 
+
+Combined cycle power plant The Combined Cycle Power Plant dataset [38] contains 9,568 observations of plant operation. The task is to predict net hourly electrical energy output from temperature, ambient pressure, relative humidity, and exhaust vacuum. 13 Airfoil self-noise The Airfoil self-noise dataset [7] consists of approximately 1,500 observations from wind tunnel experiments. Covariates include frequency, angle of attack, chord length, free-stream velocity, and displacement thickness. The response is sound pressure level. 
+
+Gas turbine The gas turbine dataset [1] contains approximately 36,000 observations of turbine operation with multiple sensor measurements. We use all seven covariates and take turbine energy yield (TEY) as the response. 
+
+Abalone The Abalone dataset [26] contains physical measurements used to predict age (number of rings) from six covariates. We discard the categorical sex covariable and log-transform the response. All remaining preprocessing follows the procedure described above. 
+
+California housing The California Housing dataset [28] contains eight census-based covariates for predicting median house value; the categorical ocean proximity variable is excluded. Observations with missing values are removed and the remainings sample size is around 20k samples. The response is log-transformed, and skewed count-based covariates are log-transformed. Table 3: Test mean squared error for approximately axis-aligned real data. Values are mean ± std across 10 random seeds. The percentage of training samples being approximately axis-aligned is denoted in the subcolumns. Bold indicates the method is within 2 ˆ σ/ √10 of the best mean per column.                                                                                                                                                                                                                                                       
+
+> Dataset Seoul Bike Sharing Demand [2] Combined Cycle Power Plant [38] Airfoil Self-Noise [7]
+> % used for train 10% 16% 25% 10% 20% 25% 10% 16% 24%
+> ERM 1.76 ±0.36 1.12 ±0.20 1.13 ±0.29 21 .3±11 .812 .9±6.54.93 ±1.81 4.54 ±2.45 3.98 ±1.86 2.51 ±1.28 NAM 1.19 ±0.45 0.93 ±0.12 0.52 ±0.05 70 .2±28 .625 .1±8.24.37 ±1.92 15 .0±5.016 .6±6.111 .4±5.2Engression 0.70 ±0.03 0.68 ±0.03 0.61 ±0.02 13 .7±3.56.61 ±1.60 2.35 ±0.39 12 .9±2.913 .8±4.06.32 ±1.87 DExtrI 0.60 ±0.06 0.53 ±0.03 0.44 ±0.01 5.05 ±1.78 1.28 ±0.49 0.52 ±0.37 2.99 ±1.16 3.06 ±0.96 1.35 ±0.28
+> Dataset Gas Turbine CO and NOx Emission [1] California Housing [28] Abalone [26]
+> % used for train 10% 15% 25% 5% 11% 20% 12% 16% 26%
+> ERM 7.48 ±2.99 3.27 ±1.74 0.65 ±0.53 5.92 ±2.98 4.14 ±1.45 2.36 ±0.76 3.26 ±1.75 3.06 ±1.27 4.62 ±1.81 NAM 47 .0±20 .315 .1±3.54.08 ±1.47 8.81 ±2.18 9.01 ±2.26 2.73 ±0.66 10 .4±2.04.97 ±1.06 1.76 ±0.35 Engression 36 .0±5.514 .6±2.24.31 ±0.84 6.82 ±2.08 2.72 ±0.51 1.80 ±0.32 6.41 ±1.84 3.77 ±0.79 4.66 ±0.97 DExtrI 1.28 ±0.56 0.89 ±0.33 0.47 ±0.16 5.28 ±0.89 2.26 ±0.48 1.23 ±0.19 2.64 ±0.64 1.88 ±0.65 1.41 ±0.37
+
+# 5 Discussion 
+
+We introduced DExtrI, a framework for combinatorial extrapolation from (almost) axis-aligned data. By combining distributional regression with a projection-pursuit-type interaction structure, DExtrI can recover and extrapolate interaction effects that are not directly observed during training. We established population identifiability and extrapolation guarantees under structural model assumptions, and demonstrated good em-pirical performance across drug combination studies, hyperparameter optimization tasks, and approximately axis-aligned real-world datasets. A key implication is that one-factor-at-a-time experiments may contain substantially more information about interactions than is commonly assumed. This is particularly relevant in applications such as drug discovery, perturbation genomics, and hyperparameter optimization, where exhaustive combinatorial experimentation is often infeasible. 14 More broadly, our results suggest that combinatorial extrapolation can be treated as an identifiable statistical problem rather than solely as a prediction challenge. Several directions merit further investigation. First, finite-sample convergence rates would provide guidance for experimental design. Second, it would be valuable to understand the robustness of the method when the model assumptions are only approximately satisfied. 
+
+# Acknowledgments 
+
+M. Šola was supported by the Swiss National Science Foundation, grant no. 214865. We thank Markus Ulmer for insightful discussions on experimental design and dataset choice, and for thoughtful feedback that helped make the manuscript clearer and more accessible. The authors used ChatGPT (OpenAI) and Claude (Anthropic) during manuscript preparation for language editing, proofreading, and critical feedback on math-ematical arguments and exposition. The authors reviewed and verified all resulting suggestions and take full responsibility for the content of the manuscript. 
+
+# References 
+
+[1] Gas Turbine CO and NOx Emission Data Set. UCI Machine Learning Repository, 2019. DOI: https://doi.org/10.24432/C5WC95. [2] Seoul Bike Sharing Demand. UCI Machine Learning Repository, 2020. DOI: https://doi.org/10.24432/C5F62R. [3] J. Aczél. Lectures on Functional Equations and Their Applications . Academic Press, New York, 1966. [4] Rishabh Agarwal, Levi Melnick, Nicholas Frosst, Xuezhou Zhang, Ben Lengerich, Rich Caruana, and Geoffrey E Hinton. Neural additive models: Interpretable machine learning with neural nets. Advances in Neural Information Processing Systems , 34:4699–4711, 2021. [5] Martin Arjovsky, Léon Bottou, Ishaan Gulrajani, and David Lopez-Paz. Invariant risk minimization. 
+
+arXiv preprint arXiv:1907.02893 , 2019. [6] Randall Balestriero, Jerome Pesenti, and Yann LeCun. Learning in high dimension always amounts to extrapolation. arXiv preprint arXiv:2110.09485 , 2021. [7] Thomas Brooks, D. Pope, and Michael Marcolini. Airfoil Self-Noise. UCI Machine Learning Repository, 1989. DOI: https://doi.org/10.24432/C5VW2C. [8] Satrajit Chatterjee and Piotr Zielinski. On the generalization mystery in deep learning. arXiv preprint arXiv:2203.10036 , 2022. [9] Pierre Comon, Gene Golub, Lek-Heng Lim, and Bernard Mourrain. Symmetric tensors and symmetric tensor rank. SIAM Journal on Matrix Analysis and Applications , 30(3):1254–1279, 2008. [10] R. M. Dudley. Real Analysis and Probability . Cambridge University Press, 2002. [11] Katharina Eggensperger, Philipp Müller, Neeratyoy Mallik, Matthias Feurer, René Sass, Aaron Klein, Noor Awad, Marius Lindauer, and Frank Hutter. HPOBench: A collection of reproducible multi-fidelity benchmark problems for HPO. In Joaquin Vanschoren and Sai-Kit Yeung, editors, Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks 1 (NeurIPS Datasets and Benchmarks 2021) , 2021. 15 [12] Chase R Freschlin, Sarah A Fahlberg, Pete Heinzelman, and Philip A Romero. Neural network extrapo-lation to distant regions of the protein fitness landscape. Nature Communications , 15(1):6405, 2024. [13] Jerome H. Friedman and Werner Stuetzle. Projection pursuit regression. Journal of the American Sta-tistical Association , 76(376):817–823, 1981. [14] Jingwen Fu, Zhizheng Zhang, Yan Lu, and Nanning Zheng. A general theory for compositional general-ization. arXiv preprint arXiv:2405.11743 , 2024. [15] Tilmann Gneiting and Adrian E. Raftery. Strictly proper scoring rules, prediction, and estimation. Journal of the American Statistical Association , 102(477):359–378, 2007. [16] Peter Hall. On projection pursuit regression. The Annals of Statistics , 17(2):573–588, 1989. [17] Peter J. Huber. Projection Pursuit. The Annals of Statistics , 13(2):435 – 475, 1985. [18] Hidehiko Ichimura. Semiparametric least squares (sls) and weighted sls estimation of single-index models. 
+
+Journal of Econometrics , 58(1):71–120, 1993. [19] Kenji Kawaguchi, Yoshua Bengio, and Leslie Pack Kaelbling. Generalization in deep learning. In Philipp Grohs and Gitta Kutyniok, editors, Mathematical Aspects of Deep Learning , pages 112–148. Cambridge University Press, Cambridge, 2022. [20] Diederik P Kingma and Jimmy Ba. Adam: A method for stochastic optimization. International Confer-ence on Learning Representations , 2015. [21] David Krueger, Ethan Caballero, Joern-Henrik Jacobsen, Amy Zhang, Jonathan Binas, Dinghuai Zhang, Remi Le Priol, and Aaron Courville. Out-of-distribution generalization via risk extrapolation (rex). In 
+
+International Conference on Machine Learning , pages 5815–5826. PMLR, 2021. [22] Samuel Lippl and Kim Stachenfeld. When does compositional structure yield compositional generaliza-tion? a kernel theory. International Conference on Learning Representations , 2025. [23] Hui Liu, Wenhao Zhang, Bo Zou, Jinxian Wang, Yuanyuan Deng, and Lei Deng. Drugcombdb: acomprehensive database of drug combinations toward the discovery of combinatorial therapy. Nucleic acids research , 48(D1):D871–D881, 2020. [24] Tianyi Ma, Tengyao Wang, and Richard J Samworth. Deep learning with missing data. Journal of the Royal Statistical Society Series B: Statistical Methodology , page qkag114, 07 2026. [25] Vaishnavh Nagarajan, Anders Andreassen, and Behnam Neyshabur. Understanding the failure modes of out-of-distribution generalization. International Conference on Learning Representations , 2021. [26] Warwick Nash, Tracy Sellers, Simon Talbot, Andrew Cawthorn, and Wes Ford. Abalone. UCI Machine Learning Repository, 1994. DOI: https://doi.org/10.24432/C55C7W. [27] Aviv Netanyahu, Abhishek Gupta, Max Simchowitz, Kaiqing Zhang, and Pulkit Agrawal. Learning to extrapolate: A transductive approach. International Conference on Learning Representations , 2023. [28] Kelley Pace and Ronald Barry. Sparse spatial autoregressions. Statistics & Probability Letters , 33(3):291– 297, 1997. [29] Niklas Pfister and Peter Bühlmann. Extrapolation-aware nonparametric statistical inference. arXiv preprint arXiv:2402.09758 , 2024. 16 [30] A. Pinkus. Smoothness and uniqueness in ridge function representation. Indagationes Mathematicae ,24(4):725–738, 2013. In memory of N.G. (Dick) de Bruijn (1918–2012). [31] Dominik Rothenhäusler, Nicolai Meinshausen, Peter Bühlmann, and Jonas Peters. Anchor regression: Heterogeneous data meet causality. Journal of the Royal Statistical Society Series B: Statistical Method-ology , 83(2):215–246, 2021. [32] Xinwei Shen and Nicolai Meinshausen. Distributional principal autoencoders. arXiv preprint arXiv:2404.13649 , 2024. [33] Xinwei Shen and Nicolai Meinshausen. Engression: extrapolation through the lens of distributional regression. Journal of the Royal Statistical Society Series B: Statistical Methodology , 87(3):653–677, 07 2025. [34] Max Simchowitz, Abhishek Gupta, and Kaiqing Zhang. Tackling combinatorial distribution shift: Amatrix completion perspective. In Proceedings of Thirty Sixth Conference on Learning Theory , volume 195 of Proceedings of Machine Learning Research , pages 3356–3468. PMLR, 12–15 Jul 2023. [35] Gábor J. Székely. E-statistics: The Energy of Statistical Samples. Technical Report 02-16, Department of Mathematics and Statistics, Bowling Green State University, 2003. [36] L. Székelyhidi. Convolution Type Functional Equations on Topological Abelian Groups . World Scientific, Singapore, 1991. [37] Gábor J. Székely and Maria L. Rizzo. The Energy of Data and Distance Correlation . Chapman and Hall/CRC, 1st edition, 2023. [38] Pnar Tfekci and Heysem Kaya. Combined Cycle Power Plant. UCI Machine Learning Repository, 2014. DOI: https://doi.org/10.24432/C5002N. [39] Nathaniel R Twarog, Nancy E Martinez, Jessica Gartrell, Jia Xie, Christopher L Tinkle, and Anang A Shelat. Data vignettes for the application of response surface models in drug combination analysis. Data in Brief , 38:107400, 2021. [40] Joaquin Vanschoren, Jan N. van Rijn, Bernd Bischl, and Luis Torgo. OpenML: Networked science in machine learning. ACM SIGKDD Explorations Newsletter , 15(2):49–60, 2013. [41] Keyulu Xu, Mozhi Zhang, Jingling Li, Simon S Du, Ken-ichi Kawarabayashi, and Stefanie Jegelka. How neural networks extrapolate: From feedforward to graph neural networks. International Conference on Learning Representations , 2021. [42] Kun Zhang and Aapo Hyvarinen. On the identifiability of the post-nonlinear causal model. In Proceedings of the Twenty-Fifth Conference on Uncertainty in Artificial Intelligence (UAI 2009) , pages 647–655. AUAI Press, 2009. 
+
+# A Mathematical Derivations 
+
+Throughout this appendix, Xtr denotes the axis-aligned training support in (3). We give proofs of theoretical results stated in Section 3. Consider two arbitrary parameterizations 
+
+T (x, ε ) = F (x) + G(x, ε ) = 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk
+
+(β⊤ 
+
+> k
+
+x + hk(ε))
+
+17 and 
+
+˜T (x, ε ) = ˜F (x) + ˜G(x, ε ) = 
+
+> p
+
+∑
+
+> j=1
+
+˜fj (xj ) + 
+
+˜K∑
+
+> ℓ=1
+
+˜gℓ
+
+( ˜β⊤ 
+
+> ℓ
+
+x + ˜hℓ(ε)
+
+)
+
+.
+
+Tilded quantities always refer to the second parameterization. Write its additive and interaction parts as 
+
+F (x) := 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ), G(x, ε ) := 
+
+> K
+
+∑
+
+> k=1
+
+gk
+
+(β⊤ 
+
+> k
+
+x + hk(ε)).
+
+A second parametrization of the same model is a choice of parameters ( ˜fj )pj=1 , (˜ gl, ˜βl, ˜hl) ˜Kl=1 with additive and interaction parts ˜F (x) = ∑ 
+
+> j
+
+˜fj (xj ) and ˜G(x, ε ) = ∑ ˜ Kl=1 ˜gl( ˜β⊤ 
+
+> l
+
+x + ˜hl(ε)); throughout tilde ˜(·) quantities refer to such a second parametrization. The following result enables all following identifiability results. 
+
+Lemma A.1. Let F, ˜F : Rp → R, and let G, ˜G : Rp × R → R be continuous, strictly increasing in the second variable. Fix x ∈ X tr , if 
+
+F (x) + G(x, ε ) d
+
+= ˜F (x) + ˜G(x, ε ), ε ∼ N (0 , 1) ,
+
+then for all ε ∈ R,
+
+F (x) + G(x, ε ) = ˜F (x) + ˜G(x, ε ).
+
+Proof. Equality in distribution implies equality of all quantiles. For ε ∼ N (0 , 1) the α-quantile is Φ −1(α), where Φ denotes the standard normal cumulative distribution function, and Φ −1 : (0 , 1) → R is surjective. Since G
+
+and ˜G are strictly increasing in their second argument, the α-quantile of F (x)+ G(x, ε ) is F (x)+ G(x, Φ−1(α)), and likewise for the tilde side; hence 
+
+F (x) + G(x, Φ−1(α)) = ˜F (x) + ˜G(x, Φ−1(α)) for all α ∈ (0 , 1) .
+
+Since Φ −1 maps (0 , 1) onto R, substituting ε = Φ −1(α) gives the identity for all ε ∈ R.Let μtr denote the marginal distribution of the training covariates and, for x ∈ X tr , let Px := Ptr (Y | X = x)denote a regular conditional distribution of Y given X = x. We measure weak convergence of probability laws using the bounded–Lipschitz metric. For probability measures P, Q on R, define 
+
+dBL (P, Q ) := sup  
+
+> ∥f∥BL ≤1
+
+∣∣∣∣∫
+
+f dP −
+
+∫
+
+f dQ 
+
+∣∣∣∣ , ∥f ∥BL := ∥f ∥∞ + Lip( f ),
+
+where Lip( f ) := sup u̸=v |f (u) − f (v)|/|u − v|. The metric dBL metrizes weak convergence of probability measures on R; see, e.g., [10, Theorem 11.3.3]. 
+
+Corollary A.2. Let μtr denote the marginal distribution of the training covariates, with supp( μtr ) = Xtr , and let ˜T be any population minimizer from Lemma 2.1. For x ∈ X tr , let Px := Ptr (Y | X = x). Assume that 
+
+x 7 → Px and x 7 → Law( ˜T (x, ε )) are continuous on Xtr with respect to the bounded-Lipschitz metric. Then 
+
+Law( ˜T (x, ε )) = Px for every x ∈ X tr .
+
+18 Proof of Corollary A.2. By Lemma 2.1, Law( ˜T (x, ε )) = Px for μtr -almost every x ∈ X tr . Suppose, for contra-diction, that the equality fails at some x0 ∈ X tr . Define d(x) := dBL 
+
+(
+
+Px, Law( ˜T (x, ε )) 
+
+)
+
+, where dBL denotes the bounded-Lipschitz metric. Then d(x0) > 0. By continuity of the two law-valued maps and the triangle inequality, d is continuous on Xtr . Hence there exists r > 0 such that d(x) > 0 for every x ∈ U := B(x0, r )∩X tr .Since supp( μtr ) = Xtr , x0 ∈ supp( μtr ), and therefore μtr (B(x0, r )) > 0. Moreover, μtr (Xtr ) = 1, so 
+
+μtr (U ) = μtr (B(x0, r ) ∩ X tr ) = μtr (B(x0, r )) > 0.
+
+Thus the two laws differ on a set of positive μtr -measure, contradicting their equality μtr -almost everywhere. 
+
+Remark 1. The continuity conditions in Corollary A.2 are automatically satisfied in our model class when the bounded–Lipschitz metric is used. Indeed, let T ⋆ ∈ M denote the data-generating transformation and choose the conditional law as Px := Law( T ⋆(x, ε )). Since all component functions defining T ⋆ are contin-uous, xn → x implies T ⋆(xn, ε ) → T ⋆(x, ε ) for every fixed ε, and hence almost surely with respect to ε.Therefore Law( T ⋆(xn, ε )) converges to Law( T ⋆(x, ε )). Since dBL metrizes weak convergence, it follows that 
+
+dBL (Pxn , P x) → 0. Likewise, any population minimizer ˜T considered in Lemma 2.1 belongs to M. Hence the same argument gives 
+
+dBL 
+
+(
+
+Law( ˜T (xn, ε )) , Law( ˜T (x, ε )) 
+
+)
+
+→ 0.
+
+Thus both law-valued maps appearing in Corollary A.2 are continuous on Xtr in dBL . In particular, the continuity assumptions of the corollary do not impose an additional regularity condition beyond membership of the data-generating transformation and the population minimizer in M.
+
+Definition A.3 (Warped ridge, foliation, cofoliarity) . A warped ridge on a strip U = ( a, A 0) × R is a map 
+
+(t, ε ) 7 → Θ( ct + h(ε)) with c̸ = 0 , h strictly monotone, and profile Θ. Its foliation is the family of level curves 
+
+{ct + h(ε) = const }, recorded by the normalised warp h/c . Two warped ridges with parameters (c, h ) and (˜ c, ˜h)
+
+are cofoliar if their level curves coincide as subsets of U .
+
+The first structural lemma identifies exactly when two warped ridges are cofoliar. 
+
+Lemma A.4 (Foliation rigidity) . Let h, ˜h be strictly monotone and differentiable, c, ˜c̸ = 0 . The warped ridges with parameters (c, h ) and (˜ c, ˜h) are cofoliar on U if and only if there exist α̸ = 0 and δ ∈ R with 
+
+˜h = αh + δ, ˜c = αc. 
+
+Under the normalization h(0) = ˜h(0) = 0 this forces δ = 0 , so cofoliarity is equivalent to ˜h = αh and ˜c = αc 
+
+for a single α̸ = 0 .Proof. Forward direction. Suppose the two foliations coincide on U . Let F : U → R, F (t, ε ) := ct + h(ε): its gradient ( c, h ′(ε)) is nowhere zero on U since c̸ = 0. Each level set F −1(s) is therefore a smooth, connected curve, and the level sets partition U .
+
+Existence and strict monotonicity of Λ. For each s in I := F (U ) ⊂ R, cofoliarity requires ˜ ct + ˜h(ε) to be constant on F −1(s); define Λ( s) to be that constant value. This yields a well-defined function Λ : I → R
+
+satisfying ˜ct + ˜h(ε) = Λ (ct + h(ε)) on U. (6) Strict monotonicity of Λ: if s < s ′ are distinct values in I, the corresponding level curves F −1(s) and F −1(s′)are disjoint, and by cofoliarity the level sets of ˜ ct + ˜h(ε) with values Λ( s) and Λ( s′) are likewise disjoint, forcing Λ( s)̸ = Λ( s′). Since F and ˜ ct + ˜h(ε) are both continuous and U is connected, the induced map Λ on I is continuous and injective, hence strictly monotone. 19 Differentiability of Λ and identification of its derivative. Fix any ε0 in the ε-domain of U . As t varies, 
+
+u := ct + h(ε0) ranges over an open subinterval of I, and (6) reads Λ( u) = ˜ c u − h(ε0)
+
+c + ˜h(ε0),
+
+an affine function of u. In particular, Λ is differentiable on this subinterval with Λ ′(u) = ˜ c/c . Since ε0 is arbitrary and the corresponding subintervals cover I, Λ is differentiable on all of I with constant derivative Λ′ ≡ α := ˜ c/c ̸ = 0, hence Λ( u) = αu + δ for some δ ∈ R.Substituting Λ( u) = αu + δ into (6) gives ˜ct + ˜h(ε) = α(ct + h(ε)) + δ on U. 
+
+Comparing the t-coefficients yields ˜ c = αc , and comparing the ε-dependent parts yields ˜h(ε) = αh (ε) + δ for all ε. Evaluating the latter at ε = 0, where h(0) = ˜h(0) = 0 by hypothesis, gives δ = 0. 
+
+Converse. If ˜h = αh + δ and ˜ c = αc , then ˜ ct + ˜h(ε) = α(ct + h(ε)) + δ, so (6) holds with Λ( u) = αu + δ strictly monotone, and the foliations coincide. Evaluating at ε = 0 gives δ = 0 under the normalization. The normalization hk(0) = 0 is implied by assumption A2: under ε ∼ N (0 , 1) the median of ε is 0, and a strictly monotone median–zero warp satisfies hk(0) = 0. We use it throughout without further comment. 
+
+Corollary A.5 (Within–model non–cofoliarity) . Suppose the warps {hk}Kk=1 are pairwise non–proportional. Then no two distinct warped ridges within the same parameterization are cofoliar on any axis on which both are active. Moreover, if the warps are linearly independent, then their derivatives {h′
+
+> k
+
+}Kk=1 are linearly independent. Proof. By Lemma A.4, cofoliarity of interactions k̸ = k′ forces hk′ = αh k, i.e. proportional warps, contrary to hypothesis. For the second claim, suppose ∑ 
+
+> k
+
+γkh′ 
+
+> k
+
+≡ 0. Integrating from 0 to ε and using hk(0) = 0 gives ∑ 
+
+> k
+
+γkhk ≡ 0; linear independence of {hk} then forces γk = 0 for all k.This section studies the case when the warps hk are non-affine, but strictly monotone and real analytic. Under growth conditions on the hk, the model structure is identifiable. The affine regime is discussed in Appendix D.5. 
+
+Notation 
+
+Two parameterizations in M, with parameters ( fj )pj=1 , (gk, β k, h k)Kk=1 and ( ˜fj )pj=1 , (˜ gl, ˜βl, ˜hl) ˜Kl=1 and K, ˜K
+
+interactions, are considered. If they induce the same conditional distribution of T on Xtr , then by Lemma A.1 they satisfy the pointwise identity 
+
+∑
+
+> j
+
+fj (xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk(β⊤ 
+
+> k
+
+x + hk(ε)) = ∑
+
+> j
+
+˜fj (xj ) + 
+
+˜K∑
+
+> l=1
+
+˜gl( ˜β⊤ 
+
+> l
+
+x + ˜hl(ε)) , x ∈ X tr , ε ∈ R. (7) Write Bk = supp βk. Setting x = te j in (7) and collecting t-independent terms into Bj (ε) gives, on the strip 
+
+Uj = ( aj , A j ) × R, ∑
+
+> k∈Sj
+
+gk(βkj t + hk(ε)) − ∑
+
+> l∈
+
+˜Sj
+
+˜gl( ˜βlj t + ˜hl(ε)) = Aj (t) + Bj (ε), (8) 20 where Sj = {k : βkj ̸ = 0 }, ˜Sj = {l : ˜βlj ̸ = 0 }, Aj = ˜fj − fj up to a constant, and Bj collects all ε-only terms. Cofoliarity (Definition A.3) is an equivalence relation on the active terms appearing in (8): each term carries a foliation ( βkj , h k) or ( ˜βlj , ˜hl), and two terms are cofoliar iff their foliations coincide up to a nonzero scalar, i.e. iff (˜ c, ˜h) = ( αc, αh ) for some α̸ = 0 (Lemma A.4). By Corollary A.5(i), no two true terms and no two tilde terms share a foliation class, so each class contains at most one term from each side. Within a matched class 
+
+{k, l }, Lemma A.4 gives ˜hl = αkl hk and ˜βlj = αkl βkj , so ˜βlj t + ˜hl(ε) = αkl (βkj t + hk(ε)) and the contribution of the pair to (8) is 
+
+gk
+
+(βkj t + hk(ε)) − ˜gl
+
+(αkl (βkj t + hk(ε)) ) = (gk − ˜gl(αkl ·))( βkj t + hk(ε)),
+
+a single warped ridge with foliation ( βkj , h k). Unmatched true terms {k} contribute gk(βkj t + hk(ε)) and unmatched tilde terms {l} contribute −˜gl( ˜βlj t + ˜hl(ε)), each again a single warped ridge. Grouping (8) by these N ≥ 1 foliation classes and writing cm, hm, Θ m for the slope, warp, and profile of the m-th class, the axis identity becomes N∑
+
+> m=1
+
+Θm(cmt + hm(ε)) = Aj (t) + Bj (ε), (9) in which the foliations ( cm, h m) are pairwise non-cofoliar by construction. 
+
+Definition A.6 (Collapse) . A collapse is an identity of the form (9) with pairwise non-cofoliar foliations in which some Θm is not a polynomial. A term in (9) is unmatched if its foliation class contains only one side (true or tilde), so that Θm = gk or Θm = −˜gl.
+
+Let P denote the polynomials and P0 the constants. The redistribution space is 
+
+R =
+
+{
+
+(qk)Kk=1 ∈ P K : ∃ (rj )pj=1 ∈ P p, ∑Kk=1 qk(β⊤ 
+
+> k
+
+x + hk(ε)) = ∑pj=1 rj (xj ) on Xtr × R
+
+}
+
+. (10) The model is identifiable (Definition 3.1) if any second parameterization in M inducing the same conditional law on Xtr has, after relabelling, the same K, supports, directions and warps up to a common per–term scalar, and interaction functions equal up to that scalar and an additive constant; the per–term rescaling (βk, h k, g k) 7 → (ρβ k, ρh k, g k(·/ρ )) and relabelling are the unavoidable indeterminacies. 
+
+Definition A.7 (Rigidity) . A pair of parameterizations (( fj )pj=1 , (βk, h k, g k)Kk=1 ), (( fj )pj=1 , ( ˜βl, ˜hl, ˜gl) ˜Kl=1 ) is 
+
+rigid if, on every axis j, after grouping (8) into its pairwise non–cofoliar foliation classes, every class, singleton or matched pair, has its profile Θm in P. Equivalently, no collapse (9) arises from (8) : every identity of the form (9) obtained from (8) has all of its profiles polynomial. 
+
+For completeness, we repeat here the assumptions from Section 3.2. 
+
+## Assumptions 
+
+(A1) Functions. Each gk is continuous and not a polynomial; each fj is continuous. (A2) Warp normalization. Each hk is strictly monotone with median zero, so that hk(0) = 0, and 
+
+hk(ε) → ±∞ as ε → ±∞ .
+
+(A3) Analyticity. Each gk, fj , and hk is real analytic. (A4) Supports. |B k| ≥ 2 for every k, and the supports {B k}Kk=1 are pairwise distinct. 21 (A5) Non-proportional warps. The warps {hk}Kk=1 are pairwise non–proportional. (A6) Distinct growth orders. Any two non-proportional warp functions that occur in parameterizations belonging to M have distinct asymptotic growth orders: for any such h, ˜h,
+
+∣∣∣∣∣
+
+h(ε)
+
+˜h(ε)
+
+∣∣∣∣∣ −→ 0 or 
+
+∣∣∣∣∣
+
+h(ε)
+
+˜h(ε)
+
+∣∣∣∣∣ −→ ∞ as ε → +∞.
+
+(A7) Exponential–polynomial functions. Every gk is an exponential polynomial, 
+
+gk(u) = ∑
+
+> i
+
+pi(u)eμiu,
+
+with pi ∈ C[u], where C[u] = {polynomials in u with coefficients in C}, and distinct μi ∈ R.The following is imposed on the parameterizations. (LI) Linear independence. The warps {hk}Kk=1 are linearly independent. (EI) Exponential independence. The only relation 
+
+∑
+
+> m
+
+Pm
+
+(hm(ε)) eμmhm(ε) ≡ const , Pm ∈ C[u], μ m ∈ R \ { 0},
+
+(finite, the ( m, μ m) distinct) is the one with every Pm ≡ 0. (S) Complex singularity. Each gk (and each ˜ gl) satisfies: there is an integer rk ≥ 0 and a discrete set 
+
+Jk ⊂ C (closed, no accumulation point in C), with Jk̸ = ∅, such that g(rk ) 
+
+> k
+
+extends to a holomorphic function on C \ J k of which no point of Jk is a removable singularity (similarly for ˜ gl). Moreover, for every ρ̸ = 0, the difference gk − ˜gl(·/ρ ) either is a polynomial or itself satisfies this property, for some order and some nonempty discrete set. (N2) Sparse co–activation. For each axis j ∈ { 1, . . . , p }, let Sj = {k : βkj ̸ = 0 }. Define an equivalence relation ≃j on Sj by k ≃j ℓ iff hℓ = αh k for some α ∈ R \ { 0}. Then 
+
+|Sj /≃j | ≤ 2 for every j. 
+
+Lemma D.6 shows that, in the presence of A2, Assumption A6 implies LI, and that the implication is strict. Assumption LI is therefore not an additional requirement in Theorem D.7, where A6 is assumed; it is stated separately because Propositions D.1 and D.2 and Theorem D.3 do not assume A6. The remaining combinations imply nothing further: Remark 2 satisfies A1–LI together with A7 and is not rigid, and Remark 3 satisfies A6 with polynomial profiles, so neither A7 nor A6 can be dispensed with in Lemma D.5. In the following, the statements below concern an arbitrary observationally equivalent pair in M; two pa-rameterizations ((fj )pj=1 , (βk, h k, g k)Kk=1 
+
+) and (( ˜fj )pj=1 , ( ˜βl, ˜hl, ˜gl) ˜Kl=1 
+
+) inducing the same conditional law on 
+
+Xtr .22 A.1 Proofs of Theorem 3.3 and Theorem 3.4 
+
+Proof of Theorem D.7 (Theorem 3.3). By Lemma D.6 (using A2), A6 implies LI. With A7 (real–frequency exponential–polynomial profiles), Lemma D.5 gives rigidity. Its hypotheses and LI then hold, so Theorem D.3 yields the matching. 
+
+Proof of Theorem 3.4. For a population minimizer, Lemma 2.1 together with Corollary A.2, and Remark 1 gives T (x, ε ) d
+
+= ˜T (x, ε ) for all x ∈ X tr . Lemma A.1 therefore yields T (x, ε ) = ˜T (x, ε ) for every x ∈ X tr ,every ε ∈ R. By identifiability (Definition 3.1), after relabelling there are rk̸ = 0 and constants bi, γ k with ∑ 
+
+> i
+
+bi + ∑ 
+
+> k
+
+γk = 0 such that 
+
+fj (xj ) = ˜fj (xj ) + bj for xj ∈ [aj , A j ], and gk(¯ xk) = ˜ gk( 1 
+
+> rk
+
+¯xk) + γk, x ∈ X tr , ε ∈ R, (11) with ¯ xk = β⊤ 
+
+> k
+
+x + hk(ε). 
+
+Assertion 2. Fix k and any i ∈ B k. On the training axis ¯ xk = βki t + hk(ε), and since hk is unbounded above and below as ε ranges over R (A2), ¯ xk attains every value in R. Hence gk(u) = ˜ gk(u/r k) + γk holds for all 
+
+u ∈ R, so for every x ∈ Rp, ε ∈ R, gk(β⊤ 
+
+> k
+
+x + hk(ε)) = ˜ gk( ˜β⊤ 
+
+> k
+
+x + ˜hk(ε)) + γk (using βk = rk ˜βk, hk = rk ˜hk). Summing over k gives G(x, ε ) = ˜G(x, ε ) + ∑ 
+
+> k
+
+γk on Rp.
+
+Assertion 1. For x ∈ X test every xi ∈ [ai, A i], so the additive identity applies alongside the interaction identity above, and 
+
+T (x, ε ) − ˜T (x, ε ) = 
+
+> p
+
+∑
+
+> j=1
+
+(fj (xj ) − ˜fj (xj )) +
+
+> K
+
+∑
+
+> k=1
+
+(gk(¯ xk) − ˜gk( 1 
+
+> rk
+
+¯xk)) =
+
+> p
+
+∑
+
+> j=1
+
+bj +
+
+> K
+
+∑
+
+> k=1
+
+γk = 0 .
+
+As Xtr ⊆ X test , this holds on Xtr ∪ X test .
+
+# B Synthetic Experiments and Details on Real Data Analyses 
+
+We complement the real-data results with a controlled study in fixed dimension p = 40. The construction isolates combinatorial extrapolation: training covariates lie on the coordinate axes (one active component at a time), while test covariates fill the interior of the input box. A method can therefore only succeed by recombining the marginal effects it observes into the joint effects it never sees. We consider two interaction regimes, sparse and dense , each crossed with three response types (polynomial, log, softplus), and compare DExtrI against ERM, Engression, and a NAM. 
+
+## B.1 Data-generating process 
+
+Training covariates. For each coordinate i ∈ { 1, . . . , p } we draw naxis values uniformly from [ a, A ] and embed each as a point v e i, with v in the i-th slot and zeros elsewhere. This yields p · naxis training points, each with a single nonzero coordinate. 
+
+Test covariates. We sample ntest points uniformly from [ a, A ′]p, so test points have many simultaneously active coordinates and lie almost entirely outside the training support. 
+
+Noise. Before evaluating the response we perturb every coordinate by independent Gaussian noise, ˜ xi = xi +ηi
+
+with ηi ∼ N (0 , σ 2), applied identically to training and test inputs. A smaller σ widens the gap between the axis-aligned training inputs and the interior test inputs; σ → 0 is the hardest regime. 23 B.2 Response functions 
+
+Each response adds a marginal part over the p coordinates to a sum over interaction groups S1, . . . , S G ⊆{1, . . . , p }, with α ≥ 0 controlling interaction strength: Polynomial: Y =
+
+> p
+
+∑
+
+> i=1
+
+˜x3 
+
+> i
+
++ α
+
+> G
+
+∑
+
+> g=1
+
+∏
+
+> i∈Sg
+
+˜xi + 1 , (12) Log: Y =
+
+> p
+
+∑
+
+> i=1
+
+log (1 + |˜xi|) + α
+
+> G
+
+∑
+
+> g=1
+
+log 
+
+(
+
+1 + ∣∣∑ 
+
+> i∈Sg
+
+˜xi
+
+∣∣)
+
+, (13) Softplus: Y =
+
+> p
+
+∑
+
+> i=1
+
+log (1 + e˜xi ) + α
+
+> G
+
+∑
+
+> g=1
+
+log 
+
+(
+
+1 + exp (∑  
+
+> i∈Sg
+
+˜xi
+
+))
+
+. (14) For pairs ( |Sg | = 2) the polynomial interaction is a product ˜ xi ˜xj and the log and softplus interactions are functions of ˜ xi + ˜ xj .
+
+## B.3 Interaction regimes 
+
+Both regimes use G = ⌊log p⌋ groups, so G = 3 for p = 40, with a fixed random assignment of coordinates to groups held constant across runs. 
+
+Sparse. Each group is a single coordinate pair ( |Sg | = 2), so only G of the (p
+
+> 2
+
+) = 780 possible pairwise interactions are active. We scale α up by a factor of 10 to keep the interaction signal comparable to the additive part. 
+
+Dense. Each group contains ⌊p/ 2⌋ = 20 coordinates and contributes one high-order joint term: a degree-20 product for the polynomial case, a function of the coordinate sum otherwise. Because these terms can be very large, we scale α down by a factor of 10. 
+
+## B.4 Settings 
+
+We fix p = 40 with naxis = 100 (4000 training points) and ntest = 5000. The training range is [ a, A ] = [0 .1, 2.0] and the test range [ a, A ′] = [0 .1, 2.1]. The base interaction strength is α = 0 .2 (before the regime-specific scaling above) and the noise level is σ = 0 .05. Group assignments and all model initializations are seeded through reproduce(seed) , which fixes the Python, NumPy and PyTorch generators and sets deterministic cuDNN behaviour. Results are averaged over 10 seeds. 
+
+## B.5 Models and hyperparameters 
+
+DExtrI. Each of the p marginal functions is a 3–4 layer MLP with 100 units per layer and LeakyReLU activations. The interaction part uses K = 1 interaction functions, each a 2-layer, 100-unit StoNet block from Engression [33]. 
+
+Baselines. ERM is a feedforward network with 100 units per layer; its depth is chosen to roughly match DExtrI’s total depth, ⌈p d marginal + K d engressor ⌉, which for p = 40 exceeds 200 layers and is therefore capped at 20–25 for tractability. Engression (StoNet) uses the original implementation with an ensemble of 2-layer, 100-unit engressors, under the same cap. NAM [4] is included as an additive baseline that by construction 24 cannot represent any of the interaction terms above; it isolates how much of each method’s accuracy comes from the additive component alone. 
+
+Training. All models use Adam with a constant learning rate of 10 −4, train for 300 epochs with batch size 10 4, and run on a single NVIDIA T4 GPU. 
+
+## B.6 Results 
+
+Table 4: Test MSE (mean ± std, 10 seeds) for DExtrI, NAM, ERM, and Engression on the high-dimensional synthetic benchmark ( p = 40). Sparse : ⌊log p⌋ pairwise interaction groups; Dense : ⌊log p⌋ groups of size ⌊p/ 2⌋.
+
+Function Regime DExtrI NAM ERM Engression 
+
+Log Sparse 41 .0 ± 2.45 47 .6 ± 2.07 7180 ± 15 .7 6012 ± 547 Dense 0.366 ± 0.037 0.409 ± 0.033 676 .9 ± 0.30 534 .8 ± 107 Polynomial Sparse 6445 ± 130 6809 ± 32 .1 30491 ± 8 33905 ± 38849 Dense 7318 ± 24 .6 7359 ± 2.98 19930 ± 5 42656 ± 47920 Softplus Sparse 456 ± 50 .5 592 ± 52 .9 16364 ± 44 2481 ± 889 Dense 55 .1 ± 3.90 71 .0 ± 3.76 1683 ± 1 629 ± 567 DExtrI attains the lowest test MSE in every cell of Table 4, frequently by one to several orders of magnitude. The gap is largest in the sparse regime, where a handful of pairwise interactions carry the entire off-axis signal and the baselines have no mechanism to recover them from marginal data. The advantage holds across all three response types and persists in the dense regime, where the joint terms involve half the coordinates. ERM and Engression not only sit well above DExtrI in mean error but also show large run-to-run variance, a sign of unstable extrapolation rather than a near-miss. NAM, as a strictly additive model, fits the marginal part but cannot express the interaction terms, so it trails DExtrI wherever those terms contribute to the response. 
+
+## B.7 Sensitivity to K
+
+We varied the number of interaction engressors K on this suite. The test-loss curves show minima at interme-diate K, but these minima do not appear in the energy-score or training-MSE traces, indicating a test-specific effect rather than a quantity that can be tuned on the training axes. Overall the gains from varying K are small and inconsistent as visible in Figure 2. 
+
+## B.8 Hyperparameters 
+
+In synthetic experiments (Table 4), the DExtrI model was constructed using p marginal MLPs, each consisting of three or four layers with 100 hidden units per layer and LeakyReLU activations. We set the interaction parameter to K = 1 in all experiments. Each interaction function MLP was implemented using the 2-layer or 4-layer, 100-unit StoNet architecture from Engression [33], available at https://github.com/xwshen51/ engression .The ERM baseline uses a standard feedforward architecture with 100 units per layer. The depth is set to approximately match the total depth of DExtrI’s networks: for DExtrI with p marginal MLPs of depth 
+
+dmarginal and K interaction functions of depth dinteraction , the ERM depth is ⌈p · dmarginal + K · dinteraction ⌉.25 1 2 3 4 5 6 7 8 9 10 15 20 8.280 8.320 8.360 
+
+> Log · Sparse
+
+Train MSE 
+
+1 2 3 4 5 6 7 8 9 10 15 20 40.00 44.00 
+
+Test MSE 
+
+1 2 3 4 5 6 7 8 9 10 15 20 1.575 1.600 1.625 
+
+Energy 
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.135 0.136 
+
+> Log · Dense
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.300 0.450 0.600 
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.204 0.208 0.212 
+
+1 2 3 4 5 6 7 8 9 10 15 20 1.660 1.666 1.672 
+
+> Poly · Sparse
+
+1 2 3 4 5 6 7 8 9 10 15 20 6.0k 6.4k 
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.495 0.510 
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.318 0.321 
+
+> Poly · Dense
+
+1 2 3 4 5 6 7 8 9 10 15 20 7250 7300 7350 
+
+1 2 3 4 5 6 7 8 9 10 15 20 0.275 0.280 0.285 
+
+1 2 3 4 5 6 7 8 9 10 15 20 9.430 9.460 
+
+> Softplus · Sparse
+
+1 2 3 4 5 6 7 8 9 10 15 20 300 450 
+
+1 2 3 4 5 6 7 8 9 10 15 20 1.700 1.725 
+
+1 2 3 4 5 6 7 8 9 10 15 20 
+
+K
+
+0.200 0.201 0.202 
+
+> Softplus · Dense
+
+1 2 3 4 5 6 7 8 9 10 15 20 
+
+K
+
+40.00 50.00 60.00 
+
+1 2 3 4 5 6 7 8 9 10 15 20 
+
+K
+
+0.248 0.252 
+
+Shaded band: ±1 std over 10 seeds. K axis evenly spaced: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20. Figure 2: Test MSE performance of our method in dependence on K for different configurations on the synthetic data generated as for Table 4. 26 When this sum exceeds 25 layers (occurring when p > 30), we cap both ERM and StoNet at 20–25 layers to maintain computational tractability. All networks were trained with the Adam optimizer using a constant learning rate of 10 −4. All experiments were performed on a single NVIDIA T4 GPU for 300 epochs for synthetic and 1000–2000 epochs for real data. 
+
+## B.9 O’Neil Dataset and preprocessing details 
+
+Raw data. The dataset is sourced from the preprocessed version of the Merck OncoPolyPharmacology Screen provided by Twarog et al. [39], which supplies single-agent measurements in AllSings.txt (11 ,856 rows, 6 viability replicates per triplet) and combination measurements in AllCombs.txt (358 ,560 rows, 4 replicates). Viability is measured as fractional cell growth relative to a vehicle control and is clipped to [0 , 1.5] to remove assay outliers. Replicates are either averaged to obtain a single estimate of the underlying response Eε[T (xi, ε )], or retained individually as independent noise samples {T (xi, ε ij )}Rj=1 depending on the experimental setting, where R ∈ { 4, 6} for combination and single-agent measurements respectively. 
+
+Feature encoding. Concentrations are log-transformed as ˜ c = log 10 (c) + 1 to linearise the dose-response relationship and avoid a degeneracy at c = 1 μM where log 10 (1) = 0 would render the feature indistinguishable from a drug-absent slot. Each observation is encoded as a vector x ∈ R38 , where entry i equals ˜ ci if drug i is present and 0 otherwise. This encoding is shared across single-agent and combination observations, yielding identical feature dimensionality: single-agent vectors have exactly one nonzero entry, and combination vectors have exactly two. Cell line identity is optionally appended as a one-hot vector ek ∈ { 0, 1}39 , giving x ∈ R77 in that setting. 
+
+Normalization and regression setup. All features are standardised by the per-feature standard deviation computed on the training set. The response y is standardised by the training standard deviation.Denoting the training set Dtrain = {(xi, y i)}Ni=1 with N = 11 ,856 (or N = 71 ,136 when replicates are retained) and the test set Dtest = {(xj , y j )}Mj=1 with M = 358 ,560 (or M = 1 ,434 ,240 with replicates), the regression task is to learn f : R38 → R from Dtrain and evaluate generalization on Dtest . Crucially, no combination observations appear in training, so test inputs lie strictly outside the support of the training distribution in the sense that 
+
+∥x∥0 = 2 for all test points while ∥x∥0 = 1 for all training points. 
+
+## B.10 HPOBench tabular MLP benchmark: dataset and preprocessing details 
+
+Benchmark. The HPOBench tabular mlp family [11] provides exhaustively pre-evaluated performance tables for a two-hidden-layer multilayer perceptron trained on eight OpenML binary classification tasks [40]. For each task, the model is trained on the fixed OpenML training split, with 33% of that split held out as a validation set (stratified, fixed seed), and performance is recorded at full training budget (maximum number of epochs). Each entry in the table is the average of five independent training runs with different random seeds. The OpenML task identifiers are listed in Table 5. 
+
+Hyperparameter space. The five hyperparameters and their discrete grids are given in Table 6. All grids are log-uniformly spaced except depth , which takes integer values in {1, 2, 3}. Four hyperparameters ( alpha ,
+
+batch_size , learning_rate_init , width ) span several orders of magnitude and are therefore log 10 -encoded prior to any further preprocessing; depth is left on its original integer scale. 27 Axis-aligned split. A baseline configuration is fixed at the componentwise grid midpoint (index ⌊nj /2⌋ for a grid of size nj ), giving λ0 = ( α0, b 0, d 0, η 0, w 0). The training set is axis-aligned: for each hyperparameter 
+
+j ∈ { 1, . . . , 5} in turn, all nj grid values are evaluated while the remaining four hyperparameters are fixed at λ0, producing ∑5 
+
+> j=1
+
+nj = 43 training observations. The test set consists of 5 ,000 configurations drawn uniformly at random (without replacement) from the full combinatorial grid of 30 ,000 joint configurations, in which all five hyperparameters vary simultaneously. 
+
+Preprocessing. Let v0 ∈ R5 denote the encoded baseline vector. Each input x is first centred by subtracting 
+
+v0, giving ˜ x = x − v0, so that the baseline maps to the origin and the axis-aligned training vectors each have exactly one non-zero coordinate. The centred inputs are then standardised column-wise by the per-feature standard deviation ˆ σj computed on the training set alone, using a zero-mean scaler (i.e. the mean is not resubtracted, preserving the centering around the baseline): 
+
+xscaled  
+
+> j
+
+= ˜xj
+
+ˆσj
+
+, j = 1 , . . . , 5.
+
+The response y (validation error rate) is standardised by the training standard deviation ˆ σy , also computed on the 39 training observations only. The same scaler is applied to the test set. All test mse values reported in Table 2 are on this normalised scale. Table 5: OpenML task identifiers and dataset statistics for the eight HPOBench mlp benchmark tasks used in Section 4.3. 
+
+Dataset OpenML task ID Observations Features 
+
+australian 146818 690 14 car 146821 1728 21 phoneme 9952 5404 5vehicle 53 846 18 kc1 3917 2109 21 segment 146822 2310 19 blood_transfusion 10101 748 4credit_g 31 1000 20 Table 6: Hyperparameter search space for the HPOBench tabular mlp benchmark. All grids are log-uniformly spaced except depth . Hyperparameters marked † are log 10 -encoded before preprocessing. 
+
+Hyperparameter Type Grid pts Range Encoded 
+
+alpha float 10 [10 −8, 1] log 10 †
+
+batch_size integer 10 [4 , 256] log 10 †
+
+depth integer 3 {1, 2, 3} identity 
+
+learning_rate_init float 10 [10 −5, 1] log 10 †
+
+width integer 10 [16 , 1024] log 10 †
+
+Full grid size 30 ,000 Axis-aligned training points 43 28 C Extension for Control Functions 
+
+In many applications, only a subset of features exhibits interactions of interest, while the remaining variables act as control features. In such cases, the framework can be extended to model interactions among the relevant features without disregarding the influence of the controls. For example, in addition to measurements of single-drug effects, one may observe background variables such as cell line, measurement device, or patient characteristics, all of which may affect the response. Formally, let X ∈ Rp denote the features of interest and Z ∈ Rq denote control variables. We assume that interactions occur only among the components of X, while Z enters the model through a general (non-interacting) effect. Moreover, we assume that the support Z of Z is fully observed. The model then takes the form 
+
+Y =
+
+> p
+
+∑
+
+> j=1
+
+fj (Xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk(β⊤ 
+
+> k
+
+X + ηk) + ι(Z),
+
+where ι is an arbitrary differentiable function, and fj , g k are defined as in the previous sections. The observed covariate support is given by the product of the axis-aligned training set for X and the full support of Z, i.e., 
+
+Xtr × Z .
+
+Accordingly, the model class M is extended to include functions of the form above, incorporating the ad-ditional component ι. Identifiability and extrapolation guarantees over Xtest × Z remain unchanged under this extension. In particular, no extrapolation is required along the Z-coordinates, as their support is fully observed. 
+
+# D Additional Results 
+
+## D.1 Auxiliary results 
+
+Proposition D.1. Under A1 , A2 , A4 and A5 if any pair of parametrizations, (( fj )pj=1 , (βk, h k, g k)Kk=1 ),
+
+(( ˜fj )pj=1 , ( ˜βl, ˜hl, ˜gl) ˜Kl=1 ), in M is rigid, then on each axis j there is a bijection σj : Sj → ˜Sj with ˜hσj (k) = αkj hk,
+
+˜βσj (k),j = αkj βkj , and gk − ˜gσj (k)(αkj ·) ∈ P for some αkj ̸ = 0 ; these are the restrictions of one global bijection 
+
+π, and K = ˜K with 
+
+Bk = ˜Bπ(k), βk = ρk ˜βπ(k), hk = ρk ˜hπ(k), gk − ˜gπ(k)(·/ρ k) ∈ P (ρk̸ = 0) .
+
+Proposition D.2. Under LI , R = P0. Consequently, under A1 ,A2 , A4 and A5 , if a pair of parametriza-tions (( fj )pj=1 , (βk, h k, g k)Kk=1 ), (( ˜fj )pj=1 , ( ˜βl, ˜hl, ˜gl) ˜Kl=1 ), in M, is rigid, then in addition to Proposition D.1 the functions satisfy gk = ˜ gπ(k)(·/ρ k) + ck for constants ck, and the model is identifiable in the sense of Definition 3.1. 
+
+Theorem D.3. Assume A1 , A2 , A4 , A5 , and LI .
+
+(i) If a pair of parametrizations is rigid, then it is identifiable in the sense of Definition 3.1. 
+
+(ii) Rigidity is also necessary: if the pair is not rigid, there exist two parameterizations satisfying A1 –A5 that induce the same conditional law on Xtr but are not related by the indeterminacies of Proposition D.1; in particular their interaction supports Bk may differ (the following Remark). 
+
+29 Remark 2. There exist warps h1, h 2, h 3 satisfying A2, A3, A5 and LI, and functions satisfying A1, forming two parameterizations that induce the same conditional law on Xtr with distinct interaction supports; for them the pair is not rigid. Explicitly, c1 = c2 = c3 = 1, 
+
+h1(ε) = ε, h2(ε) = ε3, h3(ε) = log (eε + eε3 ) − log 2 , Θ1 = Θ 2 = e(·), Θ3 = −2e(·),
+
+satisfy ∑3 
+
+> m=1
+
+Θm(t + hm(ε)) ≡ 0. The following results discuss the case when gk, ˜gl are exponential polynomials, as stated in Assmption A7. Let C[z] denote the set of polynomials in z, with coefficients in C.
+
+Lemma D.4. Let ν ∈ R \ { 0}, let M be finite and nonempty, and for m ∈ M let cm ∈ R \ { 0} and 
+
+Pm ∈ C[z], with the foliations ϕm := hm/c m (normalized warp) pairwise non–cofoliar (Assumption A5 ). Under Assumptions A2 , A6 , if 
+
+∑
+
+> m∈M
+
+Pm
+
+(hm(ε)) e(ν/c m)hm(ε) = C (constant, all ε ∈ R), (15) 
+
+then Pm ≡ 0 for every m ∈ M , and C = 0 .
+
+Lemma D.5. Assume A1 –A3 and A5 –A7 . Then no collapse (9) with a non–polynomial Θm can occur on any axis, and the pair is rigid. 
+
+Lemma D.6. Under A2 , assumption A6 implies LI . The implication is strict: LI does not imply A6 .
+
+Theorem D.7 (Theorem 3.3) . Under A1 –A7 , the pair is rigid, and therefore K = ˜K and, after relabelling, 
+
+Bk = ˜Bπ(k), βk = ρk ˜βπ(k), hk = ρk ˜hπ(k), gk = ˜ gπ(k)(·/ρ k) + ck.
+
+Remark 3 (Pooled A6 does not identify polynomial profiles) . Assumption A6 controls ratios of the raw warps but not of their powers, and this does not suffice for polynomial profiles. Set z(ε) = ε + ε3, q(s) = (1 + s2)1/4 +4s2/(1 + es), U (r) = ∫ r 
+
+> 0
+
+q, and 
+
+h1 = z, h3 = U (z), h2 = z2 + U (z),
+
+so that h2 = h21 + h3 holds exactly. Each hk is real–analytic, strictly increasing, normalised ( hk(0) = 0), and divergent, with positive–tail orders h1 ∼ z, h3 ∼ 23 z3/2, h2 ∼ z2; thus h1 ≪ h3 ≪ h2 and the warps satisfy A6 and are pairwise non–proportional. Take p = 5, K = ˜K = 3, identical warps and profiles g1 = u3, g2 = g3 = u2
+
+in both parameterizations, and directions 
+
+β1 = (1 , 1, 1, 0, 0) , β 2 = (1 , 1, 0, 1, 0) , β 3 = (4 , 4, 0, 0, 1) ,
+
+˜β1 = ( −1, −1, 1, 0, 0) , ˜β2 = (4 , 4, 0, 1, 0) , ˜β3 = (1 , 1, 0, 0, 1) ,
+
+each of support size three, pairwise distinct within each model. On Xtr at most one coordinate is nonzero; on coordinates 3 , 4, 5 a single interaction is active with equal coefficient in both models, and on coordinates 1 , 2the responses differ by (t+h1)3 − (−t+h1)3 + ( t+h2)2 − (4 t+h2)2 + (4 t+h3)2 − (t+h3)2 = 2 t3 + 6 t(h21 − h2 + h3
+
+) = 2 t3,
+
+using h2 = h21 + h3: the cubic’s cross term 6 t h 21 is cancelled by the quadratics’ −6t h 2 and 6 t h 3. Absorbing 2 t3
+
+into ˜f1 = ˜f2 = 2 u3 (other fj , ˜fj zero) gives T = ˜T pointwise on Xtr ×R. The warps’ distinct growth orders force any relabelling to match hk with ˜hk, hence (per–term rescaling) ρk = 1 and βk = ˜βk; but β1 = (1 , 1, 1, 0, 0) and ˜β1 = ( −1, −1, 1, 0, 0) are not proportional. Thus A6 does not identify polynomial–profile models. 30 D.2 Proofs of auxiliary results in Section D.1 
+
+Proof of Proposition D.1. Fix an axis j ∈ { 1, . . . , p }. Let 
+
+Sj = {k : βkj ̸ = 0 }, ˜Sj = {l : ˜βlj ̸ = 0 }
+
+denote the sets of interaction indices active on this axis in the two parameterizations. On the strip Uj =(aj , A j ) × R, the identity (8) reads 
+
+∑
+
+> k∈Sj
+
+gk(βkj t + hk(ε)) − ∑
+
+> l∈
+
+˜Sj
+
+˜gl( ˜βlj t + ˜hl(ε)) = Aj (t) + Bj (ε). (16) Define an equivalence relation ∼j on the union Sj ⊔ ˜Sj by declaring two indices equivalent iff their associated warped ridges are cofoliar; by Lemma A.4, this holds precisely when the corresponding normalised warps coincide. Let Cj denote the set of equivalence classes of Sj ⊔ ˜Sj under ∼j . For a class C ∈ C j , set 
+
+IC := C ∩ Sj , JC := C ∩ ˜Sj ,
+
+the active indices of the first and second parameterization, respectively, that fall into this class. We first claim that |IC | ≤ 1 and |JC | ≤ 1 for every class C. Indeed, suppose k1, k 2 ∈ IC with k1̸ = k2.Then the warped ridges ( βk1j , h k1 ) and ( βk2j , h k2 ) are cofoliar, so by Lemma A.4 there exists α̸ = 0 such that 
+
+hk2 = αh k1 , contradicting Assumption A5 (pairwise non-proportionality of the warps). The same argument applied to the second parameterization gives |JC | ≤ 1, since Assumption A5 also holds for {˜hl}. Thus each equivalence class has either • a single first-side index, ( IC , J C ) = ( {k}, ∅), • a single second-side index, ( IC , J C ) = ( ∅, {l}), • one of each, ( IC , J C ) = ( {k}, {l}), • or is empty (which we ignore). Classes of the first two types are called singletons ; classes of the third type are matched pairs . Distinct classes have distinct foliations, since each class is defined by a unique normalised warp. Now invoke rigidity (Definition A.7). It requires that, for every class C ∈ C j , the combined class function 
+
+FC (t, ε ) := ∑
+
+> k∈IC
+
+gk(βkj t + hk(ε)) − ∑
+
+> l∈JC
+
+˜gl( ˜βlj t + ˜hl(ε)) belongs to the polynomial space P (viewed as a function of t and ε on Uj ). Consider a singleton of the first type, C = ( {k}, ∅). Then 
+
+FC (t, ε ) = gk(βkj t + hk(ε)) .
+
+If FC ∈ P , then gk is a polynomial in its argument, since the map u = βkj t+hk(ε) is surjective onto R (because 
+
+hk is strictly monotone by Assumption A2 and t varies over an interval). This contradicts Assumption A1, which requires each gk to be non-polynomial. The same reasoning excludes singletons ( ∅, {l}), as they would force ˜ gl ∈ P , contradicting A1 for the second parameterization. Therefore, every nontrivial equivalence class 31 is a matched pair: for every k ∈ Sj , there exists a unique l ∈ ˜Sj such that the ridges are cofoliar. This defines a map σj : Sj → ˜Sj , which is bijective by applying the same argument in reverse. For each k ∈ Sj , set l = σj (k). Since k and l lie in the same matched pair, their ridges are cofoliar. By Lemma A.4, there exists a unique scalar αkj ̸ = 0 such that ˜hσj (k) = αkj hk, ˜βσj (k),j = αkj βkj . (17) The class function for this matched pair is 
+
+F{k,σ j (k)}(t, ε ) = gk(βkj t + hk(ε)) − ˜gσj (k)( ˜βσj (k),j t + ˜hσj (k)(ε)) .
+
+Using (17) and setting u := βkj t + hk(ε), we obtain 
+
+F{k,σ j (k)}(t, ε ) = gk(u) − ˜gσj (k)(αkj u).
+
+Rigidity forces F{k,σ j (k)} ∈ P ; hence 
+
+gk − ˜gσj (k)(αkj ·) ∈ P . (18) It remains to show that the per-axis bijections σj are compatible across different axes. Take an interaction index k and two axes j, j ′ ∈ B k = supp βk. From (17), ˜hσj (k) = αkj hk, ˜hσj′ (k) = αkj ′ hk.
+
+Thus ˜hσj (k) and ˜hσj′ (k) are proportional. By Assumption A5 applied to the second parameterization, the warps {˜hl} are pairwise non-proportional, so these two warps must be identical: ˜hσj (k) = ˜hσj′ (k). Since the warps in the second parameterization are indexed distinctly, this forces σj (k) = σj′ (k). Therefore σj (k) is independent of j ∈ B k; denote this common value by π(k). Applying the same argument to π−1 shows that π
+
+is a bijection {1, . . . , K } → { 1, . . . , ˜K}, so K = ˜K.Moreover, for each fixed k, the scalar αkj in (17) is the same for all j ∈ B k: if j, j ′ ∈ B k, then αkj hk = ˜hπ(k) =
+
+αkj ′ hk, and since hk̸ ≡ 0, we get αkj = αkj ′ =: αk. Let ρk := 1 /α k. Then (17) becomes ˜hπ(k) = 1
+
+ρk
+
+hk, ˜βπ(k),j = 1
+
+ρk
+
+βkj ∀j ∈ B k. (19) The first relation in (19) gives hk = ρk ˜hπ(k). The second gives, for each component j ∈ B k, βkj = ρk ˜βπ(k),j ,and for j / ∈ B k, both βkj = 0 and ˜βπ(k),j = 0 by definition of the supports. Hence βk = ρk ˜βπ(k) as vectors. Reading the support relations in (19) over all j yields Bk ⊆ ˜Bπ(k); the symmetric argument using π−1 gives the reverse inclusion. Thus Bk = ˜Bπ(k). Combining this with the vector equality, the warp equality, and the polynomial difference gives exactly the conclusion of the proposition. 
+
+Proof of Proposition D.2. Let ( qk) ∈ R . Fix an axis j. Substituting x = te j into the defining identity (10) and collecting onto the right-hand side every term qk(hk(ε)) with βkj = 0 (a function of ε alone) together with the separable part of (10) gives, on the strip Uj = ( aj , A j ) × R,
+
+∑
+
+> k∈Sj
+
+qk
+
+(βkj t + hk(ε)) = Aj (t) + Bj (ε), (20) 32 where Sj = {k : βkj ̸ = 0 }. Applying ∂t∂ε to (20) annihilates Aj (t) and Bj (ε) and yields 
+
+∑
+
+> k∈Sj
+
+βkj h′
+
+> k
+
+(ε) q′′ 
+
+> k
+
+(βkj t + hk(ε)) = 0 on Uj . (21) Fix ε and interpret (21) as a polynomial identity in t (each summand is a polynomial in t with ε-dependent coefficients, since q′′  
+
+> k
+
+is a polynomial). Set D := max k∈Sj deg q′′  
+
+> k
+
+and suppose for contradiction that D ≥ 0, i.e. that some qk has degree at least 2. The coefficient of tD in (21) is 
+
+∑  
+
+> k∈Sj
+> deg q′′
+> k=D
+
+β D+1  
+
+> kj
+
+λk h′
+
+> k
+
+(ε) = 0 ∀ ε ∈ R,
+
+where λk̸ = 0 denotes the leading coefficient of q′′  
+
+> k
+
+. Since βkj ̸ = 0 for k ∈ Sj , the scalars β D+1  
+
+> kj
+
+λk are all nonzero, so this is a nontrivial linear combination of {h′
+
+> k
+
+}k∈Sj , deg q′′   
+
+> k=D
+
+vanishing identically. However, the derivatives 
+
+{h′
+
+> k
+
+}Kk=1 are linearly independent by Corollary A.5. This contradiction shows D < 0, i.e. deg q′′  
+
+> k
+
+≤ − 1, and hence every qk has degree at most 1: 
+
+qk(u) = cku + dk, ck, d k ∈ R.
+
+It remains to show ck = 0 for all k. Substituting qk(u) = cku + dk into (20) and differentiating in t yields 
+
+∑
+
+> k∈Sj
+
+βkj ck = −A′ 
+
+> j
+
+(t)for all t ∈ (aj , A j ); the left-hand side is constant, so A′ 
+
+> j
+
+is constant. Hence Aj (t) = ej t + bj for some ej , b j ∈ R.Substituting the affine forms back into the full residual identity (10), 
+
+∑
+
+> j
+
+(ej xj + bj ) + ∑
+
+> k
+
+ck
+
+(β⊤ 
+
+> k
+
+x + hk(ε)) + ∑
+
+> k
+
+dk = 0 on Xtr × R.
+
+Separating the ε-dependent part, the identity requires ∑ 
+
+> k
+
+ckhk(ε) = 0 for all ε ∈ R; linear independence of 
+
+{hk} LI forces ck = 0 for all k. The remaining x-dependent part then reduces to ∑ 
+
+> j
+
+ej xj + const = 0 on 
+
+Xtr ; since Xtr contains segments in each coordinate direction, this forces ej = 0 for all j. Hence qk ≡ dk is a constant for every k, i.e. ( qk) ∈ P 0.
+
+Remark 4. By Proposition D.1, after relabelling by the bijection π and setting rk = α−1 
+
+> k
+
+, the matched class function qk := gk − ˜gπ(k)(αk ·) is a polynomial (Step 2 of Proposition D.1) and its tuple lies in R after compensation (substituting ˜ gπ(k)(αk ¯xk) = gk(¯ xk) − qk(¯ xk) into (7) and using βk = rk ˜βk, hk = rk ˜hk converts the full identity to (10) for the tuple ( qk)). By R = P0 each qk is a constant, qk ≡ γk, yielding 
+
+gk(¯ xk) = ˜ gk
+
+( 1 
+
+> rk
+
+¯xk
+
+) + γk,
+
+and the residual constraint ∑ 
+
+> j
+
+bj + ∑ 
+
+> k
+
+γk = 0 follows from evaluating (7) at x = 0, ε = 0. 
+
+Proof of Theorem D.3. (i) Proposition D.1 (using A1, A2, A5) produces the bijection π and the structural equalities; Proposition D.2 (using LI) reduces the residual polynomial freedom to constants. 33 (ii) Failure of rigidity means there exists an axis j and a grouped identity (9) containing a foliation class with function Θ m /∈ P . The singleton is either Θ m = gk for some k ∈ Sj (no term of the second parameterization active on axis j is cofoliar with the k-th interaction) or Θ m = −˜gl (symmetric case). In the first case, if the two parametrizations were related by the admissible indeterminacies as in Proposition D.1, then the interaction 
+
+k would have a globally matched interaction l = π(k) satisfying ˜hl = αh k and ˜βlj = αβ kj with the same 
+
+α̸ = 0. By Lemma A.4, the two would then be cofoliar on axis j, which would contradict the fact that the class containing k is a singleton. Hence, the two parametrizations are not related by the admissible indeterminacies. Remark 2 provides an explicit instance. If instead the non-polynomial foliation class is matched, then for some matched pair ( k, l ) its combined profile is Θ m = gk − ˜gl(α ·) /∈ P . By Proposition D.1, two parameterizations that differ only by the admissible indeterminacies must have a polynomial combined profile on every matched class. Since Θ m is non-polynomial, the two parameterizations cannot be related by those indeterminacies. As they nevertheless induce the same conditional law on Xtr , they constitute a failure of identifiability. 
+
+Proof of Lemma D.4. Write ϕm = hm/c m, so (15) is ∑ 
+
+> m∈M
+
+Pm(hm)eνϕ m = C. Fix distinct m, m ′. If hm
+
+and hm′ are non-proportional, then by A6, |ϕm/ϕ m′ | → 0 or ∞, so exactly one of |ϕm|, |ϕm′ | dominates. If |ϕm/ϕ m′ | → ∞ , then ϕm′ /ϕ m → 0 and ϕm − ϕm′ = ϕm(1 − ϕm′ /ϕ m) ∼ ϕm, which tends to ±∞ since 
+
+|ϕm| → ∞ ; the case |ϕm/ϕ m′ | → 0 is symmetric. If instead hm′ = αh m for some α̸ = 0, then non–cofoliarity implies cm′̸ = αc m, and hence 
+
+ϕm − ϕm′ =
+
+( 1
+
+cm
+
+− αcm′
+
+)
+
+hm −→ ±∞ .
+
+Hence for every distinct pair 
+
+ν(ϕm − ϕm′ ) → +∞ or → −∞ ,
+
+the case |ϕm/ϕ m′ | → 0 is symmetric. Hence for every distinct pair 
+
+ν(ϕm − ϕm′ ) → +∞ or → −∞ ,
+
+these two alternatives being exhaustive and mutually exclusive (the difference cannot be bounded). Define 
+
+m ≻ m′ ⇐⇒ ν(ϕm − ϕm′ ) → +∞.
+
+Exclusivity makes ≻ a well–defined relation, exhaustivity makes it total on distinct indices, and it is transitive because ν(ϕm − ϕr ) = ν(ϕm − ϕm′ ) + ν(ϕm′ − ϕr ) and the sum of two quantities tending to + ∞ tends to + ∞.A total order on the finite set M has a maximum; let m∗ be it, so ν(ϕm∗ − ϕm) → +∞ for every m̸ = m∗.Fix m̸ = m∗; if Sm ≡ 0 there is nothing to prove, so let d = deg Sm. Since hm = cmϕm, for large ε
+
+|Pm(hm)| ≤ C′(1 + |ϕm|)d = exp (d log(1 + |ϕm|)). We bound the term Pm(hm)eν(ϕm−ϕm∗ ) using A6. 
+
+Case A: |ϕm/ϕ m∗ | → 0. Then ϕm = o(ϕm∗ ), so the prefactor is exp (o(|ϕm∗ |)). Since m∗ ≻ m, the exponent 
+
+ν(ϕm − ϕm∗ ) → −∞ at rate of magnitude |νϕ m∗ |(1 + o(1)). Exponential decay e−| νϕ m∗ |(1+ o(1)) dominates exp (o(|ϕm∗ |)), so the term → 0. 
+
+Case B: |ϕm/ϕ m∗ | → ∞ . Then ϕm∗ /ϕ m → 0, so 
+
+ϕm − ϕm∗ = ϕm
+
+(
+
+1 − ϕm∗
+
+ϕm
+
+)
+
+= ϕm (1 + o(1)) .
+
+34 Since m∗ ≻ m, we have ν(ϕm − ϕm∗ ) → −∞ , and combining this gives νϕ m(1 + o(1)) → −∞ . Hence, for all sufficiently large ε,
+
+ν(ϕm − ϕm∗ ) ≤ − |ν| 
+
+> 2
+
+|ϕm|.
+
+As hm = cmϕm and Sm is a polynomial, |Pm(hm)| ≤ C′(1 + |ϕm|)d for some C′ > 0, d ≥ 0 and all large ε.Therefore ∣∣∣Pm(hm) eν(ϕm−ϕm∗ )
+
+∣∣∣ ≤ C′(1 + |ϕm|)d e−(|ν|/2) |ϕm| −→ 0,
+
+exponential decay dominating polynomial growth. 
+
+Case C: hm and hm∗ are proportional. Write hm = αh m∗ . Then ϕm = rϕ m∗ for the constant r = αc m∗ /c m̸ = 1, where r̸ = 1 follows from non–cofoliarity. Thus ϕm −ϕm∗ = (1 − 1
+
+> r
+
+) ϕm. Since m∗ ≻ m, we have ν(ϕm −ϕm∗ ) →−∞ . Hence, for some κ > 0 and all sufficiently large ε, ν(ϕm − ϕm∗ ) ≤ − κ|ϕm|. Therefore, exactly as in Case B, ∣∣∣Pm(hm)eν(ϕm−ϕm∗ )
+
+∣∣∣ ≤ C′(1 + |ϕm|)de−κ|ϕm| −→ 0.
+
+Divide (15) by eνϕ m∗ :
+
+Pm∗ (hm∗ ) + ∑
+
+> m̸=m∗
+
+Pm(hm)eν(ϕm−ϕm∗ ) = C e −νϕ m∗ ,
+
+so by the previous calculation, Pm∗ (hm∗ ) + o(1) = C e −νϕ m∗ .• If νϕ m∗ → +∞, the right side → 0, so Pm∗ (hm∗ ) → 0; as |hm∗ | → ∞ , a nonzero polynomial cannot tend to 0 along ε → +∞, so Pm∗ ≡ 0. • If νϕ m∗ → −∞ , first note C = 0. Indeed, suppose C̸ = 0. The identity Pm∗ (hm∗ ) + o(1) = C e −νϕ m∗
+
+has, on the right, a term whose modulus |C| e−νϕ m∗ → +∞, so the right side grows exponentially in 
+
+|ϕm∗ |. The left side, however, is Pm∗ (cm∗ ϕm∗ ) + o(1), a polynomial in ϕm∗ up to o(1), hence bounded by 
+
+C′(1+ |ϕm∗ |)deg Pm∗ for large ε. A quantity of at most polynomial growth cannot equal one of exponential growth as ε → +∞; this contradiction forces C = 0. With C = 0 the identity reads Pm∗ (hm∗ )+ o(1) = 0, so Pm∗ (hm∗ ) → 0; as |hm∗ | → ∞ , a nonzero polynomial cannot tend to 0 along ε → +∞, so Pm∗ ≡ 0. Remove m∗ and repeat on M \ { m∗}. Induction gives Pm ≡ 0 for all m; the empty relation gives C = 0. 
+
+Proof of Lemma D.5. Suppose a collapse arises on some axis. After merging exact cofoliar classes, index them m = 1 , . . . , N , with pairwise non–cofoliar foliations hm/c m (cm̸ = 0), and suppose some Θ m0 is not a polynomial. Apply ∂t∂ε to (9); the separable side vanishes and each class contributes cmh′
+
+> m
+
+(ε)Θ ′′ 
+
+> m
+
+(cmt + hm(ε)), so 
+
+> N
+
+∑
+
+> m=1
+
+cm h′
+
+> m
+
+(ε) Θ ′′ 
+
+> m
+
+(cmt + hm(ε)) = 0 . (22) By hypothesis Θ ′′ 
+
+> m
+
+(u) = ∑ 
+
+> i
+
+˜pmi (u)eλmi u with ˜ pmi = p′′  
+
+> mi
+
++ 2 λmi p′ 
+
+> mi
+
++ λ2
+
+> mi
+
+pmi ; if λmi ̸ = 0 and pmi ̸ ≡ 0 then ˜pmi ̸ ≡ 0, its leading coefficient being λ2 
+
+> mi
+
+times that of pmi .Substitute u = cmt + hm and factor eλmi (cmt+hm) = eνt eλmi hm with ν := λmi cm. Expand ˜ pmi (cmt + hm) = ∑ 
+
+> a
+
+Rmia (hm) ta with Rmia polynomial. Then (22) is a finite combination of {taeνt }, which are linearly 35 independent on the axis interval (distinct ν give distinct exponential rates in t; for fixed ν the powers ta are independent). Hence each coefficient vanishes: for every ν and a,
+
+∑ 
+
+> (m,i ): λmi cm=ν
+
+cm Rmia 
+
+(hm(ε)) h′
+
+> m
+
+(ε) eλmi hm(ε) = 0 . (23) For fixed m the λmi are distinct, so at most one i = i(m) has λmi cm = ν; set λm := λm,i (m) = ν/c m and let 
+
+Gν be the classes contributing to ν.Distinct merged classes are non–cofoliar by construction, so for m̸ = m′ in Gν the foliations hm/c m and 
+
+hm′ /c m′ are non–cofoliar. Hence Lemma D.4 is applicable at each ν.Fix ν̸ = 0; then each λm = ν/c m̸ = 0. For each m ∈ Gν and each a, consider the equation 
+
+V ′ 
+
+> ma
+
++ λmVma = Rm,i (m),a (24) for an unknown polynomial Vma ∈ C[z], where Rm,i (m),a is the known polynomial from (23). Write R := 
+
+Rm,i (m),a , λ := λm, and seek V = ∑Ds=0 σszs with D = deg R. In (24) the top–degree coefficient of V ′ + λV 
+
+is λσ D (the derivative V ′ has degree D − 1 and does not reach degree D), so matching the coefficient of zD
+
+in R gives σD = (coeff of zD in R)/λ ; this division is legitimate because λ̸ = 0. Descending one degree at a time, the coefficient of zs gives λσ s = (coeff of zs in R) − (s + 1) σs+1 , determining σs from the already–found 
+
+σs+1 , again by division by λ. Hence a polynomial solution Sma exists (and has degree deg R). With Vma so chosen, the chain rule gives 
+
+ddε 
+
+[Vma (hm)eλmhm ] = h′
+
+> m
+
+(V ′ 
+
+> ma
+
++ λmVma 
+
+)(hm) eλmhm = h′ 
+
+> m
+
+Rm,i (m),a (hm) eλmhm ,
+
+the last equality by (24). Thus the m–th summand of (23) (without its constant factor cm) is exactly the 
+
+ε–derivative of Vma (hm)eλmhm .Summing over m ∈ Gν with the factors cm, (23) states that 
+
+ddε 
+
+[ ∑
+
+> m∈Gν
+
+cm Vma (hm)eλmhm
+
+]
+
+= 0 on R.
+
+A function with vanishing derivative on the connected set R is constant, so 
+
+∑
+
+> m∈Gν
+
+cm Vma 
+
+(hm(ε)) e(ν/c m)hm(ε) = Kν,a 
+
+for some constant Kν,a ∈ C.This is now of the form (15) at frequency ν, with polynomial coefficients Sm := cmVma ; the foliations 
+
+{hm/c m}m∈Gν are pairwise non–cofoliar, as noted above. Lemma D.4 therefore gives cmVma ≡ 0 for ev-ery m ∈ Gν , hence Vma ≡ 0 (as cm̸ = 0). Feeding this back into (24), 
+
+Rm,i (m),a = V ′ 
+
+> ma
+
++ λmVma ≡ 0for every m ∈ Gν and every a.Since Θ m0 is not a polynomial, some λm0i0̸ = 0 with pm0i0̸ ≡ 0, so ˜ pm0i0̸ ≡ 0. Set ν = λm0i0 cm0̸ = 0. The t0
+
+coefficient of ˜ pm0i0 (cm0 t + hm0 ) is ˜ pm0i0 (hm0 ), so Rm0i00 = ˜ pm0i0̸ ≡ 0. Contradiction. 36 Proof of Lemma D.6. Linear independence. Suppose ∑ 
+
+> m
+
+λmhm(ε) ≡ const with not all λm zero, and let 
+
+M0 = {m : λm̸ = 0 }̸ = ∅. The warps {hm}m∈M0 lie in the pooled family, and A6 strictly orders them by growth as ε → +∞ (within a cofoliar class the ratio tends to a finite nonzero limit, but a nontrivial linear relation among proportional warps already forces their coefficients to vanish, so no two indices in M0 are cofoliar and the strict order applies across all of M0). Let m∗ ∈ M0 be the fastest–growing. Dividing the relation by hm∗ ,
+
+λm∗ + ∑
+
+> m∈M0\{ m∗}
+
+λm
+
+hm
+
+hm∗
+
+= const 
+
+hm∗
+
+.
+
+As ε → +∞, each ratio hm/h m∗ → 0 (by the strict order) and hm∗ → +∞ (A2), so the right side and every sum term tend to 0, forcing λm∗ = 0, contradicting m∗ ∈ M0. Hence all λm = 0, i.e. LI holds. 
+
+Strictness. The warps of Remark 2 are linearly independent yet do not have pairwise distinct growth orders, so LI does not imply A6. 
+
+## D.3 Further results with exponential polynomials in the setting of non-affine hk
+
+Proposition D.8. Under A2 , A3 , A5 and N2 , every function appearing in a collapse (9) arising from (8) is an exponential polynomial. 
+
+The remaining result discusses the case of complex singularity. 
+
+Theorem D.9. Under A2 , A3 , A5 , and S, the pair of parametrizations inducing the same distribution on Xtr 
+
+is rigid. Proof of Proposition D.8. By N2, N ≤ 2. We must show that every Θ m, m = 1 , 2, is an exponential polynomial (as in A7). We use repeatedly the following elementary fact: a real–analytic function on R (or on an interval) that is not identically zero has only isolated zeros. This is immediate from the identity theorem, since a real–analytic function extends locally to a holomorphic function, and the zero set of a holomorphic function that is not identically zero on a connected domain has no accumulation point in that domain. We call a point of the domain good for a given real–analytic function if the function is nonzero there; the set of good points is then the complement of a discrete (in particular countable) set. By A2, each hm is strictly monotone, hence h′ 
+
+> m
+
+≥ 0 (or ≤ 0) throughout its domain; since hm is non–constant (indeed unbounded, by A2), h′
+
+> m
+
+̸ ≡ 0, so h′ 
+
+> m
+
+vanishes only on a discrete set, and is nonzero off it. Apply ∂t∂ε to (9) to make the right-hand side vanish, let Ψ m := Θ ′′ 
+
+> m
+
+, then 
+
+> N
+
+∑
+
+> m=1
+
+cm h′
+
+> m
+
+(ε) Ψ m
+
+(cmt + hm(ε)) = 0 on Uj . (25) 
+
+The case N = 1 . Equation (25) reads c1h′
+
+> 1
+
+(ε)Ψ 1(c1t+h1(ε)) = 0. Fix ε good for h′ 
+
+> 1
+
+(i.e. h′
+
+> 1
+
+(ε)̸ = 0); since c1̸ = 0, this forces Ψ 1(c1t + h1(ε)) = 0 for every t ∈ (aj , A j ), i.e. Ψ 1 vanishes on the interval I1(ε) := c1(aj , A j ) + h1(ε). As ε ranges over the good set (dense, and cofinal in both directions since h1(ε) → ±∞ by A2), the intervals 
+
+I1(ε) have fixed length |c1|(Aj −aj ) > 0 and slide continuously with h1(ε); consecutive good ε’s give overlapping intervals (by continuity of h1, since the excluded bad set is discrete, hence contains, near any point, arbitrarily close good points on both sides), so their union is a single unbounded interval, in fact all of R. Thus Ψ 1 ≡ 0 on 37 a set with nonempty interior, and since Ψ 1 = Θ ′′  
+
+> 1
+
+is real–analytic on R (as Θ 1 is, by LI), the identity theorem gives Ψ 1 ≡ 0 on all of R. Hence Θ 1 is affine, Θ 1(u) = pu + q, an exponential polynomial with sole frequency 0. 
+
+The case N = 2 , reduction to a scalar ODE. Write bm(ε) := cmh′
+
+> m
+
+(ε) and um := cmt + hm(ε), m = 1 , 2; (25) reads 
+
+b1(ε)Ψ 1(u1) + b2(ε)Ψ 2(u2) = 0 on Uj . (26) If Ψ 2 ≡ 0, then (26) gives b1(ε)Ψ 1(u1) = 0 for all ( t, ε ); since b1̸ ≡ 0 and u1 ranges over an open interval as t
+
+varies (for ε with b1(ε)̸ = 0), the same argument as in the case N = 1 gives Ψ 1 ≡ 0 on R. Both Θ 1, Θ2 are then affine, and the case is settled as in N = 1. Assume henceforth Ψ 1, Ψ2̸ ≡ 0. Since the foliations of the two classes are non–cofoliar, Lemma A.4 rules out h2 = αh 1, c2 = αc 1 for any α̸ = 0; equivalently, writing 
+
+W12 (ε) := c2h′
+
+> 1
+
+(ε) − c1h′
+
+> 2
+
+(ε),W12 ̸ ≡ 0 (a relation W12 ≡ 0 together with strict monotonicity of h1, h 2 would integrate, via h1(0) = h2(0) = 0 under A2, to h2 = ( c2/c 1)h1, cofoliar with α = c2/c 1, excluded). As W12 is real–analytic and not identically zero, it is nonzero off a discrete set. Call ε admissible if b1(ε), b 2(ε), W 12 (ε) are all nonzero; the inadmissible set is a finite union of discrete sets, hence itself discrete. Fix an admissible ε. The map ( t, ε ) 7 → (u1, u 2) has Jacobian c1h′
+
+> 2
+
+(ε) − c2h′
+
+> 1
+
+(ε) = −W12 (ε)̸ = 0, so on a neighbourhood of ( t, ε ) (for any t) ( u1, u 2) form local coordinates. Consider the vector field 
+
+L := h′
+
+> 1
+
+(ε) ∂t − c1 ∂ε.
+
+Directly, Lu 1 = h′
+
+> 1
+
+(ε)c1 − c1h′
+
+> 1
+
+(ε) = 0 and Lu 2 = h′
+
+> 1
+
+(ε)c2 − c1h′
+
+> 2
+
+(ε) = W12 (ε); and, since bm depends on ε
+
+alone, Lb m = −c1b′
+
+> m
+
+(ε). Applying L to the identity (26) (valid on all of Uj , so L applied to it is again ≡ 0 on Uj ) gives, by the product and chain rules, 
+
+−c1b′
+
+> 1
+
+(ε)Ψ 1(u1) + b1(ε)Ψ ′
+
+> 1
+
+(u1) · 0 − c1b′
+
+> 2
+
+(ε)Ψ 2(u2) + b2(ε)Ψ ′
+
+> 2
+
+(u2) W12 (ε) = 0 .
+
+Using (26) to substitute Ψ 1(u1) = −(b2(ε)/b 1(ε))Ψ 2(u2) (legitimate since b1(ε)̸ = 0) and simplifying, 
+
+c1
+
+( b′
+
+> 1
+
+(ε)
+
+b1(ε) − b′
+
+> 2
+
+(ε)
+
+b2(ε)
+
+)
+
+Ψ2(u2) + W12 (ε) Ψ ′
+
+> 2
+
+(u2) = 0 ,
+
+so that, dividing by W12 (ε)̸ = 0, Ψ′
+
+> 2
+
+(u2) = κ(ε) Ψ 2(u2), κ(ε) := c1
+
+(b′
+
+> 2
+
+(ε)b1(ε) − b′
+
+> 1
+
+(ε)b2(ε))
+
+b1(ε)b2(ε)W12 (ε) . (27) Fix an admissible ε0. As t ranges over ( aj , A j ), u2 = c2t + h2(ε0) ranges over the open interval I2(ε0) := 
+
+c2(aj , A j ) + h2(ε0), and (27) says Ψ 2 solves the linear ODE y′ = κ(ε0)y (constant coefficient, since κ(ε0) does not depend on t) on I2(ε0). Since Ψ 2̸ ≡ 0 and is real–analytic, it has at most isolated zeros on I2(ε0), so there is u∗ ∈ I2(ε0) with Ψ 2(u∗)̸ = 0; the unique solution of the ODE through ( u∗, Ψ2(u∗)) is Ce κ(ε0)u with 
+
+C = Ψ 2(u∗)e−κ(ε0)u∗ , and by uniqueness for linear ODEs this solution agrees with Ψ 2 on the whole interval 
+
+I2(ε0): Ψ2(u) = C(ε0) eκ(ε0)u (u ∈ I2(ε0)) . (28) 38 Let ε0, ε 1 be admissible with overlapping intervals, I2(ε0) ∩ I2(ε1)̸ = ∅; this holds whenever |h2(ε0) − h2(ε1)| <
+
+|c2|(Aj −aj ), in particular for ε1 close enough to ε0, by continuity of h2. On the (nonempty, open) overlap, (28) gives C(ε0)eκ(ε0)u = C(ε1)eκ(ε1)u for all u in an interval; dividing, C(ε0)/C (ε1) = e(κ(ε1)−κ(ε0)) u for all such 
+
+u, and the left side is constant in u while the right side is constant in u only if κ(ε0) = κ(ε1) (a nonconstant exponential cannot equal a constant on an interval with more than one point). Hence also C(ε0) = C(ε1). The inadmissible set is discrete, hence has no accumulation point, so it meets any bounded interval in only finitely many points. Consequently, for any two admissible ε, ε ′, finitely many applications of the overlap argument above (stepping across each inadmissible point in [ ε, ε ′] by choosing admissible values arbitrarily close on either side, which exist since the admissible set is dense) show κ(ε) = κ(ε′). Thus κ(ε0) ≡ λ and 
+
+C(ε0) ≡ C are the same constants for every admissible ε0.By (28), Ψ 2(u) = Ce λu for every u ∈ I2(ε0), over all admissible ε0. As in Step 2, the admissible set is co– countable and h2(ε) → ±∞ as ε → ±∞ (A2), so the intervals I2(ε0), of fixed length |c2|(Aj − aj ) and sliding continuously and unboundedly with h2(ε0), have union equal to all of R. Hence Ψ 2(u) = Ce λu for every u ∈ R;equivalently Θ ′′  
+
+> 2
+
+≡ Ce λu on R.If λ̸ = 0, integrating twice gives Θ2(u) = Cλ2 eλu + d1u + d2
+
+for constants d1, d 2, an exponential polynomial with frequencies {0, λ }. If λ = 0, then Θ ′′  
+
+> 2
+
+≡ C, so Θ 2(u) =  
+
+> C
+> 2
+
+u2 + d1u + d2, a polynomial of degree at most 2, an exponential polynomial with sole frequency 0. In either case Θ 2 is an exponential polynomial. The equation (26) is symmetric under exchanging the indices 1 , 2 (equivalently, one may run Steps 3–7 with the vector field L′ := h′
+
+> 2
+
+(ε)∂t − c2∂ε, which satisfies L′u2 = 0), so the same argument shows Θ 1 is an exponential polynomial. Hence, every profile Θ m appearing in the is an exponential polynomial. 
+
+Lemma D.10. Let φ be holomorphic on C \ S with S discrete and no point of S a removable singularity of φ.Then φ′ is holomorphic on C \ S (the derivative of a holomorphic function is again holomorphic on the same domain), and no point of S is a removable singularity of φ′.Proof of Lemma D.10. Only the second assertion requires an argument: we show that if φ′ were removable at a point, then φ would have been removable there too. Suppose φ′ extends holomorphically across some 
+
+ζ0 ∈ S. Take a disc ∆ at ζ0 with ∆ ∩ S = {ζ0}, and let H be a primitive on ∆ of that extension — available because ∆ is simply connected. On the punctured disc ∆ \ { ζ0}, which is connected, ( φ − H)′ = φ′ − H′ ≡ 0, so φ = H + const there. But H + const is holomorphic on all of ∆, so this exhibits a holomorphic extension of φ across ζ0, contradicting that ζ0 is non–removable for φ.
+
+Proof of Theorem D.9. suppose some Jm0̸ = ∅. Then (9) has no solution. Equivalently, if (9) holds and every Θm satisfies S, then every Θ m is entire. Relabel m0 = 1 and fix ζ0 ∈ J 1.With r := max {1, r 1, . . . , r N }, apply Lemma D.10 r − rm times to each Θ (rm) 
+
+> m
+
+: by induction, each Θ (r) 
+
+> m
+
+is holomorphic on C \ J m and no point of Jm is removable for it. All profiles are now differentiated to the same order, with their singular sets unchanged. Two properties of Jm are needed. (1) Jm ∩R = ∅: the singularities are complex. Indeed Θ (r) 
+
+> m
+
+is real–analytic on 
+
+R by A3 (derivatives of real–analytic functions are real–analytic), so a real point x0 ∈ J m would be removable. To see this, real–analyticity at x0 means the Taylor series of Θ (r) 
+
+> m
+
+at x0 converges on a real interval around 39 x0, and the same series, viewed as a function of a complex variable, converges on some complex disc about 
+
+x0 and defines a holomorphic function there. This new function agrees with Θ (r) 
+
+> m
+
+itself (as already defined, holomorphically, on the punctured disc) along that real interval without x0, a set with an accumulation point, so by the identity theorem the two agree on the whole punctured disc. Hence Θ (r) 
+
+> m
+
+, originally only known to be holomorphic near x0 with x0 removed, in fact extends holomorphically across x0, this contradicting non–removability. (2) Jm is countable. Being discrete and closed, Jm can only meet any given closed disc in finitely many points, if infinitely many points of Jm lay in one disc, that disc being compact would force those points to accumulate somewhere in it, contradicting discreteness. Now cover C by the closed discs of integer radius centred at the origin, {| z| ≤ n} for n = 1 , 2, 3, . . . : every point of C lies in one of them, so this is a countable collection of discs whose union is all of C. Since Jm meets each such disc in only finitely many points, Jm itself is a countable union of finite sets, hence countable. Consequently, for every ε the set of t ∈ C
+
+at which some summand of the differentiated identity below is singular, namely 
+
+D(ε) := 
+
+> N
+
+⋃
+
+> m=1
+
+c−1
+
+> m
+
+(Jm − hm(ε)),
+
+is discrete, closed, countable, and disjoint from R: each constituent is the image of Jm under the affine map 
+
+z 7 → (z − hm(ε)) /c m, which has real coefficients and therefore preserves both discreteness and the property of avoiding R; and a finite union of closed discrete sets is closed and discrete. Applying ∂ε∂ r−1 
+
+> t
+
+to (9); gives 
+
+> N
+
+∑
+
+> m=1
+
+c r−1 
+
+> m
+
+h′
+
+> m
+
+(ε) Θ (r)
+
+> m
+
+(cmt + hm(ε)) = β(ε) := 
+
+{B′(ε), r = 1 ,
+
+0, r ≥ 2, on U, (R (r))constant in t in either case. The single ε–derivative is what eliminates A(t), and with it any need to track the singularities of the main effect; the r − 1 derivatives in t raise the profiles to the order at which S applies to all of them simultaneously. Fix ε. Read (R (r)) as an identity in t. Its left side is holomorphic on Ω ε := C \ D(ε), by construction of D(ε), and Ω ε ⊃ (a, A 0) because D(ε) avoids R. Moreover Ω ε is connected: given two of its points, consider the uncountable family of circular arcs joining them: distinct arcs meet only at the two endpoints, so each point of the countable set D(ε) obstructs at most one arc, and an unobstructed arc remains, giving a path in Ω ε.Both sides of (R (r)) are therefore holomorphic on the connected open set Ω ε and agree on the interval ( a, A 0), which has accumulation points; by the identity theorem they agree on all of Ω ε. The identity, originally valid only on a real strip, now holds for the punctured plane. The map t 7 → c1t + h1(ε) is an affine map of C carrying 
+
+t1(ε) := ζ0 − h1(ε)
+
+c1
+
+to ζ0 ∈ J 1; the first summand of (R (r)) has a non–removable singularity at t1(ε), its scalar prefactor c r−11 h′
+
+> 1
+
+(ε)being nonzero. As ε ranges over R, the point t1(ε) traces a real–analytic arc in the complex t–plane. We claim that at each ε some other summand must be singular at precisely the same point t1(ε). Suppose not, i.e. that for some ε we have cmt1(ε) + hm(ε) /∈ J m for all m ≥ 2. Choose a disc ∆ at t1(ε) with ∆ ∩ D(ε) = {t1(ε)}, possible since D(ε) is discrete. Every summand with m ≥ 2 is then holomorphic on all 40 of ∆: its singularities lie in c−1 
+
+> m
+
+(Jm − hm(ε)) ⊂ D(ε), and the only point of D(ε) in ∆ is t1(ε), which by assumption is not one of them. On ∆ \ { t1(ε)} ⊂ Ωε we may therefore rearrange (R (r)) to isolate the first summand: 
+
+c r−11 h′
+
+> 1
+
+(ε) Θ (r)1
+
+(c1t + h1(ε)) = β(ε) − ∑
+
+> m≥2
+
+c r−1 
+
+> m
+
+h′
+
+> m
+
+(ε) Θ (r)
+
+> m
+
+(cmt + hm(ε)).
+
+Every term on the right is holomorphic on the full disc ∆, so the left side extends holomorphically across 
+
+t1(ε); dividing by the nonzero constant c r−11 h′
+
+> 1
+
+(ε), so does Θ (r)1 (c1 · +h1(ε)), contradicting non–removability. Hence for every ε ∈ R there is some m ≥ 2 with cmt1(ε) + hm(ε) ∈ J m. (For N = 1 there is no such m and the proof already ends here.) It remains to show that this cannot hold for all ε. Put wm(ε) := cmt1(ε) + hm(ε) and Zm := {ε ∈ R : wm(ε) ∈Jm} for m ≥ 2; the previous step says exactly R = ⋃Nm=2 Zm, a finite union. We show each Zm is countable. Substituting t1(ε), 
+
+wm = cm 
+
+> c1
+
+ζ0 + hm − cm 
+
+> c1
+
+h1.
+
+Since h1, h m are real–valued, the imaginary part is frozen, ℑwm ≡ cm 
+
+> c1
+
+ℑζ0, so wm moves along a fixed horizontal line; whereas the real part moves nondegenerately, (ℜwm)′ = h′ 
+
+> m
+
+− cm 
+
+> c1
+
+h′ 
+
+> 1
+
+= − 1 
+
+> c1
+
+W1m̸ ≡ 0by non–cofoliarity of ( c1, h 1) and ( cm, h m) (Lemma A.4). Now Sm is countable, so it meets that horizontal line in a countable set {sm,k }k, and wm(ε) ∈ Sm forces ℜwm(ε) = ℜsm,k for some k. Hence 
+
+Zm = ⋃
+
+> k
+
+{ε ∈ R : ℜwm(ε) = ℜsm,k },
+
+a countable union of zero sets of real–analytic functions, none identically zero because ℜwm is non–constant. The zeros of a non–trivial real–analytic function are isolated, hence countably many, so each such set is countable and therefore so is Zm. Thus R is a finite union of countable sets, contradiction. 
+
+## D.4 Identification with polynomial functions gk
+
+This section replaces the standing non-polynomial-profile assumption by the following polynomial assumption; the two assumptions are not imposed simultaneously. Fix an integer D ≥ 2 and set 
+
+D⋆ := max {2, D − 1}.
+
+(P) Polynomial profiles. For both parameterizations, 
+
+gk(u) = 
+
+> dk
+
+∑
+
+> s=0
+
+ak,s us, ˜gℓ(u) = 
+
+˜dℓ∑
+
+> s=0
+
+˜aℓ,s us,
+
+where 2 ≤ dk, ˜dℓ ≤ D, ak,d k̸ = 0 , ˜aℓ, ˜dℓ̸ = 0 . Coefficients above the degree of a profile are defined to be zero. 41 (LF) Pooled finite-power independence. For the two parameterizations under comparison, form the pooled warp family 
+
+H := {hk : 1 ≤ k ≤ K} ∪ { ˜hℓ : 1 ≤ ℓ ≤ ˜K}.
+
+Let C be the set of proportionality classes in H, and choose one representative HC from each class. Then 
+
+{1} ∪ { HsC : C ∈ C, 1 ≤ s ≤ D⋆}
+
+is linearly independent as a family of functions of ε.The validity of LF is independent of the representatives HC : replacing HC by αC HC , with αC̸ = 0, merely multiplies the column HsC by the nonzero number αsC . Since the warps are real analytic, LF is equivalently the Wronskian condition 
+
+W
+
+(
+
+1, (HsC ) C∈C
+
+> 1≤s≤D⋆
+
+)̸≡ 0. (29) Assumption LF is a condition on a pooled comparison of two parameterizations. Accordingly, the theorem below is first stated pairwise. It implies identifiability of a model class when LF is required for every observationally equivalent pair in a distributional sense on Xtr in that class. 
+
+Lemma D.11 (Differentiated power independence) . Let J ⊆ R be a connected interval, for an integer Q ≥ 0,and let {HC }C∈C ⊂ C1(J) be finite. Then 
+
+{1} ∪ { HrC : C ∈ C, 1 ≤ r ≤ Q + 1 } is linearly independent (30) 
+
+if and only if 
+
+{HqC H′ 
+
+> C
+
+: C ∈ C, 0 ≤ q ≤ Q} is linearly independent .
+
+If the functions are real analytic, and the pairs (C, r ) have the same ordering on both sides, then 
+
+W
+
+(
+
+1, (HrC ) C∈C
+
+> 1≤r≤Q+1
+
+)
+
+= ((Q + 1)! )|C|W
+
+(
+
+(Hr−1 
+
+> C
+
+H′ 
+
+> C
+
+) C∈C
+
+> 1≤r≤Q+1
+
+)
+
+. (31) 
+
+Proof. Suppose first that the family in (30) is linearly independent and ∑
+
+> C∈C
+
+∑Qq=0 bC,q HqC H′ 
+
+> C
+
+= 0 . Since 
+
+HqC H′ 
+
+> C
+
+= 1 
+
+> q+1
+
+(Hq+1  
+
+> C
+
+)′, integration on the connected interval J gives b0 + ∑
+
+> C∈C
+
+∑Qq=0  
+
+> bC,q
+> q+1
+
+Hq+1  
+
+> C
+
+= 0 for some constant b0. Linear independence forces every bC,q and b0 to vanish. Conversely, differentiating a relation b0 + ∑
+
+> C∈C
+
+∑Q+1  
+
+> r=1
+
+bC,r HrC = 0 gives ∑
+
+> C∈C
+
+∑Q+1  
+
+> r=1
+
+rb C,r Hr−1 
+
+> C
+
+H′ 
+
+> C
+
+= 0 .
+
+Independence of the differentiated family gives bC,r = 0 for every C, r , and the original relation then gives 
+
+b0 = 0. For (31), expand the Wronskian on the left along its first column, which is (1 , 0, . . . , 0) ⊤. This gives 
+
+W (1 , f 1, . . . , f M ) = W (f ′
+
+> 1
+
+, . . . , f ′ 
+
+> M
+
+),
+
+where the fa’s enumerate the functions HrC . Because ( HrC )′ = rH r−1 
+
+> C
+
+H′ 
+
+> C
+
+, factoring r from the corresponding column and multiplying over all C and 1 ≤ r ≤ Q + 1 gives (31). 
+
+Theorem D.12 (Polynomial-profile identification) . Let two parameterizations satisfy the standing warp-normalization, analyticity, support, and within-parameterization non-proportionality assumptions A2 –A5 . As-sume P, and suppose that Xtr contains, on each coordinate axis, a nondegenerate segment {te j : t ∈ Ij }, 0 ∈ Ij .
+
+If the two parameterizations induce the same conditional law on Xtr and their pooled warp family satisfies LF ,then the model is identifiable in the sense of Definition 3.1. 
+
+42 Proof. By Lemma A.1, equality of the conditional laws implies the pointwise identity 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+gk
+
+(β⊤ 
+
+> k
+
+x + hk(ε)) =
+
+> p
+
+∑
+
+> j=1
+
+˜fj (xj ) + 
+
+˜K∑
+
+> ℓ=1
+
+˜gℓ
+
+( ˜β⊤ 
+
+> ℓ
+
+x + ˜hℓ(ε)) , (x, ε ) ∈ X tr × R. (32) For each pooled class C ∈ C, let k(C) be the untilded index whose warp belongs to C, if such an index exists, and let ℓ(C) be the corresponding tilded index, if it exists. These indices are unique by the within-parameterization non-proportionality assumption. Choose nonzero class scales such that 
+
+hk(C) = λk(C)HC , ˜hℓ(C) = ˜λℓ(C)HC (33) whenever the relevant indices exist. Fix a coordinate j and set x = te j in (32). Applying ∂t∂ε eliminates every term depending only on t or only on ε and gives 
+
+> K
+
+∑
+
+> k=1
+
+βkj h′
+
+> k
+
+(ε)g′′  
+
+> k
+
+(βkj t + hk(ε)) −
+
+˜K∑
+
+> ℓ=1
+
+˜βℓj ˜h′
+
+> ℓ
+
+(ε)˜ g′′ 
+
+> ℓ
+
+( ˜βℓj t + ˜hℓ(ε)) = 0 . (34) For one untilded term, the expansion gives 
+
+βkj h′
+
+> k
+
+g′′  
+
+> k
+
+(βkj t + hk) = 
+
+> dk
+
+∑
+
+> s=2
+> s−1
+
+∑
+
+> i=1
+
+ak,s s(s − 1) 
+
+(s − 2
+
+i − 1
+
+)
+
+β ikj ti−1h s−i−1 
+
+> k
+
+h′
+
+> k
+
+.
+
+If hk = λkHC , then 
+
+h s−i−1 
+
+> k
+
+h′ 
+
+> k
+
+= λ s−ik H s−i−1 
+
+> C
+
+H′ 
+
+> C
+
+.
+
+The analogous formula holds for a tilded term. For each fixed ε, (34) is a polynomial identity in t on the nondegenerate interval Ij , so every coefficient of ti−1 vanishes. For fixed i, its ε-dependent terms are linear combinations of 
+
+HqC H′ 
+
+> C
+
+, q = s − i − 1, 0 ≤ q ≤ D − 2.
+
+Since D⋆ ≥ D − 1, LF implies independence of {1, H rC : 1 ≤ r ≤ D − 1}; hence Lemma D.11, with Q = D − 2, implies independence of all the displayed functions. Separating first the powers of t and then the functions HqC H′ 
+
+> C
+
+, and cancelling the common nonzero com-binatorial factor s(s − 1) (s−2
+
+> i−1
+
+), gives, for every class C, every coordinate j, every 2 ≤ s ≤ D, and every 1 ≤ i ≤ s − 1, 
+
+1{k(C) exists } ak(C),s β ik(C)j λ s−ik(C) = 1{ℓ(C) exists } ˜aℓ(C),s ˜β iℓ(C)j ˜λ s−iℓ(C). (35) Suppose C contains an untilded index k = k(C), and let d = dk. Choose j ∈ B k. In (35), take s = d and i = 1. Its left-hand side is ak,d βkj λd−1
+
+> k
+
+̸ = 0 . Therefore C contains a tilded index ℓ(C), ˜aℓ(C),d ̸ = 0, and ˜βℓ(C)j̸ = 0. In particular, ˜dℓ(C) ≥ d. Applying the same argument with the two parameterizations interchanged gives 
+
+d ≥ ˜dℓ(C). Hence 
+
+dk = ˜dℓ(C).
+
+43 The symmetric argument starting from a tilded class shows that every pooled class contains one index from each parameterization. Consequently, the class correspondence defines a bijection π : {1, . . . , K } → { 1, . . . , ˜K},
+
+and K = ˜K.Fix a matched pair k and ℓ = π(k), and denote their common degree by d. Equation (35) with s = d and 
+
+i = 1 reads 
+
+ak,d βkj λd−1 
+
+> k
+
+= ˜aℓ,d ˜βℓj ˜λd−1 
+
+> ℓ
+
+. (36) All factors in (36), except possibly the coordinate coefficients, are nonzero. Hence βkj = 0 if and only if ˜βℓj = 0 for every j, and therefore Bk = ˜Bℓ.Suppose first that d ≥ 3, and choose j0 ∈ B k = ˜Bℓ. Taking s = d and i = 1 , 2 in (35) gives 
+
+ak,d βkj 0 λd−1 
+
+> k
+
+= ˜aℓ,d ˜βℓj 0
+
+˜λd−1 
+
+> ℓ
+
+, (37) 
+
+ak,d β2 
+
+> kj 0
+
+λd−2 
+
+> k
+
+= ˜aℓ,d ˜β2
+
+> ℓj 0
+
+˜λd−2 
+
+> ℓ
+
+. (38) The quantities divided out below are nonzero because j0 belongs to the common support, the class scales are nonzero, and the degree-d coefficients are leading coefficients. Dividing (38) by (37) yields βkj 0 /λ k = ˜βℓj 0 /˜λℓ.Substitution into (37) then gives 
+
+ak,d λdk = ˜aℓ,d ˜λdℓ . (39) For an arbitrary coordinate j, dividing (36) by (39) gives 
+
+βkj 
+
+λk
+
+= ˜βℓj 
+
+˜λℓ
+
+, j = 1 , . . . , p. (40) Thus, with ρk := λk/˜λℓ̸ = 0, (33) and (40) imply 
+
+hk = ρk ˜hℓ, βk = ρk ˜βℓ. (41) It remains to compare the nonlinear profile coefficients of this pair. For 2 ≤ s ≤ d, take i = 1 and j = j0 in (35). Substituting βkj 0 = ρk ˜βℓj 0 and λk = ρk ˜λℓ, and then cancelling the nonzero factor ˜βℓj 0
+
+˜λs−1 
+
+> ℓ
+
+, gives 
+
+ak,s = ˜aℓ,s ρ−sk , 2 ≤ s ≤ d. (42) Set x = 0 in (32). The main effects then contribute only a constant, so, for some C0 ∈ R,
+
+> K
+
+∑
+
+> k=1
+
+gk(hk(ε)) −
+
+˜K∑
+
+> ℓ=1
+
+˜gℓ(˜hℓ(ε)) ≡ C0. (43) For every matched pair of degree at least three, (41) and (42) show that all terms of degree s ≥ 2 cancel in (43). Consequently, after collecting the remaining terms by pooled warp class, the origin identity becomes 0 = C1 + ∑
+
+> C∈C
+
+(
+
+ak(C),1λk(C) − ˜aℓ(C),1˜λℓ(C)
+
+)
+
+HC + ∑
+
+> C∈C
+> dk(C)=2
+
+(
+
+ak(C),2λ2 
+
+> k(C)
+
+− ˜aℓ(C),2˜λ2
+
+> ℓ(C)
+
+)
+
+H2 
+
+> C
+
+(44) 44 for another constant C1. Since D⋆ ≥ 2, assumption LF implies linear independence of {1} ∪ { HC , H 2 
+
+> C
+
+: C ∈ C}.Hence (44) yields 
+
+ak, 1λk = ˜aℓ, 1˜λℓ for every matched pair , (45) 
+
+ak, 2λ2 
+
+> k
+
+= ˜aℓ, 2˜λ2 
+
+> ℓ
+
+for every quadratic matched pair . (46) Now consider a matched pair of degree d = 2. At s = 2, the mixed coefficient system (35) contains only the equation corresponding to i = 1: 
+
+ak, 2βkj λk = ˜aℓ, 2 ˜βℓj ˜λℓ. (47) Dividing (47) by (46) gives βkj /λ k = ˜βℓj /˜λℓ for every j. Therefore, upon setting ρk := λk/˜λℓ, the quadratic pair satisfies 
+
+hk = ρk ˜hℓ, βk = ρk ˜βℓ, ak, 2 = ˜aℓ, 2ρ−2 
+
+> k
+
+. (48) This is the only point at which the quadratic case requires a separate argument: the mixed system supplies only (47), while the coefficient of H2 
+
+> C
+
+in the reduced origin identity supplies the additional relation (46). For every matched pair, including the quadratic pairs, (45) and λk = ρk ˜λℓ give 
+
+ak, 1 = ˜aℓ, 1ρ−1 
+
+> k
+
+.
+
+Together with (42) for d ≥ 3 and (48) for d = 2, this proves ak,s = ˜aℓ,s ρ−sk for every 1 ≤ s ≤ dk. Thus gk and ˜gℓ( · /ρ k) have identical nonconstant coefficients. Their difference is therefore the constant ck := ak, 0 − ˜aℓ, 0, so 
+
+gk(u) = ˜ gℓ(u/ρ k) + ck. (49) For ℓ = π(k), the structural relations imply ( β⊤ 
+
+> k
+
+x + hk(ε)) /ρ k = ˜β⊤
+
+> π(k)
+
+x + ˜hπ(k)(ε). Substitution of (49) into (32) therefore cancels the matched interaction terms and leaves 
+
+> p
+
+∑
+
+> j=1
+
+(fj (xj ) − ˜fj (xj )) = −
+
+> K
+
+∑
+
+> k=1
+
+ck, x ∈ X tr . (50) On the jth axis, set x = te j and vary t ∈ Ij . Every term in (50) except the jth is then constant, so 
+
+fj (t) − ˜fj (t) is constant on Ij ; denote this constant by bj . Evaluating the same identity at the origin gives 
+
+∑pj=1 bj + ∑Kk=1 ck = 0. 
+
+Remark 5. Assumption LF is a finite-dimensional linear-independence condition on the powers of the pooled warp representatives. It is implied by the stronger power-separated growth condition 
+
+∣∣∣∣
+
+HC (ε)r
+
+HC′ (ε)s
+
+∣∣∣∣ −→ 0 or ∞
+
+for every two distinct pairs ( C, r )̸ = ( C′, s ) with 1 ≤ r, s ≤ D⋆: in a nontrivial linear relation, division by the fastest-growing term gives an immediate contradiction. The ordinary growth assumption A6 compares only the raw warps HC and HC′ , and therefore does not by itself imply LF. Indeed, raw warps may have distinct growth orders while their powers satisfy a relation such as in remark 3. Conversely, LF does not imply A6: finite-power linear independence can hold even when HC /H C′
+
+45 has a finite nonzero limit. Thus A6 and LF address different settings, whereas power-separated growth is a convenient sufficient condition for LF. Finally, LF does not replace the standing normalization, regularity, support, or within-parameterization non-proportionality assumptions. LF is used only to separate the finitely many pooled warp powers arising from polynomial profiles. 
+
+## D.5 Identifiability for affine hk
+
+This section discusses the case when warps hk are affine. Every interaction then uses the same noise, up to a scalar (and an intercept) and the warps can no longer be used to differentiate between the interactions. The result has two parts. First, two models with different interaction supports Bk can give the same conditional law on Xtr . Second, identification is possible when the profiles Θ m are independent enough to label the interactions across axes. Independent profiles Θ m do here what distinct warps do in the non-affine regime. One thing is always recovered. Fix a coordinate j, group the interactions active on axis j by their slope. For each slope, the data fix the sum of the corresponding profile classes, taken in Q (profiles modulo polynomials). No further resolution is possible from the axis-aligned design alone. 
+
+Notation 
+
+Write P ⊂ Meas( R) for the real polynomials and Q := Meas( R)/P for the quotient vector space, with [ g] ∈ Q 
+
+denoting the class of g. For ρ̸ = 0, set Dρ[g] := [ g(ρ ·)]; this is a well-defined automorphism of Q since dilation preserves P. A function g is non-polynomial when [ g]̸ = 0. Set bk := βk/a k ∈ Rp and g♯k(s) := gk(aks), so that gk(β⊤ 
+
+> k
+
+x+akε) = g♯k(b⊤ 
+
+> k
+
+x+ε). Recall, we write Bk := supp βk
+
+and Sj := {k : bkj ̸ = 0 } for the set of interactions active on coordinate j.
+
+Assumptions in the affine regime 
+
+(F1) Each gk is continuous and non-polynomial; each fj is continuous. (F2) The warps are affine and median-zero: hk(ε) = akε, ak̸ = 0. (F3) The augmented directions vk := ( βk, a k) ∈ Rp+1 are pairwise linearly independent; equivalently, the normalised directions bk are pairwise distinct. (F4) |B k| ≥ 2 for every k, and Bk̸ = Bl for k̸ = l.(F5) Within each model the classes [ g♯k] are pairwise distinct. The distinct classes in {[g♯
+
+> 1
+
+], . . . , [g♯K ]} ∪ {[˜ g♯
+
+> 1
+
+], . . . , [˜ g♯
+
+˜K ]} are linearly independent in Q.As in the non-affine case, the axis-aligned design is assumed nondegenerate : for each coordinate j the training interval ( aj , A j ) has nonempty interior, so that the strip Uj := ( aj , A j ) × R ⊆ R2 is open and nonempty. By Lemma A.1, observational equivalence of two parameterizations on Xtr reduces to the pointwise identity 
+
+> p
+
+∑
+
+> j=1
+
+fj (xj ) + 
+
+> K
+
+∑
+
+> k=1
+
+g♯k(b⊤ 
+
+> k
+
+x + ε) = 
+
+> p
+
+∑
+
+> j=1
+
+˜fj (xj ) + 
+
+˜K∑
+
+> l=1
+
+˜g♯l ( ˜β⊤ 
+
+> l
+
+x + ε) on Xtr × R. (51) 46 Results in the affine regime Theorem D.13 (Identification in the affine regime) . Assume F1 –F5 . Then for any two parametrizations observationally equivalent on Xtr in distribution have K = ˜K, and there exist a permutation π and nonzero scalars ρ1, . . . , ρ K such that, after relabelling by π,
+
+βk = ρk ˜βk, ak = ρk ˜ak, Bk = ˜Bk, gk(u) = ˜ gk
+
+(u/ρ k
+
+) + qk(u) (qk ∈ P ); 
+
+equivalently, bk = ˜βπ(k) and [g♯k] = [˜ g♯π(k)] in Q. The number of interactions, the augmented directions up to scale, the supports, and the Q-class of each profile are identified; the polynomial parts of the profiles are determined only up to the residual freedom R of Lemma D.14. Remark 6 (On F1: non-polynomiality) . The exclusion of polynomial profiles is necessary: a polynomial gk
+
+can be absorbed into the additive part via the polynomial redistribution (iii), leaving the interaction structure undetermined. 
+
+Remark 7 (On F2: median-zero affine warps) . The median-zero normalization hk(ε) = akε is the affine analogue of the curved-regime condition and is imposed to fix the location freedom in hk.
+
+Remark 8 (On F3: pairwise non-proportional augmented directions) . After noise-normalization, F3 is equiv-alent to pairwise distinctness of the bk. It ensures that no two interactions are cofoliar across the full design, this makes per-axis slope profiles Π j well defined as Q-valued invariants (Proposition D.17) and making the cross-axis matching in the proof of Theorem D.13 well posed. It does not exclude cofoliarity on a single axis (two terms with bkj = bk′j for some fixed j but bk̸ = bk′ ). 
+
+Remark 9 (On F4: support size and distinctness) . The condition |B k| ≥ 2 ensures that each true index k
+
+contributes a nonzero slope on at least two axes, which is used in Step 1 of the proof of Theorem D.13 to certify that each profile class is witnessed. Support distinctness Bk̸ = Bl is part of the model identifiability convention and is preserved by all indeterminacies of Lemma D.14. 
+
+Remark 10 (On F5: linear independence of g classes) . Condition F5 is imposed on the pair of compared parameterizations. Its role is to convert the per-axis equality of Q-valued sums ( ⋆j,ξ ) into equality of individual terms. The counterexamples in Proposition D.18 satisfy F1–F4 but violate F5. The condition is undesirable in that it constrains the two parameterizations jointly rather than each on its own: its second clause refers to the pooled profile classes [ g♯k] and [˜ g♯l ] of both models at once, so it cannot be checked against the true parameterization alone. 
+
+Remark 11 (Residual polynomial indeterminacy) . Under the hypotheses of Theorem D.13, the Q-classes [ g♯k]are identified. The polynomial parts are determined only modulo R. One always has dim R ≥ 2K − 1(Lemma D.14), with equality when the directions are in polynomial general position : for every d ≥ 2, the only (ck) ∈ RK with ∑ 
+
+> k
+
+ck(β⊤ 
+
+> k
+
+x + akε)d simultaneously ε-free and additive in x on the slab is c = 0. 
+
+Lemma D.14 (Indeterminacies) . Each of the following transformations transforms a parameterization to an observationally equivalent one on Xtr × R, i.e., preserve the equality in (51) :
+
+(i) permutation of the K interactions; 
+
+(ii) per-term rescaling (βk, a k, g k) 7 → (ρkβk, ρ kak, g k(·/ρ k)) , ρk̸ = 0 ;
+
+(iii) polynomial redistribution gk 7 → gk + qk, fj 7 → fj − rj , for any (qk) ∈ R and the induced rj ∈ P , where 
+
+R := 
+
+{
+
+(qk) ∈ P K : ∑ 
+
+> k
+
+qk(β⊤ 
+
+> k
+
+x + akε) = ∑ 
+
+> j
+
+rj (xj ) on Xtr × R for some (rj ) ∈ P p
+
+}
+
+.
+
+The space R contains the constants (qk ≡ ck) and the linear tuples (qk(s) = λks) with ∑ 
+
+> k
+
+λkak = 0 ; these span a subspace of dimension at least 2K − 1.
+
+47 Lemma D.15 (Planar uniqueness modulo polynomials) . Let U ⊆ R2 be open and connected, let ξ1, . . . , ξ r ∈
+
+R \ { 0} be distinct, and let Ψ1, . . . , Ψr , Ψ0, Ψ∞ be measurable with 
+
+> r
+
+∑
+
+> i=1
+
+Ψi(ξit + ε) = Ψ 0(t) + Ψ ∞(ε) on U. 
+
+Then each Ψi coincides on the interval Ii := {ξit + ε : ( t, ε ) ∈ U } with a polynomial of degree at most r. On a strip U = ( a, A ) × R one has Ii = R, so each Ψi is (globally) a polynomial; equivalently, the classes [Ψ i] ∈ Q 
+
+are uniquely determined. 
+
+Lemma D.16 (Master relation) . Assume F1 –F4 . For every coordinate j and every ξ ∈ R \ { 0},
+
+∑ 
+
+> k∈Sj
+> bkj =ξ
+
+[ g♯k ] = ∑
+
+> l∈
+
+˜Sj 
+
+> ˜βlj =ξ
+
+[ ˜ g♯l ] in Q. (⋆j,ξ )
+
+Proposition D.17 (Identifiable invariants) . Assume F1 –F4 . For each coordinate j, define the slope profile 
+
+Πj : R \ { 0} → Q , Πj (ξ) := ∑ 
+
+> k∈Sj
+> bkj =ξ
+
+[ g♯k ].
+
+Any two observationally equivalent (reproducing the same law on Xtr ) parameterizations satisfy Πj = ˜Πj for all j; each Πj is determined by the conditional law of the response on the strip Uj alone. Example (Non-identifiability) . There exist two parameterizations satisfying F1–F4 that are observationally equivalent on Xtr yet have distinct interaction supports. In particular they are not related by the indetermi-nacies (i)–(iii) of Lemma D.14. 
+
+Proposition D.18 (Cyclic non-identifiability family) . For every m ≥ 2, setting p = 2 m and K = ˜K = m,there exist two parameterizations satisfying F1 –F4 , with equal additive parts and a common profile ϕ, that are observationally equivalent on Xtr and whose interaction supports are the two cyclic perfect matchings of 
+
+{1, . . . , 2m}: {{ 1, 2}, {3, 4}, . . . , {2m − 1, 2m}} and {{ 2, 3}, {4, 5}, . . . , {2m, 1}} .
+
+Proof Theorem D.13 and with the auxiliary Lemmas 
+
+Proof of Lemma D.14. Parts (i) and (ii) are immediate from the definitions. For (iii): adding qk to gk shifts the interaction sum by ∑ 
+
+> k
+
+qk(β⊤ 
+
+> k
+
+x + akε), which equals ∑ 
+
+> j
+
+rj (xj ) on Xtr × R by the definition of R; the compensating substitution fj 7 → fj − rj restores (51). For the two explicit families in R: the constants (qk ≡ ck) contribute ∑ 
+
+> k
+
+ck (a constant), so rj ≡ 0. For a linear tuple with ∑ 
+
+> k
+
+λkak = 0, evaluating on x = te j
+
+gives ∑
+
+> k
+
+λk(βkj t + akε) = 
+
+(∑ 
+
+> k
+
+λkβkj 
+
+)
+
+t +
+
+(∑ 
+
+> k
+
+λkak
+
+)
+
+ε, 
+
+which is ε-free and equals ∑ 
+
+> j
+
+(∑ 
+
+> k
+
+λkβkj )xj across the axes; hence ( λks) ∈ R with rj (t) = ( ∑ 
+
+> k
+
+λkβkj )t.Constants occupy degree 0 and admissible linear forms degree 1, so the two families span RK ⊕ RK−1, of dimension 2 K − 1. 
+
+Proof of Lemma D.15. Put ai := ( ξi, 1) for i = 1 , . . . , r , ar+1 := (1 , 0), ar+2 := (0 , 1), and Ψ r+1 := −Ψ0,Ψr+2 := −Ψ∞, so that the hypothesis reads ∑r+2  
+
+> m=1
+
+Ψm(⟨am, z ⟩) = 0 for z = ( t, ε ) ∈ U . The directions 48 a1, . . . , a r+2 are pairwise linearly independent: ai, a i′
+
+(i̸ = i′ ≤ r) by ξi̸ = ξi′ ; ai, a r+1 since their second coordinates are 1 and 0; ai, a r+2 since ξi̸ = 0; and ar+1 , a r+2 trivially. Fix i ∈ { 1, . . . , r }. Let δv F (z) := F (z + v) − F (z). For each m̸ = i fix nm ⊥ am (in the sense ⟨am, n m⟩ = 0), 
+
+nm̸ = 0; then θm := ⟨ai, n m⟩̸ = 0 by independence of ai and am. Given h ∈ R set vm := ( h/θ m)nm, so 
+
+⟨am, v m⟩ = 0 and ⟨ai, v m⟩ = h. The composite ∏ 
+
+> m̸=i
+
+δvm annihilates Ψ m for each m̸ = i and reduces the i-th term to (∆ r+1  
+
+> h
+
+Ψi)( ⟨ai, ·⟩ ); applying it to ∑ 
+
+> m
+
+Ψm(⟨am, ·⟩ ) = 0 yields (∆ r+1  
+
+> h
+
+Ψi)( ⟨ai, z ⟩) = 0 .
+
+This holds for every z such that the 2 r+1 translates z + ∑ 
+
+> m∈I
+
+vm, I ⊆ { m̸ = i}, lie in U . By openness there exists η > 0 such that this holds for all z in a neighbourhood of any fixed z0 ∈ U and all |h| < η ; as z
+
+ranges over this neighbourhood, u = ⟨ai, z ⟩ covers an open subinterval of Ii. Hence ∆ r+1  
+
+> h
+
+Ψi ≡ 0 on an open subinterval of Ii for all |h| < η . By Fréchet’s theorem (measurable functions annihilated by all sufficiently small ∆ r+1  
+
+> h
+
+on an interval coincide there with a polynomial of degree ≤ r; see [3], Ch. 3, and [36], Thm. 2.2), Ψi is locally polynomial on Ii. Since Ii is an interval (image of the connected set U under a linear functional), these local polynomials patch to a single polynomial of degree ≤ r on Ii. The uniqueness statement follows by applying the first part to Ψ i − ˜Ψi.
+
+Proof of Lemma D.16. Substitute x = te j in (51). Terms with bkj = 0 (resp. ˜βlj = 0) become functions of ε
+
+alone and are absorbed into Bj (ε); the remaining terms yield, on the strip Uj = ( aj , A j ) × R,
+
+∑
+
+> k∈Sj
+
+g♯k(bkj t + ε) − ∑
+
+> l∈
+
+˜Sj
+
+˜g♯l ( ˜βlj t + ε) = Aj (t) + Bj (ε). (52) Group the left side by slope: for each ξ in the finite set Ξ j of nonzero slopes appearing, set Φ j,ξ := 
+
+∑   
+
+> k∈Sj, b kj =ξ
+
+g♯k − ∑
+
+> l∈
+
+˜Sj , ˜βlj =ξ ˜g♯l . Then ∑ 
+
+> ξ∈Ξj
+
+Φj,ξ (ξt + ε) = Aj (t) + Bj (ε) on Uj , with the ξ distinct and nonzero. Lemma D.15 (strip case) forces each Φ j,ξ to be a polynomial, i.e. [Φ j,ξ ] = 0, which is ( ⋆j,ξ ). 
+
+Proof of Proposition D.17. Reduction to a per-slope identity. By Lemma A.1, observational equivalence gives (51) on Xtr × R. Put x = te j , so b⊤ 
+
+> k
+
+x = bkj t, and let Ξ j := {bkj : k ∈ Sj } ∪ { ˜βℓj : ℓ ∈ ˜Sj } be the pooled set of active slopes. Grouping both models’ interactions by slope, the difference of the two responses on Uj is 
+
+∑
+
+> ξ∈Ξj
+
+(
+
+Φξ − ˜Φξ
+
+)
+
+(ξt + ε) = Aj (t) + Bj (ε), Φξ := ∑   
+
+> k∈Sj:bkj =ξ
+
+g♯k, ˜Φξ := ∑
+
+> ℓ∈
+
+˜Sj : ˜βℓj =ξ
+
+˜g♯ℓ ,
+
+where an empty sum is 0; the slopes in Ξ j are distinct and nonzero, and the noise coefficient is 1. The slopes in Ξj are distinct and nonzero, and each ridge carries noise coefficient 1, so Lemma D.15 applies to the identity on the strip Uj : each summand Φ ξ − ˜Φξ agrees, on the line Iξ = {ξt + ε : ( t, ε ) ∈ Uj } = R, with a polynomial. Being a polynomial on R is exactly membership in P, so Φ ξ − ˜Φξ ∈ P , i.e. [Φ ξ ] = [ ˜Φξ ] in Q = Meas( R)/P,for every ξ ∈ Ξj . Writing Π j (ξ) := [Φ ξ ] (and 0 off Ξ j ), this is Π j (ξ) = ˜Πj (ξ) for every ξ. In particular, at a slope active in only one parameterization the other’s class is 0, so that model’s non-polynomial content at that slope vanishes; the active slopes need not coincide, but they may differ only where the interaction content is polynomial. As (51) follows from the conditional law, so does Π j = ˜Πj , and each Π j (ξ) is recovered from the law on Uj alone. 49 Proof of Proposition D.18. Set wr := er + er+1 with indices modulo 2 m. The true model uses the m odd directions w1, w 3, . . . , w 2m−1, the alternative uses the m even directions w2, w 4, . . . , w 2m, all with entries 1 and profile ϕ. Within each model the supports {r, r + 1 } are pairwise disjoint and distinct, and the augmented vectors ( wr , 1) have distinct supports, hence are pairwise non-proportional; so F1–F4 hold. Coordinate j
+
+belongs to exactly wj−1 and wj ; on axis j exactly one direction from each model is active (with slope 1 and argument t + ε) while the other m − 1 terms contribute ϕ(ε). Both sides of (51) therefore restrict to 
+
+ϕ(t + ε) + ( m − 1) ϕ(ε) on each axis and to mϕ (ε) at the origin, establishing observational equivalence. For 
+
+m = 2 this recovers the construction of Examples in Proposition D.18. 
+
+Proof of Theorem D.13. Work in normalized coordinates. Each interaction k (of either model) has a profile class [ g♯k] ∈ Q ; let Q1, . . . , Q M be the distinct values these classes take across both models, so that every [ g♯k]and every [˜ g♯l ] equals some Qm. By F5 the Q1, . . . , Q M are linearly independent in Q.Fix j and ξ̸ = 0. By Lemma D.16, ( ⋆j,ξ ) reads, in Q,
+
+∑   
+
+> k∈Sj:bkj =ξ
+
+[g♯k] = ∑
+
+> l∈
+
+˜Sj : ˜βlj =ξ
+
+[˜ g♯l ].
+
+Collecting equal classes, each side is a combination ∑ 
+
+> m
+
+nmQm in which the coefficient nm counts the inter-actions of that model with slope ξ whose class is Qm; explicitly, nm = # {k ∈ Sj : bkj = ξ, [g♯k] = Qm} on the left, and likewise on the right. By F5 the classes within a single model are distinct, so no two interactions share a Qm and each nm ∈ { 0, 1}. Linear independence of Q1, . . . , Q M makes the representation ∑ 
+
+> m
+
+nmQm
+
+unique, so the two sides are equal only if their coefficients agree termwise: for every class Q,#{k ∈ Sj : bkj = ξ, [g♯k] = Q} = # {l ∈ ˜Sj : ˜βlj = ξ, [˜ g♯l ] = Q}. (53) Fix a true index k and set Q = [ g♯k]. Choose j ∈ B k and ξ = bkj ̸ = 0. The left count in (53) is 1, so the right count is 1: some ˜ ı satisfies [˜ g♯ 
+
+> ˜ı
+
+] = Q. By symmetry the two class sets are equal. Since neither model repeats a class, K = M = ˜K, and 
+
+π(k) := the unique ˜ ı with [˜ g♯π(k)] = [ g♯k]is a well-defined bijection. Fix k and Q = [ g♯k] = [˜ g♯π(k)]. For every j ∈ B k, set ξ = bkj ̸ = 0; the left count in (53) is 1, so the right count is 1, realised by π(k); hence ˜βπ(k)j = bkj . As this holds for all j ∈ B k, we have Bk ⊆ ˜Bπ(k) and slopes agree on 
+
+Bk. Applying the argument to π−1 at π(k) gives ˜Bπ(k) ⊆ B k; hence Bk = ˜Bπ(k) and bk = ˜βπ(k).From bk = ˜βπ(k), i.e. βk/a k = ˜βπ(k)/˜aπ(k), set ρk := ak/˜aπ(k)̸ = 0; then βk = ρk ˜βπ(k) and ak = ρk ˜aπ(k).From [ g♯k] = [˜ g♯π(k)] there exists pk ∈ P with g♯k = ˜ g♯π(k) + pk; unfolding via g♯k(s) = gk(aks) gives gk(u) = ˜gπ(k)(u/ρ k) + qk(u) with qk(u) = pk(u/a k) ∈ P .50

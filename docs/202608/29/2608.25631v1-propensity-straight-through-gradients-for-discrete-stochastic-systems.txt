@@ -1,0 +1,357 @@
+Title: 2608.25631v1.pdf
+
+URL Source: https://arxiv.org/pdf/2608.25631v1
+
+Published Time: Thu, 27 Aug 2026 00:51:00 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+1
+
+# Propensity Straight-Through Gradients for Discrete Stochastic Systems 
+
+Jose M. G. Vilar 1,2,∗  and Leonor Saiz 3,∗ 
+
+> 1
+
+Biofisika Institute (CSIC, UPV/EHU), University of the Basque Country, P.O. Box 644, 48080 Bilbao, Spain 
+
+> 2
+
+IKERBASQUE, Basque Foundation for Science, 48011 Bilbao, Spain 
+
+> 3
+
+Department of Biomedical Engineering, University of California, 451 East Health Sciences Drive, Davis, CA 95616, USA  
+
+> ∗
+
+To whom correspondence should be addressed: j.vilar@ikerbasque.org or lsaiz@ucdavis.edu 
+
+# Abstract 
+
+Continuous-time Markov chains (CTMCs) provide the backbone for modeling discrete stochastic dynamics across applied, physical, and biological sciences. Their integration with modern gradient-based machine learning, however, is limited by the hard categorical event selection intrinsic to Gillespie-type simulation algorithms. We exploit the affine state update to obtain the exact one-step conditional-mean sensitivity by differentiating normalized reaction propensities. We pair this backward rule with exact forward trajectories to define the propensity straight-through (PST) estimator. At the trajectory level, we show that one-step sensitivities composed across events can depart from the exact multistep sensitivity. We derive the resulting per-step discrepancy in closed form and prove that it vanishes identically for affine downstream dependence. PST matches the accuracy of Gumbel-Softmax straight-through across all benchmarks: reversible dimerization (0.06% error), a genetic oscillator (1.7% error), a 50-task repressilator suite (0.17% median error), and patch-clamp ion-channel recordings (R² = 0.988). Under matched settings, PST converges 3.0-fold faster on the oscillator and 2.1-fold faster on the ion channel. At deep-learning scale, PST trains a 203,796-parameter stochastic reaction network with hard sampling, reaching 98.22% MNIST digit classification accuracy. By differentiating an exact conditional mean rather than a relaxed sample, PST offers a temperature- and Gumbel-free path to scalable gradient-based learning through exact stochastic trajectories. 2
+
+# Introduction 
+
+Discrete stochastic dynamics is inherent to physical, chemical, and biological systems whenever individual events remain significant at the scale of the observed behavior. Molecular reactions, conformational transitions, ion-channel openings, and population changes generate fluctuations that determine switching, extinction, oscillatory variability, and rare transitions rather than merely perturb an underlying deterministic trajectory (1 –12). Continuous-time Markov chains (CTMCs) provide a natural framework for representing such systems, with event rates specifying both the stochastic timing and identity of discrete state changes. Exact event-driven simulation is therefore particularly important in regimes where diffusion or deterministic approximations can obscure the consequences of individual transitions. 
+
+Inference and design increasingly require these mechanistic models to be embedded within optimization procedures. Experimental data may constrain many kinetic parameters simultaneously, while inverse-design and machine-learning applications reach parameter spaces far beyond those accessible to parameter-by-parameter search. Gradient-based optimization is the natural route to such problems, and automatic differentiation has made it routine for deterministic models at scales of millions of parameters. 
+
+Exact discrete-event simulation, epitomized by the Gillespie stochastic simulation algorithm (SSA) and the Bortz –Kalos –Lebowitz (BKL) algorithm, generates exact sample paths of continuous-time Markov jump processes by alternating exponential waiting-time sampling with categorical reaction selection (13, 14). The approach is used in statistical physics, stochastic chemical kinetics, systems biology, queueing, epidemiology, and other applications governed by competing event rates. Gradient-based optimization through such a trajectory is difficult because the selected event is discrete and blocks ordinary pathwise differentiation. 
+
+The waiting time is straightforwardly differentiable. Conditional on the current state  𝐱 , it can be written as  Δ𝑡 = − log 𝑢 /𝑎 0(𝐱; 𝜽) , where  𝑢  is uniform and  𝑎 0 is the total propensity. The reaction choice, however, is a categorical sample, a piecewise constant function of its probabilities, and its derivative is consequently zero almost everywhere. The piecewise-constant dependence of the categorical sample on its probabilities does not preclude the applicability of score-function, or likelihood-ratio, estimators (15, 16), which differentiate the probability of the sampled reaction rather than the reaction realization itself, but it prevents ordinary pathwise differentiation through the categorical realization. 
+
+We address this categorical differentiation problem at the level of the one-step conditional mean by exploiting the affine structure of the SSA state update. If  𝐞 𝐽  is the one-hot indicator of the selected reaction, equivalently the corresponding reaction-selection vector, and  𝐒  contains the stoichiometric change vectors as columns, the state update is affine,  𝐱 + = 𝐱 + 𝐒𝐞 𝐽  . The conditional mean of  𝐞 𝐽  is the normalized propensity vector  𝝅 . Therefore, differentiating  𝝅  gives the exact derivative of the one-step conditional mean state. We use this derivative in the backward pass of automatic differentiation while leaving the waiting-time sampling and hard reaction selection unchanged, defining the propensity straight-through (PST) estimator. The affine structure is essential because the exactness applies to the one-step conditional mean and affine post-reaction observables. 
+
+Differentiable Gillespie approaches have also been developed by smoothing discontinuous operations in the forward dynamics (17). Recent exact-forward differentiable SSA implementations instead retain hard categorical reaction selection and use the Gumbel-Softmax straight-through estimator (GS-ST), differentiating a temperature-dependent relaxed realization only in the backward pass (18, 19). The 3
+
+relaxation temperature is a backward-pass hyperparameter rather than a property of the stochastic model, and the GS-ST settings represented across existing applications and the comparisons considered here vary markedly between systems. PST removes both this temperature selection and the Gumbel perturbation from the backward reaction-selection rule. PST takes a marginal-based route instead: it retains the same exact forward realization but differentiates the exact categorical mean, given by the normalized propensities, rather than a relaxed realization. 
+
+The resulting derivative is exact for the one-step conditional mean, and the discrepancy introduced by trajectory-level composition can be written explicitly. At the categorical level, this construction is closely related to marginal-based straight-through estimation (20), which retains discrete forward samples and differentiates exact sampling marginals. PST belongs to the broader family of straight-through estimators (21) and complements established sensitivity-analysis approaches for discrete stochastic systems, including score-function, finite-difference, unbiased, and pathwise methods (CTMCs) (15, 16, 22 –26). 
+
+We characterize PST theoretically and evaluate it empirically. We establish exactness for the one-step conditional mean state and affine post-reaction observables, identify the multistep discrepancy as a finite-difference-to-directional-derivative replacement, derive a local curvature bound, connect its small-jump structure to classical expansions of Markov jump processes (27 –30). For weighted least-squares population mean-matching objectives, we further show that the PST update field vanishes wherever the simulated population mean equals the target. We then evaluate PST in reversible dimerization, a nonlinear genetic oscillator (31), a two-channel gating model fitted to experimental recordings (32, 33), and a 50-task repressilator benchmark (34), and apply it to a 203,796-parameter stochastic gene-regulatory classifier (18). 
+
+# Results 
+
+# PST construction and exact one-step sensitivity 
+
+PST preserves exact SSA sampling in the forward pass while replacing the derivative through categorical reaction selection by the derivative of the normalized propensities. Throughout, exact-forward refers to this unmodified SSA sample path, and one-step exact refers specifically to the conditional-mean sensitivity derived below. 
+
+Consider a reaction network with state  𝐱 ∈ ℤ ≥0 𝑁  , reaction channels  𝑗 = 1, … , 𝑀 , propensities  𝑎 𝑗 (𝐱; 𝜽) ≥ 0, and stoichiometric changes  𝝂 𝑗 ∈ ℤ 𝑁 . For a non-absorbing state, the total and normalized propensities are given by  𝑎 0(𝐱; 𝜽) = ∑ 𝑎 𝑗 𝑀 𝑗=1 (𝐱; 𝜽)  and  𝜋 𝑗 (𝐱; 𝜽) = 𝑎 𝑗 (𝐱; 𝜽) 𝑎 0(𝐱; 𝜽) ⁄ , respectively. With  𝐒 = [𝝂 1 ⋯ 𝝂 𝑀 ], direct SSA samples  𝐽 ∼ Categorical(𝝅)  and updates the state as  𝐱 + = 𝐱 + 𝐒𝐞 𝐽 . PST leaves this hard reaction selection and the standard exponential waiting-time sampling unchanged, modifying only the derivative through the reaction indicator: 
+
+𝐲 PST = 𝝅 + stopgrad(𝐞 𝐽 − 𝝅). 
+
+Numerically, the forward state remains an exact discrete SSA state,  𝐲 PST = 𝐞 𝐽  , while automatic differentiation gives  ∇𝜽 𝐲 PST = ∇ 𝜽 𝝅  (Figure 1). Full TensorFlow implementation details, including tensor conventions, categorical sampling, absorbing-state masks, and framework-specific code, are given in SI Appendix, SI Materials and Methods. 4
+
+Figure 1. The propensity straight-through (PST) estimator at a single SSA step. The waiting time  Δ𝑡 = − log 𝑢 /𝑎 0 with  𝑢 ∼ Uniform(0,1)  and the reaction index  𝐽 ∼ Categorical(𝝅)  are sampled exactly from the normalized propensities  𝝅 = 𝐚/𝑎 0, 𝑎 0 = ∑ 𝑎 𝑗 𝑗  , and the hard update  𝐱 + = 𝐱 + 𝐒𝐞 𝐽  is retained, with  𝐞 𝐽 
+
+the one-hot indicator of the selected reaction and  𝐒  the matrix of stoichiometric change vectors. PST replaces the reaction indicator by  𝐲 PST = 𝝅 + stopgrad(𝐞 𝐽 − 𝝅) , whose value is  𝐞 J and whose derivative is  ∇𝜽 𝝅 . The forward trajectory is therefore unchanged, while the backward pass returns the exact one-step conditional-mean sensitivity  ∇𝜽 𝔼[𝐱 + ∣ 𝐱] = 𝐒∇ 𝜽 𝝅 .
+
+For a fixed nonabsorbing state  𝐱 , 𝔼[𝐞 𝐽 ∣ 𝐱] = 𝝅 . The affine update therefore gives 
+
+𝔼[𝐱 + ∣ 𝐱] = 𝐱 + 𝐒𝝅, ∇𝜽 𝔼[𝐱 + ∣ 𝐱] = 𝐒∇ 𝜽 𝝅. 
+
+The PST backward pass returns exactly this derivative for the one-step mean and for, more generally, every affine post-reaction observable  𝜑(𝐳) = 𝐜 𝖳 𝐳 + 𝑑  , for which  ∇𝜽 𝔼[𝜑(𝐱 +) ∣ 𝐱] = 𝐜 𝖳 𝐒∇ 𝜽 𝝅. 
+
+Consequently, for a one-step squared-error objective defined on the population mean, PST gives the exact parameter gradient by the chain rule. 
+
+Conditional on the fixed current state, this one-step affine derivative does not depend on the realized reaction index and has zero reaction-selection variance. Complete-trajectory variance remains because the gradient also depends on earlier states, later reactions, waiting times, and the objective. 
+
+# Explicit structure of the multistep surrogate 
+
+Composing the one-step PST rule along a trajectory produces a surrogate whose local error structure can be written explicitly. For a post-reaction state  𝐳 , 𝑉(𝐳; 𝜽)  is the expected downstream quantity after the current reaction. The exact process evaluates  𝑉  only at reachable states  𝐳 = 𝐱 + 𝝂 𝑗 . In the PST backward pass, gradients are propagated through the post-reaction state, requiring derivatives of  𝑉 
+
+with respect to  𝐳 . That derivative is supplied by the differentiable computational graph used for backpropagation. Holding the current state  𝐱  fixed, the expected downstream objective is  𝐹(𝜽) = ∑ 𝜋 𝑗 𝑀 𝑗=1 (𝐱; 𝜽)𝑉(𝐱 + 𝝂 𝑗 ; 𝜽). 
+
+The exact contribution from changing the current reaction probabilities can be written, after subtracting the common baseline  𝑉(𝐱) , as 5
+
+𝐠 exact = ∑(∇ 𝜽 𝜋 𝑗 )
+
+> 𝑀 𝑗=1
+
+[𝑉(𝐱 + 𝝂 𝑗 ) − 𝑉(𝐱)]. 
+
+The exact contribution is therefore weighted by finite differences between reachable states. PST retains the hard post-reaction state but propagates  𝐒∇ 𝜽 𝝅  through the downstream computational graph. Writing the probability-weighted post-reaction gradient as  ∇𝐱 𝑉(𝐱) = ∑ 𝜋 ℓ𝑀 ℓ=1 ∇𝐱 𝑉(𝐱 + 𝝂 ℓ) , the expected PST contribution is 
+
+𝐠 PST = ∑[𝝂 𝑗 𝖳 ∇𝐱 𝑉(𝐱)] 
+
+> 𝑀 𝑗=1
+
+∇𝜽 𝜋 𝑗 .
+
+PST thus replaces each exact finite difference by a probability-weighted directional derivative. The local discrepancy is 
+
+𝐠 exact − 𝐠 PST = ∑[𝑉(𝐱 + 𝝂 𝑗 ) − 𝑉(𝐱) − 𝝂 𝑗 𝖳 ∇𝐱 𝑉(𝐱)] 
+
+> 𝑀 𝑗=1
+
+∇𝜽 𝜋 𝑗 .
+
+If  𝑉  is twice continuously differentiable, the local discrepancy is bounded by its curvature along the relevant stoichiometric segments and vanishes when  𝑉  is affine. 
+
+The finite difference in  𝐠 exact  is the same jump increment that appears in the backward generator of a Markov jump process. PST therefore has a small-jump interpretation at the level of reaction-selection sensitivity: it leaves the forward jump process exact and replaces only this backward sensitivity contribution with a local directional rule (27 –30). The SI Appendix shows that the resulting discrepancy is quadratic in jump size and relates the approximation to classical small-jump and system-size expansions (29, 30). 
+
+The discrepancy expression makes the multistep approximation locally explicit. The discrepancy vanishes identically when  𝑉  is affine on the relevant neighborhood; otherwise, its magnitude is controlled by downstream curvature along stoichiometric directions. This control is inherently local because the relevant curvature depends on the downstream objective, the remaining horizon, and the continuous extension defined by the backward computation. Over longer trajectories, the same finite-difference-to-directional-derivative replacement occurs at each categorical node, and the local discrepancies may accumulate, cancel, change sign, or be damped by the dynamics. The full derivation, sufficient exactness conditions, worked two-step example, waiting-time extension, backward jump-operator and system-size interpretation, and mean-matching stationarity result are given in SI Appendix, Supplementary Theory. 
+
+The four inference benchmarks considered here span complementary regimes, covering parameter recovery in a simple reaction network, nonlinear long-trajectory optimization, inference from strongly discrete experimental data, and transfer to an independently developed fixed 50-task suite. Detailed model definitions, inference protocols, and statistical procedures are provided in Materials and Methods; the sections below focus on the resulting comparisons. A fifth calculation tests the same reaction-selection rule at deep-learning parameter scale. 
+
+# Reversible dimerization 
+
+The reversible dimerization benchmark provides a controlled test of replacing the GS-ST backward relaxation with the direct propensity derivative under the protocol used in Ref. (18). For the 6
+
+representative condition  𝑘 2 = 0.32 , exact trajectories generated from the PST-inferred parameters reproduce the target ensemble means of all three species (Figure 2A). Both inferred rates converge rapidly under the matched protocol (Figure 2B). Across the eight-conditions, the recovered  𝑘 2 values from both estimators lie essentially on the identity line (Figure 2C). The condition-level two-parameter mean absolute percentage error (MAPE), averaged across the eight conditions, is  0.060%  for PST and 
+
+0.069%  for GS-ST (Figure 2D). PST therefore retains high recovery accuracy across the eight-condition comparison.        
+
+> Figure 2. Propensity straight-through differentiation in reversible dimerization. A, Target ensemble means and representative exact trajectories generated with PST-inferred parameters for 𝑘 2= 0.32 .B,Representative parameter convergence for PST and GS-ST under the matched protocol. C, Recovered 𝑘 2
+> across the eight conditions; the dotted line denotes exact recovery. D, Condition-level two-parameter MAPE across the eight conditions.
+
+# Genetic oscillator 
+
+The genetic oscillator provides a more demanding test of PST in a nonlinear, long-trajectory inference problem. PST reaches useful oscillator parameter-recovery accuracy earlier under the protocol used in Ref. (18) while retaining comparable long-horizon recovery. The ten GS-ST runs reported previously (18) are used as the comparison baseline rather than rerunning GS-ST. At 3000 epochs, the global pooled-vector MAPE, calculated by pooling terminal parameter samples across runs before forming one aggregate estimate, is  1.69%  for PST and  1.23%  for GS-ST, with the latter equal to the published value to the displayed precision. Exact trajectories generated with the PST aggregate parameters reproduce the characteristic amplitudes and waveform statistics of the activator, repressor, and activator –
+
+repressor complex (Figure 3A). Small parameter differences accumulate as phase shifts over successive 7
+
+cycles, making sustained phase locking unlikely between independently simulated stochastic oscillators over the full window. 
+
+At the matched 1000-epoch horizon, the median run-wise MAPE, calculated separately for each run before taking the median, is  1.70%  for PST and  2.58%  for GS-ST. At 3000 epochs, the corresponding values are  1.71%  and  1.51%  . The normalized parameter estimates have overlapping run-level distributions at both horizons (Figure 3D). The training histories show that PST remains nearly unchanged after epoch 1000, whereas GS-ST continues evolving (Figure 3B). 
+
+PST and GS-ST can be implemented through a common exact-forward code path that differs only in the backward reaction-selection rule. In this representation, PST is obtained from the GS-ST backward relaxation by suppressing the Gumbel perturbation and setting  𝑇 = 1  (SI Appendix, Section S8). The per-step computational cost can therefore be made identical by construction. Consequently, epoch-to-threshold provides a wall-clock comparison under this cost-matched implementation. For sustained error below  3% , all ten runs in both arms meet the criterion. The median threshold epochs are 262.5 for PST and 782.5 for GS-ST, a 3.0-fold reduction for PST (bootstrap 95% interval 2.4 –3.5) (Figure 3C). Thus, under equal per-step computational cost, PST reaches the sustained  3%  threshold in approximately one third of the optimization time required by GS-ST.         
+
+> Figure 3. Parameter inference in the stochastic genetic oscillator. A, Exact trajectories generated with the true and PST-inferred parameters. B, Epoch-indexed parameter-MAPE histories over ten PST and ten GS-ST runs; thick curves are medians, faint curves are individual runs, shaded regions are interquartile ranges, and the vertical line marks the matched 1000-epoch horizon. These histories are distinct from the terminal-25% window summaries used for the horizon-specific estimates in panel Dand the text. C,Fractions of runs reaching and sustaining the 3% threshold under the trailing 50-epoch geometric-mean and 50-consecutive-epoch criterion. D, Run-wise parameter estimates normalized by their generating values at 1000 and 3000 epochs.
+
+8
+
+# Ion-channel gating 
+
+The ion-channel benchmark tests PST against experimental data in a strongly discrete regime, where a single opening or closing event changes the observable by half its full range. Despite these large individual state changes, PST reproduces the experimental mean trace with a final fit essentially indistinguishable from GS-ST (18). Exact-SSA validation produces visually overlapping mean traces, with 
+
+𝑅 2 = 0.988  and normalized root-mean-square error (NRMSE)  3.42%  for PST and  𝑅 2 = 0.987  and NRMSE  3.48%  for GS-ST (Figure 4A). PST infers  𝑘 open = 0.785 ms −1  , 𝑘 close = 0.186 ms −1  , and 
+
+𝑘 inact = 1.150 ms −1 . GS-ST gives  0.792 , 0.202 , and  1.147 ms −1 , respectively. 
+
+Representative exact trajectories jump among zero, one, and two open channels. Therefore, one opening or closing event changes the observable by half its full range (Figure 4B). The inactivated state is absorbing. The close final fits show that PST remains effective in a regime where individual stoichiometric events are macroscopically large relative to the measured signal. 
+
+The displayed PST history stabilizes earlier while reaching essentially the same terminal loss as GS-ST (Figure 4C). In the single saved matched-protocol pair (18), a post hoc stabilization diagnostic gives epoch 77 for PST and epoch 160 for GS-ST, a 2.08-fold difference. The stabilization-epoch ratio remains close to two across the tolerance bands reported in SI Appendix, Table S3. 
+
+The two methods yield essentially identical fits and slightly different terminal rate estimates, suggesting that some parameter combinations are not fully constrained. Both methods also reproduce the pooled probabilities of observing zero, one, or two open channels (Figure 4D), providing an additional validation beyond agreement of the mean trace.    
+
+> Figure 4. Inference of ion-channel gating from patch-clamp recordings. A, Experimental mean open-channel count with its pointwise 95% confidence interval and the means predicted by exact SSA
+
+9     
+
+> trajectories using PST- and GS-ST-inferred rates. B, Representative exact PST trajectories, restricted to zero, one, or two open channels. C, Training losses for one PST and one GS-ST realization under the matched protocol. Faint curves show per-epoch losses and thick curves show trailing 10-epoch means. Vertical dotted lines mark the first epoch after which the moving mean remains within 5% of the final 50-epoch mean loss (epoch 77 for PST and epoch 160 for GS-ST); training continues for 400 epochs. D,Experimental and simulated open-channel occupancy distributions.
+
+# Repressilator benchmark 
+
+The repressilator benchmark provides an independent test of PST using the 50-task suite developed by Burger et al. (34). We retained the released stochastic parameterization, reference –initialization pairs, and task-construction logic, and compared PST and GS-ST using a common TensorFlow implementation adapted for this comparison. The main analysis uses relative mean-squared error rather than the log-of-ensemble-mean objective of the original study; the effect of this change is examined directly in the controlled objective comparison in SI Appendix, Table S1 and Figure S1. The resulting protocol compares the two reaction-selection estimators within the same simulation, optimization, and temporal straight-through framework rather than reproducing exactly the original Burger optimizer. 
+
+For a representative task, both inferred parameter pairs reproduce the reference ensemble means at the fixed observation times (Figure 5A). Across the paired task-wise comparison, PST achieved a median two-parameter MAPE of  0.168% , with mean  0.379%  and maximum  5.482% ; the corresponding GS-ST values were  0.149% , 0.338% , and  5.467%  (Figure 5B). The inferred production rates and dissociation constants track their reference values across the complete suite (Figure 5C,D), and independent exact-SSA validation produces nearly identical median relative mean-squared errors. The exploratory analysis by initial  𝐾 𝑑  is reported in SI Appendix, Supplementary Analyses; the controlled objective comparison is summarized in SI Appendix, Table S1 and Figure S1. The result establishes accurate transfer of PST across the fixed 50-task suite. 10 
+
+Figure 5. PST on the 50-task stochastic repressilator benchmark. The released stochastic parameterization and reference –initialization pairs were evaluated under the common adapted protocol described in Materials and Methods. A, Representative fixed-time ensemble-mean trajectories for task 1. Open markers show the reference mean estimated from exact SSA trajectories; dashed and dotted curves show independent exact-SSA validation means at the PST- and GS-ST-inferred parameter pairs. B, Paired task-wise two-parameter MAPE for PST and GS-ST; the diagonal denotes equal error, and filled symbols identify the highlighted low-𝐾 𝑑  subset. C, Inferred production rate  𝑘 𝑝  versus its reference value. D,Inferred dissociation constant  𝐾 𝑑  versus its reference value. Dotted identity lines in C and D denote exact recovery. Both methods achieve two-parameter MAPE below 0.6% in 49 of 50 tasks and below 5.5% in all 50 tasks. 
+
+# Deep-learning-scale optimization 
+
+The stochastic gene-regulatory MNIST classifier introduced in Ref. (18) provides a scale test for PST with 203,796 trainable parameters. PST is active from epoch 0, every training forward pass uses hard categorical reaction selection, and no reaction-selection temperature, annealing schedule, or soft-forward warm-up is used. Test accuracy reaches an apparent plateau by approximately epoch 15 and remains essentially stable through the 40-epoch training run (SI Appendix, Figure S2B). The final single-pass test accuracy is 97.43%, with a best post-training accuracy of 98.22% using Monte Carlo and temporal averaging. PST thus reaches classification accuracy comparable to that reported previously for the same stochastic architecture (18) while demonstrating hard-forward optimization at the 203,796-parameter scale. 
+
+# Discussion 
+
+PST provides a direct route from exact SSA simulation to gradient-based learning while retaining hard categorical reaction selection in the forward pass. The normalized propensities define the reaction-11 
+
+selection backward rule, and the affine SSA state update makes this rule exact for the one-step conditional mean state and for affine post-reaction observables. Conditional on the current state, the resulting one-step derivative is independent of the realized reaction index and has zero reaction-selection variance. Compared with GS-ST, PST removes the temperature-dependent Gumbel relaxation from the backward graph without changing the hard forward process. 
+
+The exact reaction-selection contribution compares downstream values at distinct reachable states, whereas PST replaces these finite differences by directional derivatives through the backward computational graph. The discrepancy vanishes when the relevant continuation value is affine and decreases when reaction jumps are small relative to the scale over which downstream values vary, connecting PST to classical small-jump expansions of Markov jump processes without replacing the underlying Markov jump process by a diffusion (27 –30, 35). At leading order, the discrepancy separates downstream curvature from the parameter sensitivity of the conditional jump covariance. The latter is determined by the network and parameterization, whereas loss and readout design provide directly controllable influences on downstream curvature. Consistent with this interpretation, the repressilator objective-control experiment contrasts a log-of-ensemble-mean loss whose derivative grows without bound as the trainable mean approaches zero with relative mean-squared error, which avoids this singular dependence (SI Appendix, Table S1). For weighted least-squares objectives that compare population means, any parameter setting for which the model population mean exactly matches the target mean is stationary under both the exact and PST update fields (SI Appendix, Supplementary Theory). 
+
+Across the inference benchmarks, PST retains parameter-recovery accuracy comparable to GS-ST while avoiding its relaxed reaction-selection backward sample. In the genetic oscillator, replicated runs reach the sustained 3% recovery threshold in 3.0-fold fewer epochs under the matched settings. In the ion-channel example, the single matched realization shows earlier loss stabilization while reaching essentially the same final fit. PST also achieves accurate recovery across the independently developed 50-task repressilator benchmark and remains accurate in a stochastic gene-regulatory classifier with 203,796 trainable parameters. Across the benchmarks, PST shows comparable or faster optimization, with the strongest evidence coming from the oscillator analysis and the ion-channel comparison. 
+
+PST complements existing CTMC sensitivity approaches, including unbiased estimators (22), coupled finite differences (23), score-function estimators (15), and pathwise methods (24, 25). Exact finite-state chemical-master-equation sensitivities can provide useful references when the state space is tractable. At the categorical level, PST is closely related to marginal-based straight-through estimation (20), but the affine SSA update gives the SSA construction its exact one-step conditional-mean property. 
+
+More broadly, these results show that gradient-based learning through exact discrete stochastic simulation does not require relaxing the reaction selected by the simulator. PST preserves the discrete stochastic dynamics of the underlying model while making both its exact one-step result and its trajectory-level approximation explicit. 
+
+# Materials and Methods 
+
+# Estimator implementation and comparison design 
+
+For the kinetic-inference benchmarks, all trainable kinetic parameters are represented in log space to enforce positivity. The PST calculations used Python 3.11.13 and TensorFlow 2.20.0. PST uses direct hard 12 
+
+categorical sampling and differentiates the normalized propensities in the backward pass, whereas GS-ST uses a hard Gumbel-Max reaction with a temperature-dependent Gumbel-Softmax backward sample (36, 37, 18). Within each of the four inference benchmarks, PST and GS-ST use the same state model, objective, optimizer, learning-rate schedule, ensemble size, initialization protocol, and simulation horizon unless explicitly stated otherwise. 
+
+The oscillator comparison uses matched initialization multipliers, target trajectories, and nominal run seeds across methods, providing a closely aligned protocol for evaluating optimization behavior. PST and GS-ST use different random-number consumption patterns, making the resulting training trajectories independent rather than common-random-number realizations. GS-ST reaction-selection temperatures and schedules were retained from the corresponding comparison protocols without additional tuning, while PST requires no such selection. The ion-channel analysis uses one optimization realization per method, and the repressilator benchmark evaluates one seeded realization per method for each task under the common adapted protocol. The classifier complements these inference benchmarks by testing PST at deep-learning scale. Full framework-specific code, tensor conventions, random-stream details, and absorbing-state handling are provided in SI Appendix, SI Materials and Methods. 
+
+# Statistical analysis 
+
+For a parameter vector with inferred components, parameter mean absolute percentage error (MAPE) is given by  MAPE(𝜽̂, 𝜽 ∗) = 100 𝑄 ∑ |𝜃̂ 𝑞 −𝜃 𝑞 ∗ 
+
+> 𝜃 𝑞 ∗
+
+| 
+
+> 𝑄 𝑞=1
+
+. For dimerization, MAPE is computed separately for each of the eight kinetic conditions and then averaged across conditions. Repressilator results use task-wise two-parameter MAPE, summarized by the median across the 50 tasks. 
+
+For each oscillator run, each inferred parameter is summarized by its geometric mean over the terminal 25% of the selected training horizon, after which parameter MAPE is computed. Run-level results are summarized by medians and interquartile ranges, with 95% percentile bootstrap intervals obtained by resampling runs. Threshold analyses use a trailing 50-epoch geometric mean of parameter MAPE and require the threshold to remain satisfied for 50 consecutive epochs. 
+
+Ion-channel fits are evaluated by root-mean-square error (RMSE), normalized root-mean-square error (NRMSE; RMSE divided by the experimental mean-trace range), and  𝑅 2. The descriptive stabilization epoch is the first completed epoch after which a trailing 10-epoch arithmetic mean remains within a specified relative band of the final 50-epoch mean loss. Full aggregation orders, smoothing windows, bootstrap procedures, and sensitivity analyses are given in SI Appendix. 
+
+# Reversible dimerization 
+
+The benchmark is the reversible heterodimerization  𝐴 + 𝐵 ⇌ 
+
+> 𝑘 2
+> 𝑘 1
+
+𝐶 , with propensities  𝑎 1 = 𝑘 1𝐴𝐵  and  𝑎 2 =𝑘 2𝐶 . The initial state is  (𝐴, 𝐵, 𝐶) = (100,90,0) , the generating forward rate is  𝑘 1 = 0.01 , and the reverse rate takes eight values from  0.01  to  1.28 . For each condition, the target is generated from 100,000 exact SSA trajectories of 250 reactions. Training uses 100,000 model trajectories per epoch for 250 epochs and minimizes squared error between target and model ensemble-mean time courses after mapping each exact trajectory to a common physical-time grid. Individual trajectories are interpolated before averaging. The full time-grid construction, interpolation conventions, objective, optimizer, gradient clipping, and learning-rate schedule are specified in SI Appendix. 13 
+
+# Genetic oscillator 
+
+The oscillator is the nine-species, sixteen-reaction network of Vilar et al. (31). Five parameters, 
+
+(𝛽 𝐴 , 𝛽 𝑅 , 𝛿 𝐴 , 𝛿 𝑅 , 𝛾 𝐶 ), are inferred simultaneously. A 2,400,000-reaction exact SSA reference trajectory defines 262,144 starting states and associated 150-reaction target segments. Each epoch samples 8192 starting states and generates 25 model trajectories per state. The objective compares segment-level rate statistics for the activator, repressor, and activator –repressor complex. 
+
+The comparison uses ten newly generated 3000-epoch PST runs and the ten-run GS-ST result set from Ref. (18). Both methods use the same log-uniform initialization multipliers, target construction, optimizer, learning-rate schedule, and true-value-centered parameter bounds. The GS-ST comparison uses the fixed reaction-selection temperature  𝑇 = 3 × 10 −6  set from Ref. (18). Complete objective definitions, seed schedules, numerical guards, optimization settings, and sampling details are given in SI Appendix. 
+
+# Ion-channel inference 
+
+The experimental model has two channels and three states,  𝐶 ⇌
+
+> 𝑘 close
+> 𝑘 open
+
+𝑂 →
+
+> 𝑘 inact
+
+𝐼,  with  𝐼  absorbing over the recording window. The data are 100 idealized HEK293 cell-attached patch-clamp sweeps at  +40  mV from the publicly available Na V1.5 dataset of Selimi et al. (32, 33). Training uses 262,144 model trajectories per epoch, 20 SSA event slots per trajectory, and 400 epochs. The objective compares the experimental mean open-channel count with exact overlap integrals of the model’s piecewise -constant open-channel trajectories over the experimental time bins. 
+
+All three rates are optimized in log space from  0.25 ms −1  with RMSprop. The GS-ST reaction-selection temperature schedule follows the earlier implementation (18). PST ignores the temperature variable while retaining the same learning-rate schedule. Final fits use 30,000 independent hard-forward SSA trajectories. The bin integration, event-time conventions, continuation rules, and optimizer schedule are described in SI Appendix. 
+
+# Repressilator benchmark 
+
+The benchmark is a reduced three-protein stochastic repressilator (38), with the stochastic parameterization and 50 reference –initialization pairs adapted from Burger et al. (34). The inferred parameters are the production rate  𝑘 𝑝  and dissociation constant  𝐾 𝑑 . Each task uses 50,000 exact trajectories to construct the target mean, 50,000 trajectories per stochastic loss and gradient evaluation, and 50,000 independent trajectories for final validation. 
+
+PST and GS-ST use the same exact SSA forward process, relative mean-squared-error objective, temporal straight-through readout, optimizer, stopping rule, and refinement stage. They differ in the backward treatment of categorical reaction selection: PST differentiates the normalized propensities, whereas GS-ST differentiates a Gumbel-Softmax relaxed sample with temperature of  0.30 . One optimization realization is performed for each method and task. The comparison uses a common TensorFlow implementation and evaluates the two backward estimators within the shared temporal-readout approximation. Complete propensities, initial-state and observation-time construction, temporal readout, sensitivity propagation, optimization protocol, and objective-control experiment are provided in SI Appendix. 14 
+
+# Deep-learning-scale classifier 
+
+The stochastic gene-regulatory classifier maps 784 input transcription-factor concentrations through 256 hidden genes to 10 output genes and contains 203,796 trainable parameters (18). The PST calculation uses the published architecture, MNIST data split, stochastic reaction-network dynamics, categorical cross-entropy objective, RMSprop optimizer, stochastic weight averaging, and post-training Monte Carlo and temporal averaging. PST is used from the first epoch throughout the 40-epoch training run, with exact hard categorical reaction selection in every forward pass. The classifier serves as a scale demonstration rather than a matched PST –GS-ST estimator comparison. Full training and evaluation details are given in SI Appendix. 
+
+# Acknowledgments 
+
+J.M.G.V. acknowledges support from Ministerio de Ciencia, Innovación y Universidades (Grant PID2024-160016NB-I00 funded by MICIU/AEI/10.13039/501100011033 and by ERDF/EU). 
+
+# References 
+
+1. M. B. Elowitz, A. J. Levine, E. D. Siggia, P. S. Swain, Stochastic Gene Expression in a Single Cell. 
+
+Science 297 , 1183 –1186 (2002). 
+
+2. H. H. McAdams, A. Arkin, Stochastic mechanisms in gene expression. Proceedings of the National Academy of Sciences 94 , 814 –819 (1997). 
+
+3. D. J. Wilkinson, Stochastic Modelling for Systems Biology, Third Edition (CRC Press, 2018). 
+
+4. C. Chang, M. Garcia-Alcala, L. Saiz, J. M. G. Vilar, P. Cluzel, Robustness of DNA looping across multiple cell divisions in individual bacteria. Proceedings of the National Academy of Sciences 119 ,e2200061119 (2022). 
+
+5. I. Golding, J. Paulsson, S. M. Zawilski, E. C. Cox, Real-Time Kinetics of Gene Activity in Individual Bacteria. Cell 123 , 1025 –1036 (2005). 
+
+6. J. M. G. Vilar, L. Saiz, Dynamics-informed deconvolutional neural networks for super-resolution identification of regime changes in epidemiological time series. Science Advances 9, eadf0673 (2023). 
+
+7. R. Zandi, P. van der Schoot, D. Reguera, W. Kegel, H. Reiss, Classical Nucleation Theory of Virus Capsids. Biophysical Journal 90 , 1939 –1948 (2006). 
+
+8. J. M. G. Vilar, L. Saiz, Actionable Forecasting as a Determinant of Biological Adaptation. Advanced Science 12 , 2413153 (2025). 
+
+9. J. M. G. Vilar, L. Saiz, The unreasonable effectiveness of equilibrium gene regulation through the cell cycle. Cell Systems 15 , 639-648.e2 (2024). 15 
+
+10. A. Raj, A. van Oudenaarden, Nature, Nurture, or Chance: Stochastic Gene Expression and Its Consequences. Cell 135 , 216 –226 (2008). 
+
+11. E. Korobkova, T. Emonet, J. M. G. Vilar, T. S. Shimizu, P. Cluzel, From molecular noise to behavioural variability in a single bacterium. Nature 428 , 574 –578 (2004). 
+
+12. J. M. G. Vilar, R. V. Solé, Effects of Noise in Symmetric Two-Species Competition. Phys. Rev. Lett. 80 ,4099 –4102 (1998). 
+
+13. D. T. Gillespie, Exact stochastic simulation of coupled chemical reactions. J. Phys. Chem. 81 , 2340 –
+
+2361 (1977). 
+
+14. A. B. Bortz, M. H. Kalos, J. L. Lebowitz, A new algorithm for Monte Carlo simulation of Ising spin systems. Journal of Computational Physics 17 , 10 –18 (1975). 
+
+15. R. J. Williams, Simple statistical gradient-following algorithms for connectionist reinforcement learning. Mach Learn 8, 229 –256 (1992). 
+
+16. S. Plyasunov, A. P. Arkin, Efficient stochastic sensitivity analysis of discrete event systems. Journal of Computational Physics 221 , 724 –738 (2007). 
+
+17. K. Rijal, P. Mehta, A differentiable Gillespie algorithm for simulating chemical kinetics, parameter estimation, and designing synthetic biological circuits. eLife 14 , RP103877 (2025). 
+
+18. J. M. G. Vilar, L. Saiz, Exact Discrete Stochastic Simulation With Deep‐Learning‐Scale Gradient 
+
+Optimization. Advanced Science , e76297 (2026). https://doi.org/10.1002/advs.76297 
+
+19. F. Mottes, Q.-Z. Zhu, M. P. Brenner, Gradient-based optimization of exact stochastic kinetic models. [Preprint] (2026). Available at: http://arxiv.org/abs/2601.14183 [Accessed 19 August 2026]. 
+
+20. K. Ahmed, Z. Zeng, M. Niepert, G. V. den Broeck, SIMPLE: A Gradient Estimator for $k$-Subset Sampling. [Preprint] (2024). Available at: http://arxiv.org/abs/2210.01941 [Accessed 19 August 2026]. 
+
+21. Y. Bengio, N. Léonard, A. Courville, Estimating or Propagating Gradients Through Stochastic Neurons for Conditional Computation. [Preprint] (2013). Available at: http://arxiv.org/abs/1308.3432 [Accessed 20 August 2026]. 
+
+22. A. Gupta, M. Khammash, Unbiased Estimation of Parameter Sensitivities for Stochastic Chemical Reaction Networks. SIAM J. Sci. Comput. 35 , A2598 –A2620 (2013). 
+
+23. D. F. Anderson, An Efficient Finite Difference Method for Parameter Sensitivities of Continuous Time Markov Chains. SIAM J. Numer. Anal. 50 , 2237 –2258 (2012). 
+
+24. P. W. Sheppard, M. Rathinam, M. Khammash, A pathwise derivative approach to the computation of parameter sensitivities in discrete stochastic chemical systems. J. Chem. Phys. 136 , 034115 (2012). 16 
+
+25. M. Rathinam, P. W. Sheppard, M. Khammash, Efficient computation of parameter sensitivities of discrete stochastic chemical reaction networks. J. Chem. Phys. 132 , 034103 (2010). 
+
+26. R. Gunawan, Y. Cao, L. Petzold, F. J. Doyle, Sensitivity Analysis of Discrete Stochastic Systems. 
+
+Biophysical Journal 88 , 2530 –2540 (2005). 
+
+27. H. A. Kramers, Brownian motion in a field of force and the diffusion model of chemical reactions. 
+
+Physica 7, 284 –304 (1940). 
+
+28. J. E. Moyal, Stochastic Processes and Statistical Physics. Royal Statistical Society. Journal. Series B: Methodological 11 , 150 –210 (1949). 
+
+29. N. G. van Kampen, A POWER SERIES EXPANSION OF THE MASTER EQUATION. Can. J. Phys. 39 , 551 –
+
+567 (1961). 
+
+30. T. G. Kurtz, Solutions of ordinary differential equations as limits of pure jump markov processes. 
+
+Journal of Applied Probability 7, 49 –58 (1970). 
+
+31. J. M. G. Vilar, H. Y. Kueh, N. Barkai, S. Leibler, Mechanisms of noise-resistance in genetic oscillators. 
+
+Proceedings of the National Academy of Sciences 99 , 5988 –5992 (2002). 
+
+32. Z. Selimi, J. Rougier, H. Abriel, J. P. Kucera, A detailed analysis of single‐channel Na v1.5 recordings does not reveal any cooperative gating. The Journal of Physiology 601 , 3847 –3868 (2023). 
+
+33. Z. Selimi, J.-S. Rougier, H. Abriel, J. P. Kucera, Graphic user interfaces to process single-channel patch clamp recordings. (2023). https://doi.org/10.5281/zenodo.7817601. 
+
+34. L. Burger, A. Kofler, L. Heinrich, U. Gerland, Gradient estimators for parameter inference in discrete stochastic kinetic models. [Preprint] (2026). Available at: http://arxiv.org/abs/2604.02121 [Accessed 20 August 2026]. 
+
+35. R. Grima, Construction and accuracy of partial differential equation approximations to the chemical master equation. Phys. Rev. E 84 , 056109 (2011). 
+
+36. E. Jang, S. Gu, B. Poole, Categorical Reparameterization with Gumbel-Softmax. [Preprint] (2017). Available at: http://arxiv.org/abs/1611.01144 [Accessed 20 August 2026]. 
+
+37. C. J. Maddison, A. Mnih, Y. W. Teh, The Concrete Distribution: A Continuous Relaxation of Discrete Random Variables. [Preprint] (2017). Available at: http://arxiv.org/abs/1611.00712 [Accessed 20 August 2026]. 
+
+38. M. B. Elowitz, S. Leibler, A synthetic oscillatory network of transcriptional regulators. Nature 403 ,335 –338 (2000).

@@ -1,0 +1,2640 @@
+Title: TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics
+
+URL Source: https://arxiv.org/pdf/2608.21070v1
+
+Published Time: Mon, 24 Aug 2026 00:49:52 GMT
+
+Number of Pages: 37
+
+Markdown Content:
+## TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics 
+
+Yuhao Sun 1∗ , Zekun Wu 2∗ , Zixun Huang 2 , Peijie Zhou 1,3,4,5 † 1Center for Machine Learning Research, Peking University 
+
+> 2
+
+School of Mathematical Sciences, Peking University 
+
+> 3
+
+Center for Quantitative Biology, Peking University 
+
+> 4
+
+National Engineering Laboratory for Big Data Analysis and Applications, Beijing 
+
+> 5
+
+AI for Science Institute, Beijing 
+
+Abstract 
+
+Inferring continuous system evolution from sparse temporal snapshots is a key challenge in generative modeling and single-cell omics. While Optimal Transport (OT) is popular, existing frameworks are largely restricted to first-order dynamics, assuming memoryless velocity fields. This limits expressiveness, as first-order systems fail to account for regulatory momentum and time-delayed responses inherent in processes like cell differentiation. Here, we introduce TracingFlow, a simulation-free Flow Matching framework generalizing to second-order dynamics. By using neural networks to regress the acceleration field, TracingFlow provides an exact, efficient solution to the Dynamical Optimal Acceleration Transport (DOAT) problem. Unlike first-order methods yielding over-smoothed trajectories, our second-order formulation captures high-curvature transitions and nonlinear evolutions by learning the underlying force fields. Evaluated on complex synthetic and large-scale scRNA-seq datasets, TracingFlow achieves superior accuracy in distributional reconstruction and trajectory faithfulness. Moreover, by integrating lineage tracing priors, it recovers dynamical structures that are both mathematically optimal and biologically plausible. 
+
+## 1 Introduction 
+
+Recovering underlying dynamics from discrete observations is a pivotal task in single-cell omics, known as Trajectory Inference (TI) [9, 72]. To identify the least costly evolution between distributions, Optimal Transport (OT) frameworks have emerged [7, 71]. These generally categorize into Static OT methods [22, 28, 51], which learn direct mappings, and Dynamical OT methods [24, 44, 57, 67], which capture continuous evolution via flow maps. Early Dynamical OT frameworks relied on Neural ODEs [9], incurring high computational costs due to numerical integration. To address this, Flow Matching [35, 36, 48] was proposed as a simulation-free alternative, regressing velocity fields to push source distributions to targets. By decomposing transport costs into single-particle trajectories, Flow Matching efficiently solves Dynamical OT problems [27, 50, 58], including its various variants [8, 15, 45, 59] . However, most TI frameworks assume first-order dynamics ( ˙x = v(x, t )), inherently restricting 
+
+v to be single-valued w.r.t x. This limits expressiveness when modeling complex biological priors, such as lineage tracing [30, 38], potentially yielding dynamics that contradict with additional biological prior information. Furthermore, [19, 23, 34] pointed out that if more modalities  
+
+> ∗Equal contribution
+> †Corresponding author: pjzhou@pku.edu.cn
+> Preprint. August 21, 2026.
+
+1arXiv:2608.21070v1 [cs.LG] 21 Aug 2026 Figure 1: An illustration figure for TracingFlow such as chromatin accessibility or proteomics are considered, the biological kinetics may follow higher-order dynamics or could be modelled in augmented space. While 3MSBM [56] recently introduced a second-order Momentum Schrödinger Bridge for smoother trajectories, it relies on iterative retraining the acceleration field similar to Rectified Flow [36] to determine optimal couplings. Furthermore, it employs a heuristic method to estimate the initial velocity, rather than incorporating this estimation as part of the optimal control problem. To overcome these limitations, we introduce TracingFlow , a simulation-free framework utilizing second-order dynamical systems. We propose the Dynamical Optimal Acceleration Transport (DOAT) problem, which determines evolution by minimizing acceleration costs. Trac-ingFlow directly regresses the acceleration field and initial velocity, avoiding ODE simulation. Our experiments show that TracingFlow achieves competitive and often improved reconstruc-tion accuracy relative to existing simulation-free frameworks [42, 58, 59, 69], while effectively incorporating biological priors. Our contributions include: • We propose TracingFlow, a simulation-free TI framework based on second-order dynam-ics. It solves the proposed DOAT problem by regressing acceleration fields, reducing computational costs compared to ODE-based methods. • We provide theoretical guarantees by decoupling the design of the optimal transport plan and single-particle control. We further introduce an iterative strategy to transform the real-world Velocity Missed-DOAT (VM-DOAT) problem into a standard DOAT problem, enabling approximate solutions. • We demonstrate TracingFlow’s effectiveness on multi-time-point real world datasets. Re-sults indicate superior distribution reconstruction accuracy and enhanced capability in preserving biological priors compared to state-of-the-art methods. 
+
+## 2 Related Works 
+
+Solving Optimal Transport via Flow Matching. Flow Matching [1, 35, 36, 48] transports probability distributions via learned flow maps, offering scalable simulation-free training. As an optimal control problem, Optimal Transport (OT) [47] decomposes into Optimal Coupling and single-particle geodesics, facilitating solutions via Flow Matching [15, 27, 50, 58]. This approach 2extends to various variants and generalizations [4, 8, 13, 15, 26, 45, 46, 59, 61, 68]. However, these typically employ first-order dynamics. While second-order approaches have emerged [56], they require iterative training of the acceleration field to achieve optimal coupling. Moreover, they rely on heuristic methods for initial velocity estimation, rather than integrating it as a component of the optimal control problem. TracingFlow addresses this by decomposing the Dynamical Acceleration Optimal Transport (DOAT) problem into optimal coupling and single particle optimal trajectory, achieving a truly simulation-free process for DOAT. 
+
+Overcoming Single-Valued Velocity Constraint in Flow Matching. In standard Flow Matching, the velocity field is modeled as a function solely dependent on x and t. This single-valued dependency prevents the model from representing intersecting trajectories with distinct velocities, often resulting in curved inference paths and increased computational costs. To decouple the velocity from the current position, the velocity network can incorporate additional inputs like class labels [54, 73], initial positions [14], or hidden states [20]. Additionally, [69] employs hierarchical generation to mitigate this issue. However, these methods do not extend to second-order dynamics. While [42] utilized a second-order system, it is limited to constant-acceleration paths. In contrast, TracingFlow offers a flexible second-order setting. By designing minimal-cost paths, it effectively resolves the limitation of the single-valued velocity field. 
+
+Single-cell Trajectory Inference and Lineage Integration. Optimal Transport (OT) is a robust framework for inferring cellular dynamics from scRNA-seq data [2, 6, 10–12, 24, 25, 28, 29, 33, 37, 40, 41, 44, 51–53, 55, 57, 60, 65, 66, 70, 74]. However, transcriptomic similarity alone often fails to resolve complex trajectories. To mitigate this, studies incorporate lineage tracing priors such as clonal barcode information. Existing approaches integrate such info via regularization [17, 49], structural alignment [32], velocity mapping [62], or sparse transition modeling [18, 21, 63]. While improving accuracy, these generally focus on discrete couplings or static matrices. TracingFlow advances this by embedding priors into a continuous OT-based second-order flow matching framework, capturing complex dynamics consistent with lineage information. 
+
+## 3 Mathematical Background 
+
+In this section, we provide the mathematical formulation of the problem addressed by Trac-ingFlow. 
+
+Dynamical Optimal Acceleration Transport (DOAT) Problem Let X ⊂ Rd and 
+
+V ⊂ Rd denote the position and velocity spaces, respectively. We define the augmented space as 
+
+S := X × V , so that the full system state is s = ( x, v) ∈ S . Consider the second-order dynamic system: ˙x = v ˙v = a(x, v, t ), t ∈ [t0, t K ]. (1) Modeling a large ensemble of such particles via a probability density ρt in S, we follow [5, 11] to formulate the following optimal control problem:       
+
+> min
+> a,ρ JDOAT (a, ρ ) =
+> ∫tK
+> t0
+> ∫
+> S
+> 12∥a(x,v, t )∥2ρt(x,v) d xdvdt(2)
+
+s.t. ∂tρt + ∇x · (vρt) + ∇v · (aρt) = 0 , (3) 
+
+ρti (x, v) = μi(x, v), i = 0 , . . . , K. (4) Here, constraints are imposed at K + 1 timestamps ti with given densities μi. Equation (3) represents the continuity equation in the augmented space. Analogous to standard Dynamical 3Optimal Transport [47], we term this the Dynamical Optimal Acceleration Transport (DOAT) 
+
+problem. To facilitate the subsequent numerical solution via particle methods, we assume the existence of an optimal flow map. 
+
+Velocity-Missed Dynamical Optimal Acceleration Transport (VM-DOAT) Problem 
+
+However, in practical applications such as single-cell datasets, only particle positions are observ-able, rendering velocities as unknown quantities. This presents a discrepancy with the DOAT formulation. Consequently, TracingFlow addresses a relaxation of the problem:       
+
+> min
+> a,ρ JVM-DOAT (a, ρ ) =
+> ∫tK
+> t0
+> ∫
+> S
+> 12∥a(x,v, t )∥2ρt(x,v) d xdvdt(5)
+
+s.t. ∂tρt(x, v) + ∇x · (vρt) + ∇v · (aρt) = 0 , (6) 
+
+> ∫
+
+ρti (x, v) d v = μ(pos)  
+
+> i
+
+(x), i = 0 , 1, . . . , K. (7) Here, the constraints are imposed only on the marginal distribution of positions, ∫ ρtj (x, v) d v,at each time point, with no constraints on the velocity distribution. We refer to this problem as 
+
+Velocity Missed-Dynamical Optimal Acceleration Transport (VM-DOAT) .
+
+## 4 Methodology of TracingFlow 
+
+In this section, we first introduce the key properties of the DOAT problem that are essential for our algorithm design. Subsequently, drawing inspiration from Flow Matching approaches for standard Dynamical OT, we devise an algorithm to exactly solve the DOAT problem by combining Optimal Coupling with single-particle optimal trajectories. Finally, we introduce a global path-based velocity completion scheme that effectively bridges the gap between VM-DOAT and the standard DOAT framework. By inferring missing velocities through the lens of global trajectory consistency, our approach enables the application of optimal transport theory to solve the VM-DOAT problem in a principled manner. 
+
+4.1 Key Properties of DOAT Problem 
+
+Optimal Single Particle Trajectory The DOAT problem is an optimal control problem over distributions. We begin by considering the corresponding single-particle optimal control problem. Specifically, the optimal trajectory is a cubic interpolation determined by the boundary states. 
+
+Proposition 4.1. Let γ : [0 , T ] → Rd be a twice continuously differentiable curve satisfying the boundary conditions γ(0) = x0, γ′(0) = v0, γ(T ) = xT , and γ′(T ) = vT . The variational problem 
+
+min  
+
+> γ
+> ∫T
+> 0
+
+12 ∥γ′′ (t)∥22 dt (8) 
+
+admits a unique minimizer, which is a cubic polynomial of the form 
+
+γ(t) = c3t3 + c2t2 + c1t + c0, (9) 
+
+where the coefficients are detailed in Section A.1.This result is got by Euler-Lagrange formula. See a detailed proof in Section A.1. 
+
+4Optimal Coupling By utilizing the single-particle optimal trajectory, we can immediately obtain the minimum cost for transporting a particle from ( x0, v0) to ( xT , vT ): 
+
+Corollary 4.2. Substitute Equation (9) to Equation (8) , we get the minimum cost : 
+
+C[0 ,T ] = 2
+
+T 3
+
+> {
+
+(∥v0∥2 + ⟨v0, vT ⟩ + ∥vT ∥2)T 2 + 3 ⟨v0 + vT , x0 − xT ⟩T + 3 ∥x0 − xT ∥2
+
+> }
+
+(10) The minimum cost allows us to define an optimal transport problem between t = 0 and 
+
+t = T :
+
+π∗  
+
+> [0 ,T ]
+
+= min  
+
+> π[0 ,T ]
+> ∫
+
+C[0 ,T ][( x0, v0), (xT , vT )]d π[0 ,T ] (11) where π[0 ,T ][( x0, v0), (xT , vT )] is any coupling satisfying the constraints ∫ π[0 ,T ]dx0dv0 = μT (x, v)and ∫ π[0 ,T ]dxT dvT = μ0(x, v) , μ0(x, v) and μT (x, v) are two distributions in augmented space. We term this formulation the Static Optimal Acceleration Transport (SOAT) problem. It is worth noting that while DOAT permits crossings in the projected position space, it prohibits trajectory crossing in the augmented space, which guarentees the neatness of trajectories. The following remark provides the mathematical justification for this non-crossing property in the augmented space, demonstrating that any such intersection implies a strictly higher transport cost. 
+
+Remark 4.3 . Consider two pairs of points in R2d, ( x0, v0), (xT , vT ) and ( ˜x0, ˜v0), (˜xT , ˜vT ) with no points overlapping. Denote the cubic interpolation curves between each pair by γ(t), ˜γ(t)( t ∈
+
+[0 , T ]), respectively. If the curves cross with each other at time point t0 ∈ (0 , T ), then we have 
+
+C[0 ,T ](x0, v0, xT , vT ) + C[0 ,T ](˜x0, ˜v0, ˜xT , ˜vT ) > C[0 ,T ](x0, v0, ˜xT , ˜vT ) + C[0 ,T ](˜x0, ˜v0, xT , vT ).
+
+See a detailed proof in Section A.2. Equation (2) represents a multi-marginal optimal transport problem over the interval [ t0, t K ]. To address this, we formulate sequential SOAT problems between adjacent time steps ti and 
+
+ti+1 by applying the substitutions x0 → xi, xT → xi+1 , v0 → vi, vT → vi+1 , and T → ti+1 − ti
+
+to Equation (11). For simplicity, let Ci→i+1 denote the resulting pairwise cost and π∗ 
+
+> i→i+1
+
+the optimal plan. Due to the Markovian nature of the dynamics, the full multi-marginal plan decomposes into the sequence of these local plans {π∗
+
+> i→i+1
+
+} for i = 0 , . . . , K − 1. 
+
+4.2 Conditional and Marginal Probability Path 
+
+Obtaining Marginal Probability Path via Mixing Conditional Probability Paths 
+
+Similar to the approach in standard Flow Matching [35, 58], directly constructing the Marginal Probability Path is difficult. Therefore, we condition on z and define the Marginal Probability Path as a mixture of Conditional Probability Paths: 
+
+ρt(x, v) = 
+
+> ∫
+
+ρt(x, v|z)q(z)d z (12) The condition z consists of K +1 points selected respectively from the snapshot data at K +1 time points t = 0 , 1, · · · , K . If ρt(x, v|z) is generated by a conditional acceleration field a(x, v, t |z)starting from the initial condition ρ0(x, v|z), then the marginal acceleration field: 
+
+a(x, v, t ) := Eq(z) 
+
+> {
+
+a(x, v, t |z)ρt(x, v|z)
+
+ρt(x, v)
+
+> }
+
+(13) will generate the marginal probability path ρt(x, v). 
+
+Theorem 4.4. The marginal acceleration field in Eq. (13) generates the marginal probability path. See the proof in Section A.3. 
+
+5Equivalence between Regressing Conditional Acceleration Fields and Marginal Acceleration Fields Assuming the marginal acceleration field a(x, v, t ) is known and we can sample from the marginal probability path ρt(x, v), we can directly regress a(x, v, t ) using a neural network. Let aθ(·, ·, ·) : Rd × Rd × R1 → Rd be a time-dependent acceleration field parameterized by a neural network with parameters θ. The acceleration flow matching loss is 
+
+LAFM = E(x,v)∼ρt(x,v),t ∼U [t0,t K ]
+
+{
+
+∥aθ − a(x, v, t )∥2}
+
+However, a(x, v, t ) is generally intractable because it is defined via an expectation (integral), and its denominator ρt(x, v) also requires integration to compute. In contrast, the conditional acceleration field a(x, v, t |z) and the conditional probability path ρt(x, v|z) have simple forms. Therefore, in actual training, we use the following Conditional Acceleration Flow Matching (CAFM) objective: 
+
+LCAFM = E (x,v)∼ρt(x,v|z),t∼U [t0,t K ],z ∼q(z)
+
+[
+
+∥aθ(x, v, t ) − a(x, v, t |z)∥2]
+
+These two objectives are equivalent in training, as described by the following theorem: 
+
+Theorem 4.5. If ρt(x, v) > 0 for any x ∈ Rd, v ∈ Rd, t ∈ [t0, t K ], then LAFM and LCAFM differ only by a constant independent of θ. In other words, ∇θLAFM = ∇θLCAFM . The proof is left to Section A.4. 
+
+Design of the Conditional Probability Path Consider the joint distributions μ0(x, v), 
+
+μ1(x, v), ..., μK (x, v) at K + 1 time points. The optimal transport plans calculated via solving SOAT problem are π∗
+
+> 0→1
+
+, π ∗
+
+> 1→2
+
+, · · · , π ∗ 
+
+> K−1→K
+
+. Taking the condition variable z =[( x0, v0), · · · , (xK , vK )], and similar to standard Flow Matching, we choose a path with time-varying mean and invariant variance as the conditional probability path, i.e.: 
+
+ρt(x, v|z) = N (x|mx(t), σ 2
+
+> x
+
+I) · N (v|mv(t), σ 2 
+
+> v
+
+I) (14) Here, mx, mv are given by the Minimum Cost Trajectory described in Proposition 4.1, where for t ∈ [ti, t i+1 ]: 
+
+mx(t) = c3(t − ti)3 + c2(t − ti)2 + c1(t − ti) + c0 mv(t)3 c3(t − ti)2 + 2 c2(t − ti) + c1
+
+, the coefficients are identical to those given in Section A.1, with x0, v0 replaced by xi, vi, xT , vT
+
+replaced by xi+1 , vi+1 , and T replaced by ti+1 − ti. Based on the optimal transport plans, we define the optimal propagator (transition kernel) from time ti to ti+1 as the probability of a particle at ( xi, vi) at time ti being transported to ( xi+1 , vi+1 ) at time ti+1 :
+
+K∗
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] = π∗
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] 
+
+μi(xi, vi) (15) Then, 
+
+z ∼ μ0(x0, v0) ·
+
+> K−1
+
+∏
+
+> i=0
+
+K∗
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] In the following, we demonstrate that the constructed marginal probability path recovers the true distribution at every given time point. 
+
+Theorem 4.6. When σx → 0, σ v → 0, the marginal probability density constructed by Equa-tion (12) satisfies ρti (x, v) → μi(x, v) at the K + 1 given time points. Therefore, the Marginal Probability Path constructed by mixing Conditional Probability Paths can correctly reconstruct the marginal distributions. See the proof in Section A.5. 
+
+Furthermore, we demonstrate that the design yields an exact solution to the DOAT problem. 
+
+Proposition 4.7. As σx → 0 and σv → 0, the marginal probability path and the marginal acceleration field will converge to the solution to the DOAT problem. See the proof in Section A.6. 
+
+64.3 Transform VM-DOAT to DOAT 
+
+Relations between DOAT and VM-DOAT The optimal transport cost of the DOAT problem is a functional of the sequence of joint distributions μi(x, v) for i = 0 , . . . , K . Formally, we denote this dependency as JDOAT [{μi(x, v)}| Ki=0 ]. In the VM-DOAT setting, we only have access to the marginal spatial distributions μ(pos)  
+
+> i
+
+(x) = ∫ μi(x, v)d v. Consequently, the cost of VM-DOAT, denoted as JVM-DOAT [{μ(pos)  
+
+> i
+
+(x)}| Ki=0 ], relates to JDOAT through the following minimization: 
+
+JVM-DOAT [{μ(pos)  
+
+> i
+
+(x)}] = min  
+
+> ωi(v|x)
+
+JDOAT [{μ(pos)  
+
+> i
+
+(x) · ωi(v|x)}], (16) where ωi(v|x) represents the conditional distribution of velocity, such that the joint distribution factorizes as μi(x, v) = μ(pos)  
+
+> i
+
+(x) · ωi(v|x). Thus, our objective is to determine the optimal 
+
+ωi(v|x) that minimizes the expression above, thereby transforming the VM-DOAT problem into a solvable DOAT instance. This transformation rests on two key properties: 1) The SOAT problem can be solved efficiently using the Sinkhorn method. Once the Transport Plan is computed, we can sample a trajectory [( x0, v0), · · · , (xK , vK )]; 2) Given the positions x0: K of a trajectory, consider the following multi-marginal optimal control problem: min  
+
+> ∫tK
+> t0
+
+12 ∥γ′′ (t)∥2dt, s.t. γ(ti) = xi, i = 0 , . . . , K. (17) The velocities of the optimal trajectory, denoted as V = [ γ′(t0), · · · , γ′(tK )], can be obtained by solving a sparse linear system, as illustrated in the following proposition: 
+
+Proposition 4.8. The velocities V defined above are the solution to the sparse linear system 
+
+V A = B, where A ∈ R(K+1) ×(K+1) is a tridiagonal matrix and B ∈ Rd×(K+1) . A detailed derivation and the explicit expressions for A and B are provided in Section A.7. 
+
+It is worth noting that solving this linear system requires O(K) time, ensuring high compu-tational efficiency. 
+
+Iterative Scheme to Perform the Transformation Based on this decomposition, we employ an iterative scheme to estimate the conditional velocity distributions across t0, . . . , t K .We initialize ω(0)  
+
+> i
+
+(v|x) = δ(v − 0) and subsequently alternate between the following two steps: • Solve SOAT Plans : Compute the K optimal SOAT plans between the distributions 
+
+μ(pos)  
+
+> i
+
+(x)·ω(m) 
+
+> i
+
+(v|x) for adjacent time points. This yields the plans π∗(m)
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] for i = 0 , . . . , K − 1, where m denotes the iteration index. This step effectively provides the multi-marginal optimal transport plan given the current ω(m) 
+
+> i
+
+(v|x). • Update Velocity Distributions : Update the conditional velocity distributions based on the computed SOAT plans: 
+
+ω(m+1)  
+
+> i
+
+(v|xi) =  
+
+> ∫
+
+q(m)(z)δ(ˆvi[x0 · · · xK ] − v) d z\i 
+
+> ∫
+
+q(m)(z) d z\i
+
+, (18) where d z\i denotes the volume element d x0dv0 . . . dxK dvK excluding d xi (i.e., integrating over all variables except xi). The term ˆvi[x0, . . . , xK ] denotes the optimal velocity at time 
+
+ti derived from the sequence x0, . . . , xK via Proposition 4.8. Intuitively, ω(m+1)  
+
+> i
+
+(v|xi) is set to the distribution induced by the velocities of all optimal control trajectories passing through xi at time ti. Since the total transport cost is the sum of costs along individual trajectories, aligning v with the optimal velocity of each trajectory minimizes the global objective. 7In the update step above, the trajectory variable z = [( x0, v0), . . . , (xK , vK )] follows the joint distribution q(m)(z) defined as: 
+
+q(m)(z) = μ(pos) 0 (x0) · ω(m)0 (v0|x0) ×
+
+> K−1
+
+∏
+
+> i=0
+
+K∗(m)
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] ,
+
+where the propagator K∗(m) 
+
+> i→i+1
+
+is given by: 
+
+K∗(m)
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] = π∗(m)
+
+> i→i+1
+
+[( xi, vi), (xi+1 , vi+1 )] 
+
+μ(pos)  
+
+> i
+
+(xi) · ω(m) 
+
+> i
+
+(vi|xi) .
+
+During the iteration process, the objective LDOAT [μ(pos)  
+
+> i
+
+(x) · ω(m) 
+
+> i
+
+(v|x)] decreases mono-tonically. Since the cost is bounded below by 0, the iterative algorithm is guaranteed to converge. 
+
+## 5 TracingFlow Algorithm for Trajectory Inference 
+
+In the practical implementation of TracingFlow, we first perform an approximation of the condi-tional velocity distribution to reduce the VM-DOAT problem to a DOAT problem. Subsequently, we employ flow matching to solve for the acceleration field of the DOAT problem. Notably, for lineage tracing data, we incorporate biological priors into this framework. 
+
+5.1 Approximation of Conditional Velocity Distribution 
+
+Determining the full conditional velocity distribution ωi(v|x) to transform VM-DOAT to DOAT (Section 4.3) is computationally prohibitive, potentially requiring an auxiliary generative model. We therefore adopt a deterministic approximation, assigning a single velocity to each data point. Consequently, Equation (18) is modified to: 
+
+ω(m+1)  
+
+> i
+
+(v|xi) = δ(v − v(m+1) exp (xi)) , v(m+1) exp (xi) = 
+
+∫ q(m)(z)ˆvi[x0 · · · xK ] d z\i
+
+∫ q(m)(z) d z\i
+
+. (19) Intuitively, this assigns v(m+1) exp (xi) as the mean velocity of all optimal control trajectories passing through xi at time ti.
+
+5.2 MiniBatch-OT 
+
+Solving SOAT repeatedly is computationally intensive for large-scale datasets. However, since the conditional velocity distribution ωi(v|x) is approximated as a Dirac delta, the joint empirical distribution μi(x, v) effectively becomes a superposition of Dirac deltas. This allows us to employ a minibatch strategy: we partition μi and μi+1 into B corresponding minibatches {μ(n) 
+
+> i
+
+}Bn=1 
+
+and {μ(n)
+
+> i+1
+
+}Bn=1 . By solving the local plans π∗(n) 
+
+> i→i+1
+
+independently and aggregating them as 
+
+π∗ 
+
+> i→i+1
+
+= ⊕Bn=1 π∗(n)
+
+> i→i+1
+
+, we significantly enhance computational efficiency. 
+
+5.3 Incorporation of Biological Priors 
+
+In lineage tracing applications, let indices li and li+1 denote individual samples at time points 
+
+ti and ti+1 , respectively. Each data point ( xi,l i , vi,l i ) is associated with a barcode bi,l i ∈ N+.We incorporate this prior by modifying the cost matrix Ci→i+1 . Specifically, when computing the cost between the l-th sample at ti and the k-th sample at ti+1 , we compare their barcodes: if bi,l i̸ = bi+1 ,l i+1 , the standard cost is multiplied by a penalty factor p0(p0 > 1). This soft constraint discourages transitions between distinct lineages, effectively embedding biological knowledge into the dynamics learning process. 8Table 1: Average W1 and W2 distances between the generated and ground truth distributions at various time points on the 2D Simulation , Cite 5D, and Cite 100D datasets for different algorithms.                                                                                                                                        
+
+> Method Dynamics 2D Simulation Cite 5D Cite 100D
+> W1W2W1W2W1W2
+> OT-CFM 1st Order 0.5270 ±0.0612 0.5922 ±0.0813 0.8298 ±0.0162 0.9155 ±0.0160 10.5498 ±0.0291 10.6220 ±0.0310
+> SF 2M0.9926 ±0.1857 1.1318 ±0.1734 0.7650 ±0.0375 0.8956 ±0.0408 12.3426 ±0.0735 12.4757 ±0.0783
+> 3MSBM 2nd Order 1.1855 ±0.2636 1.2767 ±0.2215 3.6369 ±0.3508 3.7703 ±0.3178 15.7708 ±0.1473 15.8833 ±0.1832
+> MMFM 2.3689 ±0.1830 2.6466 ±0.1769 2.5346 ±0.1520 2.7576 ±0.1877 12.5353 ±0.6268 12.7868 ±0.7061
+> HRF 1.5390 ±0.1130 1.6631 ±0.1214 1.4016 ±0.0437 1.5313 ±0.0430 10.1532 ±0.0643 10.2336 ±0.0707
+> CAF 1.6385 ±0.2777 1.6431 ±0.2766 4.5589 ±0.1073 4.7411 ±0.1620 16.7429 ±0.4371 16.9837 ±0.4324
+> TF (Ours) 0.3748 ±0.0505 0.5180 ±0.0360 0.5861 ±0.0688 0.6386 ±0.0775 8.0700 ±0.1537 8.2530 ±0.1889
+
+5.4 Algorithm of TracingFlow 
+
+The TracingFlow algorithm comprises three main steps: First, we apply the iterative approxi-mation from Section 5.1 to determine initial velocities, effectively transforming the VM-DOAT problem into a DOAT problem. Second, we compute the Optimal Transport Plan for SOAT as defined in Equation (11). Third, we sample conditional probability paths to train the acceleration network aθ(x, v, t ) via regression. Additionally, to provide initial conditions for inference, we parameterize the unique initial velocities derived in the first step using a neural network v0,ξ(x), trained similarly via regression. The algorithm’s pseudocode is provided in Section D. Theoretically, TracingFlow recovers the exact distribution if the acceleration and initial velocity are perfectly fitted. In practice, where losses are non-zero, we prove that the positional 
+
+W2 distance between the generated and true distributions is bounded by the sum of the velocity and AFM losses, and the relevant theorem is detailed in Section A.8. 
+
+## 6 Experiment Results 
+
+To evaluate the effectiveness of our algorithm, TracingFlow, we conducted three categories of experiments: 1) verifying whether the acceleration field of TracingFlow can transport the initial data distribution μ(pos) 0 (x) = ∫ ρt0 (x, v)d v to the data distribution μ(pos)  
+
+> i
+
+(x) at other given times ti; 2) verifying whether TracingFlow can effectively perform distribution interpolation and extrapolation; and 3) verifying whether TracingFlow can more effectively infer the dynamical laws in Lineage Tracing data given biological prior knowledge. 
+
+Distribution Transport We evaluated TracingFlow on a 2-dimensional synthetic dataset and real single-cell omics datasets of varying dimensions. The evaluation metrics were the 1-Wasserstein ( W1) and 2-Wasserstein ( W2) distances, measuring the discrepancy between the fitted and ground truth distributions. The second-order dynamics model of TracingFlow provides stronger expressive power than first-order algorithms, yielding lower average W1 and W2 values across all datasets (Table 1). We visualized the evolutionary trajectories learned by OT-CFM and TracingFlow on the synthetic dataset in Figure 2. TracingFlow’s second-order model allows it to learn trajectories that cross in the position space x1, x2, whereas OT-CFM is unable to do so. In Section C.1, we present the distribution reconstruction accuracy at each time point, as well as experimental results on additional datasets (such as the Mexico Gulf dataset). 
+
+Interpolation and Extrapolation To verify TracingFlow’s interpolation and extrapolation capabilities, we conducted a Hold-One-Out experiment on the 5-dimensional EB dataset (time points t = 0 , . . . , 4). In each iteration, we withheld one time point from the latter four for training and calculated the W1 and W2 distances between the interpolated and true distributions. As 9a)  Traj . Generated by OT -CFM  b)  Traj . Generated by Tracing Flow Figure 2: On the Simulation 2D dataset: a) non-crossing paths learned by OT-CFM, and b) crossing paths learned by TracingFlow. Table 2: Average W1 and W2 dis-tances between the predicted and ground truth distributions at held-out time points on the EB 5D dataset for different algorithms.                                  
+
+> Method Dynamics EB 5D
+> W1W2
+> OT-CFM 1st Order 5.1205 ±0.2400 5.6910 ±0.2561
+> SF 2M4.5602 ±0.1041 4.9905 ±0.1262
+> 3MSBM 2nd Order 7.1901 ±0.8667 7.4697 ±0.8588
+> MMFM 9.7777 ±0.9006 10.5980 ±0.9407
+> TF (Ours) 4.4974 ±0.0950 4.7859 ±0.1857
+
+Table 3: Average lineage-weighted W1 and W2 distances between the generated and ground truth distributions at various time points on the 3D Simulation Lineage and Hematopoiesis datasets for different algorithms.                                                                                                       
+
+> Method Dynamics 3D Sim-Lineage Hematopoiesis
+> W1W2W1W2
+> OT-CFM 1st Order 2.2383 ±0.0205 2.3162 ±0.0216 14.9945 ±0.3442 15.3971 ±0.3180
+> SF 2M1.5255 ±0.0513 1.5435 ±0.0515 18.7170 ±0.1124 18.9756 ±0.1168
+> 3MSBM 2nd Order 2.3126 ±0.4756 2.4905 ±0.4582 18.3313 ±0.9834 18.6427 ±0.9413
+> MMFM 2.6098 ±0.3149 3.0309 ±0.3265 27.0830 ±2.9299 29.5421 ±3.1420
+> HRF 1.7934 ±0.4043 1.8085 ±0.4022 15.4571 ±0.1266 15.7138 ±0.1282
+> CAF 2.6806 ±0.2777 2.7547 ±0.3521 15.2165 ±0.0685 15.4974 ±0.0576
+> TF w/o Bio-Prior 1.5292 ±0.1714 1.5532 ±0.2303 16.6166 ±0.1229 17.0110 ±0.1456
+> TF (Ours) 0.4538 ±0.2039 0.5328 ±0.2066 14.0470 ±0.1530 14.4589 ±0.1815
+
+shown in Table 2, TracingFlow achieved the highest accuracy, demonstrating that models based on second-order dynamics are superior in capturing high-curvature and non-linear trajectories. 
+
+Lineage Tracing Data To verify whether TracingFlow better handles lineage tracing data given biological priors, we experimented on a 3D Simulation Lineage Dataset and the Hematopoiesis Dataset. Following Section 5.3, we introduced biological priors into TracingFlow by modifying the transport cost matrix, other baselines also incorporates priors via conditional velocity fields. We used lineage-weighted W1 and W2 distances to evaluate consistency with biological priors while learning dynamics. Results in Table 3 show that incorporating priors enables TracingFlow to outperform other algorithms. In Figure 3, we visualized dynamics on the simulation dataset to demonstrate how TracingFlow learns trajectories conforming to priors. In Figure 4, we plotted the PCA-reduced positions of two barcodes from the Hematopoiesis Dataset at t = 1; the positions inferred by TracingFlow are significantly closer to the ground truth than those by OT-CFM. 
+
+## 7 Conclusion and Limitation 
+
+In this work, we introduce TracingFlow, a Flow Matching framework for the Dynamical Accelera-tion Optimal Transport (DOAT) problem. By pre-solving SOAT to learn acceleration and initial velocity, it enables efficient, simulation-free solutions for large-scale DOAT problem. Experiments on simulated and real world data demonstrate that second-order dynamics enhance expressivity, yielding precise temporal distribution recovery. Additionally, incorporating biological priors better preserves intercellular lineages. A limitation is the computationally intensive SOAT pre-calculation, though this is mitigable via minibatch-OT. Furthermore, explicitly modeling the theoretical conditional velocity distribu-tion per data point is prohibitive, so we approximate it using its expectation. The objective 10 a) Traj . Generated by OT -CFM  b)  Traj . Generated by Tracing Flow  
+
+> Wrong Barcodes Correct Barcodes
+
+Figure 3: On the Sim-Lineage dataset: a) paths learned by OT-CFM without consider-ing biological priors, and b) paths learned by TracingFlow that preserve biological priors. a) Data points Generated by OT -CFM  b) Data points Generated by Tracing Flow  
+
+> (t=1) (t=1)
+
+Figure 4: Comparison of generated (circles) and ground truth (’x’) positions at t = 1 for two barcodes on the hematopoiesis dataset [64]. (a) OT-CFM. (b) TracingFlow. Visualized via 2D PCA. 
+
+∫ T  
+
+> 012
+
+∥a∥2dt also lacks a clear physical interpretation, as standard classical actions exclude second time derivatives (see Section E.2). Despite current sequencing measurements lacking velocity data, priors suggest biological systems may follow higher-order dynamics due to the existence of complex regulations. Future work will extend TracingFlow to further model these dynamics. 
+
+## References 
+
+[1] Michael S Albergo and Eric Vanden-Eijnden. Building normalizing flows with stochastic interpolants. arXiv preprint arXiv:2209.15571 , 2022. [2] Michael S Albergo, Nicholas M Boffi, and Eric Vanden-Eijnden. Stochastic interpolants: A unifying framework for flows and diffusions. arXiv preprint arXiv:2303.08797 , 2023. [3] Vladimir Igorevich Arnol’d. Mathematical methods of classical mechanics , volume 60. Springer Science & Business Media, 2013. [4] Lazar Atanackovic, Xi Zhang, Brandon Amos, Mathieu Blanchette, Leo J Lee, Yoshua Bengio, Alexander Tong, and Kirill Neklyudov. Meta flow matching: Integrating vector fields on the wasserstein manifold. In The Thirteenth International Conference on Learning Representations , 2025. [5] Jean-David Benamou, Thomas O Gallouët, and François-Xavier Vialard. Second-order models for optimal transport and cubic splines on the wasserstein space. Foundations of Computational Mathematics , 19(5):1113–1143, 2019. [6] Charlotte Bunne, Ya-Ping Hsieh, Marco Cuturi, and Andreas Krause. The schrödinger bridge between gaussian measures has a closed form. In International Conference on Artificial Intelligence and Statistics , pages 5802–5833. PMLR, 2023. [7] Charlotte Bunne, Geoffrey Schiebinger, Andreas Krause, Aviv Regev, and Marco Cuturi. Optimal transport for single-cell and spatial omics. Nature Reviews Methods Primers , 4(1): 58, 2024. [8] Zihan Cao, Yu Zhong, and Liang-Jian Deng. Taming flow matching with unbalanced optimal transport into fast pansharpening. arXiv preprint arXiv:2503.14975 , 2025. [9] Ricky TQ Chen, Yulia Rubanova, Jesse Bettencourt, and David K Duvenaud. Neural ordinary differential equations. Advances in neural information processing systems , 31, 2018. 11 [10] Tianrong Chen, Guan-Horng Liu, and Evangelos Theodorou. Likelihood training of schrödinger bridge using forward-backward SDEs theory. In International Conference on Learning Representations , 2022. [11] Yongxin Chen, Giovanni Conforti, Tryphon T Georgiou, and Luigia Ripani. Multi-marginal schrödinger bridges. In International Conference on Geometric Science of Information ,pages 725–732. Springer, 2019. [12] Lénaïc Chizat, Stephen Zhang, Matthieu Heitz, and Geoffrey Schiebinger. Trajectory inference via mean-field langevin in path space. Advances in Neural Information Processing Systems , 35:16731–16742, 2022. [13] Gabriele Corso, Vignesh Ram Somnath, Noah Getz, Regina Barzilay, Tommi Jaakkola, and Andreas Krause. Composing unbalanced flows for flexible docking and relaxation. In The Thirteenth International Conference on Learning Representations , 2025. [14] Valentin De Bortoli, Guan-Horng Liu, Tianrong Chen, Evangelos A Theodorou, and Weilie Nie. Augmented bridge matching. arXiv preprint arXiv:2311.06978 , 2023. [15] Luca Eyring, Dominik Klein, Théo Uscidda, Giovanni Palla, Niki Kilbertus, Zeynep Akata, and Fabian J Theis. Unbalancedness in neural Monge maps improves unpaired domain translation. In The Twelfth International Conference on Learning Representations , 2024. [16] Rémi Flamary, Nicolas Courty, Alexandre Gramfort, Mokhtar Z Alaya, Aurélie Boisbunon, Stanislas Chambon, Laetitia Chapel, Adrien Corenflos, Kilian Fatras, Nemo Fournier, et al. Pot: Python optimal transport. Journal of Machine Learning Research , 22(78):1–8, 2021. [17] Aden Forrow and Geoffrey Schiebinger. Lineageot is a unified framework for lineage tracing and trajectory inference. Nature Communications , 12(1), 2021. [18] Mingze Gao, Melania Barile, Shirom Chabra, Myriam Haltalli, Emily F. Calderbank, Yiming Chao, Weizhong Zheng, Nicola K. Wilson, Elisa Laurenti, Berthold Göttgens, and Yuanhua Huang. CLADES: a hybrid neuralode-gillespie approach for unveiling clonal cell fate and differentiation dynamics. Nature Communications , 16(1), 2025. [19] Gennady Gorin, Valentine Svensson, and Lior Pachter. Protein velocity and acceleration from single-cell multiomics experiments. Genome biology , 21(1):39, 2020. [20] Pengsheng Guo and Alexander G Schwing. Variational rectified flow matching. arXiv preprint arXiv:2502.09616 , 2025. [21] Wenbo Guo, Zeyu Chen, Xinqi Li, Jingmin Huang, Qifan Hu, and Jin Gu. sctrace+: Enhanc-ing cell fate inference by integrating the lineage-tracing and multi-faceted transcriptomic similarity information. Cell Systems , 16(9):101398, 2025. [22] Peter Halmos, Xinhao Liu, Julian Gold, Feng Chen, Li Ding, and Benjamin J Raphael. Dest-ot: Alignment of spatiotemporal transcriptomics data. Cell Systems , 16(2), 2025. [23] Ari Hong, Sangseon Lee, and Kwangsoo Kim. Multi-omic relay velocity modeling uncovers dynamic chromatin-transcription regulation across cell states. Nature Communications ,2025. [24] Guillaume Huguet, Daniel Sumner Magruder, Alexander Tong, Oluwadamilola Fasina, Manik Kuchroo, Guy Wolf, and Smita Krishnaswamy. Manifold interpolating optimal-transport flows for trajectory inference. Advances in neural information processing systems ,35:29705–29718, 2022. 12 [25] Qi Jiang and Lin Wan. A physics-informed neural SDE network for learning cellular dynamics from time-series scRNA-seq data. Bioinformatics , 40:ii120–ii127, 09 2024. ISSN 1367-4811. [26] Kacper Kapusniak, Peter Potaptchik, Teodora Reu, Leo Zhang, Alexander Tong, Michael Bronstein, Joey Bose, and Francesco Di Giovanni. Metric flow matching for smooth interpolations on the data manifold. Advances in Neural Information Processing Systems ,37:135011–135042, 2024. [27] Dominik Klein, Théo Uscidda, Fabian Theis, and Marco Cuturi. Genot: Entropic (gromov) wasserstein flow matching with applications to single-cell genomics. Advances in Neural Information Processing Systems , 37:103897–103944, 2024. [28] Dominik Klein, Giovanni Palla, Marius Lange, Michal Klein, Zoe Piran, Manuel Gander, Laetitia Meng-Papaxanthos, Michael Sterr, Lama Saber, Changying Jing, et al. Mapping cells through time and space with moscot. Nature , pages 1–11, 2025. [29] Takeshi Koshizuka and Issei Sato. Neural lagrangian schrödinger bridge: Diffusion mod-eling for population dynamics. In The Eleventh International Conference on Learning Representations , 2023. [30] Kai Kretzschmar and Fiona M. Watt. Lineage tracing. Cell , 148(1–2):33–45, 2012. [31] Christopher Lance, Malte D Luecken, Daniel B Burkhardt, Robrecht Cannoodt, Pia Rautenstrauch, Anna Laddach, Aidyn Ubingazhibov, Zhi-Jie Cao, Kaiwen Deng, Sumeer Khan, et al. Multimodal single cell data integration challenge: results and lessons learned. 
+
+BioRxiv , pages 2022–04, 2022. [32] Marius Lange, Zoe Piran, Michal Klein, Bastiaan Spanjaard, Dominik Klein, Jan Philipp Junker, Fabian J. Theis, and Mor Nitzan. Mapping lineage-traced cells across time points with moslin. Genome Biology , 25(1), 2024. [33] Hugo Lavenant, Stephen Zhang, Young-Heon Kim, Geoffrey Schiebinger, et al. Toward a mathematical theory of trajectory inference. The Annals of Applied Probability , 34(1A): 428–500, 2024. [34] Chen Li, Maria C Virgilio, Kathleen L Collins, and Joshua D Welch. Multi-omic single-cell velocity models epigenome–transcriptome interactions and improves cell fate prediction. 
+
+Nature biotechnology , 41(3):387–398, 2023. [35] Yaron Lipman, Ricky T. Q. Chen, Heli Ben-Hamu, Maximilian Nickel, and Matthew Le. Flow matching for generative modeling. In The Eleventh International Conference on Learning Representations , 2023. [36] Xingchao Liu, Chengyue Gong, and Qiang Liu. Flow straight and fast: Learning to generate and transfer data with rectified flow. arXiv preprint arXiv:2209.03003 , 2022. [37] Suryanarayana Maddu, Victor Chardès, Michael Shelley, et al. Inferring biological processes with intrinsic noise from cross-sectional data. arXiv preprint arXiv:2410.07501 , 2024. [38] Shanjun Mao, Chenyang Zhang, Runjiu Chen, Shan Tang, Xiaodan Fan, and Jie Hu. Cell lineage tracing: Methods, applications, and challenges. Quantitative Biology , 13(4), 2025. [39] Kevin R Moon, David Van Dijk, Zheng Wang, Scott Gigante, Daniel B Burkhardt, William S Chen, Kristina Yim, Antonia van den Elzen, Matthew J Hirn, Ronald R Coifman, et al. Vi-sualizing structure and transitions in high-dimensional biological data. Nature biotechnology ,37(12):1482–1492, 2019. 13 [40] Kirill Neklyudov, Rob Brekelmans, Daniel Severo, and Alireza Makhzani. Action matching: Learning stochastic dynamics from samples. In International conference on machine learning ,pages 25858–25889. PMLR, 2023. [41] Kirill Neklyudov, Rob Brekelmans, Alexander Tong, Lazar Atanackovic, Qiang Liu, and Alireza Makhzani. A computational framework for solving wasserstein lagrangian flows. In 
+
+Forty-first International Conference on Machine Learning , 2024. [42] Dogyun Park, Sojin Lee, Sihyeon Kim, Taehoon Lee, Youngjoon Hong, and Hyunwoo J Kim. Constant acceleration flow. Advances in Neural Information Processing Systems , 37: 90030–90060, 2024. [43] Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary DeVito, Zeming Lin, Alban Desmaison, Luca Antiga, and Adam Lerer. Automatic differen-tiation in pytorch. 2017. [44] Qiangwei Peng, Peijie Zhou, and Tiejun Li. stVCR: Spatiotemporal dynamics of single cells. 
+
+bioRxiv , pages 2024–06, 2024. [45] Qiangwei Peng, Zihan Wang, Junda Ying, Yuhao Sun, Qing Nie, Lei Zhang, Tiejun Li, and Peijie Zhou. WFR-FM: Simulation-free dynamic unbalanced optimal transport. arXiv preprint arXiv:2601.06810 , 2026. [46] Katarina Petrović, Lazar Atanackovic, Kacper Kapusniak, Michael M. Bronstein, Joey Bose, and Alexander Tong. Curly flow matching for learning non-gradient field dynamics. In Learning Meaningful Representations of Life (LMRL) Workshop at ICLR 2025 , 2025. [47] Gabriel Peyré and Marco Cuturi. Computational optimal transport: With applications to data science . Now Foundations and Trends, 2019. [48] Aram-Alexandre Pooladian, Heli Ben-Hamu, Carles Domingo-Enrich, Brandon Amos, Yaron Lipman, and Ricky TQ Chen. Multisample flow matching: Straightening flows with minibatch couplings. arXiv preprint arXiv:2304.14772 , 2023. [49] Neha Prasad, Karren Yang, and Caroline Uhler. Optimal transport using gans for lineage tracing. arXiv preprint arXiv:2007.12098 , 2020. [50] Martin Rohbeck, Edward De Brouwer, Charlotte Bunne, Jan-Christian Huetter, Anne Biton, Kelvin Y Chen, Aviv Regev, and Romain Lopez. Modeling complex system dynamics with flow matching across time and conditions. In The Thirteenth International Conference on Learning Representations , 2025. [51] Geoffrey Schiebinger, Jian Shu, Marcin Tabaka, Brian Cleary, Vidya Subramanian, Aryeh Solomon, Joshua Gould, Siyan Liu, Stacie Lin, Peter Berube, et al. Optimal-transport analysis of single-cell gene expression identifies developmental trajectories in reprogramming. 
+
+Cell , 176(4):928–943, 2019. [52] Yutong Sha, Yuchi Qiu, Peijie Zhou, and Qing Nie. Reconstructing growth and dynamic trajectories from single-cell transcriptomics data. Nature Machine Intelligence , 6(1):25–39, 2024. [53] Yuyang Shi, Valentin De Bortoli, Andrew Campbell, and Arnaud Doucet. Diffusion schrödinger bridge matching. Advances in Neural Information Processing Systems , 36, 2024. [54] Sagar Shrestha and Xiao Fu. Diversified flow matching with translation identifiability. arXiv preprint arXiv:2511.05558 , 2025. 14 [55] Yuhao Sun, Zhenyi Zhang, Zihan Wang, Tiejun Li, and Peijie Zhou. Variational regularized unbalanced optimal transport: Single network, least action. arXiv preprint arXiv:2505.11823 ,2025. [56] Panagiotis Theodoropoulos, Augustinos D Saravanos, Evangelos A Theodorou, and Guan-Horng Liu. Momentum multi-marginal schr \" odinger bridge matching. arXiv preprint arXiv:2506.10168 , 2025. [57] Alexander Tong, Jessie Huang, Guy Wolf, David Van Dijk, and Smita Krishnaswamy. Trajectorynet: A dynamic optimal transport network for modeling cellular dynamics. In 
+
+International conference on machine learning , pages 9526–9536. PMLR, 2020. [58] Alexander Tong, Kilian FATRAS, Nikolay Malkin, Guillaume Huguet, Yanlei Zhang, Jarrid Rector-Brooks, Guy Wolf, and Yoshua Bengio. Improving and generalizing flow-based generative models with minibatch optimal transport. Transactions on Machine Learning Research , 2024. ISSN 2835-8856. Expert Certification. [59] Alexander Tong, Nikolay Malkin, Kilian Fatras, Lazar Atanackovic, Yanlei Zhang, Guillaume Huguet, Guy Wolf, and Yoshua Bengio. Simulation-free schrödinger bridges via score and flow matching. In International Conference on Artificial Intelligence and Statistics , pages 1279–1287. PMLR, 2024. [60] Elias Ventre, Aden Forrow, Nitya Gadhiwala, Parijat Chakraborty, Omer Angel, and Geoffrey Schiebinger. Trajectory inference for a branching sde model of cell differentiation. 
+
+arXiv preprint arXiv:2307.07687 , 2023. [61] Dongyi Wang, Yuanwei Jiang, Zhenyi Zhang, Xiang Gu, Peijie Zhou, and Jian Sun. Joint velocity-growth flow matching for single-cell dynamics modeling. arXiv preprint arXiv:2505.13413 , 2025. [62] Kun Wang, Liangzhen Hou, Xin Wang, Xiangwei Zhai, Zhaolian Lu, Zhike Zi, Weiwei Zhai, Xionglei He, Christina Curtis, Da Zhou, and Zheng Hu. Phylovelo enhances transcriptomic velocity field mapping using monotonically expressed genes. Nature Biotechnology , 42(5): 778–789, 2023. [63] Shou-Wen Wang, Michael J. Herriges, Kilian Hurley, Darrell N. Kotton, and Allon M. Klein. Cospar identifies early cell fate biases from single-cell transcriptomic and lineage information. Nature Biotechnology , 40(7):1066–1074, 2022. [64] Caleb Weinreb, Alejo Rodriguez-Fraticelli, Fernando D Camargo, and Allon M Klein. Lineage tracing on transcriptional landscapes links state to fate during differentiation. 
+
+Science , 367(6479):eaaw3381, 2020. [65] Maosheng Yang. Topological schrödinger bridge matching. In The Thirteenth International Conference on Learning Representations , 2025. [66] Grace Hui Ting Yeo, Sachit D Saksena, and David K Gifford. Generative modeling of single-cell time series with prescient enables prediction of cell trajectories with interventions. 
+
+Nature communications , 12(1):3222, 2021. [67] Jiaqi Zhang, Erica Larschan, Jeremy Bigness, and Ritambhara Singh. scNODE: gener-ative model for temporal single cell transcriptomic data prediction. Bioinformatics , 40 (Supplement_2):ii146–ii154, 09 2024. ISSN 1367-4811. [68] Xi Nicole Zhang, Yuan Pu, Yuki Kawamura, Andrew Loza, Yoshua Bengio, Dennis Shung, and Alexander Tong. Trajectory flow matching with applications to clinical time series modelling. Advances in Neural Information Processing Systems , 37:107198–107224, 2024. 15 [69] Yichi Zhang, Yici Yan, Alex Schwing, and Zhizhen Zhao. Towards hierarchical rectified flow. arXiv preprint arXiv:2502.17436 , 2025. [70] Zhenyi Zhang, Tiejun Li, and Peijie Zhou. Learning stochastic dynamics from snapshots through regularized unbalanced optimal transport. In The Thirteenth International Confer-ence on Learning Representations , 2025. [71] Zhenyi Zhang, Yuhao Sun, Qiangwei Peng, Tiejun Li, and Peijie Zhou. Integrating dynamical systems modeling with spatiotemporal scRNA-Seq data analysis. Entropy , 27(5), 2025. ISSN 1099-4300. [72] Grace XY Zheng, Jessica M Terry, Phillip Belgrader, Paul Ryvkin, Zachary W Bent, Ryan Wilson, Solongo B Ziraldo, Tobias D Wheeler, Geoff P McDermott, Junjie Zhu, et al. Massively parallel digital transcriptional profiling of single cells. Nature communications , 8 (1):14049, 2017. [73] Qunxi Zhu and Wei Lin. Switched flow matching: Eliminating singularities via switching odes. arXiv preprint arXiv:2405.11605 , 2024. [74] Qunxi Zhu, Bolin Zhao, Jingdong Zhang, Peiyang Li, and Wei Lin. Governing equation discovery of a complex system from snapshots. arXiv preprint arXiv:2410.16694 , 2024. 16 Contents of Appendix 
+
+A Proofs of Main Theorems . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 A.1 Proof of Proposition 4.1 : Optimal Trajectory of Single Particle . . . . . . . . . . . . . . . . .17 A.3 Proof of Remark 4.4 : No-Cross Property . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .18 A.4 Proof of Theorem 4.5 : Marginal Acceleration Field . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19 A.5 Proof of Theorem 4.6 : The Relation Between AFM Loss and CAFM Loss . . . . . . 19 A.6 Proof of Theorem 4.7 : Marginal Probability Path . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20 A.7 Proof of Proposition 4.8 : TracingFlow Exactly Solves DOAT Problem . . . . . . . . . . 21 A.8 Proof of Proposition 4.9 : Solve Linear System to Get Optimal Velocity . . . . . . . . 22 A.9 Proof of Theorem A.1 : W2 Distance can be bounded by LAFM and Lv0 . . . . . . . . 24 
+
+B Datasets and Evaluation Metric . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26 B.1 Experiment Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26 B.2 Evaluation Metrics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27 B.3 Datasets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27 
+
+C Experiment Details . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28 C.1 Experiment Details across Various Datasets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28 C.2 Training Time and Scalability of Tracing Flow . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32 C.3 Sensitivity Analysis on Minibatch-OT . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32 
+
+D Pseudocode for Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34 
+
+E Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35 E.1 Relation with other Algorithms . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35 E.2 Is S = X × V a phase space? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35 
+
+## A Proofs of Main Theorems 
+
+A.1 Proof of Proposition 4.1 
+
+Proof. First, we show that the unique minimizer is a cubic polynomial. Consider the energy functional defined on the interval [0 , T ]: 
+
+J [γ] = 12 
+
+> ∫T
+> 0
+
+∥γ′′ (t)∥22 dt. (20) The integrand L(γ, γ ′, γ ′′ ) = 12 ∥γ′′ ∥22 depends on derivatives up to the second order. The necessary condition for optimality is given by the Euler–Lagrange equation: 
+
+∂L ∂γ − ddt 
+
+> (
+
+∂L ∂γ ′
+
+> )
+
++ d2
+
+dt2 
+
+> (
+
+∂L ∂γ ′′ 
+
+> )
+
+= 0 . (21) Since ∂L/∂γ = 0, ∂L/∂γ ′ = 0, and ∂L/∂γ ′′ = γ′′ , the equation simplifies to: d2
+
+dt2 γ′′ (t) = γ(4) (t) = 0 . (22) This implies that the optimal trajectory γ(t) is a cubic polynomial: 
+
+γ(t) = c3t3 + c2t2 + c1t + c0. (23) 17 Imposing the boundary conditions γ(0) = x0, γ ′(0) = v0 and γ(T ) = xT , γ ′(T ) = vT leads to the linear system: 
+
+c0 = x0,c1 = v0,c3T 3 + c2T 2 + c1T + c0 = xT ,
+
+3c3T 2 + 2 c2T + c1 = vT .
+
+(24) Solving for the coefficients yields the unique solution: 
+
+
+
+c0 = x0,c1 = v0,c2 = 3( xT − x0) − (2 v0 + vT )TT 2 ,c3 = (v0 + vT )T − 2( xT − x0)
+
+T 3 .
+
+(25) 
+
+A.2 Proof of Remark 4.3 
+
+Proof. First we propose a lemma: 
+
+Lemma. Let C[0 ,t ](x0, v0, xt, vt) be the least acceleration cost through [0 , t ] ,( x0, v0), (xT , vT ) ∈X × V are two different points. Then for arbitrary midpoint τ ∈ (0 , 1) and state ( x, v) ∈ X × V ,the following inequality holds: 
+
+C[0 ,τ ](x0, v0, x, v) + C[τ,T ](x, v, xT , vT ) ≥ C [0 ,T ](x0, v0, xT , vT ) (26) The "=" holds if and only if ( x, v ) = γ∗(τ ), where γ∗(t)( t ∈ [0 , T ]) is the cubic interpolation trajectory connecting ( x0, v0) and ( xT , vT ). 
+
+Proof. Fix τ ∈ (0 , T ). Define objective function Fτ (x, v) = C[0 ,τ ](x0, v0, x, v)+ C[τ,T ](x, v, xT , vT ). By Corollary 4.2 , we can rewrite 
+
+Fτ (x, v) = 2
+
+τ 3
+
+{
+
+(∥v0∥2 + ⟨v0, v⟩ + ∥v∥2)τ 2 + 3 ⟨v0 + v, x0 − x⟩τ + 3 ∥x0 − x∥2}
+
++2(T − τ )3
+
+{
+
+(∥vT ∥2 + ⟨vT , v⟩ + ∥v∥2)( T − τ )2 + 3 ⟨vT + v, x − xT ⟩T + 3 ∥xT − x∥2} (27) Which is a quadratic form of ( x, v) up to a constant. Fτ (x, v) ≥ 0 always holds, namely, the quadratic form has a finite lower bound, so it is semi-quadratic. To minimize Fτ (x, v), we can take differentiations: 
+
+∇xFτ (x, v) = 3 
+
+( −(v0 + v)τ + 2( x − x0)
+
+τ 2 + (v + vT )( T − τ ) + 2( x − xT )(T − τ )2
+
+)
+
+= 0 . (28) 
+
+∇vFτ (x, v) = (v0 + 2 v)τ + 3( x0 − x)
+
+τ 2 + (vT + 2 v)( T − τ ) + 3( x − xT )(T − τ )2 = 0 , (29) Denote the cubic interpolation from ( x0, v0) to ( x, v) on [0 , τ ] and ( x, v) to ( xT , vT ) on [τ, T ] by γ[0 ,τ ](t) and γ[τ,T ](t), respectively.The coefficients are known according to Section A.1. Then we have: 
+
+γ′′  
+
+> [0 ,τ ]
+
+(τ −) = 6 · (v0 + v)τ − 2( x − x0)
+
+τ 2 +2 · 3( x − x0) − (2 v0 + v)ττ 2 = 2 · 3( x0 − x) + ( v0 + 2 v)ττ 2 ,
+
+(30) 18 γ′′  
+
+> [τ,T ]
+
+(τ +) = 6 · (v + vT )τ − 2( xT − x)
+
+τ 2 + 2 · 3( xT − x) − (2 v + vT )( T − τ )(T − τ )2
+
+= 2 · 3( x − xT ) + ( v + 2 vT )( T − τ )(T − τ )2
+
+(31) 
+
+γ′′′  
+
+> [0 ,τ ]
+
+(τ −) = 6 · (v0 + v)τ − 2( x − x0)
+
+τ 2 (32) 
+
+γ′′′  
+
+> [τ,T ]
+
+(τ +) = 6 · (v + vT )( T − τ ) − 2( xT − x)(T − τ )2 (33) Then we can find that 28 and 29 appear to be γ′′′  
+
+> [0 ,τ ]
+
+(τ −) = γ′′′  
+
+> [τ,T ]
+
+(τ +), γ ′′  
+
+> [0 ,τ ]
+
+(τ −) = γ′′  
+
+> [τ,T ]
+
+(τ +).
+
+Because the two curves are cubic, and γ(i)[0 ,τ ](τ −) = γ(i)[τ,T ](τ +), i = 0 , 1, 2, 3, so we know that in the optimal case γ[0 ,τ ] = γ∗∣∣[0 ,τ ], γ [τ,T ] = γ∗∣∣[τ,T ].. That is, the unique solution of 28 and 29 is (γ∗(τ ), γ ∗′
+
+(τ )) , which completes the proof. Back to our target, assume γ and ˜ γ cross at ( xτ , vτ ), then we have 
+
+C[0 ,T ](x0, v0, xT , vT ) + C[0 ,T ]( ˜ x0, ˜v0, ˜xT , ˜vT )=
+
+{
+
+C[0 ,τ ](x0, v0, xτ , vτ ) + C[τ,T ](xτ , vτ , xT , vT )
+
+}
+
++
+
+{
+
+C[0 ,τ ]( ˜ x0, ˜v0, xτ , vτ ) + C[τ,T ](xτ , vτ , ˜xT , ˜vT )
+
+}
+
+=
+
+{
+
+C[0 ,τ ](x0, v0, xτ , vτ ) + C[τ,T ](xτ , vτ , ˜xT , ˜vT )
+
+}
+
++
+
+{
+
+C[0 ,τ ]( ˜ x0, ˜v0, xτ , vτ ) + C[τ,T ](xτ , vτ , xT , vT )
+
+}
+
+≥C [0 ,T ](x0, v0, ˜xT , ˜vT ) + C[0 ,T ]( ˜ x0, ˜v0, xT , vT ).
+
+(34) The equality holds if and only if γ and ˜ γ coincide. Consequently, the strict inequality holds for distinct trajectories, which implies the non-crossing property. This completes the proof. 
+
+A.3 Proof of Theorem 4.4 
+
+Proof. Consider the time derivative of the marginal distribution: 
+
+∂tρt(x, v) = ∂t
+
+{∫ 
+
+ρt(x, v|z)q(z)d z
+
+}
+
+=
+
+∫
+
+∂tρt(x, v|z)q(z)d z
+
+= −
+
+∫
+
+∇x · (ρt(x, v|z)v)q(z)d z −
+
+∫
+
+∇v · (ρt(x, v|z)a(x, v, t |z)) q(z)d z
+
+= −∇ x ·
+
+(∫ 
+
+ρt(x, v|z)vq(z)d z
+
+)
+
+− ∇ v ·
+
+(∫ 
+
+ρt(x, v|z)a(x, v, t |z)q(z)d z
+
+)
+
+= −∇ x · (ρt(x, v)v) − ∇ v · (at(x, v)ρt(x, v)) (35) Therefore, ρt(x, v) satisfies the continuity equation: 
+
+∂tρt(x, v) = −∇ x · (ρt(x, v)v) − ∇ v · (at(x, v)ρt(x, v)) (36) This completes the proof. 
+
+A.4 Proof of Theorem 4.5 
+
+Proof. Consider the gradient of the AFM Loss and CAFM Loss: 
+
+∇θLAFM = ∇θEρt(x,v)(∥aθ(x, v, t )∥2 − 2aTθ (x, v, t )a(x, v, t )) (37) 
+
+∇θLCAFM = ∇θEρt(x,v|z)q(z)(∥aθ(x, v, t )∥2 − 2aTθ (x, v, t )a(x, v, t |z)) (38) 19 For the first term of ∇θLAFM :
+
+Eρt(x,v)∥aθ(x, v, t )∥2 =
+
+∫
+
+ρt(x, v)∥aθ(x, v, t )∥2dxdv
+
+=
+
+∫
+
+ρt(x, v|z)q(z)∥aθ(x, v, t )∥2dxdvdz
+
+= Eρt(x,v|z)q(z)∥aθ(x, v, t )∥2 (39) For the second term: 
+
+Eρt(x,v)[aTθ (x, v, t )a(x, v, t )] = 
+
+∫
+
+ρt(x, v)aTθ (x, v, t )a(x, v, t )d xdv
+
+=
+
+∫
+
+ρt(x, v)aTθ (x, v, t )
+
+(∫ 
+
+q(z) a(x, v, t |z)ρt(x, v|z)
+
+ρt(x, v) dz
+
+)
+
+dxdv
+
+=
+
+∫ ∫
+
+aTθ (x, v, t )a(x, v, t |z)ρt(x, v|z)q(z)d xdvdz
+
+= Eρt(x,v|z)q(z)(aTθ (x, v, t )a(x, v, t |z)) (40) 
+
+A.5 Proof of Theorem 4.6 
+
+Proof. Consider a given time ti. Based on the expressions for mx, mv, at this moment we exactly have: 
+
+ρti (x, v|z) = N (x|xi, σ 2
+
+> x
+
+I) · N (v|vi, σ 2 
+
+> v
+
+I) (41) For simplicity, let d sj = d xj dvj Therefore, the Marginal Probability Path is: 
+
+ρti (x, v) = 
+
+∫
+
+ρti (x, v|z)q(z)d z
+
+=
+
+∫
+
+ρti (x, v|(xi, vi)) μ0(x0, v0) ·
+
+> K−1
+
+∏
+
+> j=0
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d s0 · · · dsK (42) Using the definition of the propagator, we know that: 
+
+∫
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d xj+1 dvj+1 = 1 (43) Thus, we can integrate out the future terms ( j > i ) first , and then iteratively collapse the past terms ( j < i ): 20 ρti (x, v) = 
+
+∫
+
+ρti (x, v|(xi, vi)) μ0(x0, v0) ·
+
+> K−1
+
+∏
+
+> j=0
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d s0 · · · dsK
+
+=
+
+∫
+
+ρti (x, v|(xi, vi)) μ0(x0, v0) ·
+
+> i−1
+
+∏
+
+> j=0
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d s0 · · · dsi
+
+=
+
+∫
+
+ρti (x, v|(xi, vi)) π∗
+
+> 0→1
+
+[( x0, v0), (x1, v1)] 
+
+> i−1
+
+∏
+
+> j=1
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d s0 · · · dsi
+
+=
+
+∫
+
+ρti (x, v|(xi, vi)) μ1(x1, v1)
+
+> i−1
+
+∏
+
+> j=1
+
+K∗
+
+> j→j+1
+
+[( xj , vj ), (xj+1 , vj+1 )]d s1 · · · dsi
+
+...=
+
+∫
+
+ρti (x, v|(xi, vi)) μi(xi, vi)d si
+
+=
+
+∫
+
+(N (x|xi, σ 2
+
+> x
+
+I) · N (v|vi, σ 2 
+
+> v
+
+I)) μi(xi, vi)d si
+
+= ( μi ∗ g)( x, v) (44) where g(x, v) = ( N (x|0, σ 2
+
+> x
+
+I) · N (v|0, σ 2 
+
+> v
+
+I)). When ( σx, σ v) → 0, we have ρti (x, v) → μi(x, v)in distribution. If μi(x, v) is absolutely continuous with respect to the Lebesgue measure and admits a density in L1(R2d), we can guarantee strong convergence in the L1 norm: lim σ→0 ∥ρti (x, v) −
+
+μi(x, v)∥L1 = 0 for all i = 0 , 1, ..., K .
+
+A.6 Proof of Proposition 4.7 
+
+First, we prove that the Marginal Probability Path constructed by TracingFlow converges to the optimal solution of the DOAT problem when σx → 0, σ v → 0. We investigate directly in the augmented space. Let s = [ x, v]T ∈ X × V , and consider the cost of the DOAT problem. The subsequent position of a particle starting from the initial point 
+
+s0 can be represented by the flow map ϕt(s0). Therefore, the cost can be written as: 
+
+LDOAT (a, ρ ) = 
+
+∫ tk
+
+> t0
+
+∫
+
+> X ×V
+
+12 ∥a(s, t )∥2ρt(s)d xdvdt
+
+=
+
+∫ tk
+
+> t0
+
+∫
+
+> X ×V
+
+12 ∥a(ϕt(s0), t )∥2 det 
+
+( ∂ϕ
+
+∂s0
+
+)−1
+
+ρ0(s0) det 
+
+( ∂ϕ
+
+∂s0
+
+)
+
+ds0dt
+
+=
+
+∫
+
+> X ×V
+
+ρ0(s0)d s0
+
+∫ tk
+
+> t0
+
+12 ∥a(ϕt(s0), t )∥2dt
+
+=
+
+∫
+
+> Ω
+
+(∫ tk
+
+> t0
+
+12 ∥γ′′ (t)∥2dt
+
+)
+
+dP[γ] (45) where P is a probability measure in the path space, satisfying the constraint ( eti )#P = μi(x, v). Here, et is the evaluation map et[γ] = γ(t), and ( eti )#P denotes the push-forward of the probability measure by the evaluation map. According to Proposition 4.1, the minimum cost path connecting si and si+1 is a cubic spline, and the minimum cost is Ci→i+1 [si, si+1 ]. Therefore, for any path γ: ∫ ti+1 
+
+> ti
+
+12 ∥γ′′ (t)∥2dt ≥ C i→i+1 [si, si+1 ] (46) 21 Thus, the DOAT problem cost has a lower bound: 
+
+LDOAT (ρ, a) = 
+
+∫
+
+> Ω
+> K−1
+
+∑
+
+> i=0
+
+(∫ ti+1 
+
+> ti
+
+12 ∥γ′′ (t)∥2dt
+
+)
+
+dP[γ]
+
+≥
+
+∫
+
+> Ω
+> K−1
+
+∑
+
+> i=0
+
+Ci→i+1 [si, si+1 ]d P[γ]
+
+≥
+
+∫ K−1∑
+
+> i=0
+
+Ci→i+1 [si, si+1 ]d π∗(si, si+1 ) (47) where π∗(si, si+1 ) is the Optimal Transport Plan for the SOAT problem between μ(si) and 
+
+μ(si+1 ). Consider the path constructed by TracingFlow. In the case where σx, σ v → 0, we have 
+
+ρt(x, v|z) = ρt(s|z) → δ(s − γ∗ 
+
+> z
+
+(t)), where γ∗ 
+
+> z
+
+is the optimal single-particle trajectory connecting 
+
+z = [ s0, s1, · · · , sK ]. We calculate the transport cost of the constructed path: 
+
+LTF =
+
+∫
+
+q(z)d z
+
+> K−1
+
+∑
+
+> i=0
+
+∫ ti+1 
+
+> ti
+
+∥γ′′∗  
+
+> z
+
+(t)∥2dt
+
+=
+
+∫
+
+q(z)d z
+
+> K−1
+
+∑
+
+> i=0
+
+Ci→i+1 [si, si+1 ]=
+
+∫
+
+μ0(s0)
+
+> K−1
+
+∏
+
+> i=0
+
+K∗
+
+> i→i+1
+
+[si, si+1 ]
+
+
+
+> K−1
+
+∑
+
+> j=0
+
+Cj→j+1 [sj , sj+1 ]
+
+ dz (48) Here, using the definition of the propagator: 
+
+∫
+
+μ0(s0)
+
+> K−1
+
+∏
+
+> i=0
+
+K∗
+
+> i→i+1
+
+[si, si+1 ] ( Cj→j+1 [sj , sj+1 ]) d z
+
+=
+
+∫
+
+π∗
+
+> j→j+1
+
+[sj , sj+1 ]Cj→j+1 [sj , sj+1 ]d sj dsj+1 
+
+(49) Therefore: 
+
+LTF =
+
+> K−1
+
+∑
+
+> i=0
+
+∫
+
+π∗
+
+> i→i+1
+
+[si, si+1 ]Ci→i+1 [si, si+1 ]d sidsi+1 (50) This coincides exactly with the lower bound of the DOAT problem cost derived above. Thus, the path constructed by TracingFlow is exactly the optimal solution to the DOAT problem in the case where σx, σ v → 0. Next, we prove that under the construction of TracingFlow, the acceleration field a(s, t )is single-valued with respect to s and t. By Remark 4.3, under the Optimal Transport Plan, the trajectories of flow maps starting from different points must not intersect. This implies that for a given time t, any point s in the augmented space is traversed by at most one flow map trajectory. Therefore, the acceleration field a(s, t ) possesses single-valuedness. In other words, the solution constructed by TracingFlow can indeed be expressed by a single optimal acceleration field a(s, t ). 
+
+A.7 Proof of Proposition 4.8 
+
+Proof. Let γ : [0 , T ] → Rd be a path that is C1 on [0 , T ] and piecewise C2 on each interval [tj−1, t j ]. The optimal solution is given by a piecewise cubic polynomial: 22 γ(tj−1 + τ ) = (vj−1 + vj )∆ tj − 2( xj − xj−1)(∆ tj )3 τ 3
+
++ 3( xj − xj−1) − (2 vj−1 + vj )∆ tj
+
+(∆ tj )2 τ 2 + vj−1τ + xj−1,
+
+(51) for τ ∈ [0 , ∆tj ], where ∆ tj = tj − tj−1,According to Corollary 4.2, it suffices to minimize 
+
+J (v0, v1, . . . , vK ) =2 
+
+> K
+
+∑
+
+> j=1
+
+1(∆ tj )3
+
+{
+
+(∥vj−1∥2 + ⟨vj−1, vj ⟩ + ∥vj ∥2)(∆ tj )2
+
++ 3 ⟨vj−1 + vj , x j−1 − xj ⟩∆tj + 3 ∥xj−1 − xj ∥2
+
+}
+
+(52) 
+
+J ≥ 0 always holds, so the the formula above is a semi-positive quadratic form. Take differentiation, we have 
+
+∇vj J = 2 
+
+( vj−1 + 2 vj
+
+∆tj
+
++ 2vj + vj+1 
+
+∆tj+1 
+
+)
+
++ 6 
+
+( xj−1 − xj
+
+(∆ tj )2 + xj − xj+1 
+
+(∆ tj+1 )2
+
+)
+
+, for j = 1 , . . . , K − 1,
+
+(53) 
+
+∇v0 J = 2(2 v0 + v1)∆t1
+
++ 6( x0 − x1)(∆ t1)2 , ∇vK J = 2( vK−1 + 2 vK )∆tK
+
++ 6( xK−1 − xK )(∆ tK )2 . (54) Set the gradients to zero and rearranging the terms to separate the velocities v and positions 
+
+x, we obtain: For j = 0: 2∆t1
+
+v0 + 1∆t1
+
+v1 = 3( x1 − x0)(∆ t1)2 . (55) For j = 1 , . . . , K − 1: 1∆tj
+
+vj−1 + 2 
+
+( 1∆tj
+
++ 1∆tj+1 
+
+)
+
+vj + 1∆tj+1 
+
+vj+1 = 3 
+
+( xj − xj−1
+
+(∆ tj )2 + xj+1 − xj
+
+(∆ tj+1 )2
+
+)
+
+. (56) For j = K:1∆tK
+
+vK−1 + 2∆tK
+
+vK = 3( xK − xK−1)(∆ tK )2 . (57) Denote V = [ v0, v1, . . . , vK ] ∈ Rd×(K+1) and writing this system in matrix form V A = B,where 
+
+A =
+
+ 
+
+> 2∆t1
+> 1∆t1
+
+0 · · · 0 0 
+
+> 1∆t1
+
+2
+
+( 1∆t1 + 1∆t2
+
+) 1∆t2 · · · 0 00 1∆t2 2
+
+( 1∆t2 + 1∆t3
+
+) . . . ... ...... ... . . . . . . 1∆tK−1 00 0 · · · 1∆tK−1 2
+
+( 1∆tK−1 + 1∆tK
+
+) 1∆tK
+
+0 0 · · · 0 1∆tK
+
+> 2∆tK
+
+
+
+∈ R(K+1) ×(K+1) 
+
+(58) 23 B =
+
+[ 3( x1 − x0)(∆ t1)2 , 3
+
+( x1 − x0
+
+(∆ t1)2 + x2 − x1
+
+(∆ t2)2
+
+)
+
+, . . . , 
+
+3
+
+( xK−1 − xK−2
+
+(∆ tK−1)2 + xK − xK−1
+
+(∆ tK )2
+
+)
+
+, 3( xK − xK−1)(∆ tK )2
+
+]
+
+∈ Rd×(K+1) 
+
+(59) The solution satisfies γ′(tj ) = vj for all j = 0 , 1, ...K. 
+
+Since A is strictly diagonally dominant, the solution V is unique. 
+
+A.8 Proof of Theorem A.1 
+
+Theorem A.1. Let aθ(x, v, t ) be Lθ-Lipschitz continuous of (x, v). The Wasserstein-2 distance between the generated distribution ˆρ(pos ) 
+
+> ti
+
+(x) = ∫ ˆρti (x, v)d v and the true distribution μ(pos ) 
+
+> i
+
+(x) in the position space is bounded by 
+
+W22 (ˆ ρ(pos ) 
+
+> ti
+
+, μ (pos ) 
+
+> i
+
+) ≤ 2eκ(ti−t0) (
+
+Lv0 + ( ti − t0)LAFM |[t0,t i]
+
+)
+
+(60) 
+
+where the cumulative AFM loss and the initial velocity loss are defined as: 
+
+LAFM |[t0,t i] = Et, (x,v)∼ρt ∥aθ(x, v, t ) − a(x, v, t )∥2, Lv0 = E(x0,v0)∼ρt0 ∥v0,ξ(x0) − v0∥2.
+
+and κ is a constant only depending on Lθ.Proof. We address the problem directly within the augmented space X × V . Let the system state be denoted by s = [ x, v]T , and let μi(s) represent the data distribution in this space. We define a flow map ϕt : [ t0, t K ] × X × V → X × V , which is governed by the exact marginal acceleration field a(s, t ) defined in Equation (13). Using ( ϕt)# to denote the push-forward operator, the time-dependent density evolves as 
+
+ρt = ( ϕt)#ρt0 , where ρt0 = μ0. Similarly, let ϕθ 
+
+> t
+
+be the flow map induced by the learned acceleration field aθ(s, t ). The generated distribution ˆ ρt then evolves according to ˆ ρt = ( ϕθ 
+
+> t
+
+)# ˆρt0 .It is important to note that ˆ ρt0̸ = ρt0 , as the conditional distribution of the initial velocity is approximated via a neural network. We introduce a bridging measure νt = ( ϕθt )#ρt0 , then the Wasserstein-2 distance between joint distributions can be decomposed as 
+
+W22 (ρt, ˆρt) ≤ (W2(ρt, ν t) + W2(νt, ˆρt)) 2 ≤ 2
+
+(
+
+W22 (ρt, ν t) + W22 (νt, ˆρt)
+
+)
+
+(61) 
+
+Estimation of Term 1 : Define Qt = ∫ μ0(s0)∥ϕθt (s0)−ϕt(s0)∥2ds0,here μ0 = ρt0 according to definition. Noting that Qt0 = 0 since the starting points are identical. Define A =
+
+[
+
+0 I
+
+0 0
+
+]
+
+.Taking the time derivative, we have: dQt
+
+dt = 2 
+
+∫
+
+μ0(s0)( ϕθt (s0) − ϕt(s0)) T
+
+( dϕθt (s0)dt − dϕt(s0)dt
+
+)
+
+ds0
+
+= 2 
+
+∫
+
+μ0(s0)( ϕθt (s0) − ϕt(s0)) T
+
+(
+
+Aϕθt (s0) − Aϕt(s0) + 
+
+[
+
+0
+
+aθ(ϕθt (s0), t )
+
+]
+
+−
+
+[
+
+0
+
+a(ϕt(s0), t )
+
+]) 
+
+ds0
+
+= 2 
+
+∫
+
+μ0(s0)
+
+[
+
+(ϕθt (s0) − ϕt(s0)) T A(ϕθt (s0) − ϕt(s0)) + ( ϕθt (s0) − ϕt(s0)) T
+
+[
+
+0
+
+aθ(ϕθt (s0), t ) − aθ(ϕt(s0), t )
+
+]
+
++ ( ϕθt (s0) − ϕt(s0)) T
+
+[
+
+0
+
+aθ(ϕt(s0), t ) − a(ϕt(s0), t )
+
+] ] 
+
+ds0 (62) 24 We bound the three terms inside the integral separately. Let ∆ ϕt(s0) = ϕθt (s0) − ϕt(s0). 1. Since ∥A∥ ≤ 1 , we have ∆ ϕt(s0)T A∆ϕt(s0) ≤ ∥ ∆ϕt(s0)∥2.2. Using the Lipschitz continuity of the network aθ with constant Lθ:∆ϕt(s0)T
+
+[
+
+0
+
+aθ(ϕθt (s0), t ) − aθ(ϕt(s0), t )
+
+]
+
+≤ ∥ ∆ϕt(s0)∥ · ∥ aθ(ϕθt (s0), t ) − aθ(ϕt(s0), t )∥≤ Lθ∥∆ϕt(s0)∥2. (63) 3. Using Cauchy-Schwarz and the inequality 2 xy ≤ x2 + y2:∆ϕt(s0)T
+
+[
+
+0
+
+aθ(ϕt(s0), t ) − a(ϕt(s0), t )
+
+]
+
+≤ ∥ ∆ϕt(s0)∥ · ∥ aθ(ϕt(s0), t ) − a(ϕt(s0), t )∥≤ 12 ∥∆ϕt(s0)∥2 + 12 ∥aθ(ϕt(s0), t ) − a(ϕt(s0), t )∥2.
+
+(64) Substituting these bounds back into the derivative: dQt
+
+dt ≤ 2
+
+∫
+
+μ0(s0)
+
+[
+
+(1 + Lθ + 12 )∥∆ϕt(s0)∥2 + 12 ∥aθ(ϕt(s0), t ) − a(ϕt(s0), t )∥2
+
+]
+
+ds0
+
+= (2 Lθ + 3) Qt +
+
+∫
+
+μ0(s0)∥aθ(ϕt(s0), t ) − a(ϕt(s0), t )∥2ds0 (65) By Gronwall’s inequality, since Qt0 = 0: 
+
+Qt ≤ e(2 Lθ +3)( t−t0)
+
+∫ tt0
+
+(∫ 
+
+μ0(s0)∥aθ(ϕτ (s0), τ ) − a(ϕτ (s0), τ )∥2ds0
+
+)
+
+dτ (66) By the definition of Wasserstein-2 distance, we have: 
+
+t0W22 (ρt, ν t) = min 
+
+> π
+
+∫
+
+∥s1 − s2∥2dπ s.t. 
+
+∫
+
+πds1 = ρt,
+
+∫
+
+πds2 = νt
+
+≤
+
+∫
+
+μ0(s0)∥ϕθ 
+
+> t
+
+(s0) − ϕt(s0)∥2ds0
+
+= Qt ≤ e(2 Lθ +3)( t−t0)
+
+∫ tt0
+
+Es∼μτ ∥aθ(s, τ ) − a(s, τ )∥2dτ (67) = e(2 Lθ +3)( t−t0)(t − t0)LAFM |[t0,t ]. (68) 
+
+Estimation of Term 2 :Take π0(s0, sξ
+
+> 0
+
+) as the optimal coupling that attains W22 (νt0 , ˆρt0 ) = 
+
+∫ ∥s0 − sξ
+
+> 0
+
+∥2dπ0(s0, sξ
+
+> 0
+
+). Note that νt0 = μ0 (the true data distribution). From a pair of starting points ( s0, sξ
+
+> 0
+
+) ∼ π0, define the square distance between trajectories under the same approximate flow as ∆( t) = ∥ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)∥2. Taking the time derivative, we have: d∆( t)dt = 2( ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)) T
+
+( dϕθt (s0)dt − dϕθt (sξ
+
+> 0
+
+)dt
+
+)
+
+= 2( ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)) T
+
+(
+
+A(ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)) + 
+
+[ 0
+
+aθ(ϕθt (s0), t ) − aθ(ϕθt (sξ
+
+> 0
+
+), t )
+
+]) 
+
+≤ 2
+
+(
+
+∥A∥ · ∥ ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)∥2 + ∥ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)∥ · ∥ aθ(ϕθt (s0), t ) − aθ(ϕθt (sξ
+
+> 0
+
+), t )∥
+
+)
+
+≤ 2(1 + Lθ)∆( t). (69) 25 Again by Gronwall’s inequality, we have: ∆( t) ≤ e2(1+ Lθ )( t−t0)∆( t0) = e2(1+ Lθ )( t−t0)∥s0 − sξ
+
+> 0
+
+∥2. (70) Since νt = ( ϕθt )#νt0 and ˆ ρt0 = ( ϕθt )# ˆρt0 , the push-forward of the optimal coupling πt =(ϕθt , ϕθt )#π0 is a valid coupling for ( νt, ˆρt). Integrate the squared distance over all starting pairs with respect to π0, we obtain: 
+
+W22 (νt, ˆρt) ≤
+
+∫
+
+∥ϕθt (s0) − ϕθt (sξ
+
+> 0
+
+)∥2dπ0(s0, sξ
+
+> 0
+
+)
+
+≤
+
+∫
+
+e2(1+ Lθ )( t−t0)∥s0 − sξ
+
+> 0
+
+∥2dπ0(s0, sξ
+
+> 0
+
+)= e2(1+ Lθ )( t−t0)W22 (νt0 , ˆρt0 ) (71) Let ˜ π(s0, sξ
+
+> 0
+
+) be the coupling between ν0 and ˆ ρ0 induced by the identity mapping on the position space, i.e., pairing s0 = ( x0, v0) with sξ 
+
+> 0
+
+= ( x0, vξ
+
+> 0
+
+). We can bound Wasserstein distance by L2
+
+loss: 
+
+W22 (νt0 , ˆρt0 ) ≤
+
+∫
+
+∥s0 − sξ
+
+> 0
+
+∥2d˜ π(s0, sξ
+
+> 0
+
+)=
+
+∫ (
+
+∥x0 − xξ
+
+> 0
+
+∥2 + ∥v0 − vξ
+
+> 0
+
+∥2)
+
+d˜ π(x0, v0, xξ
+
+> 0
+
+, vξ
+
+> 0
+
+)=
+
+∫
+
+∥v0 − vξ
+
+> 0
+
+∥2d˜ π(x0, v0, xξ
+
+> 0
+
+, vξ
+
+> 0
+
+) = Lv0 (72) Thus W22 (νt, ˆρt) ≤ e2(1+ Lθ )( t−t0)Lv0 .
+
+Combining the bounds above, we have 
+
+W22 (ˆ ρti , ρ ti ) ≤ 2
+
+[
+
+W22 (ˆ ρti , ν ti ) + W22 (νti , ρ ti )
+
+]
+
+≤ 2
+
+[
+
+e(2 Lθ +3)( ti−t0) · (ti − t0)LAFM |[t0,t i] + e(2 Lθ +2)( ti−t0)Lv0
+
+]
+
+. (73) Define κ = (2 Lθ + 3),then the final bound is obtained by: 
+
+W22 (ˆ ρ(pos)  
+
+> ti
+
+, ρ (pos)  
+
+> ti
+
+= μ(pos)  
+
+> i
+
+) = min 
+
+> πx
+
+∫
+
+∥x1 − x2∥2dπx(x1, x2) s.t. 
+
+∫
+
+πxdx2 = ρ(pos)  
+
+> ti
+
+,
+
+∫
+
+πxdx1 = ˆ ρ(pos) 
+
+> ti
+
+≤ min 
+
+> π
+
+∫
+
+∥x1 − x2∥2dπ(s1, s2) s.t. 
+
+∫
+
+πds2 = ρti ,
+
+∫
+
+πds1 = ˆ ρti
+
+≤ min 
+
+> π
+
+∫
+
+∥s1 − s2∥2dπ(s1, s2) (74) = W22 (ˆ ρti , ρ ti ) ≤ 2eκ(ti−t0) (
+
+(ti − t0)LAFM |[t0,t i] + Lv0
+
+)
+
+. (75) This completes the proof. Note that our derivation holds even for multi-valued or stochastic cases, since the upper bound on the Wasserstein distance is established via a valid coupling, which remains well-defined regardless of whether the mapping is deterministic. 
+
+## B Datasets and Evaluation Metric 
+
+B.1 Experiment Setup 
+
+The experiments were conducted on a shared high-performance computing (HPC) cluster. All experimental runs utilized GPUs equipped with 80GB of memory. Both the network 
+
+aθ(x, v, t ), employed to approximate acceleration, and the network vϕ(x, v, t ), employed to 26 approximate velocity, utilize residual architectures. Specifically, aθ(x, v, t ) consists of 4 hidden layers, while vϕ(x, v, t ) comprises 2 hidden layers. The Optimal Transport (OT) calculations were implemented using the Python Optimal Transport (POT) library [16], and the training process of neural networks were implemented using Pytorch [43]. In all experiments, TracingFlow employs a completely consistent set of hyperparameters. When solving for OT using the Sinkhorn algorithm, the regularization coefficient is set to 
+
+ϵ = 1 ×10 −3. When incorporating biological priors, the penalty coefficient for barcode mismatches is set to p0 = 25. Since the number of cells at each time point in the datasets processed in this paper is on the order of 10 3, we do not utilize mini-batch OT; instead, we compute the Transport Plan on the full dataset. 
+
+B.2 Evaluation Metrics 
+
+We employ the 1-Wasserstein Distance ( W1) and the 2-Wasserstein Distance ( W2) to quantify the discrepancy between the predicted distribution and the ground truth distribution. These metrics are defined as follows: 
+
+W1(μ, ν ) = min 
+
+> π∈Π( μ,ν )
+> ∫
+
+∥x − y∥dπ(x, y) (76) 
+
+W2(μ, ν ) = 
+
+> (
+
+min 
+
+> π∈Π( μ,ν )
+> ∫
+
+∥x − y∥22dπ(x, y)
+
+> )1/2
+
+(77) For the evaluation of datasets containing lineage information, we utilize the lineage-weighted W1
+
+and W2 distances. These are defined based on the decomposition of the distributions. Consider the distribution generated by the model, denoted as μ(x), and the reference distribution provided by the dataset, denoted as ν(x). Both consist of L lineages and can be decomposed as: 
+
+μ(x) = 
+
+> L∑
+> i=1
+
+wiμ(i)(x), ν(x) = 
+
+> L∑
+> i=1
+
+viν(i)(x) (78) where μ(i)(x) and ν(i)(x) represent the distributions of the i-th lineage within μ(x) and ν(x), respectively, satisfying ∫ μ(i)(x)d x = 1 and ∫ ν(i)(x)d x = 1. The terms wi and vi denote the weights of the i-th lineage in μ(x) and ν(x), respectively, subject to the constraint ∑Li=1 wi = 
+
+> ∑Li=1
+
+vi = 1. The lineage-weighted W1 and W2 distances are defined as: 
+
+W(L)1 (μ∥ν) = 
+
+> L∑
+> i=1
+
+viW1(μ(i), ν (i)), W(L)2 (μ∥ν) = 
+
+> L∑
+> i=1
+
+viW2(μ(i), ν (i)) (79) In essence, we first calculate the W1 and W2 distances between the distributions of corresponding lineages in the two datasets. Subsequently, we compute a weighted average of these distances using the proportions of each lineage given by the reference distribution ν(x). It is important to note that the lineage-weighted W1 and W2 metrics serve solely as indicators of the model’s ability to preserve lineage prior information while learning the dynamics. They are not true distance metrics in the mathematical sense, as they are evidently asymmetric with respect to μ
+
+and ν.
+
+B.3 Datasets 
+
+3D Simulation Lineage Data. Consider the following dynamics with three lineage barcodes and a twist structure: 27 
+
+dX (0)  
+
+> t
+
+= v dt + σxdB Xt
+
+dY (0)  
+
+> t
+
+= σydB Yt
+
+dZ (0)  
+
+> t
+
+= σz dB Zt
+
+> 
+
+dX (1)  
+
+> t
+
+= v dt + σxdB Xt
+
+dY (1)  
+
+> t
+
+= −μZ (1)  
+
+> t
+
+dt + σydB Yt
+
+dZ (1)  
+
+> t
+
+= μY (1)  
+
+> t
+
+dt + σz dB Zt
+
+> 
+
+dX (2)  
+
+> t
+
+= v dt + σxdB Xt
+
+dY (2)  
+
+> t
+
+= μZ (2)  
+
+> t
+
+dt + σydB Yt
+
+dZ (2)  
+
+> t
+
+= −μY (2)  
+
+> t
+
+dt + σz dB Zt
+
+(80) We take v = 3 .0, μ = 3 .14 , σ x = σy = σz = 0 .1 and time points t = 0 , 1, 2. Initialize (X(0) 0 , Y (0) 0 , Z (0) 0 ) ∼ N ([0 , 0, 0] , 0.5I), ( X(1) 0 , Y (1) 0 , Z (1) 0 ) ∼ N ([0 , −2, 0] , 0.5I), (X(2) 0 , Y (2) 0 , Z (2) 0 )∼N ([0 , 2, 0] , 0.5I)and sample 500 particles for each. 
+
+Figure 5: Dynamics of simulation datasets. (a)2D simulation data, (b)3D simulation data and (c)3D simulation data projected to XY plane. 
+
+Cite Data. We utilized the Cite-seq dataset introduced in [31], which comprises 31,240 cells collected across 4 distinct time points. To evaluate the performance of TracingFlow on real-world biological data, we applied Principal Component Analysis (PCA) to reduce the dimensionality of the gene expression profiles to 100 and 5 dimensions, respectively. 
+
+Embryoid Bodies Data. We employed the Embryoid Bodies (EB) dataset from [39], consisting of 16,819 cells sampled at 5 time points. We utilized PCA to reduce the dimensionality of the gene expression data to 5 dimensions. 
+
+Hematopoiesis Data. We employed the Hematopoiesis dataset from [64], consisting of 130,887 cells sampled at 3 time points. Part of the cells are recorded with barcodes. We selected 22,329 cells with barcodes from the dataset and utilized PCA to reduce the dimensionality of gene expression data to 50 dimensions. When processing this dataset, we filtered for data where barcodes were present at all three time points. The barcodes for the remaining data were set to undefined, incurring no additional transport cost during the incorporation of biological priors (Section 5.3). 
+
+Mexico Gulf Data To assess the capability and robustness of Tracing Flow in capturing long-term system dynamics, we utilize the Mexico Gulf dataset, following [56]. This two-dimensional dataset comprises 9 time points. 
+
+## C Experiment Details 
+
+C.1 Experiment Details across various datasets 
+
+Simulation 2D Data Table 4 presents the performance of TracingFlow and other algorithms on the 2D Simulation dataset. On average, TracingFlow reconstructs the data distribution at each time point with higher accuracy. 
+
+Cite 5D & Cite 100D Data We present the distribution reconstruction performance of each algorithm on the Cite 5D and Cite 100D datasets in Table 5 and Table 6, respectively. On these 28 Table 4: W1 and W2 distances between the generated and ground-truth distributions at each time point on the 2D Simulation dataset. 
+
+Method Dynamics t = 1 t = 2 t = 3 t = 4 
+
+W1 W2 W1 W2 W1 W2 W1 W2
+
+OT-CFM 1st Order 0.1215 ± 0.0164 0.1441 ± 0.0164 0.3644 ± 0.1177 0.4143 ± 0.1168 0.5863 ± 0.2615 0.6238 ± 0.2657 1.0356 ± 0.2325 1.1867 ± 0.2890 
+
+SF 2M 0.2389 ± 0.1217 0.2668 ± 0.1305 0.5700 ± 0.2574 0.6108 ± 0.2654 1.0630 ± 0.2769 1.3557 ± 0.2770 2.0986 ± 1.3198 2.2938 ± 1.3193 
+
+3MSBM 2nd Order 1.4029 ± 0.6892 1.4459 ± 0.6596 0.9318 ± 0.2553 1.0181 ± 0.2050 1.8079 ± 0.7761 1.9162 ± 0.7529 0.5993 ± 0.6176 0.7265 ± 0.6935 
+
+MMFM 1.3226 ± 0.1774 1.9287 ± 0.3002 1.8387 ± 0.5624 1.1779 ± 0.5114 1.8158 ± 0.1794 1.8740 ± 0.1701 4.4984 ± 0.2937 4.6059 ± 0.2977 
+
+HRF 1.2036 ± 0.0425 1.2096 ± 0.0244 0.9955 ± 0.0921 1.0009 ± 0.0873 1.9829 ± 0.1311 2.0040 ± 0.1582 1.9740 ± 0.1873 2.4379 ± 0.2157 
+
+CAF 0.4051 ± 0.1712 0.5117 ± 0.1738 0.8857 ± 0.3630 0.8996 ± 0.3689 1.3274 ± 0.1194 1.3731 ± 0.1107 3.9358 ± 0.4572 3.7880 ± 0.4530 
+
+TF(Ours) 0.1609 ± 0.0232 0.1787 ± 0.0258 0.1753 ± 0.0299 0.2045 ± 0.0277 0.4091 ± 0.0523 0.4821 ± 0.0698 0.6404 ± 0.2661 1.1436 ± 0.1577 
+
+datasets TracingFlow achieves superior reconstruction accuracy at all time steps except for t = 3. The trajectories learned by TracingFlow on these two datasets are illustrated in Figure 6. Table 5: W1 and W2 distances between the generated and ground-truth distributions at each time point on the Cite 5D dataset 
+
+Method Dynamics t = 1 t = 2 t = 3 
+
+W1 W2 W1 W2 W1 W2
+
+OT-CFM 1st Order 0.5615 ± 0.0156 0.6484 ± 0.0268 0.8472 ± 0.0463 0.9416 ± 0.0443 1.0536 ± 0.0534 1.1566 ± 0.0573 
+
+SF 2M 0.5932 ± 0.0249 0.6797 ± 0.0424 0.7768 ± 0.0451 0.8670 ± 0.0480 0.9251 ± 0.0279 1.0221 ± 0.0352 
+
+3MSBM 2nd Order 5.3735 ± 0.3961 5.4244 ± 0.3582 4.3118 ± 0.4589 4.5458 ± 0.4141 1.2254 ± 0.2998 1.3427 ± 0.3307 
+
+MMFM 0.5335 ± 0.0134 0.5911 ± 0.0057 2.2290 ± 0.2151 2.4557 ± 0.1613 4.8413 ± 0.2538 5.2261 ± 0.4061 
+
+HRF 0.4225 ± 0.0152 0.4622 ± 0.0185 0.6227 ± 0.0421 0.6814 ± 0.0392 0.7638 ± 0.0738 0.8394 ± 0.0713 
+
+CAF 5.1724 ± 0.0452 5.6242 ± 0.0763 5.4333 ± 0.0914 5.4637 ± 0.1425 3.0710 ± 0.1853 3.1354 ± 0.2672 
+
+TF (Ours) 0.2682 ± 0.0241 0.2916 ± 0.0312 0.6094 ± 0.0615 0.6516 ± 0.0684 0.8808 ± 0.1208 0.9725 ± 0.1329 
+
+Table 6: W1 and W2 distances between the generated and ground-truth distributions at each time point on the Cite 100D dataset 
+
+Method Dynamics t = 1 t = 2 t = 3 
+
+W1 W2 W1 W2 W1 W2
+
+OT-CFM 1st Order 10.1136 ± 0.0104 10.1873 ± 0.0135 10.2504 ± 0.0209 10.3145 ± 0.0201 11.2682 ± 0.0938 11.3642 ± 0.0997 
+
+SF 2M 10.3598 ± 0.0051 10.4448 ± 0.0053 11.4647 ± 0.0384 11.5456 ± 0.0402 15.2032 ± 0.1813 15.4367 ± 0.1949 
+
+3MSBM 2nd Order 19.9677 ± 0.1373 20.1015 ± 0.1105 15.3218 ± 0.1232 15.4089 ± 0.1343 12.0229 ± 0.2895 12.1395 ± 0.3621 
+
+MMFM 9.8726 ± 0.0383 9.9305 ± 0.0361 12.1374 ± 0.2422 12.3076 ± 0.2495 15.5960 ± 1.4972 16.1222 ± 2.0195 
+
+HRF 9.9660 ± 0.0215 10.0580 ± 0.0341 9.9451 ± 0.0632 9.9986 ± 0.1526 10.5485 ± 0.1082 10.6442 ± 0.1254 
+
+CAF 18.1182 ± 0.3214 18.1971 ± 0.2845 17.4947 ± 0.4267 17.5767 ± 0.4912 14.6158 ± 0.5632 15.1773 ± 0.5215 
+
+TF (Ours) 2.8955 ± 0.1429 3.2763 ± 0.1776 9.8235 ± 0.1489 9.8773 ± 0.1827 11.4910 ± 0.1693 11.6054 ± 0.2064 
+
+EB 5D Data Table 7 displays the interpolation accuracy on the EB 5D dataset, evaluated by holding out one time point during training. TracingFlow outperformed other methods in reconstruction accuracy for all time points except t = 1. Figure 7 illustrates the interpolated distributions generated by TracingFlow across the four time points. Table 7: W1 and W2 distances between predicted and ground-truth distributions at held-out time points on the EB 5D dataset. 
+
+Method Dynamics t = 1 t = 2 t = 3 t = 4 
+
+W1 W2 W1 W2 W1 W2 W1 W2
+
+OT-CFM 1st Order 3.4335 ± 0.1465 3.8462 ± 0.1449 4.8404 ± 0.1496 5.5792 ± 0.1358 5.0713 ± 0.2839 5.6448 ± 0.2861 7.1368 ± 0.3799 7.6938 ± 0.4574 
+
+SF 2M 3.4204 ± 0.0637 3.6713 ± 0.0589 3.5511 ± 0.0394 3.9441 ± 0.0418 4.3175 ± 0.2517 4.8738 ± 0.3247 6.9516 ± 0.0616 7.4727 ± 0.0795 
+
+3MSBM 2nd Order 6.1086 ± 1.1215 6.5434 ± 1.2227 7.3626 ± 0.8043 8.0596 ± 1.0252 7.5862 ± 1.1170 8.1734 ± 0.7900 7.7029 ± 0.4241 7.1022 ± 0.3971 
+
+MMFM 10.7803 ± 0.6718 11.8376 ± 0.7823 5.7932 ± 0.2162 6.2242 ± 0.1828 9.3326 ± 0.5617 9.9837 ± 0.4994 13.2046 ± 2.1528 14.3464 ± 2.2982 
+
+TF (Ours) 3.5611 ± 0.0362 3.8930 ± 0.0243 3.5002 ± 0.0983 3.8035 ± 0.1086 3.5643 ± 0.1140 3.7947 ± 0.4123 7.3639 ± 0.1316 7.6523 ± 0.1976 
+
+3D Simulation Lineage Dataset Table 8 demonstrates the ability of various algorithms to preserve biological priors on the 3D Simulation Lineage dataset. Since the trajectories learned 29 a) CITE 5D  b) CITE 100D Figure 6: Trajectories learned by TracingFlow on the (a) Cite 5D and (b) Cite 100D datasets, projected to 2D using PCA. a) EB5D w/o t=1  b) EB5D w/o t=2  c) EB5D w/o t=3  d) EB5D w/o t=4 
+
+Figure 7: Predicted distributions by TracingFlow at four held-out time points, projected to 2D using PCA. by TracingFlow align with biological priors (see Figure 3), it achieves lower lineage-weighted W1and W2 scores on average. Table 8: lineage-weighted W1 and W2 distances between the generated and ground-truth distributions at each time point on the 3D Simulation Lineage dataset 
+
+Method Dynamics t = 1 t = 2 
+
+W1 W2 W1 W2
+
+OT-CFM 1st Order 2.6080 ± 0.0029 2.6869 ± 0.0030 1.8686 ± 0.0382 1.9456 ± 0.0403 
+
+SF 2M 2.8262 ± 0.0409 2.8373 ± 0.0462 0.2247 ± 0.0617 0.2533 ± 0.0568 
+
+3MSBM 2nd Order 4.0141 ± 0.8788 4.2262 ± 0.8596 0.7548 ± 0.0726 0.6751 ± 0.0573 
+
+MMFM 1.8585 ± 0.0350 2.1618 ± 0.0496 3.5695 ± 0.5692 4.1028 ± 0.6037 
+
+HRF 2.9150 ± 0.2595 2.9265 ± 0.3901 0.6717 ± 0.5491 0.6905 ± 0.4143 
+
+CAF 1.6284 ± 0.2249 1.6623 ± 0.3726 3.7328 ± 0.3305 3.8471 ± 0.3316 
+
+TF w/o Bio. Prior 2.8267 ± 0.2896 2.8376 ± 0.3714 0.2317 ± 0.0512 0.2687 ± 0.0892 
+
+TF(Ours) 0.4282 ± 0.1606 0.4989 ± 0.1585 0.4795 ± 0.2680 0.5667 ± 0.2654 
+
+Hematopoiesis Dataset Table 9 presents the performance of different algorithms in retaining biological priors on real-world datasets, measured by the lineage-weighted W1, W2 distance. TracingFlow surpassed other algorithms at all time points. We also evaluated the algorithms 30 without introducing biological priors by Vanilla W1, W2 distance, and as shown in Table 10, TracingFlow maintained superior performance. Figure 8 visualizes the data points generated by TracingFlow on the real-world dataset under both conditions (with and without biological priors). Table 9: lineage-weighted W1 and W2 distances between the generated and ground-truth distributions at each time point on the Hematopoiesis dataset 
+
+Method Dynamics t = 1 t = 2 
+
+W1 W2 W1 W2
+
+OT-CFM 1st Order 13.2972 ± 0.0804 13.7134 ± 0.0831 16.6918 ± 0.1973 17.0807 ± 0.2025 
+
+SF 2M 14.1427 ± 0.0341 14.4199 ± 0.0303 23.2913 ± 0.2590 23.5314 ± 0.2640 
+
+3MSBM 2nd Order 17.6487 ± 0.5250 17.8710 ± 0.5204 19.0139 ± 1.4418 19.4144 ± 1.3622 
+
+MMFM 18.4040 ± 2.8129 19.8538 ± 2.8906 36.0412 ± 3.0429 40.2282 ± 3.3934 
+
+HRF 14.1007 ± 0.0804 14.3122 ± 0.0831 16.8135 ± 0.1973 17.1154 ± 0.2025 
+
+CAF 13.1098 ± 0.0628 13.3263 ± 0.0742 17.3232 ± 0.0580 17.6685 ± 0.0572 
+
+TF w/o Bio. Prior 14.1260 ± 0.0526 14.5958 ± 0.0537 19.1073 ± 0.1932 19.4262 ± 0.2375 
+
+TF 11.5203 ± 0.0695 12.0151 ± 0.0809 16.5736 ± 0.2603 16.9027 ± 0.2999 
+
+Table 10: W1 and W2 distances between the generated and ground-truth distributions at each time point on the Hematopoiesis dataset 
+
+Method Dynamics t = 1 t = 2 Average 
+
+W1 W2 W1 W2 W1 W2
+
+OT-CFM First-order 9.8780 10.6132 10.7621 11.4466 10.3201 11.0299 SF 2M 10.2352 10.8017 13.2507 13.6879 11.7430 12.2428 3MSBM Second-order 12.8214 13.2501 20.0262 20.6374 16.4238 16.9438 MMFM 10.4305 10.8695 22.3269 23.5322 16.3787 17.2008 HRF 10.6233 11.4510 10.9570 11.6201 10.7902 11.5356 CAF 21.8716 22.3309 17.1251 18.3914 19.4984 20.3612 TF w/o Bio. Prior 7.0139 7.4140 10.1642 10.5925 8.5891 9.0032 b)  c) a) 
+
+Figure 8: Original data (a), and data points generated by TracingFlow on the Hematopoiesis dataset without biological priors (b) and with biological priors (c), projected to 2D using UMAP. 
+
+Mexico Gulf Dataset Table 11 presents the performance of various algorithms on the Mexico Gulf dataset. Tracing Flow achieves the best distribution reconstruction accuracy at all time points, yielding smooth trajectories. 31 Table 11: W1 and W2 distances between the generated and ground-truth distributions at each time point on the Mexico Gulf dataset 
+
+Method Dynamics t = 1 t = 2 t = 3 t = 4 
+
+W1 W2 W1 W2 W1 W2 W1 W2
+
+OT-CFM First-order 0.0336 0.0375 0.0791 0.0887 0.1367 0.1415 0.1409 0.1474 SF 2M 0.0768 0.0917 0.0802 0.0964 0.0819 0.0968 0.0809 0.0987 3MSBM Second-order 0.4407 0.6305 0.5565 0.7617 0.5887 0.9113 0.5231 1.0714 MMFM 0.0346 0.0364 0.2961 0.3008 1.0538 1.0571 1.8755 1.8766 HRF 0.6205 0.6217 1.2004 1.2011 1.5334 1.5337 1.4986 1.5013 CAF 1.7659 1.7663 2.4713 2.4714 2.0742 2.0755 1.3040 1.3071 TF 0.0128 0.0145 0.0301 0.0339 0.0407 0.0458 0.0348 0.0456 Method Dynamics t = 5 t = 6 t = 7 t = 8 Average                                                                                
+
+> W1W2W1W2W1W2W1W2W1W2
+> OT-CFM First-order 0.1318 0.1370 0.1364 0.1425 0.1610 0.1799 0.1871 0.2236 0.1258 0.1373 SF 2M0.1030 0.1191 0.0851 0.0956 0.1401 0.1494 0.1965 0.2068 0.1056 0.1193 3MSBM Second-order 0.2185 1.2783 0.5362 2.0436 0.8474 4.5953 1.3606 13.2434 0.6340 3.0669 MMFM 2.3926 2.3928 2.7214 2.7215 2.9191 2.9199 2.9930 2.9945 1.7857 1.7875 HRF 1.3022 1.3075 0.9476 0.9518 0.6480 0.6535 0.3296 0.3341 1.0101 1.0131 CAF 0.7086 0.7124 0.4669 0.4751 0.6672 0.6914 0.9641 0.9914 1.3028 1.3113 TF 0.0545 0.0657 0.0778 0.0824 0.1039 0.1133 0.1206 0.1309 0.0594 0.0665
+
+C.2 Training time and scalability of TracingFlow 
+
+To evaluate the scalability of TracingFlow, we report the training time required by each method across various datasets, as presented in Table 12. Experimental results indicate that Flow Matching algorithms based on second-order dynamics (e.g., 3 MSBM and our TracingFlow) generally require more training time compared to first-order dynamics algorithms (e.g., OT-CFM and SF 2M). Notably, the training time of TracingFlow is slightly lower than that of 3 MSBM, demonstrating that our method does not introduce additional computational overhead. Table 12: Training time comparison (in seconds) of different methods across various datasets.                                         
+
+> Method Simulation Cite 5D Cite 100D SimLineage-3D RealLineage
+> OT-CFM 12 s 175 s 218 s 13 s 196 s SF 2M26 s 79 s 84 s 34 s 61 s MMFM 42 s 96 s 179 s 68 s 201 s 3 MSBM 220 s 495 s 910 s 244 s 855 s CAF 94 s 274 s 382 s 256 s 264 s HRF 247 s 271 s 359 s 289 s 347 s TF 225 s 319 s 806 s 269 s 742 s
+
+C.3 Sensitivity Analysis on Minibatch-OT 
+
+In all experiments presented in this paper, the full dataset was utilized to compute the OT plan. However, as the scale of the data increases, the computational cost of the OT plan grows rapidly, making the adoption of the minibatch computation method described in Section 5.2 inevitable. We conducted a sensitivity analysis on the Cite-5D dataset to evaluate the impact of batch size in minibatch-OT computation on the accuracy of distribution reconstruction. The results are presented in Table 13. Experimental results demonstrate that TracingFlow consistently and accurately reconstructs the distributions at each time point when the batch size is adjusted within a certain range ( batch size ∼ 10 3). 32 Table 13: Sensitivity analysis of batch size for Minibatch-OT on the Cite-5D dataset. 
+
+Batch Size t = 1 t = 2 t = 3 Average 
+
+W1 W2 W1 W2 W1 W2 W1 W2
+
+1000 0.4344 0.4798 0.6522 0.7183 0.7658 0.8479 0.6175 0.6820 2000 0.4196 0.4624 0.5640 0.6251 0.7972 0.8820 0.5936 0.6565 Full Dataset 0.2868 0.3185 0.5487 0.5997 0.7689 0.8499 0.5348 0.5894 33 D Pseudocode for Algorithm 
+
+The pseudocode for the training process of Tracing Flow is provided in Algorithm 1. 
+
+Algorithm 1 Tracing-Flow Matching Training 
+
+Require: Snapshot datasets Dk = {x(i) 
+
+> k
+
+}Nk 
+
+> i=1
+
+at times t0 < t 1 < · · · < t K ;Acceleration Network aθ; Velocity Network vξ;Hyperparameters: batch size Btraj , learning rates ηa, η v. 
+
+> 1:
+
+Initialize: Estimated velocity sets Vk = {v(i) 
+
+> k
+
+}Nk 
+
+> i=1
+
+← { 0} for all k. 
+
+> 2:
+
+while Velocity Estimates Not Converged do  
+
+> 3:
+
+Stage 1: Velocity Assignment (Iterative SOAT)  
+
+> 4:
+
+Initialize velocity accumulators ˆV(i) 
+
+> k
+
+← ∅ for all k, i . 
+
+> 5:
+
+// Step 1.1: Solve Optimal Transport  
+
+> 6:
+
+for k = 0 to K − 1 do  
+
+> 7:
+
+Compute cost matrix Ci→i+1 with / w.o. biological prior.  
+
+> 8:
+
+Compute optimal coupling π∗ 
+
+> k→k+1
+
+between ( xk, vk) and ( xk+1 , vk+1 ) by solving the SOAT Problem.  
+
+> 9:
+
+Compute propagator (transition) matrix K∗ 
+
+> k→k+1
+
+by normalizing π∗
+
+> k→k+1
+
+: 
+
+> 10:
+
+K∗
+
+> k→k+1
+
+(i, j ) = π∗
+
+> k→k+1 (i,j )
+
+∑  
+
+> j′π∗
+> k→k+1 (i,j ′)
+> 11:
+
+end for  
+
+> 12:
+
+// Step 1.2: Trajectory Sampling & Velocity Update  
+
+> 13:
+
+Sample Btraj discrete trajectories Tm = {(x(sm,k ) 
+
+> k
+
+, v(sm,k ) 
+
+> k
+
+)}Kk=0 for m = 1 . . . B traj . 
+
+> 14:
+
+· Initial indices sm, 0 are sampled uniformly.  
+
+> 15:
+
+· Subsequent indices sm,k +1 ∼ K ∗
+
+> k→k+1
+
+(sm,k , ·).  
+
+> 16:
+
+for m = 1 to Btraj do  
+
+> 17:
+
+Compute optimal path velocities {ˆv(sm,k ) 
+
+> k
+
+}Kk=0 for trajectory Tm using Proposition 4.8.  
+
+> 18:
+
+Accumulate: ˆV(sm,k ) 
+
+> k
+
+← ˆV(sm,k ) 
+
+> k
+
+∪ { ˆv(sm,k ) 
+
+> k
+
+} for k = 0 . . . K . 
+
+> 19:
+
+end for  
+
+> 20:
+
+// Step 1.3: Average Accumulated Velocities  
+
+> 21:
+
+for k = 0 to K, i = 1 to Nk do  
+
+> 22:
+
+if ˆV(i)
+
+> k
+
+̸ = ∅ then  
+
+> 23:
+
+v(i) 
+
+> k
+
+← 1  
+
+> |ˆV(i)
+> k|
+
+∑ 
+
+> v∈ˆV(i)
+> k
+
+v 
+
+> 24:
+
+end if  
+
+> 25:
+
+end for  
+
+> 26:
+
+end while  
+
+> 27:
+
+Stage 2: Final Transport Plan Computation  
+
+> 28:
+
+Compute optimal couplings π∗ and propagators K∗ using the converged velocities Vk. 
+
+> 29:
+
+Stage 3: Neural Network Training  
+
+> 30:
+
+while Not Converged do  
+
+> 31:
+
+Sample random time t ∼ U [t0, t K ] and coupling z ∼ q(z).  
+
+> 32:
+
+Compute Acceleration Matching Loss:  
+
+> 33:
+
+LCAFM = E(x,v)∼ρt(·| z),z∼q(z),t ∼U [t0,t K ]
+
+[
+
+∥aθ(x, v, t ) − a(x, v, t |z)∥2] 
+
+> 34:
+
+Compute Initial Velocity Loss:  
+
+> 35:
+
+Lv0 = E(x,v)∼ρ0
+
+[
+
+∥vξ(x) − v∥2] 
+
+> 36:
+
+Update parameters (Gradient Descent):  
+
+> 37:
+
+θ ← θ − ηa∇θLCAFM  
+
+> 38:
+
+ξ ← ξ − ηv∇ξLv0 
+
+> 39:
+
+end while 
+
+34 E Discussion 
+
+E.1 Relation to other Algorithms 
+
+Relation to 3 MSBM 3 MSBM considers the following stochastic optimal control problem: min Eρt
+
+> ∫
+
+[∥at∥2]d t (81) dmt = Amtdt + utdt + gdWt, xn ∼ qn =
+
+> ∫
+
+πn(x, v)d vn (82) where mt = [ xt, vt]T , A =
+
+> [
+
+0 00 1
+
+> ]
+
+, and g =
+
+> [
+
+0 00 σ
+
+> ]
+
+. This problem can be viewed as a “stochastic” version of the VM-DOAT problem proposed in this paper. 3 MSBM also provides a simulation-free training method to regress the acceleration field. However, 3 MSBM does not explicitly solve this stochastic optimal control problem using the form of optimal coupling plus optimal single-particle trajectories. Its optimal coupling requires iterative solutions similar to Rectified Flow [36] : a process of repeatedly selecting the coupling and training aθ. Furthermore, it relies on a heuristic method to estimate the initial velocity (via normal initialization and iteratively solving forward and backward SDEs), rather than incorporating this estimation as part of the optimal control problem. Experiments show that Tracing Flow achieves better distribution reconstruction accuracy than 3MSBM. 
+
+Relation to MMFM In MMFM, the single-particle path is similarly specified by: 
+
+> ∫
+
+∥γ′′ (t)∥2dt, xk = γ(tk) (83) which corresponds to a natural spline. However, MMFM does not solve an optimal control problem over distributions. Furthermore, the velocity field in MMFM remains single-valued with respect to x, which prevents it from learning trajectories that cross in the position space. 
+
+Relation to OAT-FM OAT-FM introduces a DOAT problem formulation consistent with this paper; however, the objective of OAT-FM is not to genuinely solve the DOAT problem within the augmented space X × V , but rather to fine-tune a pre-trained FM model. It employs the loss: 
+
+LCAFM = Eπ∗[( x0,v0),(x1,v1)] 
+
+> [
+
+α∥ xt − x0
+
+t − v0 + vθ
+
+2 ∥2 + (1 − α)∥vθ(xt, t ) − v0∥2
+
++ α∥ x1 − xt
+
+1 − t − vθ + v1
+
+2 ∥2 + (1 − α)∥v1 − vθ(xt, t )∥2] (84) to enforce the velocity field along the line segment connecting any two samples to be as parallel to that line as possible. As a fine-tuning approach, it effectively still addresses a distribution transport problem involving only two time points within the position space X , rather than tackling a multi-marginal optimal control problem. Furthermore, OAT-FM does not establish a connection between its loss function and the cost along each trajectory 12  
+
+> ∫10
+
+∥¨γ∥2dt, nor does it explicitly learn the acceleration field a(x, v, t ). 
+
+E.2 Is S = X × V a Phase Space? 
+
+In the Conclusion and Limitation section, we noted that if x is regarded as the generalized coordinate and v as its time derivative, the term ∫ 12 ∥a∥2dt cannot be interpreted as a physical action, as the action in classical mechanics typically does not involve second-order time derivatives. Here, we offer an alternative physical interpretation of this control objective. 35 Proposition E.1. Consider a d-dimensional second-order dynamical system governed by the equations: 
+
+˙x = v (85) ˙v = a (86) 
+
+where x, v, a ∈ Rd. The optimal control objective is given by: 
+
+min 12 
+
+> ∫T
+> 0
+
+∥a∥2dt (87) 
+
+The evolution of this system under the optimal control law is equivalent to a Hamiltonian system in 4d-dimensional phase space with the following Hamiltonian: 
+
+H = pT 
+
+> 1
+
+q2 + 12 ∥p2∥2 (88) 
+
+where q1, q2 ∈ Rd are the canonical coordinates, and p1, p2 ∈ Rd are the canonical momenta (note that q1 does not appear in the Hamiltonian). Here, q1 and q2 correspond to x and v in the optimal control problem, respectively, while p2 corresponds to a.Proof. We derive the equations of motion directly using Hamilton’s canonical equations: ˙q1 = ∂H ∂p1
+
+= q2, ˙q2 = ∂H ∂p2
+
+= p2, ˙p1 = − ∂H ∂q1
+
+= 0, ˙p2 = − ∂H ∂q2
+
+= −p1 (89) This implies that p1 is constant. Solving these equations sequentially yields: 
+
+p2(t) = c′ 
+
+> 2
+
+− p1t (90) 
+
+q2(t) = c′ 
+
+> 1
+
++ c′
+
+> 2
+
+t − 12 p1t2 (91) 
+
+q1(t) = c′ 
+
+> 0
+
++ c′ 
+
+> 1
+
++ 12 c′
+
+> 2
+
+t2 − 16 p1t3 (92) Comparing this with the results in Equation (9), we observe that q1(t) and q2(t) satisfy the same equations as x(t) and v(t), with the undetermined constants determined by the boundary conditions. This completes the proof. Consequently, we observe that although the augmented space S = X × V concatenates position x and velocity (momentum) v, it cannot be interpreted as a phase space . Instead, it should be viewed as the configuration space of the classical mechanical system described by the Hamiltonian above. We can attempt to recover the Lagrangian from this Hamiltonian. The canonical equations established that ˙ q1 = q2 and ˙ q2 = p2. Applying the Legendre transformation: 
+
+L = pT 
+
+> 1
+
+˙q1 + pT 
+
+> 2
+
+˙q2 − H
+
+= pT 
+
+> 1
+
+( ˙ q1 − q2) + 12 ∥ ˙q2∥2 (93) We find that the term pT 
+
+> 1
+
+cannot be eliminated; the Lagrangian cannot be expressed solely as a function of the canonical coordinates and their first derivatives. This is a characteristic of constrained systems (in Dirac’s theory of constraints, a constrained system is typically defined as one where the Hessian matrix of the Lagrangian is singular. To see this intuitively, if we regard 
+
+p1 in the Lagrangian as d new canonical coordinates, their corresponding canonical momenta are zero, implying the motion is confined to a submanifold of the phase space). In Equation (10), we derived the minimum cost for the system to transition from ( x1, v1)to ( x2, v2). While this cost is a symmetric positive-definite quadratic form with respect to x
+
+36 and v, it does not constitute a metric on the augmented space S = X × V . (If it were a metric, the augmented space would be flat, and the optimal control trajectories—geodesics—would be linear functions of t). Maupertuis’ principle suggests a close relationship between the metric in the configuration space and the system’s Lagrangian [3]: if the Lagrangian takes the form: 
+
+L(q, ˙q) = 12 mij (q) ˙ qi ˙qj − V (q) (94) then the configuration space possesses the metric: 
+
+gij (q) = 2( E − V (q)) mij (q) (95) where E is the total energy of the particle. For the optimal control problem discussed herein, we have seen that the Lagrangian cannot be written in such a form; therefore, it is fundamentally impossible to equip the configuration space S = X × V with such a metric. 
+
+E.3 Broader Impacts 
+
+This paper presents work whose goal is to advance the field of machine learning. There are many potential societal consequences of our work, none of which we feel must be specifically highlighted here. However, as our algorithm is applied to single-cell data analysis, the fidelity of the generated trajectories is heavily dependent on the quality of the input data. Consequently, when utilizing our method for biological or medical research purposes, it is critical to employ high-quality datasets, incorporate established and accurate biological priors, and ensure that the algorithmic outputs are rigorously validated by domain experts. 37

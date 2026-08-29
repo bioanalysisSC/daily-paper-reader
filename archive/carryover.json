@@ -1,89 +1,12 @@
 {
-  "generated_at": "2026-08-28T13:06:32.065299+00:00",
-  "updated_date": "20260730-20260828",
+  "generated_at": "2026-08-29T02:49:51.299775+00:00",
+  "updated_date": "20260829",
   "carryover_days": 9,
   "tag_states": {
     "gene-perturb": {
-      "updated_date": "20260730-20260828",
+      "updated_date": "20260829",
       "carryover_days": 9,
-      "items": [
-        {
-          "id": "biorxiv-10-64898-2026-08-14-744937-v1",
-          "source": "biorxiv",
-          "title": "Signature Recontextualization: Mapping perturbational signatures across biological contexts",
-          "abstract": "Perturbational transcriptomics is a powerful tool for understanding gene function and drug effects, yet predicting how perturbations manifest across different biological contexts remains a central challenge, limiting translation from model systems to clinically relevant tissues. Despite growing interest in this problem, benchmarking efforts have been hindered by inconsistent evaluation tasks, heterogeneous metrics, and limited assessment across perturbation types and biological systems. Here, we introduce a benchmarking framework for cross-context perturbation-signature prediction (a task we define as signature recontextualization), grounded in explicit definitions of the prediction task, target-data availability, and evaluation metrics centered on signature recovery. The framework evaluates prediction performance across three target-context data regimes: (1) control only, where only control profiles from the target context are measured; (2) low coverage, where a limited subset of perturbations in the target context are measured; and (3) high coverage, where most perturbations in the target context are measured. This design enables systematic assessment of how prediction performance depends on target-context sample size while providing a standardized basis for comparing methods. We evaluate newly developed projection-based (projectCor) and network-based (netProp) methods alongside deep learning-based foundation models (scGPT, STACK) and statistical baselines. The benchmark spans four diverse perturbational datasets: CRISPR knockdowns and drug perturbations in cell lines, plus in vivo chemical perturbations in rat tissues from DrugMatrix, extending evaluation beyond isolated cell-line models to tissue-level responses. Across tasks, projection and network propagation approaches show strong flexibility across perturbation types and biological contexts, and in several cases match or exceed the performance of deep learning and foundation models, suggesting that model complexity does not inherently improve cross-context generalization. We further show that perturbation predictability varies substantially with pathway conservation, transcriptional response strength, and baseline similarity between source and target contexts. All datasets, methods, and evaluation utilities are released as an open-source R package (sigRecon), providing a foundation for reproducible benchmarking and future method development.",
-          "authors": [
-            "Chen, A. D.",
-            "Girke, T.",
-            "Monti, S."
-          ],
-          "primary_category": "bioinformatics",
-          "categories": [
-            "bioinformatics"
-          ],
-          "published": "2026-08-19T00:00:00+00:00",
-          "link": "https://www.biorxiv.org/content/10.64898/2026.08.14.744937v1.full.pdf",
-          "tags": [
-            "keyword:gene-perturb",
-            "query:gene-perturb"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "Benchmarking framework for cross-context perturbation-signature prediction, directly evaluating prediction of perturbation effects across biological contexts",
-          "llm_evidence_cn": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-          "llm_evidence": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-          "canonical_evidence": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-          "llm_tldr_en": "This paper introduces a benchmark for cross-context perturbation-signature prediction (signature recontextualization), defining the prediction task, target-data availability, and evaluation metrics to map perturbational signatures across biological contexts.",
-          "llm_tldr_cn": "扰动转录组学有助于理解基因功能和药物效应，但预测扰动在不同生物情境下的表现仍是难题，缺乏统一基准评估。该论文提出“签名重情境化”任务，即跨情境扰动签名预测，并给出明确的预测任务定义、目标数据可用性和评估指标。该基准覆盖多种扰动类型和生物系统，有助于统一比较不同预测方法，推动从模型系统到临床组织的转化。",
-          "llm_tldr": "扰动转录组学有助于理解基因功能和药物效应，但预测扰动在不同生物情境下的表现仍是难题，缺乏统一基准评估。该论文提出“签名重情境化”任务，即跨情境扰动签名预测，并给出明确的预测任务定义、目标数据可用性和评估指标。该基准覆盖多种扰动类型和生物系统，有助于统一比较不同预测方法，推动从模型系统到临床组织的转化。",
-          "llm_tags": [
-            "query:gene-perturb"
-          ],
-          "matched_query_tag": "query:gene-perturb",
-          "matched_query_text": "predicting the effects of gene perturbations on cellular state",
-          "matched_requirement_id": "req-1",
-          "selection_source": "carryover_cache",
-          "paper_id": "biorxiv-10-64898-2026-08-14-744937-v1",
-          "carry_days": 1
-        },
-        {
-          "id": "biorxiv-10-64898-2026-08-08-743701-v1",
-          "source": "biorxiv",
-          "title": "Double Machine Learning with Multi-Gene Shared Backgroundfor Causal Inference in Single-Cell Data: Grouping Deviation Follows a Random Walk and the Accuracy-Compute Trade-Off",
-          "abstract": "In high-throughput single-cell transcriptomics (p {approx} 20,000 genes), performing double machine learning (DML) causal inference on q {approx} 5,000 target genes requires nuisance function fits that grow linearly with the number of targets (Kf cross-fitting folds, Kf = 5 or 10), far exceeding feasible computational budgets, especially with deep learning. We propose a Randomized Partition Strategy (RPS): randomly divide target genes into groups, share one background compression per group, reducing deep learning model training to q/m runs (m = group size) --- a factor of m savings. The cost of grouping is accuracy loss --- we prove that the cumulative deviation of the estimator follows a one-dimensional drift-free symmetric random walk, with diffusion variance growing linearly with group size and mean squared displacement equaling the mean squared error, so accuracy loss is predictable: m = 1 is always optimal, accuracy cost is monotonically increasing, and a small accuracy sacrifice yields m-fold compute savings. On GSE189050 SLE single-cell data (Memory B cells, n = 2120), both PCA and DL methods converge to the same conclusion, confirming the random walk mechanism is method-independent; an unexpected finding is that DL diffusion growth is only 16%, far slower than PCAs 7.4 times. This work provides a quantifiable theoretical foundation for compute strategy selection in single-cell high-dimensional causal inference.",
-          "authors": [
-            "Ye, W.",
-            "Jiang, X.",
-            "Shen, F."
-          ],
-          "primary_category": "systems biology",
-          "categories": [
-            "systems biology"
-          ],
-          "published": "2026-08-10T00:00:00+00:00",
-          "link": "https://www.biorxiv.org/content/10.64898/2026.08.08.743701v1.full.pdf",
-          "tags": [
-            "keyword:gene-perturb",
-            "query:gene-perturb"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "double machine learning causal inference for single-cell gene effects, directly applicable to perturbation prediction",
-          "llm_evidence_cn": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-          "llm_evidence": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-          "canonical_evidence": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-          "llm_tldr_en": "Proposes a randomized partition strategy for double machine learning in single-cell causal inference, cutting training runs from q to q/m, proving grouping deviation follows a random walk, and quantifying accuracy-compute trade-offs.",
-          "llm_tldr_cn": "在单细胞转录组学中，对约五千个靶基因进行双机器学习因果推断需要线性增长的 nuisance 模型拟合，计算预算难以承受。为此提出随机分区策略，将基因随机分组并共享每一组的背景压缩，使深度模型训练次数从 q 次降到 q/m 次，理论上证明分组偏差服从随机游走，并刻画精度-计算权衡。该框架为大规模单细胞因果推断和基因扰动效应估计提供了可扩展的计算工具。",
-          "llm_tldr": "在单细胞转录组学中，对约五千个靶基因进行双机器学习因果推断需要线性增长的 nuisance 模型拟合，计算预算难以承受。为此提出随机分区策略，将基因随机分组并共享每一组的背景压缩，使深度模型训练次数从 q 次降到 q/m 次，理论上证明分组偏差服从随机游走，并刻画精度-计算权衡。该框架为大规模单细胞因果推断和基因扰动效应估计提供了可扩展的计算工具。",
-          "llm_tags": [
-            "query:gene-perturb"
-          ],
-          "matched_query_tag": "query:gene-perturb",
-          "matched_query_text": "What methods predict gene perturbation effects in single cell data?",
-          "matched_requirement_id": "req-8",
-          "selection_source": "carryover_cache",
-          "paper_id": "biorxiv-10-64898-2026-08-08-743701-v1",
-          "carry_days": 1
-        }
-      ]
+      "items": []
     }
   }
 }

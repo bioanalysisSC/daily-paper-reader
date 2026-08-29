@@ -1,0 +1,23 @@
+---
+title: Symbolic regression enables coarse-grained model discovery of intracellular signalling dynamics
+title_zh: 符号回归实现细胞内信号动力学的粗粒度模型发现
+authors: "de Pomereu, T., Fröhlich, F."
+date: 2026-08-21
+pdf: "https://www.biorxiv.org/content/10.64898/2026.08.20.745973v1.full.pdf"
+tags: ["query:gene-perturb"]
+score: 6.0
+evidence: 符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模
+tldr: 细胞信号网络动态建模受数据与算力限制，常需粗粒化，但经典方法依赖强假设，难以判断部分观测是否支持降维描述。本文提出用符号回归从数据中自动发现粗粒化动力学：在合成酶系统中恢复米氏-门顿速率定律，在ERK磷酸化数据中识别出可解释的紧凑速率方程。与稀疏神经ODE对比表明，SR成功时更简洁，失败则对应更复杂动力学。该方法为检验粗粒化可行性、生成假说和指导实验提供了新工具。
+source: biorxiv
+selection_source: fresh_fetch
+motivation: 经典粗粒化建模依赖强假设，难以确定部分观测数据是否足以支撑低维动力学描述。
+method: 利用符号回归从实验数据中自动推断粗粒化速率方程，并在合成酶系统与ERK磷酸化数据上验证。
+result: SR在合成系统恢复米氏动力学，在ERK数据发现可解释速率定律；失败时神经ODE需更多输入。
+conclusion: 符号回归能检验何时存在紧凑粗粒化模型，为生成机制假说和设计新实验提供依据。
+---
+
+## 摘要
+细胞通过蛋白质网络响应其环境，这些网络在癌症中常常失调，因此动力学建模至关重要。实验数据和计算资源的局限性促使人们采用粗粒度化方法构建低维描述。然而，经典的粗粒度建模方法依赖于强假设，使得在部分实验观测是否支持系统动力学的简化描述方面尚不明确。在此，我们表明符号回归（SR）提供了一种数据驱动的方式，用于检验信号系统动力学是否以及在多大程度上能在测量变量上粗粒度化，并且当它们确实如此时，能推断出具有机理解释性的模型。在合成酶系统中，SR恢复了双步机制和三步扩展下的米氏动力学。随着数据质量的下降，SR简化为有效的动力学定律，同时保持正确的理论极限。将SR应用于已发表的时辨ERK磷酸化数据，SR在选定的癌症相关基因过表达背景下识别出紧凑的磷酸化ERK速率定律，产生可解释的动力学效应。一个稀疏神经ODE基线在SR成功的情况下需要少量输入，但在SR失败的情况下平均需要更多输入，这表明在可学习简化模型的情况下，SR失败与更复杂的动力学相关，而这些动力学是简单数学模型无法描述的。总之，这些发现确立了符号回归作为一种测试何时需要紧凑粗粒度描述的方法，在存在这种描述时生成假设，在不存在时激发潜在的新测量。
+
+## Abstract
+Cells respond to their environment through protein networks often dysregulated in cancer, making dynamical modelling crucial. Limitations in experimental data and computational resources motivate coarse-graining methods to build low-dimensional descriptions. Yet classical approaches to coarse-grained modelling rely on strong assumptions, leaving it unclear when partial experimental observations support reduced descriptions of system dynamics. Here we show that symbolic regression (SR) provides a data-driven way to test whether, and how compactly, the dynamics of a signalling system coarse-grain over the measured variables, and, when they do, infers mechanistically interpretable models. In synthetic enzyme systems, SR recovers Michaelis-Menten kinetics for the two-step mechanism and under three-step extensions. As data quality is degraded, SR simplifies toward effective kinetic laws while preserving correct theoretical limits. Applied to published time-resolved ERK phosphorylation data, SR identifies compact phospho-ERK rate laws in selected cancer-relevant gene overexpression contexts, yielding interpretable kinetic effects. A sparse neural ODE baseline requires few inputs where SR succeeds, but on average more where it fails, indicating that, where a reduced model is learnable at all, SR failure is associated with more complex dynamics that a simple mathematical model cannot describe. Together, these findings establish symbolic regression as a way to test when a compact coarse-grained description is warranted, generating hypotheses where one holds and motivating potential new measurements where it does not.
