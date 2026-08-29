@@ -1,9 +1,9 @@
 {
   "date": "20260829",
   "date_label": "",
-  "generated_at": "2026-08-29 03:01:13 UTC",
+  "generated_at": "2026-08-29 22:48:34 UTC",
   "recommend_exists": true,
-  "run_count": 1,
+  "run_count": 2,
   "papers": [
     {
       "paper_id": "2608.22079v1",
@@ -17,9 +17,9 @@
         }
       ],
       "score": 9.0,
-      "evidence": "平台预测遗传或环境变化对细胞表型的影响，构建细胞数字表示。",
+      "evidence": "数字表型平台预测基因或环境扰动对细胞表型的影响，属于虚拟细胞式建模",
       "first_seen_at": "2026-08-29 03:01:13 UTC",
-      "updated_at": "2026-08-29 03:01:13 UTC"
+      "updated_at": "2026-08-29 22:48:34 UTC"
     },
     {
       "paper_id": "2608.26586v1",
@@ -33,9 +33,9 @@
         }
       ],
       "score": 9.0,
-      "evidence": "大规模蛋白质语言模型预测跨物种基因突变的扰动响应。",
+      "evidence": "大规模蛋白质模型预测突变/替换扰动效应，契合遗传扰动功能基因组学",
       "first_seen_at": "2026-08-29 03:01:13 UTC",
-      "updated_at": "2026-08-29 03:01:13 UTC"
+      "updated_at": "2026-08-29 22:48:34 UTC"
     },
     {
       "paper_id": "2608.19849v1",
@@ -86,6 +86,54 @@
       "updated_at": "2026-08-29 03:01:13 UTC"
     },
     {
+      "paper_id": "2608.21916v1",
+      "route": "202608/29/2608.21916v1-genomeharness-harnessing-al-agents-for-reliable-adaptation-of-genome-language-models",
+      "title": "GenomeHarness: Harnessing Al Agents for Reliable Adaptation of Genome Language Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "用AI智能体可靠微调基因组语言模型以适配下游基因组预测任务",
+      "first_seen_at": "2026-08-29 22:48:34 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
+      "paper_id": "2608.25890v1",
+      "route": "202608/29/2608.25890v1-scalable-multi-gpu-simulation-of-3d-multicellular-growth-with-rnn-based-workload-balancing",
+      "title": "Scalable Multi-GPU Simulation of 3D Multicellular Growth with RNN-Based Workload Balancing",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "基于亚细胞单元模型和RNN负载均衡的三维多细胞生长模拟",
+      "first_seen_at": "2026-08-29 22:48:34 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-21-746174-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-21-746174-v1-decoding-tumour-specific-rewiring-and-synthetic-lethality-through-genome-scale-metabolic-models",
+      "title": "Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "全基因组代谢模型模拟细胞状态并推断合成致死扰动",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
       "paper_id": "2608.24953v1",
       "route": "202608/29/2608.24953v1-beyond-tokens-probing-higher-order-epistasis-in-learned-protein-representations",
       "title": "Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations",
@@ -102,22 +150,6 @@
       "updated_at": "2026-08-29 03:01:13 UTC"
     },
     {
-      "paper_id": "biorxiv-10-64898-2026-08-21-746174-v1",
-      "route": "202608/29/biorxiv-10-64898-2026-08-21-746174-v1-decoding-tumour-specific-rewiring-and-synthetic-lethality-through-genome-scale-metabolic-models",
-      "title": "Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models",
-      "section": "quick",
-      "tags": [
-        {
-          "kind": "query",
-          "label": "gene-perturb"
-        }
-      ],
-      "score": 7.0,
-      "evidence": "全基因组代谢模型预测合成致死与基因扰动效应",
-      "first_seen_at": "2026-08-29 03:01:13 UTC",
-      "updated_at": "2026-08-29 03:01:13 UTC"
-    },
-    {
       "paper_id": "2608.21070v1",
       "route": "202608/29/2608.21070v1-tracingflow-a-simulation-free-trajectory-inference-framework-based-on-second-order-dynamics",
       "title": "TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics",
@@ -129,9 +161,57 @@
         }
       ],
       "score": 6.0,
-      "evidence": "用于动态建模的单细胞轨迹推断框架",
+      "evidence": "单细胞动态建模与流匹配，与虚拟细胞模拟相关",
       "first_seen_at": "2026-08-29 03:01:13 UTC",
-      "updated_at": "2026-08-29 03:01:13 UTC"
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
+      "paper_id": "2608.22901v1",
+      "route": "202608/29/2608.22901v1-data-shared-neighbourhood-selection-for-multi-condition-network-inference",
+      "title": "Data Shared Neighbourhood Selection for multi-condition network inference",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "跨条件推断分子关联变化的网络推断方法",
+      "first_seen_at": "2026-08-29 22:48:34 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
+      "paper_id": "2608.26208v1",
+      "route": "202608/29/2608.26208v1-learning-interpretable-tumor-microenvironment-representations-by-fitting-pan-cancer-cell-state-niche-correlation",
+      "title": "Learning Interpretable Tumor Microenvironment Representations by Fitting Pan-Cancer Cell State-Niche Correlation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "利用单细胞和空间转录组学习可解释的肿瘤微环境表征，建模细胞状态-微环境关联",
+      "first_seen_at": "2026-08-29 22:48:34 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
+    },
+    {
+      "paper_id": "biorxiv-10-64898-2026-08-20-745973-v1",
+      "route": "202608/29/biorxiv-10-64898-2026-08-20-745973-v1-symbolic-regression-enables-coarse-grained-model-discovery-of-intracellular-signalling-dynamics",
+      "title": "Symbolic regression enables coarse-grained model discovery of intracellular signalling dynamics",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "符号回归发现细胞内信号传导的粗粒度动力学模型，支持生物系统模拟。",
+      "first_seen_at": "2026-08-29 03:01:13 UTC",
+      "updated_at": "2026-08-29 22:48:34 UTC"
     },
     {
       "paper_id": "2608.22627v1",
@@ -178,22 +258,6 @@
       ],
       "score": 6.0,
       "evidence": "无疤痕条件性sgRNA平台支持时间可控基因组编辑，提升汇合扰动筛选效果",
-      "first_seen_at": "2026-08-29 03:01:13 UTC",
-      "updated_at": "2026-08-29 03:01:13 UTC"
-    },
-    {
-      "paper_id": "biorxiv-10-64898-2026-08-20-745973-v1",
-      "route": "202608/29/biorxiv-10-64898-2026-08-20-745973-v1-symbolic-regression-enables-coarse-grained-model-discovery-of-intracellular-signalling-dynamics",
-      "title": "Symbolic regression enables coarse-grained model discovery of intracellular signalling dynamics",
-      "section": "quick",
-      "tags": [
-        {
-          "kind": "query",
-          "label": "gene-perturb"
-        }
-      ],
-      "score": 6.0,
-      "evidence": "符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模",
       "first_seen_at": "2026-08-29 03:01:13 UTC",
       "updated_at": "2026-08-29 03:01:13 UTC"
     }

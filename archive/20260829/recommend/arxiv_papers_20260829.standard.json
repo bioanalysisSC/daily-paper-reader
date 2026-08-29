@@ -1,12 +1,12 @@
 {
   "mode": "standard",
-  "generated_at": "2026-08-29T02:49:51.298335+00:00",
+  "generated_at": "2026-08-29T22:44:37.749011+00:00",
   "stats": {
     "mode": "standard",
     "tag_count": 1,
-    "deep_divecandidates": 5,
+    "deep_divecandidates": 2,
     "deep_cap": 6,
-    "deep_selected": 5,
+    "deep_selected": 2,
     "quick_candidates": 7,
     "quick_skim_target": 11,
     "quick_selected": 7
@@ -40,13 +40,13 @@
         "query:gene-perturb"
       ],
       "llm_score": 9.0,
-      "llm_evidence_en": "Platform predicts impact of genetic/environmental changes on cell phenotype, building a digital cell representation.",
-      "llm_evidence_cn": "平台预测遗传或环境变化对细胞表型的影响，构建细胞数字表示。",
-      "llm_evidence": "平台预测遗传或环境变化对细胞表型的影响，构建细胞数字表示。",
-      "canonical_evidence": "平台预测遗传或环境变化对细胞表型的影响，构建细胞数字表示。",
-      "llm_tldr_en": "DigiPhen integrates experimental, analytical and modeling workflows to build digital representations of cells that can accurately predict the impact of genetic or environmental changes on cell phenotype, accelerating cell reengineering.",
-      "llm_tldr_cn": "生物系统的极端复杂性使得细胞重工程化困难重重。DigiPhen提出了一种新范式，将实验、分析与建模工作流整合为数字表型平台，为微生物或植物细胞构建可计算的数字表示，从而能够准确预测遗传或环境变化对细胞表型的影响。该平台有望大幅加速细胞重工程化，并应用于化学品生产、关键矿物回收、威胁感知与人类健康等领域。",
-      "llm_tldr": "生物系统的极端复杂性使得细胞重工程化困难重重。DigiPhen提出了一种新范式，将实验、分析与建模工作流整合为数字表型平台，为微生物或植物细胞构建可计算的数字表示，从而能够准确预测遗传或环境变化对细胞表型的影响。该平台有望大幅加速细胞重工程化，并应用于化学品生产、关键矿物回收、威胁感知与人类健康等领域。",
+      "llm_evidence_en": "Digital phenome platform predicts genetic/environmental perturbation effects on cell phenotype; virtual-cell-style predictive modeling",
+      "llm_evidence_cn": "数字表型平台预测基因或环境扰动对细胞表型的影响，属于虚拟细胞式建模",
+      "llm_evidence": "数字表型平台预测基因或环境扰动对细胞表型的影响，属于虚拟细胞式建模",
+      "canonical_evidence": "数字表型平台预测基因或环境扰动对细胞表型的影响，属于虚拟细胞式建模",
+      "llm_tldr_en": "DigiPhen integrates experimental, analytical and modeling workflows to build a digital representation of cells and accurately predict how genetic or environmental changes alter phenotype.",
+      "llm_tldr_cn": "生物系统极端复杂，传统方法难以准确预测遗传或环境变化对表型的影响，阻碍细胞再工程化。DigiPhen将实验、分析与建模工作流集成，构建微生物或植物的数字表型表示，用于预测遗传或环境扰动下的细胞表型变化。该平台以数字表征为核心，使表型预测更系统化，为细胞再工程化和虚拟细胞建模提供了新范式。",
+      "llm_tldr": "生物系统极端复杂，传统方法难以准确预测遗传或环境变化对表型的影响，阻碍细胞再工程化。DigiPhen将实验、分析与建模工作流集成，构建微生物或植物的数字表型表示，用于预测遗传或环境扰动下的细胞表型变化。该平台以数字表征为核心，使表型预测更系统化，为细胞再工程化和虚拟细胞建模提供了新范式。",
       "llm_tags": [
         "query:gene-perturb"
       ],
@@ -87,170 +87,60 @@
         "keyword:gene-perturb",
         "query:gene-perturb"
       ],
-      "llm_score": 9.0,
-      "llm_evidence_en": "Large protein language model predicts perturbation responses to mutations across 200M protein sequences.",
-      "llm_evidence_cn": "大规模蛋白质语言模型预测跨物种基因突变的扰动响应。",
-      "llm_evidence": "大规模蛋白质语言模型预测跨物种基因突变的扰动响应。",
-      "canonical_evidence": "大规模蛋白质语言模型预测跨物种基因突变的扰动响应。",
-      "llm_tldr_en": "RegimeFormer is a large protein perturbation model that learns global perturbation regimes from 200M protein sequences and predicts substitution-specific responses, validated on deep mutational scanning benchmarks.",
-      "llm_tldr_cn": "现有蛋白质语言模型能组织序列与结构，但缺乏对突变响应的全局表征。作者构建了RegimeFormer，它整合2亿多非冗余蛋白质序列，并用一百万蛋白质子集进行高分辨率训练，可提供残基级和替换特异的扰动预测。在深度突变扫描、分子基准和结构置信度等实验中，模型识别出一致可复现的蛋白质级扰动模式，为蛋白质工程和功能基因组学提供了大规模扰动预测工具。",
-      "llm_tldr": "现有蛋白质语言模型能组织序列与结构，但缺乏对突变响应的全局表征。作者构建了RegimeFormer，它整合2亿多非冗余蛋白质序列，并用一百万蛋白质子集进行高分辨率训练，可提供残基级和替换特异的扰动预测。在深度突变扫描、分子基准和结构置信度等实验中，模型识别出一致可复现的蛋白质级扰动模式，为蛋白质工程和功能基因组学提供了大规模扰动预测工具。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "large language model for gene perturbation prediction inference",
-      "matched_requirement_id": "req-3",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "id": "2608.19849v1",
-      "source": "arxiv",
-      "title": "Distributional Extrapolation for Interactions",
-      "abstract": "Predicting combinatorial effects from limited-range observations is a fundamental challenge in many scientific domains, including drug discovery and hyperparameter optimization. We study combinatorial extrapolation, where training data consists of axis-aligned samples with only one active covariate, while test-time inputs involve multiple simultaneously active covariates. We introduce DExtrI, a method for extrapolating interaction effects beyond the support of the training data. We provide theoretical guarantees characterizing when such extrapolation is possible. Empirical results on synthetic and real-world datasets demonstrate that DExtrI successfully generalizes to unseen combinations of covariates. Our approach enables applications such as predicting previously untested drug combinations and improving the efficiency of hyperparameter optimization.",
-      "authors": [
-        "Marin Šola",
-        "Xinwei Shen",
-        "Peter Bühlmann"
-      ],
-      "primary_category": "stat.ME",
-      "categories": [
-        "stat.ME",
-        "stat.ML"
-      ],
-      "published": "2026-08-20T09:51:36+00:00",
-      "link": "https://arxiv.org/pdf/2608.19849v1",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
       "llm_score": 8.0,
-      "llm_evidence_en": "predicting combinatorial interaction effects from single-covariate data to unseen multi-covariate inputs, directly applicable to gene/drug perturbation response prediction",
-      "llm_evidence_cn": "从单协变量数据外推组合交互效应，可应用于基因扰动响应预测",
-      "llm_evidence": "从单协变量数据外推组合交互效应，可应用于基因扰动响应预测",
-      "canonical_evidence": "从单协变量数据外推组合交互效应，可应用于基因扰动响应预测",
-      "llm_tldr_en": "DExtrI predicts combinatorial interaction effects from training data with only single active covariates to unseen multi-covariate inputs, providing theory and empirical generalization for untested drug/perturbation combinations.",
-      "llm_tldr_cn": "针对有限观测下组合效应预测难题，该方法从仅含单一活性协变量的训练数据出发，外推预测多个协变量同时激活时的交互效应。DExtrI提供了可外推性的理论保证，并在合成与真实数据集上显示对未见组合的泛化能力。该工作为药物联用和基因扰动组合效应预测提供了通用工具。",
-      "llm_tldr": "针对有限观测下组合效应预测难题，该方法从仅含单一活性协变量的训练数据出发，外推预测多个协变量同时激活时的交互效应。DExtrI提供了可外推性的理论保证，并在合成与真实数据集上显示对未见组合的泛化能力。该工作为药物联用和基因扰动组合效应预测提供了通用工具。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
-      "matched_requirement_id": "req-1",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "id": "biorxiv-10-64898-2026-08-08-743701-v1",
-      "source": "biorxiv",
-      "title": "Double Machine Learning with Multi-Gene Shared Backgroundfor Causal Inference in Single-Cell Data: Grouping Deviation Follows a Random Walk and the Accuracy-Compute Trade-Off",
-      "abstract": "In high-throughput single-cell transcriptomics (p {approx} 20,000 genes), performing double machine learning (DML) causal inference on q {approx} 5,000 target genes requires nuisance function fits that grow linearly with the number of targets (Kf cross-fitting folds, Kf = 5 or 10), far exceeding feasible computational budgets, especially with deep learning. We propose a Randomized Partition Strategy (RPS): randomly divide target genes into groups, share one background compression per group, reducing deep learning model training to q/m runs (m = group size) --- a factor of m savings. The cost of grouping is accuracy loss --- we prove that the cumulative deviation of the estimator follows a one-dimensional drift-free symmetric random walk, with diffusion variance growing linearly with group size and mean squared displacement equaling the mean squared error, so accuracy loss is predictable: m = 1 is always optimal, accuracy cost is monotonically increasing, and a small accuracy sacrifice yields m-fold compute savings. On GSE189050 SLE single-cell data (Memory B cells, n = 2120), both PCA and DL methods converge to the same conclusion, confirming the random walk mechanism is method-independent; an unexpected finding is that DL diffusion growth is only 16%, far slower than PCAs 7.4 times. This work provides a quantifiable theoretical foundation for compute strategy selection in single-cell high-dimensional causal inference.",
-      "authors": [
-        "Ye, W.",
-        "Jiang, X.",
-        "Shen, F."
-      ],
-      "primary_category": "systems biology",
-      "categories": [
-        "systems biology"
-      ],
-      "published": "2026-08-10T00:00:00+00:00",
-      "link": "https://www.biorxiv.org/content/10.64898/2026.08.08.743701v1.full.pdf",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "double machine learning causal inference for single-cell gene effects, directly applicable to perturbation prediction",
-      "llm_evidence_cn": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-      "llm_evidence": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-      "canonical_evidence": "单细胞基因因果推断方法，可直接用于基因扰动效应预测",
-      "llm_tldr_en": "Proposes a randomized partition strategy for double machine learning in single-cell causal inference, cutting training runs from q to q/m, proving grouping deviation follows a random walk, and quantifying accuracy-compute trade-offs.",
-      "llm_tldr_cn": "在单细胞转录组学中，对约五千个靶基因进行双机器学习因果推断需要线性增长的 nuisance 模型拟合，计算预算难以承受。为此提出随机分区策略，将基因随机分组并共享每一组的背景压缩，使深度模型训练次数从 q 次降到 q/m 次，理论上证明分组偏差服从随机游走，并刻画精度-计算权衡。该框架为大规模单细胞因果推断和基因扰动效应估计提供了可扩展的计算工具。",
-      "llm_tldr": "在单细胞转录组学中，对约五千个靶基因进行双机器学习因果推断需要线性增长的 nuisance 模型拟合，计算预算难以承受。为此提出随机分区策略，将基因随机分组并共享每一组的背景压缩，使深度模型训练次数从 q 次降到 q/m 次，理论上证明分组偏差服从随机游走，并刻画精度-计算权衡。该框架为大规模单细胞因果推断和基因扰动效应估计提供了可扩展的计算工具。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "What methods predict gene perturbation effects in single cell data?",
-      "matched_requirement_id": "req-8",
-      "selection_source": "carryover_cache",
-      "paper_id": "biorxiv-10-64898-2026-08-08-743701-v1"
-    },
-    {
-      "id": "biorxiv-10-64898-2026-08-14-744937-v1",
-      "source": "biorxiv",
-      "title": "Signature Recontextualization: Mapping perturbational signatures across biological contexts",
-      "abstract": "Perturbational transcriptomics is a powerful tool for understanding gene function and drug effects, yet predicting how perturbations manifest across different biological contexts remains a central challenge, limiting translation from model systems to clinically relevant tissues. Despite growing interest in this problem, benchmarking efforts have been hindered by inconsistent evaluation tasks, heterogeneous metrics, and limited assessment across perturbation types and biological systems. Here, we introduce a benchmarking framework for cross-context perturbation-signature prediction (a task we define as signature recontextualization), grounded in explicit definitions of the prediction task, target-data availability, and evaluation metrics centered on signature recovery. The framework evaluates prediction performance across three target-context data regimes: (1) control only, where only control profiles from the target context are measured; (2) low coverage, where a limited subset of perturbations in the target context are measured; and (3) high coverage, where most perturbations in the target context are measured. This design enables systematic assessment of how prediction performance depends on target-context sample size while providing a standardized basis for comparing methods. We evaluate newly developed projection-based (projectCor) and network-based (netProp) methods alongside deep learning-based foundation models (scGPT, STACK) and statistical baselines. The benchmark spans four diverse perturbational datasets: CRISPR knockdowns and drug perturbations in cell lines, plus in vivo chemical perturbations in rat tissues from DrugMatrix, extending evaluation beyond isolated cell-line models to tissue-level responses. Across tasks, projection and network propagation approaches show strong flexibility across perturbation types and biological contexts, and in several cases match or exceed the performance of deep learning and foundation models, suggesting that model complexity does not inherently improve cross-context generalization. We further show that perturbation predictability varies substantially with pathway conservation, transcriptional response strength, and baseline similarity between source and target contexts. All datasets, methods, and evaluation utilities are released as an open-source R package (sigRecon), providing a foundation for reproducible benchmarking and future method development.",
-      "authors": [
-        "Chen, A. D.",
-        "Girke, T.",
-        "Monti, S."
-      ],
-      "primary_category": "bioinformatics",
-      "categories": [
-        "bioinformatics"
-      ],
-      "published": "2026-08-19T00:00:00+00:00",
-      "link": "https://www.biorxiv.org/content/10.64898/2026.08.14.744937v1.full.pdf",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "Benchmarking framework for cross-context perturbation-signature prediction, directly evaluating prediction of perturbation effects across biological contexts",
-      "llm_evidence_cn": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-      "llm_evidence": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-      "canonical_evidence": "提出跨情境扰动签名预测的基准框架，直接评估扰动效应在不同生物学情境下的预测",
-      "llm_tldr_en": "This paper introduces a benchmark for cross-context perturbation-signature prediction (signature recontextualization), defining the prediction task, target-data availability, and evaluation metrics to map perturbational signatures across biological contexts.",
-      "llm_tldr_cn": "扰动转录组学有助于理解基因功能和药物效应，但预测扰动在不同生物情境下的表现仍是难题，缺乏统一基准评估。该论文提出“签名重情境化”任务，即跨情境扰动签名预测，并给出明确的预测任务定义、目标数据可用性和评估指标。该基准覆盖多种扰动类型和生物系统，有助于统一比较不同预测方法，推动从模型系统到临床组织的转化。",
-      "llm_tldr": "扰动转录组学有助于理解基因功能和药物效应，但预测扰动在不同生物情境下的表现仍是难题，缺乏统一基准评估。该论文提出“签名重情境化”任务，即跨情境扰动签名预测，并给出明确的预测任务定义、目标数据可用性和评估指标。该基准覆盖多种扰动类型和生物系统，有助于统一比较不同预测方法，推动从模型系统到临床组织的转化。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
-      "matched_requirement_id": "req-1",
-      "selection_source": "carryover_cache",
-      "paper_id": "biorxiv-10-64898-2026-08-14-744937-v1"
-    }
-  ],
-  "quick_skim": [
-    {
-      "id": "2608.24953v1",
-      "source": "arxiv",
-      "title": "Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations",
-      "abstract": "Protein fitness landscapes contain nonlinear interactions in which mutation effects depend on other residues. We introduce ORBIT, an Order-Resolved Benchmarking of Interaction Transformations framework that separates interaction presence, representation accessibility, and functional recovery. ORBIT first validates Walsh-based diagnostics on synthetic landscapes with known interaction order, then analyzes the experimentally measured GB1 fitness landscape under the FLIP 2-vs-rest setting. We compare ridge regression, a standard MLP, independent tokens, nonlinear independent tokens, and Residual Interaction Tokenization (RIT).   Across 20 paired training seeds, the primary two-hidden-layer comparison found no significant architecture differences in FLIP test R^2, third- or fourth-order functional recovery, or final-layer third- or fourth-order accessibility. However, RIT significantly increased pairwise accessibility at the token stage relative to both independent-token controls (Delta A_tok,2 = 0.2468, d_z = 1.67, Holm-adjusted p = 1.14 x 10^-5), without a detectable downstream higher-order advantage.   A pre-specified depth/capacity analysis showed that deeper MLPs improved FLIP prediction, third-order functional recovery, and final-layer third-order accessibility; fourth-order accessibility also improved relative to the shallow MLP but remained below zero in absolute held-out R^2. ORBIT therefore reveals representation-level changes hidden by conventional prediction metrics and distinguishes early interaction-aware encoding from higher-order structure constructed by downstream nonlinear capacity.",
-      "authors": [
-        "Maryam Rahimimovassagh",
-        "Ivan Garibay",
-        "Niloofar Yousefi"
-      ],
-      "primary_category": "q-bio.QM",
-      "categories": [
-        "q-bio.QM",
-        "cs.LG"
-      ],
-      "published": "2026-08-24T23:35:36+00:00",
-      "link": "https://arxiv.org/pdf/2608.24953v1",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
-      "llm_score": 7.0,
-      "llm_evidence_en": "probing higher-order epistasis in protein fitness landscapes relates directly to genetic perturbation effects in functional genomics",
-      "llm_evidence_cn": "解析蛋白质适应度地形中的高阶上位效应，与功能基因组学中遗传扰动效应研究直接相关",
-      "llm_evidence": "解析蛋白质适应度地形中的高阶上位效应，与功能基因组学中遗传扰动效应研究直接相关",
-      "canonical_evidence": "解析蛋白质适应度地形中的高阶上位效应，与功能基因组学中遗传扰动效应研究直接相关",
-      "llm_tldr_en": "ORBIT separates interaction presence, representation accessibility, and functional recovery to benchmark higher-order epistasis in protein fitness landscapes, testing models on synthetic and GB1 datasets.",
-      "llm_tldr_cn": "针对蛋白质适应度地形中的高阶上位效应难以刻画的问题，本文提出ORBIT框架，把交互检测拆分为交互存在性、表征可达性和功能恢复性三个维度，并在合成地形与GB1实验数据上评估多种模型。结果显示现有架构差异有限，该框架为研究突变或遗传扰动的组合效应提供了规范化基准工具。",
-      "llm_tldr": "针对蛋白质适应度地形中的高阶上位效应难以刻画的问题，本文提出ORBIT框架，把交互检测拆分为交互存在性、表征可达性和功能恢复性三个维度，并在合成地形与GB1实验数据上评估多种模型。结果显示现有架构差异有限，该框架为研究突变或遗传扰动的组合效应提供了规范化基准工具。",
+      "llm_evidence_en": "Large protein model predicting mutation/substitution perturbation effects across functional genomics",
+      "llm_evidence_cn": "大规模蛋白质模型预测突变/替换扰动效应，契合遗传扰动功能基因组学",
+      "llm_evidence": "大规模蛋白质模型预测突变/替换扰动效应，契合遗传扰动功能基因组学",
+      "canonical_evidence": "大规模蛋白质模型预测突变/替换扰动效应，契合遗传扰动功能基因组学",
+      "llm_tldr_en": "RegimeFormer introduces a large protein perturbation model coupled to RegimeAtlas, leveraging 202 million protein sequences to learn global perturbation regimes and enabling substitution-specific predictions, validated across deep mutational scanning and structural benchmarks.",
+      "llm_tldr_cn": "现有蛋白质语言模型缺乏对突变扰动的全局表征。本文提出大规模蛋白质扰动模型 RegimeFormer 并配套构建 RegimeAtlas，整合跨物种的两亿余条非冗余序列，利用一百万个高分辨率蛋白子集进行训练和推理。该模型支持按需的残基级替换预测，并在深度突变扫描、分子基准、结构可信度和进化约束等实验中展现出可复现的蛋白质水平扰动模式。这为理解遗传突变效应和蛋白质功能预测提供了新工具。",
+      "llm_tldr": "现有蛋白质语言模型缺乏对突变扰动的全局表征。本文提出大规模蛋白质扰动模型 RegimeFormer 并配套构建 RegimeAtlas，整合跨物种的两亿余条非冗余序列，利用一百万个高分辨率蛋白子集进行训练和推理。该模型支持按需的残基级替换预测，并在深度突变扫描、分子基准、结构可信度和进化约束等实验中展现出可复现的蛋白质水平扰动模式。这为理解遗传突变效应和蛋白质功能预测提供了新工具。",
       "llm_tags": [
         "query:gene-perturb"
       ],
       "matched_query_tag": "query:gene-perturb",
       "matched_query_text": "genetic perturbation effects in functional genomics",
       "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.21916v1",
+      "source": "arxiv",
+      "title": "GenomeHarness: Harnessing Al Agents for Reliable Adaptation of Genome Language Models",
+      "abstract": "Pretrained genome language models provide reusable representations for DNA sequence analysis, but turning them into reliable downstream predictors remains non-trivial. Their practical performance depends strongly on fine-tuning recipes, and default recipes reported in prior studies may be suboptimal for new tasks or model backbones, making weak downstream results difficult to interpret. These requirements place a substantial operational burden on many intended users, whose expertise is often centered on biological questions and interpretation rather than machine-learning engineering. Reliable use of genome language models therefore requires more than conventional AutoML-style tuning: it requires a systematic, budget-aware, and auditable procedure that lowers the barrier to downstream adaptation. We present GenomeHarness, an agentic harness for adapting genome language models through controlled search over fine-tuning recipes. GenomeHarness combines an AI agent for proposing and repairing recipe edits, a harness for protocol-constrained execution, resource management, and test isolation, and a Monte Carlo tree search controller for allocating search effort across recipe lineages. We evaluate GenomeHarness on DNABERT2 and NTv2-100M-Multi across the NT Benchmark and Genomic Benchmarks. Final evaluation is performed using three random seeds after recipe freezing. Across 52 model-task settings, GenomeHarness improves mean test MCC in 47 settings, including 24 of 26 DNABERT2 settings and 23 of 26 NTv2-100M-Multi settings. The gains are especially pronounced on Genomic Benchmarks and on tasks where the root recipe is unstable or poorly matched, such as human ocr ensembl task. Search traces further show that GenomeHarness progressively identifies stronger recipes, turning downstream adaptation into a controlled and auditable workflow rather than a manual tuning process.",
+      "authors": [
+        "Weicai Long",
+        "Yusen Hou",
+        "Houcheng Su",
+        "Junning Feng",
+        "Yanlin Zhang"
+      ],
+      "primary_category": "cs.CE",
+      "categories": [
+        "cs.CE"
+      ],
+      "published": "2026-08-22T11:01:32+00:00",
+      "link": "https://arxiv.org/pdf/2608.21916v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "AI-agent framework to reliably fine-tune genome language models for downstream genomic prediction tasks",
+      "llm_evidence_cn": "用AI智能体可靠微调基因组语言模型以适配下游基因组预测任务",
+      "llm_evidence": "用AI智能体可靠微调基因组语言模型以适配下游基因组预测任务",
+      "canonical_evidence": "用AI智能体可靠微调基因组语言模型以适配下游基因组预测任务",
+      "llm_tldr_en": "GenomeHarness uses AI agents to systematically tune genome language models for new tasks, reducing engineering burden and making downstream genomic predictors more reliable and auditable.",
+      "llm_tldr_cn": "基因组语言模型在具体下游任务中的性能高度依赖微调策略，而默认方案往往不佳。GenomeHarness提出利用AI智能体构建系统化、预算感知且可审计的微调流程，自动为新型任务和模型骨干调整超参数。该方法降低了机器学习工程负担，有助于将基因组大模型稳定部署到如基因扰动预测等生物学预测任务中。",
+      "llm_tldr": "基因组语言模型在具体下游任务中的性能高度依赖微调策略，而默认方案往往不佳。GenomeHarness提出利用AI智能体构建系统化、预算感知且可审计的微调流程，自动为新型任务和模型骨干调整超参数。该方法降低了机器学习工程负担，有助于将基因组大模型稳定部署到如基因扰动预测等生物学预测任务中。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "large language model for gene perturbation prediction inference",
+      "matched_requirement_id": "req-3",
       "selection_source": "fresh_fetch",
       "quick_tier": "7"
     },
@@ -278,19 +168,101 @@
         "query:gene-perturb"
       ],
       "llm_score": 6.0,
-      "llm_evidence_en": "single-cell trajectory inference framework for dynamic modeling",
-      "llm_evidence_cn": "用于动态建模的单细胞轨迹推断框架",
-      "llm_evidence": "用于动态建模的单细胞轨迹推断框架",
-      "canonical_evidence": "用于动态建模的单细胞轨迹推断框架",
-      "llm_tldr_en": "Proposes TracingFlow, a simulation-free flow matching framework for second-order dynamics, regressing acceleration field to precisely solve DOAT from sparse snapshots, enabling more expressive trajectory inference in single-cell omics.",
-      "llm_tldr_cn": "针对现有最优传输轨迹推断框架仅支持一阶动力学、难以刻画细胞分化中调控记忆与延迟响应的问题，作者提出TracingFlow，一种基于二阶动力学的免模拟流匹配框架。其核心是用神经网络直接回归加速度场，从而精确高效地求解动力学最优加速度输运（DOAT）问题。实验表明该方法能有效从稀疏时间快照中重建连续细胞演化轨迹，为单细胞组学动态建模提供了更具表现力的新工具。",
-      "llm_tldr": "针对现有最优传输轨迹推断框架仅支持一阶动力学、难以刻画细胞分化中调控记忆与延迟响应的问题，作者提出TracingFlow，一种基于二阶动力学的免模拟流匹配框架。其核心是用神经网络直接回归加速度场，从而精确高效地求解动力学最优加速度输运（DOAT）问题。实验表明该方法能有效从稀疏时间快照中重建连续细胞演化轨迹，为单细胞组学动态建模提供了更具表现力的新工具。",
+      "llm_evidence_en": "single-cell dynamics modeling, flow matching, relevant to virtual cell simulation",
+      "llm_evidence_cn": "单细胞动态建模与流匹配，与虚拟细胞模拟相关",
+      "llm_evidence": "单细胞动态建模与流匹配，与虚拟细胞模拟相关",
+      "canonical_evidence": "单细胞动态建模与流匹配，与虚拟细胞模拟相关",
+      "llm_tldr_en": "Proposes TracingFlow, a simulation-free flow matching framework for second-order dynamics, enabling trajectory inference in single-cell systems with acceleration fields and extending optimal transport beyond first-order assumptions.",
+      "llm_tldr_cn": "现有最优传输轨迹推断多局限于记忆无速度的一阶动力学，难以刻画细胞分化中的调控动量与延迟响应。为此提出TracingFlow，一种免模拟的流匹配框架，通过神经网络回归加速度场，推广到二阶动力学并精确求解动态最优加速传输问题。实验表明该方法能高效推断稀疏时间快照下的连续系统演化，为单细胞组学与虚拟细胞建模提供新的动力学建模工具。",
+      "llm_tldr": "现有最优传输轨迹推断多局限于记忆无速度的一阶动力学，难以刻画细胞分化中的调控动量与延迟响应。为此提出TracingFlow，一种免模拟的流匹配框架，通过神经网络回归加速度场，推广到二阶动力学并精确求解动态最优加速传输问题。实验表明该方法能高效推断稀疏时间快照下的连续系统演化，为单细胞组学与虚拟细胞建模提供新的动力学建模工具。",
       "llm_tags": [
         "query:gene-perturb"
       ],
       "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "single-cell data perturbation response prediction",
-      "matched_requirement_id": "req-4",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25890v1",
+      "source": "arxiv",
+      "title": "Scalable Multi-GPU Simulation of 3D Multicellular Growth with RNN-Based Workload Balancing",
+      "abstract": "Detailed multicellular growth simulations based on subcellular element models (SEMs) can capture complex tissue development, but their element-level interactions impose substantial computational cost. This work presents a scalable multi-GPU framework for 3D multicellular growth simulation that combines GPU acceleration, spatial binning, domain decomposition, and workload-aware partitioning. Cell movement, growth, and division continuously reshape the spatial workload distribution, causing initially balanced partitions to become inefficient over time. To address this, we introduce an RNN-based load-balancing controller that observes recent per-rank execution times and partition states and learns residual corrections to a reactive boundary-adjustment rule. The controller is trained offline in a differentiable surrogate of the load-balancing loop with randomized workload dynamics, requiring no measured execution traces for training. We evaluate the framework in terms of single-GPU acceleration, multi-GPU computation scaling, controller-level load-balancing behavior, and end-to-end simulation performance, with comparisons against static partitioning, reactive load balancing, and conventional time-series prediction baselines. A representative embryonic epidermal development use case further demonstrates the type of spatially and temporally evolving workload targeted by the framework. In our evaluation, GPU acceleration with spatial binning accelerates the interaction computation by roughly three orders of magnitude over a serial CPU baseline. RNN-guided load balancing reduces the mean global imbalance from 11.3% under static partitioning to 3.5%, lowers end-to-end runtime by 9.0% relative to static partitioning, and reduces slice migration by 7.7x compared with the reactive baseline, showing that history-aware control can improve workload balance while avoiding unnecessary repartitioning.",
+      "authors": [
+        "Matvey Moisseyev",
+        "Huijing Du",
+        "Dandan Zheng",
+        "Chi Zhang",
+        "Hongfeng Yu"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.CE",
+        "cs.LG",
+        "math.OC"
+      ],
+      "published": "2026-08-26T15:06:10+00:00",
+      "link": "https://arxiv.org/pdf/2608.25890v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "3D multicellular growth simulation with subcellular element models and RNN-based load balancing",
+      "llm_evidence_cn": "基于亚细胞单元模型和RNN负载均衡的三维多细胞生长模拟",
+      "llm_evidence": "基于亚细胞单元模型和RNN负载均衡的三维多细胞生长模拟",
+      "canonical_evidence": "基于亚细胞单元模型和RNN负载均衡的三维多细胞生长模拟",
+      "llm_tldr_en": "This paper presents a scalable multi-GPU framework for 3D multicellular growth simulation, combining GPU acceleration and RNN-based workload balancing for efficient tissue development modeling.",
+      "llm_tldr_cn": "该文面向3D多细胞生长模拟的计算开销问题，提出一种结合GPU加速、空间分箱、域分解和基于RNN的负载均衡控制器的可扩展多GPU框架。通过观察各分区执行时间并学习校正策略，该框架能持续处理细胞移动、生长和分裂导致的不均匀工作负载。该模拟方法可支撑虚拟组织/细胞层面的生物系统建模，但不涉及基因扰动预测。",
+      "llm_tldr": "该文面向3D多细胞生长模拟的计算开销问题，提出一种结合GPU加速、空间分箱、域分解和基于RNN的负载均衡控制器的可扩展多GPU框架。通过观察各分区执行时间并学习校正策略，该框架能持续处理细胞移动、生长和分裂导致的不均匀工作负载。该模拟方法可支撑虚拟组织/细胞层面的生物系统建模，但不涉及基因扰动预测。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.22901v1",
+      "source": "arxiv",
+      "title": "Data Shared Neighbourhood Selection for multi-condition network inference",
+      "abstract": "External stresses may affect both the circulating levels of specific biomarkers and disturb the correlation structures across molecular entities. The contribution of both types of dysregulations to the subsequent risk of disease are yet to be evaluated. We propose Data Shared Neighbourhood Selection (DSNS), a joint network inference method for estimating preserved and altered conditional association structures across related conditions. DSNS combines neighbourhood selection with the Data Shared Lasso decomposition, representing each nodewise regression coefficient as the sum of a shared component and a sparse condition-specific deviation. This provides an interpretable decomposition of molecular associations while retaining the computational advantages of neighbourhood selection. We also adapt the Stability Approach to Regularisation Selection (StARS) to this two-parameter joint estimation setting. In simulations involving sparse, hub-based and rewiring perturbation mechanisms, DSNS matched the best joint estimation methods for two conditions and outperformed them as the number of conditions increased, while remaining substantially faster than graphical lasso frameworks. Applied to prediagnostic inflammatory proteomic data from future lung cancer cases and matched controls in the EPIC-Italy and NOWAC cohorts, DSNS highlighted altered associations involving CDCP1 and IL10, two established lung cancer risk markers, as well as differential associations involving proteins not selected by risk models.",
+      "authors": [
+        "Blanche Francheterre",
+        "Ruben Colindres Zuehlke",
+        "Vivian Viallon",
+        "Marc Chadeau-Hyam",
+        "Julien Chiquet"
+      ],
+      "primary_category": "stat.AP",
+      "categories": [
+        "stat.AP",
+        "stat.ME"
+      ],
+      "published": "2026-08-24T07:34:58+00:00",
+      "link": "https://arxiv.org/pdf/2608.22901v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Network inference method for altered molecular associations across conditions",
+      "llm_evidence_cn": "跨条件推断分子关联变化的网络推断方法",
+      "llm_evidence": "跨条件推断分子关联变化的网络推断方法",
+      "canonical_evidence": "跨条件推断分子关联变化的网络推断方法",
+      "llm_tldr_en": "Proposes Data Shared Neighbourhood Selection for joint network inference, estimating shared and condition-specific molecular associations under external stresses, supporting analysis of perturbation responses.",
+      "llm_tldr_cn": "外部压力会同时改变生物标志物水平和分子相关结构，但现有方法难以清晰区分两类失调。本文提出数据共享邻域选择（DSNS），将每个节点回归系数分解为共享成分和稀疏的条件特异偏差，从而联合推断多种相关条件下的保守与改变的条件关联结构。该方法在保留计算优势的同时提供可解释的分子关联分解，可用于理解扰动引起的基因调控网络变化和疾病风险机制。",
+      "llm_tldr": "外部压力会同时改变生物标志物水平和分子相关结构，但现有方法难以清晰区分两类失调。本文提出数据共享邻域选择（DSNS），将每个节点回归系数分解为共享成分和稀疏的条件特异偏差，从而联合推断多种相关条件下的保守与改变的条件关联结构。该方法在保留计算优势的同时提供可解释的分子关联分解，可用于理解扰动引起的基因调控网络变化和疾病风险机制。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
       "selection_source": "fresh_fetch",
       "quick_tier": "6"
     },
@@ -316,88 +288,13 @@
         "query:gene-perturb"
       ],
       "llm_score": 7.0,
-      "llm_evidence_en": "Genome-scale metabolic models predict synthetic lethality and gene perturbation effects",
-      "llm_evidence_cn": "全基因组代谢模型预测合成致死与基因扰动效应",
-      "llm_evidence": "全基因组代谢模型预测合成致死与基因扰动效应",
-      "canonical_evidence": "全基因组代谢模型预测合成致死与基因扰动效应",
-      "llm_tldr_en": "Cancer metabolism rewiring is key for targets; context-specific genome-scale metabolic models from TCGA data identify tissue-specific flux changes and synthetic lethality, demonstrating that metabolic modeling can decode tumor states and predict gene perturbation effects.",
-      "llm_tldr_cn": "癌细胞为了支持增殖会重编程代谢，理解这一过程对发现治疗靶点至关重要。本文利用TCGA表达数据构建八种组织的全基因组代谢模型，并通过约束性建模和通量富集分析识别差异通路。结果显示不同组织呈现特异性代谢重编程，如乳腺癌中支链氨基酸代谢受抑，并能预测合成致死基因。该工作表明全基因组代谢模型可有效解码肿瘤代谢状态并预测基因扰动效应，为功能基因组学和虚拟细胞代谢模拟提供支撑。",
-      "llm_tldr": "癌细胞为了支持增殖会重编程代谢，理解这一过程对发现治疗靶点至关重要。本文利用TCGA表达数据构建八种组织的全基因组代谢模型，并通过约束性建模和通量富集分析识别差异通路。结果显示不同组织呈现特异性代谢重编程，如乳腺癌中支链氨基酸代谢受抑，并能预测合成致死基因。该工作表明全基因组代谢模型可有效解码肿瘤代谢状态并预测基因扰动效应，为功能基因组学和虚拟细胞代谢模拟提供支撑。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "genetic perturbation effects in functional genomics",
-      "matched_requirement_id": "req-5",
-      "selection_source": "fresh_fetch",
-      "quick_tier": "7"
-    },
-    {
-      "id": "2608.22627v1",
-      "source": "arxiv",
-      "title": "A general-purpose sensitivity method for multiple simultaneous parameter perturbations in stochastic reaction networks",
-      "abstract": "Stochastic reaction networks are continuous-time Markov chain models for interacting populations, with applications in biochemistry, epidemiology, ecology, and related areas. We study finite-difference sensitivity estimation when a single estimator requires several nearby parameterized paths. Existing variance-reducing couplings are typically pairwise, so that repeated use is either inefficient or requires application-specific choices in multi-path settings. We introduce the multi-path stacked coupling (MSC), a space-time Poisson construction that jointly generates any finite collection of parameterized paths. Each pairwise marginal of MSC has the same law as the corresponding split coupling pair, allowing existing variance bounds to transfer directly; in finite-state settings, we also obtain first-order expansions for the mean and second moment of finite-difference numerators. We apply MSC in three settings of practical importance: estimating many first derivatives simultaneously, estimating a single first derivative using a wider finite-difference stencil, and estimating higher-order derivatives. Numerical experiments on a processive phosphorylation network demonstrate strong performance in each of the three application areas considered, consistent with the theoretical advantages of MSC: across all three applications, MSC achieves the smallest root mean square error (RMSE) among the methods considered over the tested computational budgets.",
-      "authors": [
-        "David F. Anderson",
-        "Jingyi Ma"
-      ],
-      "primary_category": "stat.ME",
-      "categories": [
-        "stat.ME",
-        "math.NA",
-        "math.PR",
-        "q-bio.QM"
-      ],
-      "published": "2026-08-23T22:20:26+00:00",
-      "link": "https://arxiv.org/pdf/2608.22627v1",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
-      "llm_score": 6.0,
-      "llm_evidence_en": "general sensitivity method for simultaneous parameter perturbations in stochastic reaction networks, applicable to perturbation response modeling",
-      "llm_evidence_cn": "随机反应网络中多参数同时扰动的通用敏感性方法，可用于扰动响应建模",
-      "llm_evidence": "随机反应网络中多参数同时扰动的通用敏感性方法，可用于扰动响应建模",
-      "canonical_evidence": "随机反应网络中多参数同时扰动的通用敏感性方法，可用于扰动响应建模",
-      "llm_tldr_en": "MSC jointly generates any finite collection of parameterized paths for stochastic reaction networks via space-time Poisson construction, enabling efficient sensitivity estimation under multiple simultaneous perturbations.",
-      "llm_tldr_cn": "针对随机反应网络中多参数同时扰动敏感性估计缺乏通用高效耦合方法的问题，本文提出多路径堆叠耦合MSC，通过时空泊松构造一次性生成任意多条参数化路径。每个成对边际保持与分裂耦合相同的分布，从而支持高效方差缩减估计，为生化网络等多参数扰动响应建模提供了通用工具。",
-      "llm_tldr": "针对随机反应网络中多参数同时扰动敏感性估计缺乏通用高效耦合方法的问题，本文提出多路径堆叠耦合MSC，通过时空泊松构造一次性生成任意多条参数化路径。每个成对边际保持与分裂耦合相同的分布，从而支持高效方差缩减估计，为生化网络等多参数扰动响应建模提供了通用工具。",
-      "llm_tags": [
-        "query:gene-perturb"
-      ],
-      "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
-      "matched_requirement_id": "req-1",
-      "selection_source": "fresh_fetch",
-      "quick_tier": "6"
-    },
-    {
-      "id": "2608.25631v1",
-      "source": "arxiv",
-      "title": "Propensity Straight-Through Gradients for Discrete Stochastic Systems",
-      "abstract": "Continuous-time Markov chains (CTMCs) provide the backbone for modeling discrete stochastic dynamics across applied, physical, and biological sciences. Their integration with modern gradient-based machine learning, however, is limited by the hard categorical event selection intrinsic to Gillespie-type simulation algorithms. We exploit the affine state update to obtain the exact one-step conditional-mean sensitivity by differentiating normalized reaction propensities. We pair this backward rule with exact forward trajectories to define the propensity straight-through (PST) estimator. At the trajectory level, we show that one-step sensitivities composed across events can depart from the exact multistep sensitivity. We derive the resulting per-step discrepancy in closed form and prove that it vanishes identically for affine downstream dependence. PST matches the accuracy of Gumbel-Softmax straight-through across all benchmarks: reversible dimerization (0.06% error), a genetic oscillator (1.7% error), a 50-task repressilator suite (0.17% median error), and patch-clamp ion-channel recordings ($R^2$ = 0.988). Under matched settings, PST converges 3.0-fold faster on the oscillator and 2.1-fold faster on the ion channel. At deep-learning scale, PST trains a 203,796-parameter stochastic reaction network with hard sampling, reaching 98.22% MNIST digit classification accuracy. By differentiating an exact conditional mean rather than a relaxed sample, PST offers a temperature- and Gumbel-free path to scalable gradient-based learning through exact stochastic trajectories.",
-      "authors": [
-        "Jose M. G. Vilar",
-        "Leonor Saiz"
-      ],
-      "primary_category": "q-bio.QM",
-      "categories": [
-        "q-bio.QM"
-      ],
-      "published": "2026-08-26T10:59:25+00:00",
-      "link": "https://arxiv.org/pdf/2608.25631v1",
-      "tags": [
-        "keyword:gene-perturb",
-        "query:gene-perturb"
-      ],
-      "llm_score": 6.0,
-      "llm_evidence_en": "Differentiable stochastic simulation for biological CTMC models supports virtual cell modeling",
-      "llm_evidence_cn": "面向生物CTMC模型的可微随机模拟，支撑虚拟细胞建模",
-      "llm_evidence": "面向生物CTMC模型的可微随机模拟，支撑虚拟细胞建模",
-      "canonical_evidence": "面向生物CTMC模型的可微随机模拟，支撑虚拟细胞建模",
-      "llm_tldr_en": "CTMCs are central to stochastic biological simulation, but discrete event selection blocks gradients. The propensity straight-through estimator differentiates normalized propensities for exact one-step sensitivities, enabling differentiable simulation and gradient-based ML for discrete stochastic systems.",
-      "llm_tldr_cn": "连续时间马尔可夫链广泛用于生物等领域的离散随机模拟，但其Gillespie型模拟的硬事件选择阻碍了梯度学习。本文提出倾向性直通（PST）估计器，通过对反应倾向求导得到精确的一步条件均值灵敏度，并与正向轨迹结合。文章推导了轨迹级灵敏度与精确多步灵敏度的偏差，并验证了估计器的效果。该方法为虚拟细胞等生物系统的可微随机建模提供了可行的梯度路径，有助于将机器学习应用于随机动力学模型。",
-      "llm_tldr": "连续时间马尔可夫链广泛用于生物等领域的离散随机模拟，但其Gillespie型模拟的硬事件选择阻碍了梯度学习。本文提出倾向性直通（PST）估计器，通过对反应倾向求导得到精确的一步条件均值灵敏度，并与正向轨迹结合。文章推导了轨迹级灵敏度与精确多步灵敏度的偏差，并验证了估计器的效果。该方法为虚拟细胞等生物系统的可微随机建模提供了可行的梯度路径，有助于将机器学习应用于随机动力学模型。",
+      "llm_evidence_en": "genome-scale metabolic modeling of cellular state and synthetic lethality perturbations",
+      "llm_evidence_cn": "全基因组代谢模型模拟细胞状态并推断合成致死扰动",
+      "llm_evidence": "全基因组代谢模型模拟细胞状态并推断合成致死扰动",
+      "canonical_evidence": "全基因组代谢模型模拟细胞状态并推断合成致死扰动",
+      "llm_tldr_en": "Using TCGA expression data, the authors build context-specific genome-scale metabolic models for eight tissues and apply constraint-based modeling and flux enrichment to reveal tissue-specific rewiring and synthetic lethal targets, offering a computational means to decode perturbation effects in cancer metabolism.",
+      "llm_tldr_cn": "癌症代谢重塑的系统级解码对发现治疗靶点至关重要。作者利用TCGA基因表达数据为八种组织构建背景特异的全基因组尺度代谢模型，结合约束性建模与通量富集分析识别差异通路，揭示组织特异的重编程，如乳腺癌中支链氨基酸代谢受抑。进一步通过模型推断合成致死关系，为肿瘤代谢的遗传扰动效应提供了可计算的分析框架。该方法属于典型的虚拟细胞（代谢）建模，但未直接使用单细胞数据。",
+      "llm_tldr": "癌症代谢重塑的系统级解码对发现治疗靶点至关重要。作者利用TCGA基因表达数据为八种组织构建背景特异的全基因组尺度代谢模型，结合约束性建模与通量富集分析识别差异通路，揭示组织特异的重编程，如乳腺癌中支链氨基酸代谢受抑。进一步通过模型推断合成致死关系，为肿瘤代谢的遗传扰动效应提供了可计算的分析框架。该方法属于典型的虚拟细胞（代谢）建模，但未直接使用单细胞数据。",
       "llm_tags": [
         "query:gene-perturb"
       ],
@@ -405,48 +302,43 @@
       "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
       "matched_requirement_id": "req-2",
       "selection_source": "fresh_fetch",
-      "quick_tier": "6"
+      "quick_tier": "7"
     },
     {
-      "id": "biorxiv-10-64898-2026-08-20-745814-v1",
-      "source": "biorxiv",
-      "title": "Scarless conditional sgRNAs via endogenous mascRNA processing enable rapid and temporally controlled genome editing",
-      "abstract": "Precise temporal control of gene editing is essential for studying dynamic biological processes, interrogating essential gene function, and improving the interpretability of pooled perturbation screens. Cre-dependent single guide RNA (sgRNA) switches provide temporal regulation by coupling guide activation to site-specific recombination, but existing designs retain a loxP-derived 5' sequence (scar) on the mature sgRNA that can impair guide function. We developed a scarless conditional sgRNA platform that combines Cre-loxP recombination with endogenous RNA processing to restore the native sgRNA architecture following induction. A MALAT1-associated small cytoplasmic RNA (mascRNA) module was positioned upstream of the guide sequence such that, after Cre-mediated recombination, cellular RNase P and RNase Z remove the residual loxP-derived overhang, generating a mature sgRNA with an authentic 5' terminus. Using guides targeting endogenous cell-surface marker genes, the scarless design maintained stringent OFF-state control while improving ON-state editing performance compared with a conventional Cre-activated sgRNA switch, resulting in faster editing kinetics, greater perturbation penetrance, and more consistent editing efficiency. This modular strategy provides a simple approach for conditional CRISPR genome editing that preserves guide integrity and should be readily adaptable to time-resolved functional genomics and pooled screening applications.",
+      "id": "2608.26208v1",
+      "source": "arxiv",
+      "title": "Learning Interpretable Tumor Microenvironment Representations by Fitting Pan-Cancer Cell State-Niche Correlation",
+      "abstract": "In the tumor microenvironment, cell's state is influenced by cell-cell interactions (CCIs) with neighboring cells in its niches. Identifying dysregulated CCIs that are associated with pathogenic process pinpoints targets for drug discovery. Imaging-based spatial transcriptomics and single-cell RNA sequencing provide, respectively, single-cell spatial information and transcriptome-wide measurements needed to study CCIs, but neither modality provides both. Existing spatial transcriptomics foundation models also cannot effectively learn from spatially resolved single-cell data with full-transcriptome coverage, explicitly infer the CCI mechanisms driving cell state-niche associations, or interpretable enough to support direct biological interpretations. Here, we present GITIII-scale, a hierarchical, interpretable pan-cancer spatial transcriptomics foundation model for TME representation learning that investigates cell state-niche associations and their underlying ligand-receptor (LR) signaling pathways. GITIII-scale uses transformers to model interactions between pairs of cells at defined spatial distances, an interpretable single-layer graph transformer without a feed-forward network to decompose how each gene in a receiver cell is influenced by each neighboring sender cell, and a graph transformer to generate cellular-neighborhood embeddings. Trained on our assembled pan-cancer database of specimen-matched scRNA-seq and imaging-based spatial transcriptomics datasets, GITIII-scale generated TME embeddings that recovered niche-associated state changes more accurately than existing spatial transcriptomics foundation models in cancer types unseen during training. A case study of an unseen breast cancer dataset further demonstrated the model's interpretability by identifying potentially drug-targetable LR pathways associated with endothelial overgrowth and tumorigenesis.",
       "authors": [
-        "Hart, C.",
-        "Devakumar, L. P. S.",
-        "Saeed, K.",
-        "Spruce, A.",
-        "Mastrokalou, C.",
-        "Lukasiak, S.",
-        "Ross-Thriepland, D.",
-        "Walter, D.",
-        "Gupta, N."
+        "Xiao Xiao",
+        "Jiashu He",
+        "Shiyang Zhang",
+        "Meiyi Mao"
       ],
-      "primary_category": "cell biology",
+      "primary_category": "q-bio.GN",
       "categories": [
-        "cell biology"
+        "q-bio.GN"
       ],
-      "published": "2026-08-21T00:00:00+00:00",
-      "link": "https://www.biorxiv.org/content/10.64898/2026.08.20.745814v1.full.pdf",
+      "published": "2026-08-26T04:55:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.26208v1",
       "tags": [
         "keyword:gene-perturb",
         "query:gene-perturb"
       ],
       "llm_score": 6.0,
-      "llm_evidence_en": "scarless conditional sgRNA platform enabling temporally controlled genome editing and improved pooled perturbation screens",
-      "llm_evidence_cn": "无疤痕条件性sgRNA平台支持时间可控基因组编辑，提升汇合扰动筛选效果",
-      "llm_evidence": "无疤痕条件性sgRNA平台支持时间可控基因组编辑，提升汇合扰动筛选效果",
-      "canonical_evidence": "无疤痕条件性sgRNA平台支持时间可控基因组编辑，提升汇合扰动筛选效果",
-      "llm_tldr_en": "Develops scarless conditional sgRNAs combining Cre-loxP recombination with endogenous mascRNA processing to restore native sgRNA architecture, enabling rapid temporally controlled genome editing for pooled perturbation screens.",
-      "llm_tldr_cn": "在功能基因组学中，时间可控的基因编辑对研究动态过程和扰动筛选非常重要，但现有的Cre依赖sgRNA会在成熟sgRNA上留下影响功能的5端序列疤痕。该研究开发了无疤痕条件性sgRNA平台，将Cre-loxP重组与MALAT1相关的内源MascRNA加工模块结合，诱导后恢复天然sgRNA结构。平台支持快速且时间可控的基因编辑，可提高汇合扰动筛选的准确性，为基因扰动功能研究提供有力的实验工具。",
-      "llm_tldr": "在功能基因组学中，时间可控的基因编辑对研究动态过程和扰动筛选非常重要，但现有的Cre依赖sgRNA会在成熟sgRNA上留下影响功能的5端序列疤痕。该研究开发了无疤痕条件性sgRNA平台，将Cre-loxP重组与MALAT1相关的内源MascRNA加工模块结合，诱导后恢复天然sgRNA结构。平台支持快速且时间可控的基因编辑，可提高汇合扰动筛选的准确性，为基因扰动功能研究提供有力的实验工具。",
+      "llm_evidence_en": "interpretable tumor microenvironment representation from single-cell and spatial transcriptomics; models cell state-niche associations",
+      "llm_evidence_cn": "利用单细胞和空间转录组学习可解释的肿瘤微环境表征，建模细胞状态-微环境关联",
+      "llm_evidence": "利用单细胞和空间转录组学习可解释的肿瘤微环境表征，建模细胞状态-微环境关联",
+      "canonical_evidence": "利用单细胞和空间转录组学习可解释的肿瘤微环境表征，建模细胞状态-微环境关联",
+      "llm_tldr_en": "This paper learns interpretable pan-cancer tumor microenvironment representations by fitting cell state-niche correlations from spatially resolved single-cell data, enabling inference of cell-cell interaction mechanisms.",
+      "llm_tldr_cn": "该文针对空间转录组和单细胞RNA测序无法同时提供空间与全转录组信息的问题，提出一种表征学习方法，拟合泛癌的细胞状态-微环境关联。通过学习可解释的细胞-细胞互作机制，该方法可支持肿瘤微环境中的细胞状态建模。该表征可直接用于理解扰动如何改变细胞状态，属于单细胞扰动响应预测的上游方法。",
+      "llm_tldr": "该文针对空间转录组和单细胞RNA测序无法同时提供空间与全转录组信息的问题，提出一种表征学习方法，拟合泛癌的细胞状态-微环境关联。通过学习可解释的细胞-细胞互作机制，该方法可支持肿瘤微环境中的细胞状态建模。该表征可直接用于理解扰动如何改变细胞状态，属于单细胞扰动响应预测的上游方法。",
       "llm_tags": [
         "query:gene-perturb"
       ],
       "matched_query_tag": "query:gene-perturb",
-      "matched_query_text": "genetic perturbation effects in functional genomics",
-      "matched_requirement_id": "req-5",
+      "matched_query_text": "single-cell data perturbation response prediction",
+      "matched_requirement_id": "req-4",
       "selection_source": "fresh_fetch",
       "quick_tier": "6"
     },
@@ -470,13 +362,13 @@
         "query:gene-perturb"
       ],
       "llm_score": 6.0,
-      "llm_evidence_en": "symbolic regression discovers coarse-grained mechanistic models of intracellular signaling, supporting computational cell modeling",
-      "llm_evidence_cn": "符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模",
-      "llm_evidence": "符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模",
-      "canonical_evidence": "符号回归发现胞内信号粗粒化机制模型，支持虚拟细胞计算建模",
-      "llm_tldr_en": "Symbolic regression determines whether and how intracellular signaling dynamics coarse-grain over measured variables, inferring interpretable low-dimensional models for computational cell biology.",
-      "llm_tldr_cn": "针对实验数据有限和计算资源紧张的问题，本文用符号回归自动判断胞内信号系统能否在测量变量上实现粗粒化，并推断可解释的低维动力学模型。在合成酶系统中，该方法恢复了已知的粗粒化结构，为部分观测下的细胞信号建模提供了数据驱动方案。",
-      "llm_tldr": "针对实验数据有限和计算资源紧张的问题，本文用符号回归自动判断胞内信号系统能否在测量变量上实现粗粒化，并推断可解释的低维动力学模型。在合成酶系统中，该方法恢复了已知的粗粒化结构，为部分观测下的细胞信号建模提供了数据驱动方案。",
+      "llm_evidence_en": "Symbolic regression discovers coarse-grained dynamical models of intracellular signalling, enabling in silico biological simulation.",
+      "llm_evidence_cn": "符号回归发现细胞内信号传导的粗粒度动力学模型，支持生物系统模拟。",
+      "llm_evidence": "符号回归发现细胞内信号传导的粗粒度动力学模型，支持生物系统模拟。",
+      "canonical_evidence": "符号回归发现细胞内信号传导的粗粒度动力学模型，支持生物系统模拟。",
+      "llm_tldr_en": "Symbolic regression infers mechanistically interpretable coarse-grained models of intracellular signaling dynamics from partial observations, providing a data-driven route to build compact simulations of cellular systems.",
+      "llm_tldr_cn": "细胞通过蛋白网络响应环境，信号动力学建模对理解疾病至关重要；但实验数据受限和计算开销大促使需要粗粒度建模。本文提出用符号回归以数据驱动方式判断信号系统能否在观测变量上粗粒度化，并推断可解释的简化动力学模型。在合成酶系统等实验中，该方法能够恢复已知的粗粒度结构，为基于部分观测构建虚拟细胞模型和模拟生物系统动态提供了通用工具。",
+      "llm_tldr": "细胞通过蛋白网络响应环境，信号动力学建模对理解疾病至关重要；但实验数据受限和计算开销大促使需要粗粒度建模。本文提出用符号回归以数据驱动方式判断信号系统能否在观测变量上粗粒度化，并推断可解释的简化动力学模型。在合成酶系统等实验中，该方法能够恢复已知的粗粒度结构，为基于部分观测构建虚拟细胞模型和模拟生物系统动态提供了通用工具。",
       "llm_tags": [
         "query:gene-perturb"
       ],

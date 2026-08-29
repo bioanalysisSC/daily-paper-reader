@@ -1,0 +1,1282 @@
+Title: Data Shared Neighbourhood Selection for multi-condition network inference
+
+URL Source: https://arxiv.org/pdf/2608.22901v1
+
+Published Time: Tue, 25 Aug 2026 02:10:07 GMT
+
+Number of Pages: 30
+
+Markdown Content:
+> Journal Title Here , 2026, , 1–23 DOI added during production Published: Date added during production
+> Paper
+
+# Data Shared Neighbourhood Selection for multi-condition network inference 
+
+Blanche Francheterre, 1,2 ∗ Ruben Colindres Zuehlke, 1 Vivian Viallon, 3
+
+Marc Chadeau-Hyam 1 and Julien Chiquet 2
+
+> 1
+
+Department of Epidemiology and Biostatistics, School of Public Health, Imperial College London, London, UK 
+
+> 2
+
+Universit´ e Paris-Saclay, AgroParisTech INRAE, UMR MIA, SolsTIS team, Paris, France 
+
+> 3
+
+Nutrition and Metabolism Branch, International Agency for Research on Cancer (IARC/WHO), Lyon, France 
+
+> ∗
+
+Corresponding author. blanche.francheterre23@imperial.ac.uk 
+
+# Abstract 
+
+External stresses may affect both the circulating levels of specific biomarkers and disturb the correlation structures across molecular entities. The contribution of both types of dysregulations to the subsequent risk of disease are yet to be evaluated. We propose Data Shared Neighbourhood Selection (DSNS), a joint network inference method for estimating preserved and altered conditional association structures across related conditions. DSNS combines neighbourhood selection with the Data Shared Lasso decomposition, representing each nodewise regression coefficient as the sum of a shared component and a sparse condition-specific deviation. This provides an interpretable decomposition of molecular associations while retaining the computational advantages of neighbourhood selection. We also adapt the Stability Approach to Regularisation Selection (StARS) to this two-parameter joint estimation setting. In simulations involving sparse, hub-based and rewiring perturbation mechanisms, DSNS matched the best joint estimation methods for two conditions and outperformed them as the number of conditions increased, while remaining substantially faster than graphical lasso frameworks. Applied to prediagnostic inflammatory proteomic data from future lung cancer cases and matched controls in the EPIC-Italy and NOWAC cohorts, DSNS highlighted altered associations involving CDCP1 and IL10, two established lung cancer risk markers, as well as differential associations involving proteins not selected by risk models. Keywords Data Shared Lasso, Differential network, Graphical models, Neighbourhood Selection, Proteomic study 
+
+# 1. Introduction 
+
+Many biological processes arise from coordinated activity among molecular features rather than from isolated changes in individual markers. Proteins, genes and metabolites interact within complex systems, and comparisons across biological conditions may reveal differences not only in molecular levels, but also in the association structure linking them (Bassett and Bullmore, 2009; Chiquet et al., 2011). Such differences may reflect mechanistic contribution to the biological response to an external stress and/or to the development of a clinical outcome. Consequently, network-based molecular analyses can provide complementary insight to biomarker identification approaches by characterising how molecular features are connected. In disease studies involving related states, such as cases and controls, disease subtypes or treatment groups, a key objective is therefore not only to identify molecular markers associated with disease, but also to determine whether pairwise relationships across these markers are preserved or altered across biological states. Such analyses are particularly relevant in omics studies, where molecular relationships are expected to be shared across related conditions, with disease or treatment affecting only a subset of associations (Danaher et al., 2014). Network analysis may help identifying pairwise correlations that may differ across conditions and        
+
+> Received: Date Month Year. Revised received: Date Month Year. Accepted: Date Month Year
+> ©The Author(s) YEAR. Copyright and licence statements to be updated by the publisher during production. arXiv:2608.22901v1 [stat.AP] 24 Aug 2026 2Journal Title Here, YEAR, Volume X, Issue x
+
+contribute to the biological response of interest, and may therefore identify molecules that are involved in biolgoical response and pathogenesis that would not have been identified through their marginal effect. A variety of computational methods have been proposed to infer such molecular association networks (Kuismin and Sillanp¨ a¨ a, 2017). Among them, Gaussian graphical models (GGMs) provide a natural framework for modelling interpretable biological networks and have become a widely used tool (Barabasi and Oltvai, 2004). The network structure is encoded by the precision matrix with zero off-diagonal entries correspond to conditionally independent pairs of variables and therefore to the absence of an edge in the graph. Compared with marginal correlation networks, GGMs distinguish direct conditional associations from associations induced indirectly through other variables. In omics studies, however, estimating GGMs is challenging because the number of molecular features is often comparable to, or larger than, the number of observations. To address this issue, a variety of regularised estimators have been proposed, including constrained ℓ1 minimisation approaches, Bayesian graphical models and regression-based methods. Among the most widely used are the graphical lasso, which estimates a sparse precision matrix directly through penalised likelihood (Friedman et al., 2008), and neighbourhood selection, which recovers graph structure through sparse nodewise regressions (Meinshausen and B¨ uhlmann, 2006). Unlike graphical lasso approaches, Neighbourhood Selection (NS) primarily estimates graph support rather than precision matrices, and is computationally efficient because the estimation problem decomposes into independent regressions. When several biological states are observed, estimating each network independently ignores the substantial structure they are likely to share. Joint graphical model estimators leverage this shared structure by estimating several networks simultaneously while encouraging similarity across conditions through joint regularisation (Guo et al., 2011; Chiquet et al., 2011; Danaher et al., 2014). By borrowing information across related conditions, these methods improve graph recovery and differential edge detection relative to separate estimation (Danaher et al., 2014). Existing approaches include the Joint Graphical Lasso (Danaher et al., 2014), Joint Neighbourhood Selection (Chiquet et al., 2011; Zhang and Wang, 2012), CLIME-based estimators (Lee and Liu, 2015) and Bayesian approaches (Li et al., 2019); see Tsai et al. (2022) for a review. Existing joint extimators typically estimate each condition’s network jointly, with differential networks identified after estimation by comparing the resulting networks. Thus, shared and altered structures are encouraged through joint penalties but are not represented explicitly within the model. In many biological applications, however, it may be more natural to view their network structures as coming from a common underlying component with a limited number of alterations specific to each condition. Recent work on Ising models has shown the value of explicitly decomposing network parameters into shared and condition-specific components (Ballout and Viallon, 2019). Comparable formulations have received little attention for Gaussian graphical models. We propose the Data Shared Neighbourhood Selection (DSNS), a joint network inference method which combines the Data Shared Lasso (DSL) coefficient decomposition with Neighbourhood Selection. Originally proposed for regression models, the Data Shared Lasso decomposes each condition’s coefficients as the sum of a shared effect and a condition-specific deviation (Ollier and Viallon, 2014; Gross and Tibshirani, 2016). We extend this principle to Neighbourhood Selection by decomposing each nodewise regression coefficient into a common component and deviations from that component for each condition. Consequently, DSNS simultaneously estimates the network structure shared across conditions and the sparse perturbations that distinguish them. For each node, estimation reduces to a Data Shared Lasso problem that can be reformulated as a standard lasso estimation on an extended design matrix. Hence, this decomposition preserves the computational advantages of both Neighbourhood Selection and DSL. A practical challenge is the calibration of the two regularisation parameters controlling the sparsity of the shared component and of the condition-specific deviations. We therefore adapt the Stability Approach to Regularisation Selection (StARS) (Liu et al., 2010) to the two-parameter joint estimation setting. We evaluate DSNS against competing methods through an extensive simulation study reflecting key features of molecular networks, such as sparsity, degree heterogeneity and hub structure with various perturbation mechanisms. We apply DSNS to prediagnostic circulating inflammatory protein measurements from the study of Dagnino et al. (2021). By jointly estimating the protein association networks of future lung cancer cases and matched controls, we aim to identify associations that are preserved across groups and those that differ before diagnosis, thereby providing complementary insight into the inflammatory processes associated with future lung cancer risk. Journal Title Here, YEAR, Volume X, Issue x 3
+
+# 2. Methods 
+
+# 2.1. Background 
+
+Consider K datasets coming from different biological conditions, for example controls and cases or different disease subtypes. For each condition k ∈ { 1, . . . , K }, we measure p molecular markers (e.g. proteomics, gene expression, metabolites) for nk independent individuals. We assume that the observations, X(k) 
+
+> ℓ
+
+, follow a multivariate Normal distribution such that: 
+
+X(k) 
+
+> ℓ
+
+∼ N (μ(k), Σ(k)), ℓ ∈ { 1, . . . , n k}, k ∈ { 1, . . . , K }
+
+where μ(k) ∈ Rp is the mean vector and Σ(k) ∈ Rp×p the covariance matrix for condition k. Throughout the paper, we assume that variables are centered within each condition. For each condition, the precision matrix is defined as the inverse of the covariance matrix, Ω(k) = Σ (k)−1
+
+, and is assumed to be sparse. Specifically, under the Gaussian graphical model assumption, Ω(k) 
+
+> ij
+
+= 0 , i ̸ = j if and only if X(k) 
+
+> i
+
+and X(k) 
+
+> j
+
+are independent conditionally on all other variables. Each condition’s precision matrix encodes an undirected graph G(k) = ( V, E(k)), where V = {1, . . . , p } is the set of shared molecular features and the edge set is: 
+
+E(k) = {(i, j ) : Ω (k)
+
+> ij
+
+̸ = 0 , i ̸ = j}
+
+We consider two objectives: first, recovery of the graph supports for each biological state, by estimating {E (k)}Kk=1 
+
+with the estimation of the precision matrices {Ω(k)}Kk=1 and second, identification of differential biological networks across conditions. Two complementary definitions of differential network are considered (Shojaie, 2021). The first is differential support, also referred to as differential structure, which captures differences in edge across conditions. For K
+
+conditions, we define the differential support as the set of edges that are present in at least one condition and absent in at least one other condition: 
+
+Esuppdiff =
+
+> K
+
+[
+
+> k=1
+
+E(k)
+
+!
+
+\
+
+> K
+
+\
+
+> k=1
+
+E(k)
+
+!
+
+.
+
+The second is differential edge weights which capture changes in the strength of conditional dependencies, including changes that occur without support differences. It is defined pairwise between conditions as: 
+
+E(kk ′ ) 
+
+> precdiff
+
+= {(i, j ) : Ω (k)
+
+> ij
+
+̸ = Ω (k′ ) 
+
+> ij
+
+, i ̸ = j}, k ̸ = k′.
+
+We introduce the two main families of joint inference methods: Joint Graphical Lasso approaches, which directly estimate the precision matrix via penalised likelihood, and Joint Neighbourhood Selection, which estimate graph structure via nodewise regressions. Both families introduce a joint penalty that encourages similarities across conditions and involve two non-negative regularisation parameters: λ1, which controls within-condition sparsity, and λ2, controlling the degree of similarity enforced across conditions. 
+
+Joint Graphical Lasso 
+
+The Joint Graphical Lasso (JGL), introduced by Danaher et al. (2014) , extends the standard graphical Lasso to multiple conditions and estimates {Ω(k)}Kk=1 by minimising the penalised log-likelihood: 
+
+min  
+
+> {Ω(k)}Kk=1
+> K
+
+X
+
+> k=1
+
+nk
+
+h
+
+tr 
+
+ ˆΣ(k)Ω(k)
+
+− log det(Ω (k))
+
+i
+
++ λ1
+
+> K
+
+X
+
+> k=1
+
+X
+
+> i̸=j
+
+Ω(k) 
+
+> ij
+
++ λ2P({Ω(k)})
+
+where ˆΣ(k) is the empirical covariance matrix for condition k and P a joint penalty across conditions. The estimated precision matrices returned by JGL are sparse, symmetric and positive-definite. Two commonly used penalties are the Fused Graphical Lasso (FGL), which encourages similar edge weights across conditions, and the Group Graphical Lasso (GGL), which encourages common sparsity patterns. Additional variants such as Perturbed-node Joint Graphical Lasso (PNJGL) (Mohan et al., 2014) assume that differences are concentrated around a subset of perturbed nodes. Details are provided in Supplementary Material S1.1. 4 Journal Title Here, YEAR, Volume X, Issue x 
+
+Joint Neighbourhood Selection 
+
+Neighbourhood Selection (NS), introduced by Meinshausen and B¨ uhlmann (2006), estimates the conditional dependency structure by estimating p penalised regressions where each node j is regressed against all other variables. Under the Gaussian graphical model assumption, the regression coefficients satisfy: 
+
+βij = − Ωij 
+
+Ωjj 
+
+where βij denotes the coefficient associated with predictor i̸ = j in the regression of node j. Thus, nonzero coefficients correspond to nonzero off-diagonal entries in the precision matrix and therefore to edges in the graph. Similarly to the graphical lasso, Neighbourhood Selection can be extended to multiple conditions by introducing a joint penalty P between regression coefficients across conditions (Chiquet et al., 2011; Zhang and Wang, 2012). For each node j, we solve: 
+
+min  
+
+> {β(k)
+> j}Kk=1
+> K
+
+X
+
+> k=1
+
+12nk
+
+X(k) 
+
+> j
+
+− X(k) 
+
+> −j
+
+β(k)
+
+> j
+> 22
+
++ λ1
+
+> K
+
+X
+
+> k=1
+
+β(k) 
+
+> j1
+
++ λ2P({β(k) 
+
+> j
+
+})
+
+where X(k) 
+
+> j
+
+∈ Rnk is the jth column of X(k), X(k) 
+
+> −j
+
+∈ Rnk ×(p−1) consists of all variables of X(k) except j and 
+
+β(k) 
+
+> j
+
+∈ Rp−1, the coefficient vector for node j.Analogously to JGL, two common penalties are Fused Neighbourhood Selection (FNS) (Zhang and Wang, 2012), which encourages similar coefficient values across conditions, and Group Neighbourhood Selection (GNS) (Chiquet et al., 2011; Liu et al., 2025), which encourages common sparsity patterns. Additional details are provided in Supplementary Material S1.2. As the p regressions are solved independently for each node, the resulting edge set is not necessarily symmetric. Symmetry is enforced by post-processing using either the AND rule, an edge (i, j ) is included in the graph if ˆβij ̸ = 0 
+
+and ˆβji ̸ = 0 or the OR rule, an edge (i, j ) is included in the graph if ˆβij ̸ = 0 or ˆβji ̸ = 0 . We write ˆSAND ( ˆβ) and 
+
+ˆSOR ( ˆβ) for the supports obtained by applying these rules to the estimated ˆβ.To ensure comparable implementation across methods, all neighbourhood selection approaches considered in this work were implemented within our R package monique .
+
+# 2.2. Data Shared Neighbourhood Selection model 
+
+We consider a decomposition in which each condition’s network is represented as the sum of a shared component and a sparse deviation, allowing common and differential network structures to be estimated simultaneously. The 
+
+Data Shared Neighbourhood Selection (DSNS) is a joint network inference method that combines the coefficient decomposition strategy of Data Shared Lasso with Neighbourhood Selection. 
+
+Data Shared Lasso 
+
+The Data Shared Lasso (DSL), introduced by Ollier and Viallon (2014); Gross and Tibshirani (2016), was developed for regression settings in which observations are partitioned into K non-overlapping conditions defined by a categorical covariate. The DSL assumes that the response is generated as: 
+
+yi = xTi (θ + ∆(ki )) + ϵi
+
+where ki ∈ { 1, . . . , K } denotes the condition of observation i, θ ∈ Rp is the coefficient vector shared across all conditions, ∆(k) ∈ Rp is the deviation for each condition k, and ϵi are independent errors. Both components are estimated jointly by minimising: 
+
+min  
+
+> θ, {∆(k)}Kk=1
+> n
+
+X
+
+> i=1
+
+12n
+
+
+
+yi − xTi (θ + ∆(ki ))
+
+2
+
++ λ ∥θ∥1 +
+
+> K
+
+X
+
+> k=1
+
+∆(k)
+
+> 1
+
+!
+
+where λ is the regularisation parameter. The authors showed that estimation of these components can be performed as a standard lasso problem through a simple redesign of the predictor matrix, making the approach computationally efficient. In the following section, we integrate this decomposition into the NS framework to jointly estimate multiple related graphs. Journal Title Here, YEAR, Volume X, Issue x 5
+
+Model 
+
+Figure 1 DSNS framework under K = 2 .
+
+Motivated by the assumption that related conditions share a common network structure, DSNS assumes that each condition node’s neighbourhood is the sum of a sparse shared component and a sparse deviation specific to each condition. For each node j and condition k, we have: 
+
+β(k) 
+
+> j
+
+= θj + ∆(k)
+
+> j
+
+where β(k) 
+
+> j
+
+∈ Rp−1 denotes the vector of regression coefficients, θj ∈ Rp−1 represents the coefficients shared across conditions and ∆(k) 
+
+> j
+
+∈ Rp−1 represents the condition’s deviation. We assume that each node j is generated as: 
+
+X(k) 
+
+> j
+
+= X(k) 
+
+> −j
+
+β(k) 
+
+> j
+
++ ϵ = X(k) 
+
+> −j
+
+(θj + ∆(k) 
+
+> j
+
+) + ϵ
+
+Thus, for each node j, DSNS estimates the coefficient components by solving the following minimisation: 
+
+min   
+
+> θj,{∆(k)
+> j}Kk=1
+> K
+
+X
+
+> k=1
+
+12N X(k) 
+
+> j
+
+− X(k) 
+
+> −j
+
+(θj + ∆(k) 
+
+> j
+
+) 22
+
++ λ1
+
+> K
+
+X
+
+> k=1
+
+∆(k) 
+
+> j1
+
++ λ2 ∥θj ∥1 (1) 
+
+where the penalty parameter λ1 controls the sparsity of each condition’s deviations while λ2 controls the sparsity of the shared component and N = PKk=1 nk. Although the decomposition is not identifiable in the absence of regularisation, the ℓ1 penalty provides an optimal sparse decomposition under the conditions described in Supplementary Material S2.1 (Ballout and Viallon, 2019). For each node j, estimating the shared and deviation components corresponds to solving a DSL problem. Consequently, the optimisation can be reformulated as a standard lasso problem through an extended design matrix. For each node j, we define the response vector: 
+
+Zj =
+
+
+
+X(1) 
+
+> j
+
+X(2) 
+
+> j
+
+...
+
+X(K)
+
+> j
+
+ ∈ RN6 Journal Title Here, YEAR, Volume X, Issue x 
+
+and construct the extended design matrix: 
+
+Z−j =
+
+
+
+X(1)   
+
+> −j1
+> τ
+
+X(1)  
+
+> −j
+
+0 · · · 0
+
+X(2)  
+
+> −j
+
+0 1 
+
+> τ
+
+X(2)  
+
+> −j
+
+· · · 0
+
+... ... ... . . . ...
+
+X(K) 
+
+> −j
+
+0 0 · · · 1 
+
+> τ
+
+X(K)
+
+> −j
+
+ ∈ RN ×(p−1)( K+1) 
+
+where the first block of p − 1 columns corresponds to the shared predictors while the remaining K blocks encode the predictors specific to each condition and τ = λ1/λ 2 is the ratio of penalty parameters. Let ˜θj = ( θj , τ ∆(1)  
+
+> j
+
+, . . . , τ ∆(K) 
+
+> j
+
+)⊤, then Equation 1 can be rewritten as: 
+
+min 
+
+> ˜θj
+
+12N Zj − Z−j ˜θj
+
+> 22
+
++ λ2 ˜θj 1
+
+Similarly to the DSL, this reformulation shows that DSNS can be estimated using existing lasso solvers without requiring specialised optimisation algorithms (Tibshirani, 1996). 
+
+Symmetrisation 
+
+As in standard neighbourhood selection, edge symmetry needs to be enforced as a post-processing step but for DSNS, we symmetrise the shared and condition-specific components separately to preserve their individual interpretability. Applying the AND and OR rules to the shared component ˆθ and to each condition-specific component ˆ∆(k) gives the supports ˆSAND  
+
+> θ
+
+, ˆSOR  
+
+> θ
+
+and ˆSAND  
+
+> ∆(k)
+
+, ˆSOR  
+
+> ∆(k)
+
+. As the two components are symmetrised independently, any pairing of their rules can be considered, giving four combinations: ( ˆSAND  
+
+> θ
+
+, ˆSAND  
+
+> ∆(k)
+
+), ( ˆSOR  
+
+> θ
+
+, ˆSOR  
+
+> ∆(k)
+
+), ( ˆSAND  
+
+> θ
+
+, ˆSOR  
+
+> ∆(k)
+
+) and ( ˆSOR  
+
+> θ
+
+, ˆSAND  
+
+> ∆(k)
+
+).For each condition k, the estimated edge set is then obtained by combining the shared and condition-specific supports, 
+
+ˆE(k) = ˆSθ ∪ ˆS∆(k) ,
+
+where each support is symmetrised according to the chosen combination. While joint estimators presented above recover differential networks by comparing estimated supports after fitting, the DSNS parameterisation gives the differential structure directly: ˆS∆(k) , symmetrised by the chosen rule. The framework is shown for K = 2 in Figure 1. 
+
+Maximum Likelihood refitting 
+
+Neighbourhood Selection methods primarily aim at recovering the graph support rather than accurate estimation of precision matrices. Thus, to obtain these estimates, a refitting step is performed following support identification (Ma and Michailidis, 2016). A graphical lasso model constrained to the inferred support is fitted in which entries corresponding to selected edges are left unpenalised, whereas excluded edges are penalised with a large constant penalty, 10 8. For each condition k, the precision matrix is estimated by solving: 
+
+min 
+
+> Ω(k)
+
+h
+
+tr 
+
+ ˆΣ(k)Ω(k)
+
+− log det 
+
+
+
+Ω(k)i 
+
++ X
+
+> i̸=j
+
+w(k) 
+
+> ij
+
+Ω(k) 
+
+> ij
+
+(2) 
+
+where: 
+
+w(k) 
+
+> ij
+
+=
+
+(0 if (i, j ) ∈ ˆE(k)
+
+10 8 if (i, j ) /∈ ˆE(k)
+
+and ˆE(k) is the support estimated by DSNS. This refitting procedure results in a symmetric positive-definite precision matrix estimate while preserving the support estimated by DSNS. 
+
+# 2.3. Calibration 
+
+Calibrating the two hyperparameters (λ1, λ 2) involves balancing sparsity, goodness-of-fit and stability of the inferred graphs. We consider two calibration strategies: information criteria and subsampling-based stability. Journal Title Here, YEAR, Volume X, Issue x 7
+
+Information criteria 
+
+Well established information criteria such as Bayesian (BIC) or Akaike (AIC) Information Criterion (Foygel and Drton, 2010) evaluate the likelihood of the observed data under the estimated model parameters while penalising model complexity according to the number of estimated parameters. In high dimensional settings AIC and BIC tend to select overly dense graphs, leading to a high number of false positive edges. To address this issue, we consider the extended Bayesian Information Criterion (eBIC) which introduces an additional parameter, γ, that penalizes graph density and encourages sparser networks (Foygel and Drton, 2010). For multiple conditions, the eBIC criterion at a given pair of sparsity parameters (λ1, λ 2) is defined as: 
+
+eBIC( λ1, λ 2) = 
+
+> K
+
+X
+
+> k=1
+
+h
+
+−2ℓ( ˆΩ(k)(λ1, λ 2)) + | ˆE(k)(λ1, λ 2)| log( nk) + 4 γ| ˆE(k)(λ1, λ 2)| log( p)
+
+i
+
+,
+
+where, for condition k, ˆΩ(k)(λ1, λ 2) denotes the refitted precision matrix, | ˆE(k)(λ1, λ 2)| the number of edges, nk
+
+the sample size and p the number of variables. 
+
+Subsampling-based calibration 
+
+Information criteria can give unstable results, especially in high-dimensional settings, where the same sparsity parameters or small changes in the data can give rise to different sets of selected edges (Liu et al., 2010). To address this, we adapted StARS, which has been shown to be robust for single Gaussian graphical network inference calibration (Liu et al., 2010), to the joint inference setting which involves two regularisation parameters. For each condition, B subsamples of size nk/2 are drawn without replacement from the initial dataset. For each hyperparameter pair (λ1, λ 2) on a two-dimensional grid, where larger λ1 or λ2 implies more regularisation, DSNS is fitted on each subsample and the selected edges are recorded for each condition. Let Π(k) 
+
+> ij
+
+(λ1, λ 2) denote the proportion of subsamples in which edge (i, j ) is selected in condition k at parameter 
+
+(λ1, λ 2). The total instability at (λ1, λ 2) is defined as: 
+
+ˆD(λ1, λ 2) = 1
+
+K · p(p−1) 2
+
+> K
+
+X
+
+> k=1
+
+X
+
+> i<j
+
+2 · Π(k) 
+
+> ij
+
+(λ1, λ 2)(1 − Π(k) 
+
+> ij
+
+(λ1, λ 2)) 
+
+To ensure monotonicity of the instability measure with increasing regularisation, let: 
+
+¯D(λ1, λ 2) = sup t1≥λ1
+
+> t2≥λ2
+
+ˆD(t1, t 2)
+
+The regularisation parameters are chosen such that: 
+
+(ˆλ1, ˆλ2)StARS = arg max   
+
+> (λ1,λ 2)
+
+| ˆE(λ1, λ 2)|, subject to ¯D(λ1, λ 2) ≤ β and | ˆE(λ1, λ 2)| > 0
+
+where | ˆE(λ1, λ 2)| denotes the total number of edges summed across conditions and β is the instability threshold. Following the original article recommendation, we considered β = 0 .05 as the default value. In the simulation study, we also evaluated β = 0 .10 as a less conservative alternative. Finally, the retained graph is obtained by fitting the model on the full dataset at calibrated sparsity parameters (ˆλ1, ˆλ2)StARS .
+
+# 2.4. Simulation study 
+
+We evaluated the performance of DSNS against 9 competing methods with respect to overall graph recovery, differential support recovery, and differential precision recovery across simulation scenarios designed to reflect biologically relevant network configurations. The methods consisted of Joint Graphical Lasso methods: Fused Graphical Lasso (FGL), Group Graphical Lasso (GGL) and Perturbed-node Joint Graphical Lasso (PNJGL), and Joint Neighbourhood Selection methods: Fused Neighbourhood Selection (FNS) and Group Neighbourhood Selection (GNS). We considered their pooled and independent variants as baselines. Pooled network inference consists in inferring one graph on all samples regardless of condition while in the independent variant, each condition is estimated independently. For clarity, we reported the neighbourhood selection methods under a single symmetrisation 8 Journal Title Here, YEAR, Volume X, Issue x 
+
+rule throughout: the (OR, OR) rule for DSNS and the OR rule for the neighbourhood selection methods. Acomparison across the alternative rules is provided in the Supplementary Figure S1, S2. Methods and joint penalties are summarised in Table 1. As available software implementations differ substantially across joint graphical model estimators, particular care was taken to harmonise the implementation of all nodewise methods in our R package 
+
+monique . Additionally, to ensure fair comparison, the refitting step (2) was performed for all joint estimation methods.  
+
+> Figure 2 Overview of the simulation design 1.
+
+We evaluated DSNS in two complementary simulation settings. First, we considered a two-condition setting, reflecting the case-control structure of our application. Second, to assess the behaviour of DSNS in multi-condition problems, we considered K = 3 and K = 5 related networks generated from a common base graph with sparse deviations for each condition. 
+
+Simulation design 1: two-condition setting 
+
+Figure 2 illustrates the simulation design. For the two-condition setting, simulations were generated for p = 100 
+
+variables. To generate the network supports, three network topologies were considered to represent sparse networks with different degree heterogeneity: random network with added hubs (RH), scale-free network with linear preferential attachment (SF1) and scale-free with preferential attachment parameter 2 (SF2), yielding a denser graph. Starting from a common graph structure, we introduced support differences between the two conditions using three representative perturbation mechanisms: (i) sparse perturbation, in which 20% of edges differ in support and 20% of precision matrix entries differ in value between conditions, (ii) rewiring, in which 20% of edges are rewired and (iii) hub support perturbations, in which edges connected to a hub node are all removed in one condition and preserved in the other. Additional experiments varying the proportion of rewired or perturbed edges were considered. Details on simulation procedures are provided in Supplementary Material S3.1. For each resulting graph support, a sparse positive-definite precision matrix was generated. A fourth perturbation scenario was considered: hub value perturbations, in which the weights of the edges connected to a hub node are all modified for one condition while they maintain a common graph structure. Each scenario was evaluated under two sample sizes, nk = 50 and 200 . The choice of nk = 50 reflects the limited sample sizes commonly encountered in omics studies, while nk = 200 was selected to approximate the sample size available in our proteomics application. For each condition, observations were drawn independently from a multivariate Gaussian distribution N (0 , Σ(k)), where Σ(k) = Ω (k)−1
+
+is the condition-specific covariance matrix. Performance was additionally assessed at nk = 100 . Each configuration was replicated 50 times. Journal Title Here, YEAR, Volume X, Issue x 9 
+
+> Estimation strategy Loss  Method  Joint penalty
+> Penalised likelihood  min
+> {Ω(k) }
+> KX
+> k=1
+> nk
+> h
+> tr   ˆΣ(k)Ω(k) − log det   Ω(k)i
+> Fused Graphical Lasso (FGL)
+> λ1
+> KX
+> k=1
+> X
+> i̸=j
+> Ω(k)
+> ij  + λ2
+> X
+> k<k ′
+> X
+> i,j
+> Ω(k)
+> ij  − Ω(k′ )
+> ij
+> Group Graphical Lasso (GGL)
+> λ1
+> KX
+> k=1
+> X
+> i̸=j
+> Ω(k)
+> ij  + λ2
+> X
+> i̸=j
+> vuut KX
+> k=1
+> 
+> Ω(k)
+> ij
+> 2
+> Perturbed-Node JGL (PNJGL)
+> λ1
+> KX
+> k=1
+> X
+> i̸=j
+> Ω(k)
+> ij  + λ2
+> X
+> k<k ′
+> V (kk ′ )
+> 2
+> ,s.t.  Ω(k) − Ω(k′ ) = V (kk ′ ) + V (kk ′ )⊤
+> Independent GL  λ1
+> KX
+> k=1
+> X
+> i̸=j
+> Ω(k)
+> ij
+> Pooled GL  Single graph fitted on all observations. Nodewise Lasso regression  min
+> {β(k)
+> j }
+> KX
+> k=1
+> 12nk
+> X(k)
+> j − X(k)
+> −j β(k)
+> j
+> 22
+> Fused Neighbourhood Selection (FNS)
+> λ1
+> KX
+> k=1
+> β(k)
+> j 1
+> + λ2
+> X
+> k<k ′
+> β(k)
+> j − β(k′ )
+> j 1
+> Group Neighbourhood Selection (GNS)
+> λ1
+> KX
+> k=1
+> β(k)
+> j 1
+> + λ2
+> X
+> i̸=j
+> vuut KX
+> k=1
+> 
+> β(k)
+> ij
+> 2
+> Independent NS  λ1
+> KX
+> k=1
+> β(k)
+> j 1
+> Pooled NS  Single graph fitted on all observations Proposed method  min
+> θj ,{∆(k)
+> j }
+> KX
+> k=1
+> 12N X(k)
+> j − X(k)
+> −j (θj + ∆(k)
+> j ) 22 Data Shared Neighbourhood Selection (DSNS)
+> λ1
+> KX
+> k=1
+> ∆(k)
+> j 1
+> + λ2 ∥θj ∥1
+> Table 1.  Summary of all methods considered in the simulation study. All joint methods involve two regularisation parameters. For the fused and group estimators,  λ1 controls within-condition sparsity, and  λ2 controls the degree of similarity enforced across conditions with  λ2 = 0  corresponding to the independent variants. The correspondence differs for DSNS,  λ1 penalizes the condition-specific deviations and  λ2 penalises the shared component. Pooled estimators fit a single network on the combined datasets, ignoring condition membership. 10 Journal Title Here, YEAR, Volume X, Issue x
+
+Simulation design 2: multi-condition setting 
+
+Similarly, for the multi-condition simulations each related networks were generated from a common base graph with 
+
+p = 100 nodes for all three topologies. Sparse condition-specific perturbations affecting 20% of the original support and 20% of precision matrix entries was distributed among the graphs to reflect settings in which several biological states share most molecular associations but each state may contain a limited number of specific alterations. Precision matrices and observations were generated as in the first simulation, with nk = 100 observations per condition and 50 replicates per configuration. 
+
+Edge recovery performance 
+
+Edge recovery performance was evaluated using the area under the precision-recall curve (AUPR) separately for: overall graph recovery, differential support recovery, and differential edge-weight recovery. Overall graph recovery was computed separately for each condition-specific graph and averaged over the K conditions. Details are provided in Supplementary Material S3.2. 
+
+Calibration performance 
+
+To assess the calibration of DSNS, we compared the F1 score obtained at the calibrated parameter values against the oracle F1 score corresponding to the maximum achievable performance over the regularisation grid. Calibration performance was evaluated separately for: overall graph recovery, differential support and differential precision recovery. For each simulation replicate and scenario, we computed the relative difference between oracle and calibrated F1 scores: 
+
+δ = F 1oracle − F 1calibrated 
+
+F 1oracle 
+
+and reported the median across simulation replicates and scenarios. 
+
+# 2.5. Data overview 
+
+We revisited a previous cohort study investigating circulating inflammatory proteins in plasma samples and their association with future lung cancer risk (Dagnino et al., 2021). The data came from two prospective cohorts, EPIC-Italy and the Norwegian Women and Cancer Study (NOWAC), comparing participants who subsequently developed lung cancer during follow-up with matched controls who remained lung cancer free. While the original analysis focused on identifying individual proteins associated with disease risk using penalised logistic regression, our objective was to characterise differences in the conditional dependence structure of inflammatory proteins between future lung cancer cases and matched controls. Data included 648 prediagnostic blood samples, comprising 325 future lung cancer cases and 323 controls matched on age, sex, year of recruitment, season of blood collection and study centre. A panel of 92 inflammatory proteins was measured using an Olink assay. Following the preprocessing and quality-control procedures described in Dagnino et al. (2021), 71 proteins were retained for analysis. Protein concentrations were expressed as normalised protein expression values and log-transformed before analysis. Consistent with the original study, the present analysis was restricted to women, resulting in 384 participants, including 191 future cases and 193 controls. Protein measurements were adjusted for age, body mass index and cumulative smoking exposure (pack-years). We applied DSNS to the full set of 71 inflammatory proteins to jointly estimate the conditional independence networks of future lung cancer cases and controls. The method was calibrated using the proposed extension of StARS over a grid of 400 pairs of regularisation parameters with the instability threshold β = 0 .05 . We explored differences between conditions in terms of both differential support, corresponding to edges present in only one of the two networks, and differential precision, corresponding to changes in conditional dependency strength. To contextualise the inferred network differences, we also reproduced the protein selection analysis from the original study of Dagnino et al. (2021) using Sharp stability selection (Bodinier et al., 2023) with lasso logistic regression, with future lung cancer status as the outcome. Journal Title Here, YEAR, Volume X, Issue x 11 
+
+# 3. Results 
+
+# 3.1. Simulated data 
+
+3.1.1. Simulation design 1: two-condition setting 
+
+Recovery of graph structures for each condition 
+
+The AUPR for recovering the graph structures E(k) of each condition for all topologies and perturbations is displayed in Figure 3. Joint estimation consistently outperforms independent network estimations across all settings, with gains of approximately 0.15-0.20 AUPR. This confirms that borrowing information across conditions substantially improves overall graph recovery when the true networks share a common structure. DSNS preserves these gains while achieving performance comparable to, and often exceeding, that of existing joint estimation methods. Overall, DSNS consistently ranks among the top performing methods with FNS and GNS across most settings. Its performance is nearly identical to that of FNS and remains competitive with pooled estimators, indicating that the decomposition into shared and condition-specific components does not compromise overall graph recovery. topology = SF2, n = 200 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 50 
+
+> indep GL indep NS GNS PNJGL GGL pooled GL FGL pooled NS DSNS FNS indep NS indep GL PNJGL GNS GGL DSNS FNS FGL pooled NS pooled GL indep GL PNJGL indep NS pooled GL FGL GGL pooled NS DSNS FNS GNS indep GL indep NS PNJGL GGL FGL pooled GL GNS pooled NS DSNS FNS indep GL PNJGL pooled GL FGL GGL indep NS pooled NS DSNS FNS GNS indep GL PNJGL indep NS pooled GL FGL GGL pooled NS DSNS FNS GNS 0.6 0.8 1.0 0.4 0.5 0.6 0.7 0.8 0.2 0.3 0.4 0.5 0.6 0.6 0.7 0.8 0.9 1.0 0.7 0.8 0.9 0.5 0.6 0.7 0.8 0.9
+> Median AUPR
+
+perturbation hubsupp hubval rewire sparse Method DSNS FNS GNS indep NS pooled NS FGL GGL PNJGL indep GL pooled GL 
+
+Figure 3 Median area under the precision-recall curve for graphs support recovery across graph topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ) and removal of edges around hubs ( hubsupp ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. 
+
+For all methods, network topology has a strong impact on recovery performance. Denser networks are more difficult to recover than sparse networks, with the SF2 topology yielding the lowest AUPR across all methods with 12 Journal Title Here, YEAR, Volume X, Issue x 
+
+values below 0.88 for nk = 200 and below 0.57 for nk = 50 . In contrast, recovery is more accurate for the SF1 topology with AUPR above 0.8 for nk = 200 and above 0.7 for nk = 50 for all joint estimators, except PNJGL. As expected, increasing the sample size substantially improves performance across all methods and topologies. Similar conclusions are observed for nk = 100 , with the corresponding results reported in Supplementary Figure S3–Figure S5. 
+
+Differential support recovery topology = SF2, n = 200 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 50 
+
+> indep GL indep NS GNS GGL PNJGL DSNS FNS FGL indep GL indep NS PNJGL GNS GGL DSNS FNS FGL indep GL indep NS PNJGL GGL FGL DSNS FNS GNS indep GL indep NS PNJGL GGL FGL GNS DSNS FNS indep GL PNJGL indep NS GGL FGL DSNS FNS GNS indep GL indep NS PNJGL GGL FGL GNS DSNS FNS 0.25 0.50 0.75 0.1 0.2 0.025 0.050 0.075 0.100 0.25 0.50 0.75 1.00 0.2 0.4 0.6 0.8 0.2 0.4 0.6
+> Median AUPR
+
+perturbation hubsupp rewire sparse Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Figure 4 Median area under the precision-recall curve for differential support recovery across graph topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ) and removal of edges around hubs (hubsupp ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. 
+
+Figure 4 presents the AUPR for recovering the differential support Esuppdiff in scenarios involving structural differences between conditions. Across all perturbations types, all joint methods outperformed independent estimations, confirming the benefit of joint estimation for differential support identification in addition to the recovery of the individual networks. However, recovery is strongly affected by network topology and the type of perturbation. Dense networks remain challenging for all methods, particularly in high dimensional settings. For the SF2 topology, AUPR values remain below 0.52 for nk = 200 and below 0.10 for nk = 50 , indicating that reliable differential support recovery becomes difficult when the underlying graphs are highly connected. Journal Title Here, YEAR, Volume X, Issue x 13 
+
+The perturbation type also had a strong impact on performance. Differential structures concentrated around hubs are substantially easier to detect than differences arising from rewiring or sparse edge modifications for the SF1 and RH topologies. PNJGL, which explicitly encourages node differential structure, achieves the highest performance in the hub support scenario. In contrast, its advantage disappears in the rewiring and sparse perturbation settings. In the rewiring and sparse perturbation scenarios, DSNS consistently ranks among the top three best performing methods, with performance close to or equal to FNS and GNS for the SF1 and RH topology, and performances similar to FNS and FGL in the SF2 topology. These scenarios correspond most closely to the modelling assumption underlying DSNS: networks are largely shared across conditions, with sparse and distributed deviations from a common structure. The strong performance of DSNS in these settings suggests that explicitly modelling perturbations around a shared component is well suited to detecting distributed network perturbations. Nevertheless, differential support recovery remains substantially more challenging than overall graph recovery, with AUPR values rarely exceeding 0.5. 
+
+Differential edge weights recovery topology = SF2, n = 200 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 50 
+
+> indep GL indep NS GGL GNS FNS DSNS FGL PNJGL indep GL indep NS GNS GGL PNJGL FNS DSNS FGL indep GL GGL indep NS GNS PNJGL FNS FGL DSNS indep GL GGL indep NS GNS FGL PNJGL FNS DSNS indep GL GGL indep NS GNS PNJGL FGL FNS DSNS indep GL GGL indep NS GNS FGL PNJGL FNS DSNS 0.25 0.50 0.75 0.1 0.2 0.3 0.03 0.06 0.09 0.25 0.50 0.75 1.00 0.25 0.50 0.75 0.2 0.4 0.6
+> Median AUPR
+
+perturbation hubsupp hubval rewire sparse Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Figure 5 Median area under the precision-recall curve for differential precision edge recovery across graph topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ), removal of edges around hubs (hubsupp ) and differences of edge values connecting a hub ( hubval ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. 14 Journal Title Here, YEAR, Volume X, Issue x 
+
+The AUPR for recovering the differential precision edges Eprecdiff is shown in Figure 5. Similar patterns are observed to those seen for differential support recovery. In particular, denser graph structures lead to much lower performance, with the impact becoming more pronounced in high dimensional settings. The performance of the methods depends strongly on the type of perturbation. In the hub support scenario, PNJGL achieves the highest AUPR across most settings, consistent with its joint penalty. In contrast, when differences arise through rewiring or sparse perturbations, DSNS consistently achieves either the highest or second highest AUPR across topologies and sample sizes, with performance comparable to FNS and FGL. These findings indicate that DSNS is particularly effective at identifying differential edge weights generated by sparse network reorganisation. The hub value scenario, where conditions share the same support but differ only in edge weights around hub nodes, is the most challenging perturbation type for all methods. In the RH and SF2 topologies, all methods achieve AUPR values below 0.10 regardless of sample size, demonstrating the difficulty of detecting edge weight changes in the absence of structural differences. Performance improves in the simpler SF1 topology, where PNJGL and FGL achieve the highest AUPR values. The same conclusions are observed across a broader range of rewiring levels, with the proportion of rewired edges varying from 5% to 40% (Supplementary Figure S6-S8). 
+
+3.1.2. Simulation design 2: multi-condition setting 
+
+Figure 6 presents the AUPR for overall graph recovery, differential support recovery and differential precision recovery in the multi-condition setting with K = 2 , 3 and 5. Across all network topologies, DSNS consistently achieved the best overall graph recovery performance. For differential support and differential precision recovery, DSNS was either the best-performing method or ranked second after FGL in a subset of scenarios. Compared with FNS, whose performance was comparable to DSNS in the two-condition setting, DSNS showed a clearer advantage as the number of conditions increased. This improvement is consistent with the explicit decomposition of nodewise coefficients into a shared component and sparse condition-specific deviations, rather than encouraging similarity through pairwise fusion penalties. topology = SF1, n = 100 topology = RH, n = 100 topology = SF2, n = 100 
+
+> graph recovery support differences value differences PNJGL indep GL GGL indep NS GNS FGL FNS DSNS PNJGL indep GL GGL indep NS GNS FNS DSNS FGL PNJGL indep NS GNS indep GL GGL FNS FGL DSNS PNJGL indep GL indep NS GGL FGL FNS GNS DSNS PNJGL indep GL indep NS GGL GNS FNS DSNS FGL PNJGL indep GL indep NS GNS GGL FNS DSNS FGL indep GL indep NS PNJGL pooled GL GGL pooled NS FGL GNS FNS DSNS indep GL indep NS PNJGL GGL GNS pooled GL pooled NS FNS FGL DSNS indep NS indep GL GNS PNJGL GGL FNS pooled NS FGL pooled GL DSNS 0.4 0.5 0.6 0.7 0.1 0.2 0.3 0.10 0.15 0.20 0.25 0.30 0.5 0.6 0.7 0.8 0.2 0.3 0.4 0.5 0.3 0.4 0.5 0.6 0.7 0.8 0.9 0.2 0.4 0.6 0.2 0.3 0.4 0.5 0.6 0.7
+> Median AUPR Number of conditions 235Method DSNS FNS GNS indep NS pooled NS FGL GGL PNJGL indep GL pooled GL
+
+Figure 6 Median area under the precision-recall curve for graphs, differential support and differential precision edge recovery across different number of conditions. Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. Journal Title Here, YEAR, Volume X, Issue x 15 
+
+3.1.3. Calibration performance 
+
+The median relative difference between oracle and calibrated F1 scores across simulation replicates and scenarios for DSNS is reported in Table 2. Smaller values indicate that the calibration method selects a parameter pair closer to the oracle choice. StARS calibration with β = 0 .05 gave the lowest average gap to the oracle F1 score for graph, differential support and differential precision recovery. The difference with other calibration methods was especially pronounced for overall graph recovery, where AIC, BIC and eBIC selected substantially less favourable parameter values on average. Although eBIC performed competitively for differential support and differential edge-weight recovery, StARS with β = 0 .05 provided the most reliable calibration overall. 
+
+Calibration method Graph recovery Differential support Differential edge weights 
+
+StARS ( β = 0 .05 ) 0.092 0.265 0.237 
+
+StARS ( β = 0 .10 ) 0.288 0.632 0.552 
+
+eBIC ( γ = 0 .5) 0.314 0.335 0.301 
+
+BIC 0.314 0.620 0.575 
+
+AIC 0.805 0.931 0.897 
+
+Table 2. Calibration performance for DSNS, measured by the median relative gap between the calibrated F1 score and the oracle F1, averaged across scenarios and simulations. Results are reported separately for graph recovery, differential support recovery, and differential edge weight recovery. Values closer to zero indicate better calibration. The smallest value for each edge set is highlighted in bold. 
+
+3.1.4. Computational performance 
+
+Method Median Time (ms) Total Memory Allocated (MB) 
+
+p = 100 p = 300 p = 500 p = 100 p = 300 p = 500 
+
+DSNS (Ours) 122.12 760.69 2 099.62 224.32 1 961.36 5 418.505 GNS 96.17 781.36 2 230.50 168.64 1 472.67 4 049.35 
+
+FNS 5 983.34 145 933.21 668 316.18 251.55 5 093.33 22 118.46 GGL 345.21 8 143.58 29 486.09 389.03 3 321.75 11 789.31 FGL 201.11 9 278.09 28 578.99 283.99 6 088.28 13 677.46 PNJGL 588.52 13 023.36 47 403.15 715.32 5 955.95 18 185.91 
+
+Table 3. Median execution time and memory allocation for each method across number of variables p ∈{100 , 300 , 500 } for K = 2 and nk = 100 .Computational time and memory allocation across candidate methods are reported in Table 3. Among the neighbourhood selection approaches, DSNS and GNS showed similar computational increase as the network increased and remained considerably faster than FNS and graphical lasso methods whose computation time increased more substantially with p. DSNS had computational time comparable to GNS, and was slightly faster at p = 300 and 
+
+p = 500 , which may be explained by the simpler penalty structure. Regarding memory allocation, DSNS required more memory than GNS due to the extended design matrix whose column dimension grows as (p − 1)( K + 1) .Nevertheless, memory usage remained substantially lower than the graphical lasso methods. Overall, DSNS achieved a computational performance that makes it scalable to high-dimensional problems and advantageous over other methods. 16 Journal Title Here, YEAR, Volume X, Issue x 
+
+# 3.2. Application: inflammatory protein network reorganisation in future lung cancer cases 
+
+The networks estimated by DSNS are displayed in Figure 7A-B. The control network included 146 edges and the future lung cancer cases network included 145 edges. Among these, 140 edges were shared across conditions, while 11 edges were present in one condition but absent in the other: six were specific to controls and five were specific to future cases. The Sharp calibrated lasso logistic regression selected four proteins associated with future lung cancer risk: IL10, CDCP1, ST1A1 and CD8A. The estimated differential support network is displayed in Figure 7C. Four proteins CDCP1, CSF1, IL18R1 and VEGFA displayed the largest number of differential associations, with two each. CDCP1 was also selected in the logistic regression analysis as associated with future lung cancer risk, whereas CSF1, IL18R1 and VEGFA were not. This suggests that the network analysis may highlight proteins whose relevance is expressed through altered conditional associations rather than through marginal association with disease status. The association between CDCP1 and IFNgamma was present in controls but absent in future cases, whereas associations between CDCP1 and IL18R1 was specific to future cases. IL10 also selected in the logistic regression analysis, displayed an additional association in future cases with CCL20. These results suggest that proteins previously identified as individual risk markers may also be embedded in broader alterations of the inflammatory association structure preceding lung cancer diagnosis. Journal Title Here, YEAR, Volume X, Issue x 17 control     
+
+> IL8
+> VEGFA
+> CD8A MCP3 CDCP1
+> CD244
+> IL7 OPG
+> LAPTGFbeta1 uPA
+> IL6 MCP1 IL17A
+> CXCL11
+> AXIN1 TRAIL CXCL9 CST5 OSM CXCL1 CCL4 CD6 SCF
+> IL18
+> TGFalpha MCP4 CCL11
+> TNFSF14
+> FGF23 MMP1
+> LIFR
+> FGF21 CCL19 IL15RA IL10RB IL18R1 PDL1 CXCL5 TRANCE
+> HGF
+> IL12B MMP10 IL10 TNF CCL23 CD5 CCL3 Flt3L CXCL6 CXCL10 4EBP1 SIRT2 CCL28 DNER ENRAGE CD40 IFNgamma FGF19 MCP2
+> CASP8
+> CCL25 CX3CL1
+> TNFRSF9
+> NT3 TWEAK CCL20 ST1A1 STAMBP ADA TNFB
+> CSF1
+
+case     
+
+> IL8 VEGFA CD8A MCP3 CDCP1
+> CD244
+> IL7 OPG
+> LAPTGFbeta1 uPA
+> IL6 MCP1 IL17A
+> CXCL11
+> AXIN1 TRAIL CXCL9 CST5 OSM CXCL1 CCL4 CD6 SCF
+> IL18
+> TGFalpha MCP4 CCL11
+> TNFSF14
+> FGF23 MMP1
+> LIFR
+> FGF21 CCL19 IL15RA IL10RB IL18R1 PDL1 CXCL5 TRANCE
+> HGF
+> IL12B MMP10 IL10 TNF CCL23 CD5 CCL3 Flt3L CXCL6 CXCL10 4EBP1 SIRT2 CCL28 DNER ENRAGE CD40 IFNgamma FGF19 MCP2
+> CASP8
+> CCL25 CX3CL1
+> TNFRSF9
+> NT3 TWEAK CCL20 ST1A1 STAMBP ADA TNFB
+> CSF1
+
+A BDifference     
+
+> IL8 VEGFA CD8A MCP3 CDCP1 CD244 IL7 OPG LAPTGFbeta1 uPA IL6 MCP1 IL17A CXCL11 AXIN1 TRAIL CXCL9 CST5 OSM CXCL1 CCL4 CD6 SCF IL18 TGFalpha MCP4 CCL11 TNFSF14 FGF23 MMP1 LIFR FGF21 CCL19 IL15RA IL10RB IL18R1 PDL1 CXCL5 TRANCE HGF IL12B MMP10 IL10 TNF CCL23 CD5 CCL3 Flt3L CXCL6 CXCL10 4EBP1 SIRT2 CCL28 DNER ENRAGE CD40 IFNgamma FGF19 MCP2 CASP8 CCL25 CX3CL1 TNFRSF9 NT3 TWEAK CCL20 ST1A1 STAMBP ADA TNFB CSF1
+
+## CDifference between control and case     
+
+> IL8
+> VEGFA
+> CD8A MCP3 CDCP1
+> CD244
+> IL7 OPG
+> LAPTGFbeta1 uPA
+> IL6 MCP1 IL17A
+> CXCL11
+> AXIN1 TRAIL CXCL9 CST5 OSM CXCL1 CCL4 CD6 SCF
+> IL18
+> TGFalpha MCP4 CCL11
+> TNFSF14
+> FGF23 MMP1
+> LIFR
+> FGF21 CCL19 IL15RA IL10RB IL18R1 PDL1 CXCL5 TRANCE
+> HGF
+> IL12B MMP10 IL10 TNF CCL23 CD5 CCL3 Flt3L CXCL6 CXCL10 4EBP1 SIRT2 CCL28 DNER ENRAGE CD40 IFNgamma FGF19 MCP2
+> CASP8
+> CCL25 CX3CL1
+> TNFRSF9
+> NT3 TWEAK CCL20 ST1A1 STAMBP ADA TNFB
+> CSF1
+
+## D
+
+Figure 7 Estimated graph supports for (A) controls and (B) future lung cancer cases, inferred using the DSNS method. (C) Estimated differential support and (D) differential precision matrix of the inflammatory protein network between future lung cancer cases and controls. Node size is proportional to node degree. Red nodes were identified by logistic regression as stably associated with lung cancer risk, while green nodes were not identified as associated with lung cancer risk. Bold node labels indicate hub nodes with more than 6 edges in the graph. Dark blue edges are common to both conditions, yellow edges are specific to controls, and light blue edges are specific to future lung cancer cases. In the differential precision matrix (D), edge colors indicate the sign of the difference between the precision matrices: green edges indicate a larger conditional dependency in controls than in future lung cancer cases, whereas red edges indicate a larger conditional dependency in future lung cancer cases than in controls. 
+
+The differential precision network which contains changes in conditional dependency strength is displayed in Figure 7D. Several associations displayed substantial differences despite being present in both networks. The largest absolute association differences were observed for CXCL1-CXCL5, 4EBP1-STAMBP, CXCL11-CXCL10 and CXCL9-CXCL10. Although these proteins were not identified as disease markers, these changes in network organisation may be involved in inflammatory dysregulation. The ten largest absolute differences are reported in Table 4. These included CDCP1-IFNgamma and IL10-CCL20 which were also identified in the differential support, confirming that these associations are highly perturbed between lung cancer cases and controls. 18 Journal Title Here, YEAR, Volume X, Issue x 
+
+Protein 1 Protein 2 Difference 
+
+CXCL1 CXCL5 0.993 4EBP1 STAMBP 0.819 CXCL11 CXCL10 0.759 CXCL9 CXCL10 0.726 SIRT2 ST1A1 0.718 IL10 CCL20 0.557 CD6 CD5 -0.55 ST1A1 STAMBP -0.527 CDCP1 IFNgamma -0.517 VEGFA CSF1 -0.511 
+
+Table 4. Top 10 protein pairs with the largest absolute differences in estimated precision matrix entries between controls and cases. Positive values indicate stronger conditional dependencies in controls, negative values indicate stronger conditional dependencies in cases. 
+
+# 4. Discussion 
+
+We proposed Data Shared Neighbourhood Selection, a joint network inference framework that combines the Data Shared Lasso decomposition with neighbourhood selection to estimate related Gaussian graphical models. By representing each nodewise regression coefficient as the sum of a shared component and sparse condition-specific deviations, DSNS directly leverages the assumption that biological conditions share most molecular associations, with only a limited number of perturbations between conditions. The resulting extended lasso formulation makes the method computationally efficient, scalable to high-dimensional settings and straightforward to implement using existing optimisation algorithms. We also adapted StARS to the two-parameter joint estimation setting and showed in simulations that stability-based calibration provides more reliable graph selection than standard information criteria. In the lung cancer proteomic application, DSNS identified differential inflammatory protein associations involving CDCP1 and IL10, two proteins reported as risk markers for lung carcinogenesis. This suggests that these markers may not act as isolated molecular signals, but may be involved in a broader reorganisation of the inflammatory association network. The analysis also highlighted CSF1, IL18R1 and VEGFA, which were not selected as individual risk markers but appeared among the most differentially connected proteins. These findings illustrate the complementary information provided by network analyses, where disease alterations may be reflected by changes in conditional associations even when individual marker effects are modest. In the two-condition setting, DSNS achieved graph recovery performance comparable to that of FNS across a wide range of network topologies, perturbation mechanisms and sample sizes. This similarity is expected, as demonstrated in (Ollier and Viallon, 2017), the two objectives share the same fusion term and differ in how the sparsity penalty is applied. However, the two methods are not equivalent when K > 2. DSNS achieved the best overall graph recovery across all three topologies and was either the best-performing method or second to FGL for differential support and differential precision recovery while FNS had lower performances than DSNS across scenarios. Indeed, unlike FNS which leverages a pairwise fusion penalty, DSNS directly provides an explicit decomposition of each condition’s coefficients into shared and deviation components, providing a representation that is directly aligned with the objective of distinguishing preserved from altered molecular associations. Additionally, DSNS was particularly competitive when network differences were sparse and distributed across the graph, whereas methods designed for localised node perturbations, such as PNJGL, performed best when differences were concentrated around hubs. Finally, DSNS offered a clear computational advantage over other graphical-lasso-based joint methods. Several limitations should be noted. Although the initial DSNS estimation decomposes nodewise coefficients into shared and condition-specific components, the constrained graphical lasso refitting step is performed independently within each condition. Differential precision matrices are therefore obtained through a posteriori comparison of refitted precision estimates and do not preserve the original shared-deviation decomposition. Additionally, since the graph support is selected and refitted using the same data, the resulting precision matrices may suffer from post-selection bias. Developing a joint unbiased refitting procedure that estimates shared and condition-specific precision matrices Journal Title Here, YEAR, Volume X, Issue x 19 
+
+directly would be a valuable extension. Additionally, DSNS, like most joint graphical model estimators, does not currently provide formal uncertainty quantification for selected shared or differential edges. Incorporating confidence measures or statistical tests would improve the reproducibility and interpretability of inferred biological networks. An extension of DSNS would be to decompose not only the nodewise regression coefficients, but also the condition-specific intercepts. In this work, variables were centered within each condition, so DSNS focuses on differences in conditional association structure rather than differences in protein abundance. Modelling the intercepts jointly would allow the identification of proteins whose conditional mean differs between biological states after adjustment for the remaining proteins, alongside protein pairs whose conditional associations differ. Such an extension would provide a unified framework for combining multivariable marker selection and joint network inference. 
+
+# 5. Conflicts of interest 
+
+MC-H holds shares of the O-SMOSE company. Consulting activities of the company are independent of the present work. The other authors declare that they have no competing interests. 
+
+# 6. Funding 
+
+BF, RC-Z, VV, JC and MC-H acknowledge support from the European Union DISCERN project (grant agreement 101096888). MC-H was also supported by the Horizon Europe Innovation programme STAGE project (grant agreement 101137146) and accompanying UKRI grant number 10109957. Views and opinions expressed are however those of the authors only and do not necessarily reflect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them. Where authors are identified as personnel of the International Agency for Research on Cancer/World Health Organization, the authors alone are responsible for the views expressed in this article and they do not necessarily represent the decisions, policy, or views of the International Agency for Research on Cancer/World Health Organization. 
+
+# 7. Data availability 
+
+The scripts and simulated datasets used to generate the results are available at https://forge.inrae. fr/blanche.francheterre/dsns_paper_simulations . The R package monique https://forge.inrae.fr/ blanche.francheterre/monique implements FNS, GNS and DSNS. The data in EPIC that support the findings of this study are available from the corresponding author upon reasonable request. The NOWAC data cannot be shared publicly because of local and national ethical and security policy. Data access for researchers will be conditional on adherence to both the data access procedures of the Norwegian women and Cancer Cohort and the UiT The Arctic University of Norway (Tromsø, Norway; contact via T.M. Sandanger, torkjel.sandanger@uit.no, Tonje Braaten tonje.braaten@uit.no, and Arne Bastian Wiik, arne.b.wiik@uit.no) in addition to the local ethical committee. 
+
+# 8. Author contributions statement 
+
+BF: formal analysis, investigation, methodology, software, visualisation, writing (original draft), writing (review and editing); RC-Z, VV: methodology, review; JC: Conceptualisation, methodology, investigation, formal analysis, project administration, writing (review and editing), supervision; MC-H: Conceptualisation, methodology, investigation, formal analysis, project administration, writing (review and editing), supervision. All authors were responsible for the decision to submit the manuscript. 
+
+# 9. Acknowledgments References     
+
+> N. Ballout and V. Viallon. Structure estimation of binary graphical models on stratified data: Application to the description of injury tables for victims of road accidents. Statistics in Medicine , 38(14):2680–2703, 2019. A.-L. Barabasi and Z. N. Oltvai. Network biology: understanding the cell’s functional organization. Nature reviews genetics , 5(2): 101–113, 2004. 20 Journal Title Here, YEAR, Volume X, Issue x
+
+D. S. Bassett and E. T. Bullmore. Human brain networks in health and disease. Current opinion in neurology , 22(4):340–347, 2009. B. Bodinier, S. Filippi, T. H. Nøst, J. Chiquet, and M. Chadeau-Hyam. Automated calibration for stability selection in penalised regression and graphical models. Journal of the Royal Statistical Society Series C: Applied Statistics , 72(5):1375–1393, 2023. J. Chiquet, Y. Grandvalet, and C. Ambroise. Inferring multiple graphical structures. Statistics and Computing , 21(4):537–553, 2011. S. Dagnino, B. Bodinier, F. Guida, K. Smith-Byrne, D. Petrovic, M. D. Whitaker, T. Haugdahl Nøst, C. Agnoli, D. Palli, C. Sacerdote, et al. Prospective identification of elevated circulating cdcp1 in patients years before onset of lung cancer. Cancer research , 81(13): 3738–3748, 2021. P. Danaher, P. Wang, and D. M. Witten. The joint graphical lasso for inverse covariance estimation across multiple classes. Journal of the Royal Statistical Society Series B: Statistical Methodology , 76(2):373–397, 2014. R. Foygel and M. Drton. Extended bayesian information criteria for gaussian graphical models. Advances in neural information processing systems , 23, 2010. J. Friedman, T. Hastie, and R. Tibshirani. Sparse inverse covariance estimation with the graphical lasso. Biostatistics , 9(3):432–441, 2008. S. M. Gross and R. Tibshirani. Data shared lasso: A novel tool to discover uplift. Computational statistics & data analysis , 101: 226–235, 2016. J. Guo, E. Levina, G. Michailidis, and J. Zhu. Joint estimation of multiple graphical models. Biometrika , 98(1):1–15, 2011. M. O. Kuismin and M. J. Sillanp¨ a¨ a. Estimation of covariance and precision matrix, network structure, and a view toward systems biology. Wiley Interdisciplinary Reviews: Computational Statistics , 9(6):e1415, 2017. W. Lee and Y. Liu. Joint estimation of multiple precision matrices with common structures. The Journal of Machine Learning Research ,16(1):1035–1062, 2015. Z. Li, T. Mccormick, and S. Clark. Bayesian joint spike-and-slab graphical lasso. In International Conference on Machine Learning ,pages 3877–3885. PMLR, 2019. H. Liu, K. Roeder, and L. Wasserman. Stability approach to regularization selection (stars) for high dimensional graphical models. 
+
+Advances in neural information processing systems , 23, 2010. S. Liu, Y. Zhang, Z. Li, and J. Yin. Learning joint graphical model with computational efficiency, dynamic regularization, and adaptation. arXiv preprint arXiv:2503.18722 , 2025. J. Ma and G. Michailidis. Joint structural estimation of multiple graphical models. Journal of Machine Learning Research , 17(166): 1–148, 2016. N. Meinshausen and P. B¨ uhlmann. High-dimensional graphs and variable selection with the lasso. 2006. K. Mohan, P. London, M. Fazel, D. Witten, and S.-I. Lee. Node-based learning of multiple gaussian graphical models. The Journal of Machine Learning Research , 15(1):445–488, 2014. E. Ollier and V. Viallon. Joint estimation of k related regression models with simple l 1-norm penalties. arXiv preprint arXiv:1411.1594 ,2014. E. Ollier and V. Viallon. Regression modelling on stratified data with the lasso. Biometrika , 104(1):83–96, 2017. A. Shojaie. Differential network analysis: A statistical perspective. Wiley Interdisciplinary Reviews: Computational Statistics , 13(2): e1508, 2021. R. Tibshirani. Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society Series B: Statistical Methodology ,58(1):267–288, 1996. K. Tsai, O. Koyejo, and M. Kolar. Joint gaussian graphical model estimation: A survey. Wiley Interdisciplinary Reviews: Computational Statistics , 14(6):e1582, 2022. B. Zhang and Y. Wang. Learning structural changes of gaussian graphical models in controlled experiments. arXiv preprint arXiv:1203.3532 , 2012. X.-F. Zhang, L. Ou-Yang, S. Yang, X. Hu, and H. Yan. Diffgraph: an r package for identifying gene network rewiring using differential graphical models. Bioinformatics , 34(9):1571–1573, 2018. 
+
+# Supplementary Material S1. Joint network inference methods 
+
+# S1.1. Joint Graphical Lasso 
+
+Two different joint penalties were defined by (Danaher et al., 2014): 
+
+• Fused Graphical Lasso (FGL), which encourages similar conditional dependency strengths across conditions: 
+
+P({Ω(k)}) = X
+
+> k<k ′
+
+X
+
+> i,j
+
+Ω(k) 
+
+> ij
+
+− Ω(k′ )
+
+> ij
+
+• Group Graphical Lasso (GGL), which in contrast encourages shared sparsity patterns across conditions: Journal Title Here, YEAR, Volume X, Issue x 21 
+
+P({Ω(k)}) = X
+
+> i̸=j
+
+vuut KX
+
+> k=1
+
+
+
+Ω(k)
+
+> ij
+
+2
+
+Additionally, we consider the perturbed-node Joint Graphical Lasso (PNJGL) whose joint penalty encourages node-wise differences, ie differences are encouraged to be around specific nodes: 
+
+P({Ω(k)}) = X
+
+> k<k ′
+
+V (kk ′ )
+
+> 2
+
+, subject to Ω(k) − Ω(k′ ) = V (kk ′ ) + V (kk ′ )T
+
+where V (kk ′ ) ∈ Rp×p. This penalisation is particularly relevant in biological settings where network perturbations may be localized around specific hub nodes. FGL and GGL are estimated using the R package JGL and PNJGL with the R package DiffGraph (Zhang et al., 2018). 
+
+# S1.2. Joint Neighbourhood Selection 
+
+Neighbourhood Selection was introduced by (Meinshausen and B¨ uhlmann, 2006) to estimate a single gaussian graphical network. For each node j, we solve: 
+
+min  
+
+> βj∈Rp−1
+
+12n ∥Xj − X−j βj ∥22 + λ ∥βj ∥1 (3) 
+
+where Xj ∈ Rn is the jth column of X, X−j ∈ Rn×(p−1) consists of all variables of X except j and λ, the regularisation parameter. The neighbourhood selection framework can be extended to the multi-condition setting but adding a joint penalty across conditions. Analogously to JGL, we consider two joint penalties:  
+
+> •
+
+Fused neighbourhood Selection (FNS), which encourages similar regression coefficients across conditions: 
+
+P({β(k) 
+
+> j
+
+}) = X
+
+> k<k ′
+
+β(k) 
+
+> j
+
+− β(k′ )  
+
+> j1
+> •
+
+Group neighbourhood Selection (GNS), which encourages shared support patterns across conditions: 
+
+P({β(k) 
+
+> j
+
+}) = X
+
+> i̸=j
+
+vuut KX
+
+> k=1
+
+
+
+β(k)
+
+> ij
+
+2
+
+# S2. Data Shared Neighbourhood Selection 
+
+# S2.1. Identifiability 
+
+The Data Shared Lasso model decomposes the regression coefficients as β(k) = θ + ∆ (k) for each condition 
+
+k ∈ { 1, . . . , K }, where θ represents a shared effect across conditions and ∆(k) captures deviations from the shared effect for each condition. In the absence of regularisation, the decomposition is overparameterised. Both Gross and Tibshirani (2016) and Ollier and Viallon (2014), demonstrated that the ℓ1 penalty induces a preferred sparse decomposition among equivalent representations. In our model, the ratio τ = λ1 
+
+> λ2
+
+controls the degree of sharing across conditions. Ollier and Viallon (2014) showed that values τ < 1 
+
+> K
+
+lead to a vanishing shared component and thus to independent neighbourhood selection, and τ = 1 
+
+> K
+
+may yield non-unique decompositions. Hence, we restrict the regularisation parameters values to values that satisfy τ > 1 
+
+> K
+
+⇔ λ1 
+
+> λ2
+
+> 1 
+
+> K
+
+.
+
+# S3. Simulation study 
+
+# S3.1. Details of simulated data generation 
+
+First, a binary adjacency matrix of size p×p was generated according to two biologically relevant topologies: scale-free graphs and random graph with hubs. 22 Journal Title Here, YEAR, Volume X, Issue x 
+
+Construction of SF1 and SF2 topology: Scale-free graphs reflect, by construction, the presence of highly connected hub nodes and lower degree nodes, a common property observed in biological networks. Two scale-free subgraphs of 50 nodes each were independently generated using the Barab´ asi-Albert preferential attachment model using the R package igraph . Two values were considered to control preferential attachement through parameter α, 1 yielding linear attachement, widely used in simulation studies for joint network inference, and 2 yielding much denser graphs, more representative of biological networks. The two subgraphs were then connected by four randomly selected edges. Construction of RH topology: We considered another topology with lower degree heterogeneity. Similarly, two subgraphs of 50 nodes each were constructed using a random graph model. Within each subgraph, node degrees were sampled uniformly from {1, 2, 3}, then two nodes per subgraph were designated as hubs and assigned a degree of 10. The resulting adjacency matrix was duplicated to represent the two conditions. Differential structure between the two conditions was then introduced using three different methods: (i) random edge removal: a proportion of edges varying from 5% to 100% was randomly removed, half from condition 1 and the other half from condition 2. Additional imbalance scenarios were considered by varying the proportion of perturbations assigned to each condition. (ii) random edge rewiring, to simulate topological reorganisation, a proportion of edges ( 5% to 50% ) were randomly reassigned in condition 2. For each selected edge (i, j ), the edge was removed in condition 2 and replaced by a new edge (i, j ′) or (i′, j ) where i′ and j′ were sampled uniformly from the remaining nodes. This scenario preserves the total number of edges while changing the network topology. (iii) hub deletion, to evaluate differential edge recovery under localized perturbations, all edges connected to the highest-degree node in the original graph were removed from condition 2. We also considered graphs were no structure alterations were added, in order to perturb only the edge weights between conditions: (iv) hub value perturbations and sparse edge weights perturbations. For each condition, positive definite precision matrices Ω(k) were generated from the corresponding adjacency matrices using the R package fake . For each nonzero edge, off-diagonal entries were sampled uniformly from [0.2,0.6] with randomly assigned signs. Entries corresponding to absent edges were set to 0. Positive definiteness was ensured by diagonal dominance such that: 
+
+Ωii =
+
+> p
+
+X
+
+> j=1
+
+|Ωij | + c
+
+where c > 0 is a parameter tuned internally. To introduce differences in edge weights independently of support differences, a subset of shared edges across conditions was perturbed by modifying the corresponding precision matrix. Specifically, for a proportion of edges ( 5% 
+
+to 50% ) present in both conditions, the corresponding precision coefficients in condition 2 were modified by adding or subtracting a constant sampled uniformly from {0.1, 0.2, 0.3, 0.4}. After introducing edge weight perturbations, we assigned a common diagonal to all precision matrices to ensure positive definiteness was not impaired. For each variable, the diagonal entry was set to the maximum, over conditions, of the sum of absolute off-diagonal entries in the corresponding row. For each condition k, observations were sampled independently from the centered multivariate normal distribution with covariance Ω(k)−1
+
+. We considered three sample size settings: nk = p/ 2, nk = p and nk = 2 p, respectively. The number of observations was the same for both conditions. For each graph configuration, 50 independent datasets were generated. 
+
+# S3.2. Performance metrics 
+
+Edge recovery performance was evaluated separately for: (i) overall graph recovery, E(k) for all k, (ii) differential support recovery, Esuppdiff , and (iii) differential precision matrix recovery, Eprecdiff . To evaluate the performance of each setting over the full sparsity parameters grid regardless of calibration ability, we computed the area under the precision-recall curve (AUPR) over the full parameter grid for each simulation replicate and each method. Estimates were ordered by decreasing number of selected edges, with ties broken by decreasing precision. For each edge recovery target, precision and recall were computed along this path. When several parameter values yielded the same recall, only the maximum precision was retained. Precision values were then monotonized by replacing each point with the maximum precision observed at larger recall values, resulting in a non-increasing curve. The area under the precision-recall curve (AUPR) was computed using the trapezoidal rule after adding the boundary points ((0,1)) Journal Title Here, YEAR, Volume X, Issue x 23 
+
+and ((1,0)). AUPR values were first computed separately for each simulation replicate, and then summarised across replicates using the median and interquartile range. 
+
+# S4. Supplementary Figures DSNS - Graph recovery DSNS - Differential support DSNS - Differential precision 
+
+> theta AND delta AND theta OR delta AND theta AND delta OR theta OR delta OR theta AND delta OR theta AND delta AND theta OR delta OR theta OR delta AND theta AND delta AND theta OR delta AND theta AND delta OR theta OR delta OR
+
+0.34 0.35 0.36 0.37 0.38 0.39 0.28 0.30 0.32 0.63 0.64 0.65 0.66 
+
+> Median AUPR
+
+Rule theta AND delta AND theta AND delta OR theta OR delta AND theta OR delta OR 
+
+Supplementary Figure S1 Median area under the precision-recall curve for graphs, differential support and differential precision edge recovery, averaged over simulation scenarios, for AND, OR rule combinations for the Data Shared Neighbourhood Selection (DSNS) method. 24 Journal Title Here, YEAR, Volume X, Issue x GNS - Graph recovery GNS - Differential support GNS - Differential precision FNS - Graph recovery FNS - Differential support FNS - Differential precision 
+
+> AND OR OR AND AND OR AND OR AND OR AND OR 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.28 0.29 0.30 0.27 0.28 0.29 0.30 0.31 0.32 0.27 0.28 0.29 0.30 0.31 0.32 0.63 0.64 0.65 0.66 0.62 0.63 0.64 0.65
+> Median AUPR
+
+Rule AND OR 
+
+Supplementary Figure S2 Median area under the precision-recall curve for graphs, differential support and differential precision edge recovery, averaged over simulation scenarios, for AND, OR rules for Fused Neighbourhood Selection (FNS) and Group Neighbourhood Selection (GNS) methods. Journal Title Here, YEAR, Volume X, Issue x 25 topology = SF2, n = 200 topology = SF2, n = 100 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 100 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 100 topology = SF1, n = 50 
+
+> indep GL indep NS GNS PNJGL GGL pooled GL FGL pooled NS DSNS FNS indep GL indep NS GNS PNJGL GGL FGL DSNS pooled GL FNS pooled NS indep NS indep GL PNJGL GNS GGL DSNS FNS FGL pooled NS pooled GL indep GL PNJGL indep NS pooled GL FGL GGL pooled NS DSNS FNS GNS indep GL indep NS PNJGL pooled GL GGL FGL pooled NS GNS FNS DSNS indep GL indep NS PNJGL GGL FGL pooled GL GNS pooled NS DSNS FNS indep GL PNJGL pooled GL FGL GGL indep NS pooled NS DSNS FNS GNS indep GL PNJGL pooled GL indep NS FGL GGL pooled NS DSNS FNS GNS indep GL PNJGL indep NS pooled GL FGL GGL pooled NS DSNS FNS GNS
+
+0.6 0.8 1.0 0.4 0.5 0.6 0.7 0.8 0.2 0.3 0.4 0.5 0.6 0.5 0.6 0.7 0.8 0.9 1.0 0.6 0.7 0.8 0.9 0.4 0.5 0.6 0.7 0.8 0.6 0.7 0.8 0.9 1.0 0.7 0.8 0.9 0.5 0.6 0.7 0.8 0.9 
+
+> Median AUPR
+
+perturbation hubsupp hubval rewire sparse Method DSNS FNS GNS indep NS pooled NS FGL GGL PNJGL indep GL pooled GL 
+
+Supplementary Figure S3 Median area under the precision-recall curve for graphs support recovery across topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ), removal of edges around hubs (hubsupp ), and differences of edge values connecting a hub ( hubval ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. 26 Journal Title Here, YEAR, Volume X, Issue x topology = SF2, n = 200 topology = SF2, n = 100 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 100 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 100 topology = SF1, n = 50 
+
+> indep GL indep NS GNS GGL PNJGL DSNS FNS FGL indep GL indep NS PNJGL GNS GGL FGL DSNS FNS indep GL indep NS PNJGL GNS GGL DSNS FNS FGL indep GL indep NS PNJGL GGL FGL DSNS FNS GNS indep GL indep NS GGL PNJGL FGL DSNS FNS GNS indep GL indep NS PNJGL GGL FGL GNS DSNS FNS indep GL PNJGL indep NS GGL FGL DSNS FNS GNS indep GL indep NS PNJGL GGL FGL DSNS FNS GNS indep GL indep NS PNJGL GGL FGL GNS DSNS FNS
+
+0.25 0.50 0.75 0.1 0.2 0.025 0.050 0.075 0.100 0.25 0.50 0.75 1.00 0.1 0.2 0.3 0.4 0.5 0.05 0.10 0.15 0.20 0.25 0.50 0.75 1.00 0.2 0.4 0.6 0.8 0.2 0.4 0.6 
+
+> Median AUPR
+
+perturbation hubsupp rewire sparse Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Supplementary Figure S4 Median area under the precision-recall curve for differential support recovery across graph topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ) and removal of edges around hubs ( hubsupp ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. Journal Title Here, YEAR, Volume X, Issue x 27 topology = SF2, n = 200 topology = SF2, n = 100 topology = SF2, n = 50 topology = RH, n = 200 topology = RH, n = 100 topology = RH, n = 50 topology = SF1, n = 200 topology = SF1, n = 100 topology = SF1, n = 50 
+
+> indep GL indep NS GGL GNS FNS DSNS FGL PNJGL indep GL indep NS GGL GNS PNJGL FNS FGL DSNS indep GL indep NS GNS GGL PNJGL FNS DSNS FGL indep GL GGL indep NS GNS PNJGL FNS FGL DSNS indep GL GGL indep NS GNS FGL FNS DSNS PNJGL indep GL GGL indep NS GNS FGL PNJGL FNS DSNS indep GL GGL indep NS GNS PNJGL FGL FNS DSNS indep GL GGL indep NS GNS PNJGL FGL FNS DSNS indep GL GGL indep NS GNS FGL PNJGL FNS DSNS
+
+0.25 0.50 0.75 0.1 0.2 0.3 0.03 0.06 0.09 0.25 0.50 0.75 0.2 0.4 0.6 0.1 0.2 0.25 0.50 0.75 1.00 0.25 0.50 0.75 0.2 0.4 0.6 
+
+> Median AUPR
+
+perturbation hubsupp hubval rewire sparse Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Supplementary Figure S5 Median area under the precision-recall curve for differential precision edge recovery across graph topologies, sample sizes and four perturbation types: sparse perturbations ( sparse ), rewiring of edges ( rewire ), removal of edges around hubs ( hubsupp ) and differences of edge values connecting a hub ( hubval ). Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Methods are ordered by increasing median AUPR within each panel. 28 Journal Title Here, YEAR, Volume X, Issue x topology = SF2, n = 50 topology = SF2, n = 100 topology = SF2, n = 200 topology = RH, n = 50 topology = RH, n = 100 topology = RH, n = 200 topology = SF1, n = 50 topology = SF1, n = 100 topology = SF1, n = 200 
+
+> 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40
+
+0.7 0.8 0.9 1.0 0.7 0.8 0.9 0.6 0.7 0.8 0.9 0.7 0.8 0.9 0.6 0.7 0.8 0.9 0.4 0.5 0.6 0.7 0.5 0.6 0.7 0.8 0.9 0.4 0.5 0.6 0.7 0.8 0.2 0.3 0.4 0.5 
+
+> Median AUPR
+
+Method DSNS FNS GNS indep NS pooled NS FGL GGL PNJGL indep GL pooled GL 
+
+Supplementary Figure S6 Median area under the precision-recall curve for graphs recovery across topologies and sample sizes, for 5 different percentage of edges rewiring. Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. Journal Title Here, YEAR, Volume X, Issue x 29 topology = SF2, n = 50 topology = SF2, n = 100 topology = SF2, n = 200 topology = RH, n = 50 topology = RH, n = 100 topology = RH, n = 200 topology = SF1, n = 50 topology = SF1, n = 100 topology = SF1, n = 200 
+
+> 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40
+
+0.2 0.4 0.6 0.8 0.2 0.4 0.6 0.8 0.2 0.4 0.6 0.2 0.4 0.6 0.1 0.2 0.3 0.4 0.5 0.1 0.2 0.3 0.1 0.2 0.3 0.4 0.05 0.10 0.15 0.20 0.25 0.00 0.05 0.10 0.15 0.20 
+
+> Median AUPR
+
+Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Supplementary Figure S7 Median area under the precision-recall curve for differential support recovery across topologies and sample sizes, for 5 different percentage of edges rewiring. Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates. 30 Journal Title Here, YEAR, Volume X, Issue x topology = SF2, n = 50 topology = SF2, n = 100 topology = SF2, n = 200 topology = RH, n = 50 topology = RH, n = 100 topology = RH, n = 200 topology = SF1, n = 50 topology = SF1, n = 100 topology = SF1, n = 200 
+
+> 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40 515 20 30 40
+
+0.00 0.25 0.50 0.75 0.2 0.4 0.6 0.8 0.0 0.2 0.4 0.6 0.0 0.2 0.4 0.6 0.1 0.2 0.3 0.4 0.5 0.1 0.2 0.3 0.1 0.2 0.3 0.4 0.05 0.10 0.15 0.20 0.25 0.00 0.05 0.10 0.15 0.20 
+
+> Median AUPR
+
+Method DSNS FNS GNS indep NS FGL GGL PNJGL indep GL 
+
+Supplementary Figure S8 Median area under the precision-recall curve for differential precision edge recovery across topologies and sample sizes, for 5 different percentage of edges rewiring. Points represent median AUPR values and error bars indicate the interquartile range across simulation replicates.

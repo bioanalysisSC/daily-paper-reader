@@ -20,5 +20,14 @@ conclusion: 建立系统框架解码肿瘤代谢重连并预测合成致死靶�
 ## 摘要
 癌细胞会迅速重构其代谢，从高效的能量生产转向合成代谢过程，以维持不受控制的生长。解码这种代谢转变对于发现新的治疗靶点至关重要。为了描绘不同癌症类型中的系统级代谢变化，我们利用癌症基因组图谱（TCGA）的基因表达数据，为八种组织（肺、甲状腺、胃、前列腺、肝、肾、结肠和乳腺）构建了组织特异性的基因组规模代谢模型。应用基于约束的建模，我们随后通过通量富集分析鉴定了差异调控的代谢通路，揭示了组织特异性的重编程：乳腺癌中支链氨基酸代谢被抑制；结肠、肾和甲状腺中鞘脂代谢下调，而乳腺中上调。我们进一步提出了一种模型驱动的流程，用于识别和描述代谢脆弱性。我们首先鉴定正常组织中的合成致死反应及其在癌症中对应的单一致死反应，从而能够为每种癌症识别代谢性‘附带致死’反应对。模型预测的附带致死基因对，包括结肠中的CMPK1-AK、前列腺中的ALDOA-PGD和肝脏模型中的SLC25A26-UQCRB，通过使用DepMap基因必需性数据的计算验证得到了支持。随后，我们展示了如何在考虑任何附带致死对的同时，解释癌症组织中的代谢重编程。总之，我们的结果为解码癌症中的代谢重编程和合成致死脆弱性建立了一个系统性框架。
 
+## 速览
+**TLDR**：癌细胞将代谢由能量生成转向合成代谢以支持增殖。作者利用TCGA表达数据构建8种组织的肿瘤基因组尺度代谢模型，通过通量富集分析揭示组织特异代谢重连，如乳腺癌支链氨基酸代谢受抑，鞘脂代谢在多种癌症中差异调控。进一步提出一种识别“伴生致死”代谢反应对的流程，预测的CMPK1-AK等基因对在DepMap中获得验证。该框架可系统解码代谢重连并发现合成致死靶点。 \
+**Motivation**：肿瘤代谢重编程暗藏治疗靶点，但系统层面解析其组织特异性重连与代谢脆弱性仍具挑战。 \
+**Method**：基于TCGA表达数据构建8种组织癌症基因组规模代谢模型，用通量富集分析揭示重连，并设计collateral lethal反应对识别流程。 \
+**Result**：发现乳腺癌支链氨基酸代谢抑制、鞘脂代谢差异调控；预测CMPK1-AK、ALDOA-PGD、SLC25A26-UQCRB等伴生致死基因对，经DepMap验证。 \
+**Conclusion**：建立了从代谢重连到合成致死脆弱性的系统分析框架，为癌症代谢靶点发现提供新途径。
+
+---
+
 ## Abstract
 Cancer cells rapidly rewire their metabolism, from efficient energy production toward anabolic processes, to sustain uncontrolled growth. Decoding such metabolic shifts is essential for uncovering novel therapeutic targets. To map systems-level metabolic changes across cancer types, we built context-specific genome-scale metabolic models for eight tissues (lung, thyroid, stomach, prostate, liver, kidney, colon, and breast) using gene expression data from The Cancer Genome Atlas (TCGA). Applying constraint-based modelling, we then identified differentially regulated pathways through flux enrichment analysis, revealing tissue-specific rewiring: branched chain amino acid metabolism was suppressed in breast cancer; sphingolipid metabolism was downregulated in colon, kidney, and thyroid but upregulated in breast. We further propose a model-driven pipeline to identify and characterise metabolic vulnerabilities. We first identify synthetic lethal reactions in normal tissues and their corresponding single lethal counterparts in cancers, thereby enabling the identification of metabolic "collateral lethal" reaction pairs for each cancer. Model-predicted collateral lethal gene pairs, including CMPK1-AK in colon, ALDOA-PGD in prostate, and SLC25A26-UQCRB in liver models, were supported through computational validation using DepMap data on gene essentiality. Subsequently, we show how to interpret metabolic rewiring in cancer tissues while accounting for any collateral lethal pairs. In summary, our results establish a systemic framework for decoding metabolic rewiring and synthetic lethal vulnerabilities in cancer.

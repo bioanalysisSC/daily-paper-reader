@@ -51,14 +51,14 @@
       <span class="dpr-home-dashboard-kicker">2026-08-29</span>
       <h3 class="dpr-home-dashboard-title">今日汇总</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">共 12 篇</strong>
+    <strong class="dpr-home-dashboard-count">共 16 篇</strong>
   </div>
   <dl class="dpr-home-dashboard-stats">
-    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>1 次</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>累计更新</dt><dd>2 次</dd></div>
     <div class="dpr-home-dashboard-stat"><dt>精读</dt><dd>5</dd></div>
-    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>7</dd></div>
+    <div class="dpr-home-dashboard-stat"><dt>速读</dt><dd>11</dd></div>
   </dl>
-  <p class="dpr-home-dashboard-body">最近更新：2026-08-29 03:01:13 UTC<br>状态：成功</p>
+  <p class="dpr-home-dashboard-body">最近更新：2026-08-29 22:48:34 UTC<br>状态：成功</p>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-brief-card">
   <div class="dpr-home-dashboard-header">
@@ -69,9 +69,7 @@
     <strong class="dpr-home-dashboard-count">AI</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<p>今日精读5篇、速读7篇，聚焦AI驱动生物系统建模与蛋白质大模型新范式。</p>
-<p>最值得关注9.0分两项：《DigiPhen》提出生物系统预测新范式，《RegimeFormer》构建全局扰动蛋白质模型。</p>
-<p>建议优先精读这两篇高分工作，快速把握AI破解生物扰动的核心思路。</p>
+<p>今日共处理16篇论文，精读2篇、速读3篇，聚焦生物系统建模与蛋白质模型新方法。最值得关注的是《DigiPhen》提出构建生物系统预测模型的新范式，以及《RegimeFormer》用大模型刻画全局扰动状态。下一步可优先研读两篇精读论文，并留意基因组语言模型与多GPU仿真的应用潜力。</p>
   </div>
 </section>
 <section class="dpr-home-dashboard-card dpr-home-deep-card">
@@ -93,12 +91,12 @@
       <span class="dpr-home-dashboard-kicker">今日累计</span>
       <h3 class="dpr-home-dashboard-title">速读推荐</h3>
     </div>
-    <strong class="dpr-home-dashboard-count">7 篇</strong>
+    <strong class="dpr-home-dashboard-count">11 篇</strong>
   </div>
   <div class="dpr-home-dashboard-body">
-<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations">Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations</span></li><li><span class="dpr-home-dashboard-paper-title" title="Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models">Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics">TracingFlow: A Simulation-Free Trajectory Inference Framework Based on Second-Order Dynamics</span></li></ul>
+<ul class="dpr-home-dashboard-paper-list"><li><span class="dpr-home-dashboard-paper-title" title="GenomeHarness: Harnessing Al Agents for Reliable Adaptation of Genome Language Models">GenomeHarness: Harnessing Al Agents for Reliable Adaptation of Genome Language Models</span></li><li><span class="dpr-home-dashboard-paper-title" title="Scalable Multi-GPU Simulation of 3D Multicellular Growth with RNN-Based Workload Balancing">Scalable Multi-GPU Simulation of 3D Multicellular Growth with RNN-Based Workload Balancing</span></li><li><span class="dpr-home-dashboard-paper-title" title="Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models">Decoding Tumour-Specific Rewiring and Synthetic Lethality Through Genome-Scale Metabolic Models</span></li></ul>
   </div>
-  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>7</strong></span></div>
+  <div class="dpr-home-dashboard-tags"><span class="dpr-home-dashboard-tag">gene-perturb <strong>11</strong></span></div>
 </section>
 </div>
 
