@@ -1,0 +1,69 @@
+{
+  "label": "2026-08-30",
+  "date": "2026-08-30",
+  "generated_at": "2026-08-30T22:56:52",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202608/30/2608.25421v1-data-driven-effective-modeling-of-stochastic-chemical-reaction-networks",
+      "section": "quick",
+      "title_en": "Data-driven Effective Modeling of Stochastic Chemical Reaction Networks",
+      "authors": "Yuan Chen, Weize Mao, Dongbin Xiu",
+      "date": "2026-08-26",
+      "pdf": "https://arxiv.org/pdf/2608.25421v1",
+      "score": "7.0",
+      "evidence": "生化反应网络的随机模拟；直接支持虚拟细胞建模",
+      "tldr": "随机化学反应的随机模拟算法(SSA)虽精确但计算成本高昂。本文提出数据驱动的有效建模方法，在用户自定义的粗时间步上，利用生成式机器学习模型直接逼近SSA诱导的连续时间马尔可夫链的有限时间转移核。采用条件归一化流作为随机传播器，仅以短突发SSA仿真数据训练，即可递归生成统计一致的粗时间步轨迹，从而大幅削减计算开销。多组数值实验验证了该方法的准确性和效率。",
+      "tags": "query:gene-perturb",
+      "abstract_en": "The Stochastic Simulation Algorithm (SSA), widely considered an exact algorithm for stochastic chemical reaction networks, suffers from high computational cost. In this work, we propose a data-driven effective model that operates on a user-defined coarse time step independent of the underlying microscopic reaction-event scale. This is accomplished by directly approximating the finite-time transition kernel of the continuous-time Markov chain induced by SSA, using a generative machine learning model trained on short bursts of SSA simulation data. The trained model constructs a stochastic propagator that recursively generates statistically consistent trajectories at the constant coarse time step, with significantly reduced computational cost. In this paper, we employ conditional normalizing flow as the stochastic propagator. A comprehensive set of numerical examples is presented to demonstrate the accuracy and efficiency of the proposed method.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/30/2608.22024v1-barycentric-fused-gromov-wasserstein-balancing-for-causal-inference-under-multiple-treatments",
+      "section": "quick",
+      "title_en": "Barycentric Fused Gromov-Wasserstein Balancing for Causal Inference under Multiple Treatments",
+      "authors": "Yuki Murakami, Takumi Hattori, Kohsuke Kubota",
+      "date": "2026-08-22",
+      "pdf": "https://arxiv.org/pdf/2608.22024v1",
+      "score": "6.0",
+      "evidence": "面向多重处理下异质性处理效应的因果推断方法；可迁移至扰动效应预测。",
+      "tldr": "针对多治疗观察数据下异质与交互效应估计问题，现有成对平衡方法复杂度随治疗模式数二次增长且损害局部邻近结构。本文提出CIHSI-Net，基于BFG-WB目标将各治疗模式表示分布与共享重心对齐，从而将复杂度由二次降为线性，并通过融合Gromov-Wasserstein差异保留局部邻近结构。模拟实验表明其一致优于最先进基线，真实营销数据应用验证其实用性，为复杂多治疗场景提供高效可靠的因果推断方案。",
+      "tags": "query:gene-perturb",
+      "abstract_en": "Estimating heterogeneous single and interaction treatment effects from observational data under multiple simultaneous treatments is crucial for decision-making. To mitigate estimation variance, previous studies balance representation distributions between every pair of treatment patterns. However, such pairwise balancing scales quadratically with the number of treatment patterns and fails to preserve consistent local proximity structures across patterns, which degrades counterfactual estimation. To address these challenges, we propose the Causal Inference for Heterogeneous Single and Interaction Treatment Effects Network (CIHSI-Net), a deep learning framework built on a novel Barycentric Fused Gromov-Wasserstein Balancing (BFG-WB) objective. BFG-WB aligns the representation distribution of each treatment pattern with a shared Wasserstein barycenter, achieving global alignment while reducing the computational complexity from quadratic to linear, and its Fused Gromov-Wasserstein discrepancy preserves the local proximity structures essential for reliable heterogeneous effect estimation. Simulation studies show that CIHSI-Net consistently outperforms state-of-the-art baselines, and an application to real-world marketing data demonstrates its practical utility in complex multi-treatment scenarios.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/30/2608.22627v1-a-general-purpose-sensitivity-method-for-multiple-simultaneous-parameter-perturbations-in-stochastic-reaction-networks",
+      "section": "quick",
+      "title_en": "A general-purpose sensitivity method for multiple simultaneous parameter perturbations in stochastic reaction networks",
+      "authors": "David F. Anderson, Jingyi Ma",
+      "date": "2026-08-23",
+      "pdf": "https://arxiv.org/pdf/2608.22627v1",
+      "score": "6.0",
+      "evidence": "用于细胞模型随机反应网络中参数扰动预测的敏感性方法",
+      "tldr": "随机反应网络的有限差分灵敏度估计常需同时生成多个邻近参数化路径，现有成对耦合在多路径场景下效率低且需特定设计。本文提出多路径堆叠耦合(MSC)，一种空间-时间泊松构造，可联合生成任意有限集合的路径，其成对边际与分裂耦合同分布，直接继承方差界。在过程磷酸化网络上，MSC在同时估计多导数、宽模板一阶导数及高阶导数三类任务中均获得最小RMSE。该方法提供通用高效的灵敏度估计框架，避免应用特定调参。",
+      "tags": "query:gene-perturb",
+      "abstract_en": "Stochastic reaction networks are continuous-time Markov chain models for interacting populations, with applications in biochemistry, epidemiology, ecology, and related areas. We study finite-difference sensitivity estimation when a single estimator requires several nearby parameterized paths. Existing variance-reducing couplings are typically pairwise, so that repeated use is either inefficient or requires application-specific choices in multi-path settings. We introduce the multi-path stacked coupling (MSC), a space-time Poisson construction that jointly generates any finite collection of parameterized paths. Each pairwise marginal of MSC has the same law as the corresponding split coupling pair, allowing existing variance bounds to transfer directly; in finite-state settings, we also obtain first-order expansions for the mean and second moment of finite-difference numerators. We apply MSC in three settings of practical importance: estimating many first derivatives simultaneously, estimating a single first derivative using a wider finite-difference stencil, and estimating higher-order derivatives. Numerical experiments on a processive phosphorylation network demonstrate strong performance in each of the three application areas considered, consistent with the theoretical advantages of MSC: across all three applications, MSC achieves the smallest root mean square error (RMSE) among the methods considered over the tested computational budgets.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/30/2608.26649v1-robust-neural-stimulation-response-modeling-through-meta-learning-and-pretraining",
+      "section": "quick",
+      "title_en": "Robust Neural Stimulation Response Modeling Through Meta-Learning and Pretraining",
+      "authors": "Matthew J Bryan, Daniel C Muir, Felix Schwock, Azadeh Yazdan-Shahmorad, Rajesh P N Rao",
+      "date": "2026-08-27",
+      "pdf": "https://arxiv.org/pdf/2608.26649v1",
+      "score": "6.0",
+      "evidence": "元学习用于扰动响应建模，方法可直接迁移",
+      "tldr": "模型驱动的闭环神经刺激受制于预测模型在部分会话中的灾难性失败及频繁校准需求。本文首次将元学习与预训练引入刺激响应建模，采用基于MAML的跨会话预训练扩展时间基函数模型。在40次灵长类光遗传刺激实验中，使R²<0.05的会话从16降至1，校准量减少50-90%。该工作证明跨会话结构可支撑预训练，为鲁棒闭环刺激奠定基础。",
+      "tags": "query:gene-perturb",
+      "abstract_en": "Objective: Model-based closed-loop neural stimulation holds promise for therapeutic applications ranging from Parkinson's disease to sensory restoration, but deployment has been limited by two obstacles: 1) forecasting models for predicting the consequences of stimulation fail catastrophically on a meaningful fraction of sessions, and 2) per-session calibration requirements are often incompatible with clinical constraints. We address both by demonstrating, for the first time, that meta-learning and pretraining can be applied to neural stimulation response modeling. Methods: Temporal basis function models (TBFMs) forecast state-dependent neural responses to stimulation. We extend TBFMs with cross-session pretraining using a novel architecture and algorithm based on model-agnostic meta-learning (MAML), evaluating them on 40 sessions of optogenetic stimulation in primary sensorimotor cortex of two non-human primates. Results: Meta-learning substantially reduces catastrophic forecast failure: for a 1k calibration set size, sessions with test R-squared < 0.05 drop from 16 of 40 (single-session training) to 1 (MAML-pretrained), and prediction intervals become significantly narrower (p < 0.05). Calibration requirements are reduced by 50-90% at matched accuracy, enabling experiments otherwise infeasible within clinical session-time constraints. Conclusion: Our results demonstrate that cross-session structure in stimulation responses is consistent enough to support pretraining, providing the first empirical evidence that meta-learning approaches are viable for neural stimulation. Significance: The robustness and sample efficiency gains directly address known obstacles to deploying model-based stimulation controllers. Our results motivate community efforts to assemble standardized multi-site stimulation datasets and to further explore meta-learning for robust closed-loop stimulation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

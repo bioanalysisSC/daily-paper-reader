@@ -1,0 +1,73 @@
+{
+  "date": "20260830",
+  "date_label": "",
+  "generated_at": "2026-08-30 22:56:50 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.25421v1",
+      "route": "202608/30/2608.25421v1-data-driven-effective-modeling-of-stochastic-chemical-reaction-networks",
+      "title": "Data-driven Effective Modeling of Stochastic Chemical Reaction Networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "生化反应网络的随机模拟；直接支持虚拟细胞建模",
+      "first_seen_at": "2026-08-30 22:56:50 UTC",
+      "updated_at": "2026-08-30 22:56:50 UTC"
+    },
+    {
+      "paper_id": "2608.22024v1",
+      "route": "202608/30/2608.22024v1-barycentric-fused-gromov-wasserstein-balancing-for-causal-inference-under-multiple-treatments",
+      "title": "Barycentric Fused Gromov-Wasserstein Balancing for Causal Inference under Multiple Treatments",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向多重处理下异质性处理效应的因果推断方法；可迁移至扰动效应预测。",
+      "first_seen_at": "2026-08-30 22:56:50 UTC",
+      "updated_at": "2026-08-30 22:56:50 UTC"
+    },
+    {
+      "paper_id": "2608.22627v1",
+      "route": "202608/30/2608.22627v1-a-general-purpose-sensitivity-method-for-multiple-simultaneous-parameter-perturbations-in-stochastic-reaction-networks",
+      "title": "A general-purpose sensitivity method for multiple simultaneous parameter perturbations in stochastic reaction networks",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "用于细胞模型随机反应网络中参数扰动预测的敏感性方法",
+      "first_seen_at": "2026-08-30 22:56:50 UTC",
+      "updated_at": "2026-08-30 22:56:50 UTC"
+    },
+    {
+      "paper_id": "2608.26649v1",
+      "route": "202608/30/2608.26649v1-robust-neural-stimulation-response-modeling-through-meta-learning-and-pretraining",
+      "title": "Robust Neural Stimulation Response Modeling Through Meta-Learning and Pretraining",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "元学习用于扰动响应建模，方法可直接迁移",
+      "first_seen_at": "2026-08-30 22:56:50 UTC",
+      "updated_at": "2026-08-30 22:56:50 UTC"
+    }
+  ]
+}

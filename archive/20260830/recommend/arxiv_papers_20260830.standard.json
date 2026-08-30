@@ -1,0 +1,174 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-30T22:52:57.442233+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.25421v1",
+      "source": "arxiv",
+      "title": "Data-driven Effective Modeling of Stochastic Chemical Reaction Networks",
+      "abstract": "The Stochastic Simulation Algorithm (SSA), widely considered an exact algorithm for stochastic chemical reaction networks, suffers from high computational cost. In this work, we propose a data-driven effective model that operates on a user-defined coarse time step independent of the underlying microscopic reaction-event scale. This is accomplished by directly approximating the finite-time transition kernel of the continuous-time Markov chain induced by SSA, using a generative machine learning model trained on short bursts of SSA simulation data. The trained model constructs a stochastic propagator that recursively generates statistically consistent trajectories at the constant coarse time step, with significantly reduced computational cost. In this paper, we employ conditional normalizing flow as the stochastic propagator. A comprehensive set of numerical examples is presented to demonstrate the accuracy and efficiency of the proposed method.",
+      "authors": [
+        "Yuan Chen",
+        "Weize Mao",
+        "Dongbin Xiu"
+      ],
+      "primary_category": "math.NA",
+      "categories": [
+        "math.NA",
+        "cs.LG",
+        "math.DS"
+      ],
+      "published": "2026-08-26T06:24:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.25421v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "stochastic simulation of biochemical reaction networks; directly supports virtual cell modeling",
+      "llm_evidence_cn": "生化反应网络的随机模拟；直接支持虚拟细胞建模",
+      "llm_evidence": "生化反应网络的随机模拟；直接支持虚拟细胞建模",
+      "canonical_evidence": "生化反应网络的随机模拟；直接支持虚拟细胞建模",
+      "llm_tldr_en": "This paper learns a generative model of the finite-time transition kernel of stochastic chemical reaction networks, producing statistically consistent coarse-step trajectories at reduced cost and enabling scalable virtual-cell simulation.",
+      "llm_tldr_cn": "针对随机化学反应网络的精确随机模拟算法计算量过高的问题，本文提出数据驱动的有效模型。模型在用户定义的粗粒度时间步上直接逼近连续时间马尔可夫链的有限时间转移核，用生成式机器学习训练得到的随机传播子递归生成统计一致的轨迹。实验表明该方法在显著降低计算成本的同时保持轨迹统计特性，为虚拟细胞等复杂生物系统的多尺度模拟提供了可扩展的建模工具。",
+      "llm_tldr": "针对随机化学反应网络的精确随机模拟算法计算量过高的问题，本文提出数据驱动的有效模型。模型在用户定义的粗粒度时间步上直接逼近连续时间马尔可夫链的有限时间转移核，用生成式机器学习训练得到的随机传播子递归生成统计一致的轨迹。实验表明该方法在显著降低计算成本的同时保持轨迹统计特性，为虚拟细胞等复杂生物系统的多尺度模拟提供了可扩展的建模工具。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.22024v1",
+      "source": "arxiv",
+      "title": "Barycentric Fused Gromov-Wasserstein Balancing for Causal Inference under Multiple Treatments",
+      "abstract": "Estimating heterogeneous single and interaction treatment effects from observational data under multiple simultaneous treatments is crucial for decision-making. To mitigate estimation variance, previous studies balance representation distributions between every pair of treatment patterns. However, such pairwise balancing scales quadratically with the number of treatment patterns and fails to preserve consistent local proximity structures across patterns, which degrades counterfactual estimation. To address these challenges, we propose the Causal Inference for Heterogeneous Single and Interaction Treatment Effects Network (CIHSI-Net), a deep learning framework built on a novel Barycentric Fused Gromov-Wasserstein Balancing (BFG-WB) objective. BFG-WB aligns the representation distribution of each treatment pattern with a shared Wasserstein barycenter, achieving global alignment while reducing the computational complexity from quadratic to linear, and its Fused Gromov-Wasserstein discrepancy preserves the local proximity structures essential for reliable heterogeneous effect estimation. Simulation studies show that CIHSI-Net consistently outperforms state-of-the-art baselines, and an application to real-world marketing data demonstrates its practical utility in complex multi-treatment scenarios.",
+      "authors": [
+        "Yuki Murakami",
+        "Takumi Hattori",
+        "Kohsuke Kubota"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "cs.AI",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-08-22T16:01:40+00:00",
+      "link": "https://arxiv.org/pdf/2608.22024v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Causal inference method for heterogeneous treatment effects under multiple treatments; transferable to perturbation effect prediction.",
+      "llm_evidence_cn": "面向多重处理下异质性处理效应的因果推断方法；可迁移至扰动效应预测。",
+      "llm_evidence": "面向多重处理下异质性处理效应的因果推断方法；可迁移至扰动效应预测。",
+      "canonical_evidence": "面向多重处理下异质性处理效应的因果推断方法；可迁移至扰动效应预测。",
+      "llm_tldr_en": "CIHSI-Net estimates heterogeneous single and interaction treatment effects using barycentric fused Gromov-Wasserstein balancing, improving counterfactual estimation without quadratic pairwise scaling.",
+      "llm_tldr_cn": "多重同时处理下的因果效应估计对决策至关重要，但两两平衡处理方法随处理模式数量平方增长，且无法保持局部邻近结构。本文提出CIHSI-Net，基于重心融合Gromov-Wasserstein平衡（BFG-WB）统一平衡各处理模式的表示分布，同时保持局部结构。实验表明该方法能有效降低估计方差并改进反事实预测。其思想可迁移到基因扰动预测中多种扰动组合和单细胞响应建模。",
+      "llm_tldr": "多重同时处理下的因果效应估计对决策至关重要，但两两平衡处理方法随处理模式数量平方增长，且无法保持局部邻近结构。本文提出CIHSI-Net，基于重心融合Gromov-Wasserstein平衡（BFG-WB）统一平衡各处理模式的表示分布，同时保持局部结构。实验表明该方法能有效降低估计方差并改进反事实预测。其思想可迁移到基因扰动预测中多种扰动组合和单细胞响应建模。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.22627v1",
+      "source": "arxiv",
+      "title": "A general-purpose sensitivity method for multiple simultaneous parameter perturbations in stochastic reaction networks",
+      "abstract": "Stochastic reaction networks are continuous-time Markov chain models for interacting populations, with applications in biochemistry, epidemiology, ecology, and related areas. We study finite-difference sensitivity estimation when a single estimator requires several nearby parameterized paths. Existing variance-reducing couplings are typically pairwise, so that repeated use is either inefficient or requires application-specific choices in multi-path settings. We introduce the multi-path stacked coupling (MSC), a space-time Poisson construction that jointly generates any finite collection of parameterized paths. Each pairwise marginal of MSC has the same law as the corresponding split coupling pair, allowing existing variance bounds to transfer directly; in finite-state settings, we also obtain first-order expansions for the mean and second moment of finite-difference numerators. We apply MSC in three settings of practical importance: estimating many first derivatives simultaneously, estimating a single first derivative using a wider finite-difference stencil, and estimating higher-order derivatives. Numerical experiments on a processive phosphorylation network demonstrate strong performance in each of the three application areas considered, consistent with the theoretical advantages of MSC: across all three applications, MSC achieves the smallest root mean square error (RMSE) among the methods considered over the tested computational budgets.",
+      "authors": [
+        "David F. Anderson",
+        "Jingyi Ma"
+      ],
+      "primary_category": "stat.ME",
+      "categories": [
+        "stat.ME",
+        "math.NA",
+        "math.PR",
+        "q-bio.QM"
+      ],
+      "published": "2026-08-23T22:20:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.22627v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "sensitivity method for parameter perturbations in stochastic reaction networks for cellular models",
+      "llm_evidence_cn": "用于细胞模型随机反应网络中参数扰动预测的敏感性方法",
+      "llm_evidence": "用于细胞模型随机反应网络中参数扰动预测的敏感性方法",
+      "canonical_evidence": "用于细胞模型随机反应网络中参数扰动预测的敏感性方法",
+      "llm_tldr_en": "The paper introduces a multi-path stacked coupling for variance-reduced sensitivity estimation under multiple simultaneous parameter perturbations in stochastic reaction networks, enabling efficient analysis of perturbation effects.",
+      "llm_tldr_cn": "论文针对随机反应网络中多重参数扰动下敏感性估计的方差削减问题，提出了一种名为多路径堆叠耦合（MSC）的时空泊松构造方法，可联合生成任意有限数量的参数化路径，且每对边际分布与相应的分裂耦合对具有相同分布。该方法避免了传统配对耦合在多重扰动场景下的低效与特定应用选择问题，为生物化学等随机网络的扰动响应预测提供了一种通用的敏感性分析工具。实验结果验证了方法的有效性与通用性，有助于理解扰动对细胞状态的影响。",
+      "llm_tldr": "论文针对随机反应网络中多重参数扰动下敏感性估计的方差削减问题，提出了一种名为多路径堆叠耦合（MSC）的时空泊松构造方法，可联合生成任意有限数量的参数化路径，且每对边际分布与相应的分裂耦合对具有相同分布。该方法避免了传统配对耦合在多重扰动场景下的低效与特定应用选择问题，为生物化学等随机网络的扰动响应预测提供了一种通用的敏感性分析工具。实验结果验证了方法的有效性与通用性，有助于理解扰动对细胞状态的影响。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "Research on virtual cell models for perturbation response prediction",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.26649v1",
+      "source": "arxiv",
+      "title": "Robust Neural Stimulation Response Modeling Through Meta-Learning and Pretraining",
+      "abstract": "Objective: Model-based closed-loop neural stimulation holds promise for therapeutic applications ranging from Parkinson's disease to sensory restoration, but deployment has been limited by two obstacles: 1) forecasting models for predicting the consequences of stimulation fail catastrophically on a meaningful fraction of sessions, and 2) per-session calibration requirements are often incompatible with clinical constraints. We address both by demonstrating, for the first time, that meta-learning and pretraining can be applied to neural stimulation response modeling. Methods: Temporal basis function models (TBFMs) forecast state-dependent neural responses to stimulation. We extend TBFMs with cross-session pretraining using a novel architecture and algorithm based on model-agnostic meta-learning (MAML), evaluating them on 40 sessions of optogenetic stimulation in primary sensorimotor cortex of two non-human primates. Results: Meta-learning substantially reduces catastrophic forecast failure: for a 1k calibration set size, sessions with test R-squared < 0.05 drop from 16 of 40 (single-session training) to 1 (MAML-pretrained), and prediction intervals become significantly narrower (p < 0.05). Calibration requirements are reduced by 50-90% at matched accuracy, enabling experiments otherwise infeasible within clinical session-time constraints. Conclusion: Our results demonstrate that cross-session structure in stimulation responses is consistent enough to support pretraining, providing the first empirical evidence that meta-learning approaches are viable for neural stimulation. Significance: The robustness and sample efficiency gains directly address known obstacles to deploying model-based stimulation controllers. Our results motivate community efforts to assemble standardized multi-site stimulation datasets and to further explore meta-learning for robust closed-loop stimulation.",
+      "authors": [
+        "Matthew J Bryan",
+        "Daniel C Muir",
+        "Felix Schwock",
+        "Azadeh Yazdan-Shahmorad",
+        "Rajesh P N Rao"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-27T05:59:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.26649v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "meta-learning for perturbation response modeling, directly transferable method",
+      "llm_evidence_cn": "元学习用于扰动响应建模，方法可直接迁移",
+      "llm_evidence": "元学习用于扰动响应建模，方法可直接迁移",
+      "canonical_evidence": "元学习用于扰动响应建模，方法可直接迁移",
+      "llm_tldr_en": "Meta-learning and pretraining are applied to neural stimulation response forecasting, extending temporal basis function models across sessions; results show improved robustness and reduced calibration, offering a transferable strategy for perturbation response prediction.",
+      "llm_tldr_cn": "预测刺激后果的模型在部分会话中会严重失败，且逐会话标定难以满足临床要求。该文提出结合跨会话预训练和元学习的时间基函数模型，首次证明元学习与预训练能有效提高神经刺激响应预测的鲁棒性。结果显示模型能够更好地泛化到新会话并减少标定负担。该方法对任何扰动响应预测任务都是一种有价值的通用策略，可迁移到基因扰动效应预测。",
+      "llm_tldr": "预测刺激后果的模型在部分会话中会严重失败，且逐会话标定难以满足临床要求。该文提出结合跨会话预训练和元学习的时间基函数模型，首次证明元学习与预训练能有效提高神经刺激响应预测的鲁棒性。结果显示模型能够更好地泛化到新会话并减少标定负担。该方法对任何扰动响应预测任务都是一种有价值的通用策略，可迁移到基因扰动效应预测。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "predicting the effects of gene perturbations on cellular state",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
