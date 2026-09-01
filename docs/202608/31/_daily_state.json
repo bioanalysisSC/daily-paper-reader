@@ -1,0 +1,89 @@
+{
+  "date": "20260831",
+  "date_label": "",
+  "generated_at": "2026-09-01 00:38:22 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.24953v1",
+      "route": "202608/31/2608.24953v1-beyond-tokens-probing-higher-order-epistasis-in-learned-protein-representations",
+      "title": "Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "蛋白质适应度景观中的突变效应与高阶上位效应",
+      "first_seen_at": "2026-09-01 00:38:22 UTC",
+      "updated_at": "2026-09-01 00:38:22 UTC"
+    },
+    {
+      "paper_id": "2608.25466v1",
+      "route": "202608/31/2608.25466v1-homo-rag-homology-guided-retrieval-augmented-generation-for-cross-species-gene-function-prediction",
+      "title": "Homo-RAG: Homology-Guided Retrieval-Augmented Generation for Cross-Species Gene Function Prediction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "基于大语言模型的检索增强生成用于基因功能预测",
+      "first_seen_at": "2026-09-01 00:38:22 UTC",
+      "updated_at": "2026-09-01 00:38:22 UTC"
+    },
+    {
+      "paper_id": "2608.22642v1",
+      "route": "202608/31/2608.22642v1-mol-jepa-a-multimodal-joint-embedding-predictive-architecture-for-molecules",
+      "title": "Mol-JEPA: A multimodal Joint Embedding Predictive Architecture for Molecules",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "融合细胞表型的多模态分子世界模型；可支持虚拟细胞式建模",
+      "first_seen_at": "2026-09-01 00:38:22 UTC",
+      "updated_at": "2026-09-01 00:38:22 UTC"
+    },
+    {
+      "paper_id": "2608.24704v1",
+      "route": "202608/31/2608.24704v1-global-geometry-of-the-genotype-phenotype-map-illuminates-a-trade-off-between-penetrance-and-mutational-adaptability",
+      "title": "Global geometry of the genotype-phenotype map illuminates a trade-off between penetrance and mutational adaptability",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "基因型-表型图谱与突变对表型的影响",
+      "first_seen_at": "2026-09-01 00:38:22 UTC",
+      "updated_at": "2026-09-01 00:38:22 UTC"
+    },
+    {
+      "paper_id": "2608.25631v1",
+      "route": "202608/31/2608.25631v1-propensity-straight-through-gradients-for-discrete-stochastic-systems",
+      "title": "Propensity Straight-Through Gradients for Discrete Stochastic Systems",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "面向CTMC生物随机模拟的梯度估计方法，可支持虚拟细胞级别的系统模拟",
+      "first_seen_at": "2026-09-01 00:38:22 UTC",
+      "updated_at": "2026-09-01 00:38:22 UTC"
+    }
+  ]
+}

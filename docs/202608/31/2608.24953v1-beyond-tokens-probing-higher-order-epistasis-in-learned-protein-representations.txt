@@ -1,0 +1,667 @@
+Title: Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations
+
+URL Source: https://arxiv.org/pdf/2608.24953v1
+
+Published Time: Thu, 27 Aug 2026 00:05:41 GMT
+
+Number of Pages: 32
+
+Markdown Content:
+# Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations 
+
+## Maryam Rahimimovassagh University of Central Florida Ivan Garibay University of Central Florida Niloofar Yousefi University of Central Florida 
+
+Abstract 
+
+Protein fitness landscapes contain nonlinear interactions in which the effect of one mutation depends on the identities of other residues. Although learning systems can predict protein fitness, predictive performance alone does not reveal how experimentally measured higher-order structure is organized within their internal representations. We introduce ORBIT , an Order-Resolved Benchmarking of Interaction Transformations framework that distinguishes interaction presence, representation accessibility, and functional recovery. ORBIT first vali-dates its Walsh-based diagnostics on synthetic landscapes with known interaction order and then analyzes the experimentally measured GB1 fitness landscape under the biologically motivated FLIP 2-vs-rest generalization setting. We compare ridge regression, a standard MLP, independent token representations, nonlinear independent tokens, and Residual Interaction Tokenization (RIT). In the primary two-hidden-layer comparison across 20 stochastic training seeds, planned seed-paired inference found no architecture differences in FLIP test R2, strict third- or fourth-order functional recovery, or final-hidden-layer third- or fourth-order accessibility. In contrast, RIT significantly increased pairwise accessibility directly at the token stage relative to both independent-token controls ( ∆Atok ,2 = 0 .2468 , dz = 1 .67 , Holm-adjusted 
+
+p = 1 .14 × 10 −5), without a detectable downstream higher-order advantage. A pre-specified depth/capacity sensitivity analysis then increased the backbone from two to three or four hidden layers. Deeper MLPs showed significant gains in FLIP prediction, third-order functional recovery, and final-layer third-order accessibility. Fourth-order accessibility also improved relative to the shallow MLP, although its absolute held-out R2 remained below zero. Independent tokens showed a smaller prediction gain at depth four, whereas nonlinear tokens and RIT showed no Holm-significant depth effects on the confirmatory endpoints. Because the deeper models also contain additional parameters, these results are interpreted as depth/capacity sensitivity rather than a parameter-matched causal effect of depth. ORBIT therefore reveals representation-level changes that are not apparent from conventional prediction metrics alone and separates early interaction-aware tokenization effects from interaction structure that can be constructed by downstream nonlinear capacity. 
+
+# 1 Introduction 
+
+Protein sequence–function relationships are often strongly nonlinear. The phenotypic effect of an amino-acid substitution can depend on the identities of other residues, producing epistasis . As additional mutations are combined, these dependencies can involve increasingly higher-order interactions that cannot be explained by independent single-mutation effects. The GB1 protein fitness landscape provides a particularly useful setting for studying this phenomenon. The original experiment measured 149,361 of the 20 4 = 160 , 000 possible combinations across four epistatic positions in the B1 domain of protein G [1]. The landscape has subsequently become a standard benchmark for protein fitness inference. Machine-learning benchmarks such as FLIP explicitly use GB1 to test whether models trained on variants with fewer mutations can generalize to variants containing more simultaneous mutations [2]. At the same time, aggregate predictive performance provides an incomplete description of what a model has learned. Models with similar test error may construct, expose, and preserve interaction structure differently inside their representations. A complementary line of work studies fitness landscapes through their spectral structure. Neural networks trained by gradient descent can preferentially learn lower-degree Walsh–Fourier components [4]. Sparse spectral regularization 1arXiv:2608.24953v1 [q-bio.QM] 24 Aug 2026 can improve recovery of higher-order fitness functions [3], and Fourier methods have been used to extract higher-order interactions from protein language model outputs [5]. These approaches demonstrate that interaction order is informative at the level of the learned function. However, they leave a distinct representation-learning question: 
+
+Where in a molecular learning pipeline does interaction information of increasing order become accessible, and how does that trajectory depend on representation design and downstream capacity? 
+
+Consider a predictor composed of multiple representation stages, 
+
+X −→ Ztok −→ H1 −→ H2 −→ ˆy. (1) Two models may achieve similar final predictive performance while organizing interaction information very differently. An interaction-aware tokenizer may expose pairwise relationships directly at Ztok , whereas an initially independent representation may rely on later nonlinear transformations to construct comparable or higher-order structure. Likewise, increasing downstream depth or capacity may change how much interaction structure becomes accessible without changing the initial token representation. We introduce ORBIT , an Order-Resolved Benchmarking of Interaction Transformations framework for analyzing these trajectories. ORBIT distinguishes three complementary levels: 1. Interaction presence: which interaction orders are expressed in a learned representation; 2. Representation accessibility: which experimentally measured interaction components can be recovered from each internal representation stage; 3. Functional recovery: which interaction orders are faithfully reproduced by the final predicted fitness landscape. Presence is quantified using normalized representation Walsh energy Eℓ,k , accessibility using held-out probe per-formance Aℓ,k , and final functional recovery using order-specific R2
+
+> k
+
+. Together, these measurements allow us to distinguish a model that merely contains order-specific variation from one in which that information is linearly accessible or successfully expressed in the predicted biological function. Our central questions are: 1. Does ORBIT correctly recover interaction order when the ground-truth structure is known? 2. Can models trained only on wild-type, single, and double mutants recover function on experimentally measured triple and quadruple mutants? 3. Where do first- through fourth-order interactions become accessible across learned representation stages? 4. Does explicit interaction-aware tokenization alter the point at which interaction information first becomes accessible? 5. Can predictive performance, representation accessibility, and higher-order functional recovery diverge? 6. Are these conclusions sensitive to additional downstream network depth and capacity? 
+
+Contributions. Our contributions are: • We introduce ORBIT , an order-resolved framework that jointly measures interaction presence, representation accessibility, and functional recovery across learned molecular representations. • We derive a representation-level Walsh analysis that quantifies order-specific structure directly within hidden representations rather than only at final model outputs. • We validate ORBIT on controlled synthetic landscapes with known first- through fourth-order structure and then apply it to the experimentally measured GB1 fitness landscape under the biologically motivated FLIP 2-vs-rest generalization setting. • We introduce an AA-identity-strict probe protocol that evaluates representation accessibility across held-out non-WT amino-acid identities, and we quantify stochastic variation across 20 paired training seeds. 2• In the primary matched-backbone comparison, we show that Residual Interaction Tokenization (RIT) 
+
+substantially increases pairwise accessibility directly at the token stage, despite no detectable downstream advantage in higher-order functional recovery, final-layer higher-order accessibility, or FLIP test R2.• Through a pre-specified depth/capacity sensitivity analysis , we show that additional downstream capacity can substantially improve third-order functional recovery and higher-order accessibility for the MLP. This demonstrates that early interaction-aware representation and later nonlinear construction constitute distinct routes by which interaction information can become accessible. Figure 1 summarizes the primary ORBIT workflow, from synthetic ground-truth validation to GB1 functional and representation-level analysis. The pre-specified depth/capacity sensitivity analysis extends the downstream backbone separately while preserving the same ORBIT measurements. 
+
+# 2 Related Work 
+
+Protein fitness benchmarks. FLIP established standardized protein-fitness tasks for evaluating generalization under biologically motivated data regimes [2]. For GB1, the 2-vs-rest setting trains on wild type, single mutants, and double mutants while reserving triple and quadruple mutants for testing. This setting motivates our primary generalization experiment: whether models trained only on lower-mutation-complexity variants can recover structure in unseen higher-mutation combinations. 
+
+Fitness-landscape characterization. Predictive accuracy alone provides only a partial description of a learned fitness landscape. GraphFLA complements prediction benchmarks with landscape-level properties such as epistasis, ruggedness, navigability, and neutrality [7]. ORBIT addresses a different but related question: rather than characterizing only the external predicted landscape, it tracks order-specific interaction structure through the model’s internal representations. 
+
+Spectral analysis of epistasis. Walsh–Fourier decompositions provide a natural basis for describing interaction order in discrete biological landscapes. Neural networks can exhibit a low-degree spectral bias [4], while sparse spectral regularization can improve recovery of higher-order fitness functions [3]. These approaches establish the value of spectral analysis at the level of the learned function. ORBIT extends this perspective to intermediate representations by asking where order-specific information is present and where experimentally measured interaction structure becomes linearly accessible. 
+
+Higher-order interactions in learned protein models. Fourier analysis has also been applied to protein language model predictions to recover higher-order mutational interactions [5]. Such analyses examine interaction structure expressed by model outputs. ORBIT instead follows the representation trajectory itself, distinguishing token-stage and hidden-layer accessibility from final functional recovery. 
+
+Spectral geometry of protein landscapes. Protein fitness landscapes can additionally be formulated over generalized Hamming graphs, providing spectral descriptions of ruggedness, epistasis, and learnability [6]. ORBIT uses the same underlying discrete interaction structure as an object to be traced through learned representation space rather than only characterized at the landscape level. 
+
+Higher-order structure across molecular domains. Beyond protein fitness landscapes, non-pairwise structure has also motivated recent work in gene regulatory modeling. Cooperative regulation can depend on complete sets of interacting regulators rather than independent regulator–target effects, motivating formulations that explicitly model non-additive set-level structure [8, 9]. These studies show that strong pairwise predictions need not imply recovery of the underlying cooperative mechanism and that higher-order structure can require distinct modeling and evaluation objectives. ORBIT addresses a complementary representation-learning question: rather than recovering interacting regulator sets, it traces where interaction structure of increasing order is present, linearly accessible, and ultimately expressed in the predicted protein fitness landscape. 3Figure 1: ORBIT workflow. ORBIT validates order-resolved diagnostics on ORBIT-Synth and then applies them to GB1 to compare functional Walsh recovery, representation energy, and linear accessibility across five models. The AA-identity-strict probe protocol uses disjoint non-WT amino-acid identities across probe partitions, and a separate pre-specified depth/capacity analysis extends the neural backbones. 
+
+Position of ORBIT. Taken together, prior work provides tools for benchmarking fitness prediction, characterizing landscape structure, and extracting higher-order interactions from learned functions. ORBIT complements these approaches by separating three questions that are otherwise easy to conflate: whether order-specific structure is present in a representation, whether it is linearly accessible, and whether it is ultimately recovered in the predicted fitness function. 43 ORBIT: Order-Resolved Representation Analysis 
+
+Let a phenotype be described by 
+
+y = f (x1, . . . , x d), (2) where xi denotes the state of molecular component i.For binary encodings, the landscape admits a Walsh expansion 
+
+f (x) = X
+
+> S⊆[d]
+
+ϵS χS (x), (3) where 
+
+χS (x) = Y
+
+> i∈S
+
+xi, xi ∈ {− 1, +1 }. (4) The interaction order is defined by the subset cardinality 
+
+|S| = k. (5) For the four variable GB1 positions, the decomposition therefore contains first-, second-, third-, and fourth-order components. 
+
+## 3.1 Functional Interaction Recovery 
+
+For a complete binary fitness cube, the Walsh coefficient associated with subset S is 
+
+ϵS = 2 −d X
+
+> x∈{− 1,+1 }d
+
+f (x)χS (x). (6) Applying the same transform to model predictions gives 
+
+ˆϵS = 2 −d X
+
+> x
+
+ˆf (x)χS (x). (7) For each interaction order k, functional recovery is quantified by 
+
+R2 
+
+> k
+
+= 1 −
+
+P
+
+> S:|S|=k
+
+(ˆ ϵS − ϵS )2
+
+P
+
+> S:|S|=k
+
+(ϵS − ¯ϵk)2 . (8) The resulting order-resolved functional profile is 
+
+RORBIT = ( R21, R 22, R 23, R 24). (9) Thus, R2 
+
+> k
+
+measures how faithfully the predicted fitness landscape recovers the experimentally measured Walsh coefficients of order k.
+
+## 3.2 Representation-Level Walsh Components 
+
+ORBIT extends the same decomposition to intermediate learned representations. Let 
+
+Hℓ(x) ∈ Rmℓ (10) 5denote the representation of sequence x at stage ℓ. For each subset S, define the vector-valued representation Walsh coefficient 
+
+rℓ,S = 2 −d X
+
+> x
+
+Hℓ(x)χS (x). (11) where 
+
+rℓ,S ∈ Rmℓ . (12) This coefficient describes representation variation associated with the Walsh pattern indexed by S; it is not itself interpreted as a biochemical interaction strength. For interaction order k, the unnormalized representation Walsh energy is 
+
+Eℓ,k = X
+
+> S:|S|=k
+
+∥rℓ,S ∥22. (13) We define normalized representation Walsh energy as 
+
+Eℓ,k = Eℓ,k 
+
+Pdj=1 Eℓ,j 
+
+, (14) where the order-0 constant component is excluded from the denominator. Therefore, Eℓ,k measures the fraction of nonconstant representation Walsh energy associated with order k.We interpret Eℓ,k as evidence of order-specific representation presence , not as evidence that the corresponding experimental epistatic coefficients are recoverable. 
+
+## 3.3 Order Accessibility 
+
+Representation energy alone does not establish whether order-specific variation is aligned with experimentally measured epistatic structure. We therefore separately measure accessibility .For each order-k coefficient, a lightweight probe receives the representation component 
+
+rℓ,S (15) and predicts the corresponding experimental Walsh coefficient 
+
+ϵS . (16) The probe is 
+
+gℓ,k : rℓ,S → ϵS . (17) Held-out probe performance defines 
+
+Aℓ,k = R2 (ϵS , g ℓ,k (rℓ,S )) . (18) Thus, Aℓ,k measures how linearly accessible experimentally measured order-k structure is from representation stage ℓ.For the primary token models, the accessibility profile is summarized as 
+
+A =
+
+Atok ,1 Atok ,2 Atok ,3 Atok ,4
+
+Ah1,1 Ah1,2 Ah1,3 Ah1,4
+
+Ah2,1 Ah2,2 Ah2,3 Ah2,4
+
+ . (19) The MLP has no explicit token stage and is therefore evaluated at H1 and H2 only. 6AA-identity-strict probe protocol. To evaluate accessibility across held-out amino-acid identities, we partition the 19 non-WT amino-acid identities available at each of the four GB1 positions into 10 probe-training identities, 4 validation identities, and 5 test identities using a fixed random seed. A WT-anchored cube is assigned to a strict partition only when all four of its non-WT alternatives belong to that partition at their respective positions. This yields 7,352 probe-training cubes, 245 validation cubes, and 613 probe-test cubes. Mixed-identity cubes are excluded from strict probe evaluation. The non-WT amino-acid identities assigned to probe training, validation, and test are disjoint at each position, while the WT identity is intentionally shared. This is an AA-identity-strict probe split , not an upstream model-training split: vertices belonging to probe-test cubes may have appeared in the official FLIP model-training partition. For each layer and interaction order, ridge-probe regularization is selected using probe validation only. The probe is then refit on the combined probe-training and validation partitions and evaluated once on the 613 strict probe-test cubes. The reported Aℓ,k is the pooled held-out R2 across experimental coefficients of interaction order k.The strict protocol therefore evaluates generalization across unseen non-WT amino-acid identities at each position while making no claim that the underlying protein sequences were unseen during upstream model training. 
+
+# 4 ORBIT-Synth 
+
+We first validate the ORBIT diagnostics on synthetic binary landscapes whose interaction order is known exactly. For d binary variables, 
+
+xi ∈ {− 1, +1 }, i = 1 , . . . , d, (20) we represent the landscape in the Walsh basis as 
+
+f (x) = X
+
+> S⊆[d]
+
+ϵS χS (x), χS (x) = Y
+
+> i∈S
+
+xi, (21) where the interaction order of coefficient ϵS is |S|.
+
+Pure-order controls. For each interaction order k ∈ { 1, 2, 3, 4}, we construct a landscape in which only Walsh coefficients satisfying |S| = k are nonzero. The nonzero coefficients are randomly sampled and normalized before the inverse Walsh transform is applied. Because all nonconstant energy is placed at a single order, the normalized Walsh spectrum provides an exact ground-truth test of whether ORBIT identifies the planted interaction order. 
+
+Parity control. We additionally construct an exact fourth-order parity landscape by assigning a nonzero coefficient only to the full subset S = [ d]:
+
+fparity (x) = 
+
+> d
+
+Y
+
+> i=1
+
+xi. (22) Under the {− 1, +1 } coding, this provides an exact full-order parity/XOR-type interaction. 
+
+Controlled cooperativity sweep. To vary the relative contribution of lower- and higher-order structure, we construct two unit-energy Walsh coefficient vectors, ϵlow and ϵhigh , occupying disjoint interaction orders. We combine them as 
+
+ϵ(C) = √1 − C ϵlow + √C ϵhigh , C ∈ [0 , 1] . (23) Because the two components occupy orthogonal Walsh orders, their normalized nonconstant energy fractions are exactly 7Elow = 1 − C, Ehigh = C. (24) For the standard d = 4 benchmark, the lower-order component occupies order 1 and the higher-order component occupies order 4. We evaluate 
+
+C ∈ { 0.0, 0.2, 0.4, 0.6, 0.8, 1.0}. (25) The same sampled lower- and higher-order coefficient directions are reused across all values of C. Thus, the sweep changes only their relative contribution rather than introducing a new random landscape at each condition. 
+
+Role of ORBIT-Synth. The primary ORBIT-Synth benchmark is noiseless and contains pure orders 1–4, exact fourth-order parity, and the six-condition cooperativity sweep. Its purpose is to verify that the Walsh-based ORBIT diagnostics recover known interaction order under controlled ground truth before the same measurements are applied to experimentally observed GB1 fitness data. 
+
+# 5 GB1 Protein Fitness Landscape 
+
+Our primary molecular experiment uses the GB1 fitness landscape introduced by Wu et al. [1]. Four positions in the B1 domain of protein G are varied: 
+
+V39 , D40 , G41 , V54 . (26) The complete combinatorial space contains 
+
+20 4 = 160 ,000 (27) possible variants, of which 149,361 were experimentally measured. GB1 is well suited to ORBIT because it contains substantial epistatic structure while remaining small enough for exact order-resolved analysis over complete local four-site landscapes. 
+
+## 5.1 Primary FLIP 2-vs-Rest Split 
+
+For the primary prediction experiment, we adopt the official FLIP GB1 2-vs-rest split [2]. The model-training partition contains wild type, single mutants, and double mutants, 
+
+HD ≤ 2, (28) whereas the test partition contains triple and quadruple mutants, 
+
+HD = 3 or 4. (29) The released FLIP split artifact used in our experiments contains 424 training variants and 8,309 test variants. The FLIP test labels are never used for model fitting, hyperparameter selection, or early-stopping decisions. This experiment therefore measures whether models trained only on lower-mutation-complexity variants can generalize to experimentally measured variants carrying three or four simultaneous mutations. The FLIP split is the upstream model-training and prediction-evaluation split. It is distinct from the AA-identity-strict probe split used later for representation-accessibility analysis. 85.2 WT-Anchored Local Binary Fitness Cubes 
+
+For order-resolved analysis, we construct four-dimensional binary fitness cubes anchored at the GB1 wild type 
+
+VDGV . (30) At each of the four positions, the binary states are 
+
+0 = WT amino acid , 1 = one selected non-WT amino acid . (31) Selecting one non-WT alternative at each position defines a local WT-anchored cube with 
+
+24 = 16 (32) variants: the WT sequence, four single mutants, six double mutants, four triple mutants, and one quadruple mutant. Because each position has 19 possible non-WT amino-acid alternatives, there are 
+
+19 4 = 130 ,321 (33) candidate WT-anchored cubes. A cube is retained only when all 16 vertices have experimentally measured GB1 fitness values. Applying this completeness criterion to the 149,361 measured variants yields 
+
+109 ,235 (34) complete WT-anchored cubes. These complete local landscapes provide the shared discrete objects used for function-level Walsh decomposition and representation-level ORBIT analysis. 
+
+# 6 Models 
+
+We use lightweight models so that the study isolates representation organization and downstream nonlinear processing rather than effects of large-scale pretraining. Five predictors are evaluated in the primary GB1 experiment: ridge regression, a standard MLP, independent tokens, nonlinear independent tokens, and Residual Interaction Tokenization (RIT). Ridge regression is included in prediction and functional-recovery analyses but has no learned hidden representation for ORBIT probing. The MLP is analyzed at hidden stages H1 and H2. The three token models additionally expose an explicit token representation Ztok before the shared downstream backbone. 
+
+## 6.1 Ridge Regression 
+
+A ridge regression model on one-hot residue encodings serves as a linear baseline: 
+
+ˆy = w⊤x + b. (35) Because the input contains position-specific residue indicators without explicit cross-position interaction features, this model primarily provides an additive reference for the nonlinear architectures. 
+
+## 6.2 Standard MLP 
+
+The standard MLP receives the concatenated one-hot sequence representation and applies two nonlinear hidden layers: 9h1 = σ(W1x + b1), (36) 
+
+h2 = σ(W2h1 + b2), (37) 
+
+ˆy = Woh2 + bo. (38) The primary MLP therefore has no explicit interaction-aware tokenization. Any cross-position interaction structure must be constructed by the downstream nonlinear transformations. 
+
+## 6.3 Independent Token Representation 
+
+For position i, an independently learned token representation is 
+
+ui = Ei(xi), (39) where Ei maps the residue identity at position i to a learned token vector. The four token vectors are then concatenated: 
+
+ztok = u1∥u2∥u3∥u4. (40) At this stage, each token depends only on its own residue identity. Thus, Ztok contains no explicit cross-position interaction mechanism. 
+
+## 6.4 Nonlinear Independent Tokens 
+
+To distinguish token-wise nonlinear transformation from explicit cross-position interaction modeling, we introduce an architecture-matched mechanistic control: 
+
+ui = ϕ(Ei(xi)) . (41) The nonlinear map ϕ is applied independently to each position. Consequently, each token can undergo nonlinear transformation while remaining independent of the residue identities at all other positions. This control allows us to distinguish an effect caused by additional token-level nonlinearity from one caused specifically by cross-position interaction. 
+
+## 6.5 Residual Interaction Tokenization 
+
+RIT introduces explicit cross-position information before the shared downstream predictor. Starting from position-specific token vectors ui, it computes 
+
+ci = 1
+
+d − 1
+
+X 
+
+> j̸=i
+
+ϕint (ui, u j ), (42) and forms an interaction-aware residual token 
+
+zi = ui + αρ (ui, c i). (43) The residual coefficient α is a learnable scalar initialized to 0.05 , so the representation begins close to the independent-token model and can learn the magnitude of the interaction-dependent correction. The sequence-level token representation is 
+
+ztok = z1∥z2∥z3∥z4. (44) 10 Interaction-order interpretation. The context term ci is constructed from pairwise functions ϕint (ui, u j ). RIT therefore provides a direct mechanism for introducing pairwise cross-position information at Ztok .This does not guarantee genuine third- or fourth-order accessibility. Whether higher-order information emerges from subsequent composition of these pairwise terms is an empirical question evaluated by ORBIT rather than an architectural assumption. 
+
+## 6.6 Matched Primary Downstream Backbone 
+
+The independent-token, nonlinear-token, and RIT models share the same downstream predictor. After construction of Ztok ,
+
+h1 = σ(W1ztok + b1), (45) 
+
+h2 = σ(W2h1 + b2), (46) 
+
+ˆy = Woh2 + bo. (47) The token dimension, hidden dimensions, optimizer, training budget, and FLIP data partitions are matched across these three primary architectures. Their principal architectural difference is therefore how Ztok is constructed before entering the common two-hidden-layer backbone. This matched-backbone comparison is the primary architecture experiment. 
+
+## 6.7 Pre-Specified Depth/Capacity Sensitivity Analysis 
+
+We additionally evaluate whether the primary conclusions are sensitive to a deeper downstream predictor. Before inspecting the depth results, we froze a confirmatory analysis covering neural backbones with 
+
+dhidden ∈ { 2, 3, 4}. (48) Depth 2 corresponds to the primary architecture described above. Depths 3 and 4 append additional hidden transformations after H2, producing 
+
+H1 → H2 → H3 (49) and 
+
+H1 → H2 → H3 → H4, (50) respectively. The deeper variants are evaluated for the MLP, independent tokens, nonlinear independent tokens, and RIT using the same 20 paired training seeds as the primary analysis. The pre-specified confirmatory contrasts are depth 3 − depth 2 (51) and depth 4 − depth 2 . (52) Depth 4 versus depth 3 is not treated as a confirmatory comparison. For representation accessibility, the final layer is defined as H2 for depth 2, H3 for depth 3, and H4 for depth 4. Because the deeper networks contain additional layers and therefore additional parameters, this experiment is interpreted as a depth/capacity sensitivity analysis . It does not isolate a causal effect of depth under parameter-matched capacity. 11 7 Evaluation and Statistical Inference 
+
+We evaluate the models using complementary prediction, functional, and representation-level measurements. 
+
+## 7.1 Prediction Metrics 
+
+On the official FLIP test partition, we report 
+
+RMSE , R2, ρSpearman . (53) These metrics summarize overall generalization from the FLIP model-training partition ( HD ≤ 2) to experimentally measured triple and quadruple mutants ( HD = 3 or 4). FLIP test R2 is the pre-specified confirmatory prediction endpoint. RMSE and Spearman correlation are reported descriptively to provide complementary views of predictive performance. 
+
+## 7.2 Functional Epistasis Recovery 
+
+For each interaction order k ∈ { 1, 2, 3, 4}, we report 
+
+R2
+
+> k
+
+, (54) which measures agreement between experimentally measured and predicted order-specific Walsh coefficients. The higher-order confirmatory endpoints are 
+
+R23 and R24. (55) First- and second-order recovery are also reported but are not included in the higher-order confirmatory hypothesis family. 
+
+## 7.3 Representation Walsh Energy 
+
+For each representation stage ℓ and interaction order k, we report normalized representation Walsh energy 
+
+Eℓ,k . (56) This quantity measures the fraction of nonconstant representation Walsh energy associated with order k.Representation energy is treated as a descriptive quantity throughout the study. We do not perform heatmap-wide inferential testing on Eℓ,k .
+
+## 7.4 Representation Accessibility 
+
+For each representation stage ℓ and interaction order k, we report 
+
+Aℓ,k , (57) defined as held-out ridge-probe R2 for predicting experimentally measured order-k Walsh coefficients from representation-level Walsh components. For the primary depth-2 architecture comparison, the confirmatory higher-order accessibility endpoints are 
+
+AH2,3 and AH2,4. (58) For the depth/capacity sensitivity analysis, the corresponding confirmatory endpoints are final-layer 12 A3 and A4, (59) where the final representation is H2, H3, or H4 for depths 2, 3, and 4, respectively. We additionally test token-stage pairwise accessibility 
+
+Atok ,2 (60) for RIT relative to the two independent-token controls. Intermediate-layer accessibility trajectories are reported descriptively unless they correspond to one of these pre-specified confirmatory endpoints. 
+
+## 7.5 Complementary ORBIT Views 
+
+The ORBIT measurements are intentionally not collapsed into a single score. Instead, we distinguish presence −→ accessibility −→ functional recovery (61) corresponding respectively to 
+
+Eℓ,k , Aℓ,k , R2
+
+> k
+
+. (62) These measurements address different questions: whether order-specific variation exists in a representation, whether experimentally measured interaction structure can be linearly recovered from that representation, and whether it is ultimately reproduced by the model’s predicted fitness landscape. 
+
+## 7.6 Confirmatory Statistical Inference 
+
+All stochastic neural-model inference uses the same 20 paired training seeds, 
+
+42 , . . . , 61 . (63) Ridge regression is deterministic and is therefore reported descriptively rather than treated as a stochastic replicate in paired seed-based inference. For each confirmatory neural-model comparison, we use a two-sided exact paired sign-flip permutation test over all 
+
+220 = 1 ,048 ,576 (64) sign assignments. For each comparison we report: • the mean paired difference; • a 95% paired percentile-bootstrap confidence interval; • paired standardized effect size dz ;• the raw exact permutation p-value; and • the Holm-adjusted p-value. Bootstrap confidence intervals use 20,000 paired resamples. 13 7.7 Pre-Specified Multiplicity Families 
+
+The primary architecture analysis originally contained 17 confirmatory tests. Before inspection of the depth/capacity results, the hypothesis plan was frozen and 40 depth comparisons were added, yielding 
+
+57 (65) confirmatory tests in total. Holm adjustment is applied separately within four pre-specified families: 1. Prediction: FLIP test R2, 11 tests total; 2. Higher-order functional recovery: R23 and R24, 22 tests total; 3. Final-layer higher-order accessibility: A3 and A4, 22 tests total; 4. Token-stage pairwise accessibility: Atok ,2, 2 tests total. Statistical significance is defined as 
+
+pHolm ≤ 0.05 . (66) The pre-specified depth contrasts are depth 3 minus depth 2 and depth 4 minus depth 2 for each neural architecture. Depth 4 minus depth 3 is not a confirmatory comparison. All pre-specified depth results are reported regardless of statistical significance or direction. Representation energy and intermediate-layer trajectories remain descriptive and are not used to define additional post hoc confirmatory hypotheses. Complete reproducibility details, including the frozen execution order, paired-seed design, probe-fitting protocol, and analysis provenance, are provided in Appendix A. 
+
+# 8 Experimental Questions 
+
+Q1: Does ORBIT correctly recover known interaction order? We first validate the Walsh-based ORBIT diagnostics on synthetic landscapes with known first- through fourth-order structure, exact fourth-order parity, and a controlled transition from lower- to higher-order Walsh energy. 
+
+Q2: Can models trained on lower-mutation-complexity variants generalize to triple and quadruple mutants? Under the official FLIP 2-vs-rest protocol, models are trained only on wild type, single mutants, and double mutants and are evaluated on experimentally measured triple and quadruple mutants. 
+
+Q3: Where does order-specific information become accessible inside learned representations? For each learned representation stage ℓ, we measure normalized representation Walsh energy 
+
+Eℓ,k (67) and linear accessibility 
+
+Aℓ,k (68) for interaction orders k = 1 , . . . , 4.
+
+Q4: Does interaction-aware tokenization alter the point at which interaction information first becomes accessible? In the primary matched-backbone comparison, we compare Independent tokens, Nonlinear independent tokens, and RIT at 
+
+Ztok , H1, H2. (69) 14 The central token-stage test asks whether RIT increases pairwise accessibility Atok ,2 relative to the two independent-token controls. 
+
+Q5: Can predictive performance, representation accessibility, and functional recovery diverge? We compare conventional fitness-prediction performance with order-specific accessibility and functional recovery to determine whether models with similar final prediction performance can organize interaction information differently internally. 
+
+Q6: Are the conclusions sensitive to additional downstream depth and capacity? Under the pre-result frozen depth/capacity analysis, we compare neural backbones with two, three, and four hidden layers. The pre-specified confirmatory contrasts are depth 3 − depth 2 (70) and depth 4 − depth 2 , (71) evaluated for FLIP test R2, strict-probe R23 and R24, and final-layer A3 and A4.
+
+# 9 Results 
+
+## 9.1 ORBIT-Synth Validation 
+
+ORBIT recovered the interaction order planted in each controlled synthetic landscape. In the pure-order benchmarks, normalized nonconstant Walsh energy was concentrated entirely at the corresponding first-, second-, third-, or fourth-order component. The exact parity control likewise concentrated all nonconstant energy at order 4. The controlled cooperativity sweep recovered the prescribed transition from first- to fourth-order structure. Because the parameter C specifies the fraction of nonconstant energy assigned to the higher-order component, the recovered spectra followed 
+
+E1 = 1 − C, E4 = C, (72) with zero energy at orders 2 and 3. Thus, increasing C from 0 to 1 produced the intended progression from purely first-order to purely fourth-order structure. These results confirm that the Walsh-based ORBIT diagnostics recover known interaction order under controlled ground truth before application to experimental GB1 data. 
+
+## 9.2 GB1 Fitness Generalization 
+
+Table 1: Prediction performance on the official FLIP two_vs_rest test set (Hamming distance 3–4). Neural-model values are mean ± standard deviation across 20 seeds (42–61); Ridge is deterministic under the frozen configuration. Model RMSE ↓ R2 ↑ Spearman ρ ↑
+
+Ridge 1.1619 ± 0.0000 0.1084 ± 0.0000 0.5617 ± 0.0000 MLP 1.1377 ± 0.0986 0.1392 ± 0.1531 0.6667 ± 0.0208 Independent tokens 1.0601 ± 0.0604 0.2556 ± 0.0862 0.6054 ± 0.0365 Nonlinear tokens 1.0898 ± 0.0876 0.2109 ± 0.1298 0.7066 ± 0.0210 RIT 1.0746 ± 0.0737 0.2340 ± 0.1085 0.6037 ± 0.0344 All nonlinear neural models generalized beyond the mutation complexity represented in the FLIP training partition, although none emerged as a statistically dominant architecture in the primary two-hidden-layer comparison. 15 Descriptively, the Independent-token model achieved the highest mean FLIP test R2 and lowest mean RMSE, whereas the Nonlinear-token model achieved the highest mean Spearman correlation. RIT remained competitive with both controls. However, the pre-specified seed-paired comparisons found no significant differences in FLIP test R2 among the token architectures after Holm correction. The RIT–Independent, RIT–Nonlinear, and Nonlinear–Independent contrasts were all nonsignificant. Thus, explicit pairwise interaction-aware tokenization did not provide a detectable advantage in final GB1 fitness generalization under the primary matched-backbone setting. 
+
+## 9.3 Order-Specific Epistasis Recovery 
+
+As shown in Fig. 2, order-resolved analysis revealed a progressive decline in functional recovery as interaction order increased. 1 2 3 4Interaction order 0.0 0.2 0.4 0.6 0.8 Pooled functional recovery  R2
+
+> k
+> Order-resolved functional Walsh recovery
+> Ridge MLP Independent Nonlinear RIT
+
+Figure 2: Order-resolved functional Walsh recovery on the AA-identity-strict probe test. Pooled functional recovery R2 
+
+> k
+
+is shown for interaction orders k = 1 , . . . , 4. Neural-model points indicate means across 20 stochastic realizations (seeds 42–61), with error bars showing ±1 standard deviation. Ridge is deterministic. Recovery decreases as interaction order increases, with substantially greater uncertainty at third and fourth order. The nonlinear neural models recovered first- and second-order experimental Walsh structure substantially better than the linear ridge baseline, whereas recovery became weaker and more variable at third and especially fourth order. Descriptively, the Nonlinear-token model achieved the highest mean functional recovery through third order, while RIT achieved the highest mean fourth-order recovery. These rankings, however, were not supported by significant architecture-level differences at the higher orders. For the pre-specified third- and fourth-order endpoints, none of the RIT–Independent, RIT–Nonlinear, or Nonlinear– Independent contrasts was significant after Holm correction. Thus, the primary matched-backbone experiment provides no statistical evidence that interaction-aware tokenization improves final third- or fourth-order functional recovery. The descriptive differences at these orders should therefore not be interpreted as reliable architectural advantages. Complete order-resolved functional-recovery values for all primary models are reported in Appendix B. 16 9.4 Representation Presence and Accessibility 
+
+As shown in Fig. 3, representation-level ORBIT analysis revealed clear differences between the presence of order-specific variation and its accessibility for recovering experimentally measured epistatic structure. E , 1 E , 2 E , 3 E , 4                                             
+
+> MLP H1
+> MLP H2
+> Independent Ztoken
+> Independent H1
+> Independent H2
+> Nonlinear Ztoken
+> Nonlinear H1
+> Nonlinear H2
+> RIT Ztoken
+> RIT H1
+> RIT H2
+> 0.937 0.057 0.0048 0.0007 0.878 0.112 0.0091 0.0010 1.000 0.0000 0.0000 0.0000 0.923 0.071 0.0056 0.0008 0.856 0.129 0.013 0.0015 1.000 0.0000 0.0000 0.0000 0.950 0.046 0.0039 0.0004 0.845 0.139 0.015 0.0011 1.000 0.0000 0.0000 0.0000 0.918 0.075 0.0058 0.0008 0.853 0.132 0.014 0.0014
+> Normalized representation Walsh energy
+> 0.0 0.2 0.4 0.6 0.8 1.0 Normalized order energy
+
+(A) Representation Walsh energy A , 1 A , 2 A , 3 A , 4                                              
+
+> MLP H1
+> MLP H2
+> Independent Ztoken
+> Independent H1
+> Independent H2
+> Nonlinear Ztoken
+> Nonlinear H1
+> Nonlinear H2
+> RIT Ztoken
+> RIT H1
+> RIT H2
+> 0.70 0.47 0.04 -0.32 0.75 0.55 0.18 -0.22 0.39 -0.05 -0.04 -0.18 0.61 0.43 0.10 -0.33 0.75 0.58 0.22 -0.17 0.51 -0.05 -0.04 -0.18 0.79 0.41 0.08 -0.45 0.79 0.69 0.22 -0.23 0.43 0.19 -0.33 -0.35 0.62 0.46 0.10 -0.34 0.75 0.60 0.21 -0.23
+> Order-specific representation accessibility
+> 0.4
+> 0.2
+> 0.0 0.2 0.4 0.6 Probe pooled  R2
+
+(B) Representation accessibility 
+
+Figure 3: Order-specific structure across learned GB1 representations. (A) Normalized representation Walsh energy Eℓ,k quantifies the fraction of nonconstant representation variation associated with interaction order k.(B) Accessibility Aℓ,k measures held-out linear-probe recovery of experimentally measured order-k Walsh coefficients from each representation stage. Energy and accessibility capture distinct properties: the presence of order-specific variation does not imply that experimentally measured epistatic structure is linearly accessible. Normalized representation Walsh energy was dominated by first-order components across architectures. At the token stage, the Independent and Nonlinear-independent models contained only first-order structure by construction, whereas RIT introduced additional second-order representation energy through its explicit pairwise interaction mechanism. Subsequent hidden layers redistributed some representation energy toward higher orders, although third-and fourth-order energy remained comparatively small. Accessibility produced a stronger architecture-specific distinction. At the token stage, RIT substantially increased pairwise accessibility relative to both independent-token controls. The paired difference was 
+
+∆Atok ,2 = 0 .2468 , (73) with 
+
+dz = 1 .67 , pHolm = 1 .14 × 10 −5. (74) The effect was identical relative to the Independent-token and Nonlinear-independent-token controls and remained significant after correction within the pre-specified token-stage family. This early pairwise advantage did not extend to the pre-specified higher-order final-layer endpoints. None of the architecture contrasts for final-layer A3 or A4 was significant after Holm correction. Thus, RIT changes where pairwise information first becomes linearly accessible, but the primary two-hidden-layer experiment provides no evidence that this early representational change produces a reliable third- or fourth-order accessibility advantage at the final hidden layer. Complete stage- and order-resolved accessibility and representation Walsh-energy values are reported in Appendix B. 17 9.5 Depth/Capacity Sensitivity Analysis 
+
+We next evaluated whether the primary conclusions were sensitive to additional downstream depth and capacity. The analysis was pre-specified before inspection of the depth results and compared two-hidden-layer backbones with corresponding three- and four-hidden-layer variants. Complete numerical depth/capacity results are reported in Appendix C. 2 3 4Backbone depth 0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 Official FLIP test  R2
+
+> GB1 depth/capacity ablation: predictive performance
+> MLP Independent tokens Nonlinear tokens RIT
+
+(A) FLIP prediction 2 3 4Backbone depth 0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 Functional recovery  R23 
+
+> GB1 depth/capacity ablation: order-3 functional recovery
+> MLP Independent tokens Nonlinear tokens RIT
+
+(B) Third-order functional recovery 
+
+Figure 4: Depth/capacity sensitivity of GB1 prediction and third-order functional recovery. Neural backbones with two, three, and four hidden layers are evaluated using the same 20 paired training seeds. (A) Official FLIP test R2. (B) Strict-probe third-order functional recovery R23. The standard MLP shows the clearest depth-associated gains in both prediction and third-order recovery. Because deeper networks also contain additional parameters, these results are interpreted as depth/capacity sensitivity rather than a parameter-matched causal effect of depth. 
+
+Prediction. As shown in Fig. 4, the clearest prediction effect occurred for the standard MLP. Relative to depth 2, FLIP test R2 increased at both depth 3 
+
+∆R2 = 0 .134 , dz = 0 .88 , pHolm = 0 .0057 , (75) and depth 4 
+
+∆R2 = 0 .156 , dz = 1 .08 , pHolm = 6 .7 × 10 −4. (76) Independent tokens also showed a significant prediction improvement at depth 4 
+
+∆R2 = 0 .069 , dz = 0 .82 , pHolm = 0 .0148 , (77) whereas its depth-3 contrast did not survive multiplicity correction. Neither Nonlinear-independent tokens nor RIT showed a Holm-significant confirmatory depth effect on FLIP test R2.
+
+Functional recovery. Additional MLP depth also substantially improved third-order functional recovery. Relative to depth 2, 
+
+∆R23 = 0 .173 (78) at depth 3 and 
+
+∆R23 = 0 .217 (79) at depth 4, with both contrasts significant after Holm correction 18 pHolm = 4 .20 × 10 −5. (80) No corresponding Holm-significant third-order depth effect was detected for Independent tokens, Nonlinear-independent tokens, or RIT. None of the four architectures showed a significant confirmatory depth effect on fourth-order functional recovery R24
+
+after Holm correction. 
+
+Final-layer accessibility. The MLP likewise showed increased final-layer third-order accessibility. Relative to depth 2, 
+
+∆A3 = 0 .106 (81) at depth 3 and 
+
+∆A3 = 0 .130 (82) at depth 4, with Holm-adjusted p-values of 0.0015 and 7.13 × 10 −4, respectively. Fourth-order accessibility also improved for the deeper MLP: 
+
+∆A4 = 0 .165 (83) at depth 3 and 
+
+∆A4 = 0 .177 (84) at depth 4. Both contrasts were significant after Holm correction. Importantly, however, the absolute held-out fourth-order accessibility remained below zero at every MLP depth. The result therefore indicates a significant improvement relative to the shallow MLP, not successful absolute fourth-order decoding. No token-based architecture showed a Holm-significant confirmatory depth effect on final-layer A3 or A4.
+
+Interpretation. These results reveal a second route by which interaction structure can emerge. RIT changes pairwise accessibility directly at the token stage, whereas additional downstream MLP capacity can construct substantially more third-order functional and representation-level structure later in the network. The depth experiment does not establish a parameter-matched causal effect of depth, because the deeper networks also contain additional parameters. We therefore interpret these findings as depth/capacity sensitivity : downstream nonlinear capacity can alter higher-order recovery even when the initial representation is not explicitly interaction-aware. 
+
+## 9.6 Prediction and Representation Can Diverge 
+
+The primary-analysis conclusions are unchanged under the subsequently expanded 57-test confirmatory analysis; complete final-family-adjusted results are reported in Appendix D. Taken together, the primary architecture and depth/capacity analyses show that conventional fitness prediction does not fully determine how interaction information is organized internally. In the primary matched-backbone comparison, the token architectures showed no significant differences in FLIP test 
+
+R2, third- or fourth-order functional recovery, or final-layer A3 and A4. Nevertheless, RIT produced a large and highly significant increase in pairwise accessibility directly at the token stage. Conversely, the depth/capacity analysis showed that later nonlinear processing can substantially alter higher-order structure without changing the initial tokenization mechanism. In particular, deeper MLPs improved FLIP prediction, third-order functional recovery, and final-layer third- and fourth-order accessibility, while no comparable confirmatory depth effect was detected for RIT on these higher-order endpoints. 19 Table 2: Primary two-hidden-layer architecture analysis before the pre-specified depth/capacity extension. Paired statistical comparisons are based on 20 stochastic training seeds. Differences are defined as Model A − Model B. Confidence intervals are paired-bootstrap 95% intervals, and dz denotes the standardized paired effect size. 
+
+pHolm values in this table correspond to the original primary-analysis multiplicity families. The subsequently frozen depth/capacity extension and the final 57-test multiplicity analysis are reported in Appendix D.                                                                                                                
+
+> Endpoint Comparison ∆95% CI dzpHolm
+> FLIP test R2RIT −Independent -0.022 [-0.066, 0.019] -0.222 0.687 FLIP test R2RIT −Nonlinear 0.023 [-0.049, 0.097] 0.136 0.687 Functional R23RIT −Independent -0.007 [-0.046, 0.031] -0.082 1.000 Functional R23RIT −Nonlinear -0.021 [-0.079, 0.038] -0.156 1.000 Functional R24RIT −Independent 0.036 [-0.007, 0.077] 0.360 0.741 Functional R24RIT −Nonlinear 0.042 [-0.019, 0.101] 0.301 0.983
+> H2accessibility A3RIT −Independent -0.015 [-0.055, 0.022] -0.168 1.000
+> H2accessibility A3RIT −Nonlinear -0.009 [-0.063, 0.050] -0.064 1.000
+> H2accessibility A4RIT −Independent -0.058 [-0.158, 0.046] -0.240 1.000
+> H2accessibility A4RIT −Nonlinear -0.003 [-0.125, 0.119] -0.010 1.000
+> Ztok accessibility A2RIT −Independent 0.247 [0.183, 0.309] 1.673 1.14 ×10 −5
+> Ztok accessibility A2RIT −Nonlinear 0.247 [0.182, 0.309] 1.673 1.14 ×10 −5
+
+These findings distinguish two representation pathways: early interaction encoding ̸ = later interaction construction (85) RIT provides evidence for the first pathway by exposing pairwise information earlier in the representation trajectory. The deeper MLP provides evidence for the second by showing that additional downstream nonlinear capacity can construct more accessible higher-order structure from an initially non-interaction-aware representation. ORBIT therefore reveals differences that would be obscured by comparing final prediction metrics alone. 
+
+# 10 Discussion 
+
+ORBIT was designed to separate questions that are easily conflated in protein fitness modeling: whether order-specific structure is present in a representation, whether experimentally measured epistatic structure is linearly accessible from that representation, and whether it is ultimately recovered in the predicted fitness landscape. The ORBIT-Synth experiments establish that the Walsh-based diagnostics recover known interaction order under controlled ground truth before they are applied to experimental GB1 data. The GB1 results show why this distinction matters. In the primary matched-backbone comparison, no single token architecture was consistently superior according to conventional fitness prediction. Independent tokens achieved the highest mean FLIP test R2 and the lowest mean RMSE, whereas Nonlinear tokens achieved the highest mean Spearman correlation. However, the pre-specified paired comparisons provided no statistical evidence of differences in FLIP test R2 among the token architectures. Thus, final prediction performance alone does not reveal how these models organize epistatic information internally. The same pattern appears in functional recovery. All nonlinear models recovered substantially more first- and second-order structure than the linear ridge baseline, while recovery weakened as interaction order increased. Descriptively, Nonlinear tokens achieved the strongest mean recovery through third order and RIT the strongest mean fourth-order recovery. Yet none of the pre-specified architecture contrasts for R23 or R24 remained significant after multiplicity correction. These differences should therefore be interpreted descriptively rather than as evidence that one tokenization strategy reliably improves higher-order functional recovery. The clearest architecture-specific result instead occurs within the representation trajectory. RIT substantially increased pairwise accessibility directly at Ztok relative to both independent-token controls, 
+
+∆Atok ,2 = 0 .2468 , dz = 1 .67 , pHolm = 1 .14 × 10 −5. (86) 20 This effect is consistent with the architecture: RIT explicitly mixes pairwise cross-position information before the shared downstream predictor. Importantly, the effect concerns accessibility , not merely representation energy. Although RIT introduces only a very small fraction of second-order Walsh energy at the token stage, that component is substantially better aligned with experimentally measured pairwise epistasis than the corresponding components of the independent-token controls. The early RIT advantage did not propagate into a detectable third- or fourth-order advantage at the final hidden layer, nor into higher-order functional recovery or FLIP prediction. This distinction shows that making interaction information accessible earlier is not equivalent to improving the final learned function. An interaction-aware representation can change where information is available without necessarily changing what the downstream predictor ultimately reconstructs. The depth/capacity experiment reveals the complementary phenomenon. Increasing the standard MLP from two hidden layers to three or four produced significant improvements in FLIP prediction, third-order functional recovery, and final-layer third-order accessibility. Fourth-order accessibility also improved significantly relative to the two-layer MLP, although absolute A4 remained below zero. Thus, the deeper MLP became substantially better at exposing higher-order structure without achieving reliable absolute fourth-order decoding. These results suggest two distinct computational routes by which interaction information can become accessible: early interaction encoding and later interaction construction (87) RIT provides evidence for the first route by introducing pairwise cross-position structure directly into the token representation. The deeper MLP provides evidence for the second: even when the initial representation contains no explicit interaction mechanism, downstream nonlinear transformations can progressively construct structure that is more predictive of experimentally measured higher-order epistasis. The distinction is particularly informative because the deeper RIT and Nonlinear-token models did not show corresponding Holm-significant improvements on the confirmatory higher-order endpoints. Additional capacity therefore does not produce the same effect uniformly across architectures. The interaction between representation design and downstream processing appears to matter, rather than depth serving as a universal solution. At the same time, the depth experiment should not be interpreted as a parameter-controlled causal demonstration that depth itself produces higher-order structure. The three- and four-layer models contain more parameters than their two-layer counterparts. The result therefore establishes depth/capacity sensitivity : increasing downstream nonlinear capacity can alter higher-order recovery. Distinguishing the specific contribution of depth from parameter count will require a future parameter-matched comparison. The FLIP 2-vs-rest setting further strengthens the interpretation of the third-order results. Models are trained only on wild type, single mutants, and double mutants, while prediction is evaluated on triple and quadruple mutants. Positive third-order functional recovery therefore shows that the nonlinear models can reconstruct useful order-specific structure beyond the mutation complexity explicitly represented in the training partition. Fourth-order recovery remains substantially more difficult and shows no significant depth effect in the confirmatory analysis. Taken together, the experiments support a representation-centric view of higher-order molecular learning. Models with similar predictive performance can expose interaction information at different stages, and models with similar initial representations can diverge after additional nonlinear processing. ORBIT makes these differences measurable by separating representation presence, linear accessibility, functional recovery, and aggregate predictive performance rather than treating them as interchangeable indicators of successful learning. 
+
+# 11 Limitations and Future Work 
+
+Several limitations define the scope of the present study. First, GB1 varies only four amino-acid positions and therefore provides a compact experimental system for studying epistasis rather than the full complexity of protein sequence–function relationships. ORBIT should next be evaluated on larger combinatorial landscapes and additional molecular domains where interaction order can still be defined or approximated reliably. Second, Walsh coefficients quantify statistical epistasis. They should not be interpreted automatically as direct physical contacts, mechanistic biochemical interactions, or causal residue relationships. 21 Third, representation accessibility depends on the probe class. We use a fixed ridge probe across architectures so that comparisons measure linear accessibility under a common decoding rule. A nonlinear probe could recover additional information, but would answer a different question about decodability rather than linear accessibility. Fourth, WT-anchored local cubes necessarily share the WT sequence and can overlap in other sequence content. The AA-identity-strict probe protocol addresses this by holding out non-WT amino-acid identities at each position, but it is not an upstream sequence-disjoint model-training split. Fifth, the depth experiment changes both network depth and parameter count. The significant improvements observed for deeper MLPs therefore establish depth/capacity sensitivity rather than a parameter-matched causal effect of depth. A controlled follow-up should compare deeper models against width-matched or parameter-matched shallow networks. The present work also intentionally prioritizes lightweight neural architectures. This makes the representation trajectory directly auditable, but does not establish how the same interaction structure behaves under modern cross-token processors. A natural next step is to extend ORBIT to Transformer-style self-attention backbones. Repeated cross-token mixing would allow us to measure whether higher-order interaction structure is progressively constructed across attention layers, 
+
+Ztok → H1 → H2 → · · · → HL, (88) while tracking Eℓ,k and Aℓ,k at each stage. This would test whether interaction information is introduced primarily by the initial token representation, constructed progressively by the processor, or emerges through their interaction. The present results motivate this experiment but do not establish that Transformer processing will necessarily improve higher-order recovery. Finally, RIT itself is constructed from pairwise interaction functions. Its significant token-stage pairwise accessibility advantage is therefore consistent with its design, but the architecture does not guarantee genuine third- or fourth-order accessibility. Higher-order structure must be established empirically through ORBIT rather than inferred from the token representation mechanism. 
+
+# 12 Conclusion 
+
+We introduce ORBIT, an order-resolved framework for tracing the emergence of nonlinear interaction structure through learned protein representations. Rather than asking only whether a model predicts fitness accurately, ORBIT asks: 
+
+Where do interactions of different orders become accessible, and does successful prediction imply faithful recovery of the underlying epistatic structure? 
+
+By combining exact synthetic systems, biologically motivated GB1 generalization, representation-level Walsh analysis, and order-specific functional recovery, ORBIT provides a lightweight framework for studying higher-order molecular representation learning. 
+
+# References 
+
+[1] N. C. Wu, L. Dai, C. A. Olson, J. O. Lloyd-Smith, and R. Sun. Adaptation in protein fitness landscapes is facilitated by indirect paths. eLife , 5:e16965, 2016. [2] C. Dallago, J. Mou, K. E. Johnston, B. J. Wittmann, N. Bhattacharya, S. Goldman, A. Madani, and K. K. Yang. FLIP: Benchmark tasks in fitness landscape inference for proteins. NeurIPS Datasets and Benchmarks Track , 2021. [3] A. Aghazadeh, H. Nisonoff, O. Ocal, D. H. Brookes, Y. Huang, O. O. Koyluoglu, J. Listgarten, and K. Ramchandran. Epistatic Net allows the sparse spectral regularization of deep neural networks for inferring fitness functions. Nature Communications , 12, 2021. 22 [4] A. Gorji, A. Amrollahi, and A. Krause. A scalable Walsh–Hadamard regularizer to overcome the low-degree spectral bias of neural networks. Proceedings of the Thirty-Ninth Conference on Uncertainty in Artificial Intelligence , PMLR 216:723–733, 2023. [5] D. Tsui and A. Aghazadeh. On recovering higher-order interactions from protein language models. ICLR Workshop on Generative and Experimental Perspectives for Biomolecular Design , 2024. [6] H. Zhu, D. M. Steinberg, and P. Koniusz. Protein Fitness Landscape: Spectral Graph Theory Perspective. 
+
+Proceedings of the 28th International Conference on Artificial Intelligence and Statistics , PMLR 258:2827–2835, 2025. [7] M. Huang, S. Zhou, and K. Li. Augmenting Biological Fitness Prediction Benchmarks with Landscapes Features from GraphFLA. Advances in Neural Information Processing Systems, Datasets and Benchmarks Track , 2025. [8] M. Rahimimovassagh, S. K. Mishra, I. Garibay, and N. Yousefi. Beyond Edge Prediction: Residual Set Modeling for Combinatorial Gene Regulation. ICLR 2026 Workshop on Generative AI in Genomics (Gen 2): Barriers and Frontiers , 2026. [9] M. Rahimimovassagh, C. T. Barham, I. Garibay, W. Karwowski, and N. Yousefi. BRIDGE: Bottleneck-Aware Regulator-Set Inference and Diagnosis for Cooperative Gene Regulatory Recovery. arXiv preprint arXiv:2607.18602 , 2026. 
+
+# A Reproducibility and Frozen Experimental Protocol 
+
+This appendix documents the frozen experimental and inferential protocol underlying the results reported in the main text. It records the data and evaluation artifacts, execution order, stochastic replication scheme, depth/capacity experiment, probe-fitting procedure, confirmatory statistical analysis, and provenance controls used for the final ORBIT experiments. These details are reported separately from the main methodological description to make the final analysis directly auditable and reproducible. 
+
+## A.1 Data and Evaluation Artifacts 
+
+The GB1 dataset contains 149,361 experimentally measured variants across the four positions V39, D40, G41, and V54. The official FLIP 2-vs-rest artifact used for prediction contains 
+
+424 training variants and 8,309 test variants . (89) The prediction-training partition contains WT, single mutants, and double mutants ( HD ≤ 2), while the FLIP test partition contains triple and quadruple mutants ( HD = 3 –4). For ORBIT analysis, all 19 4 = 130 ,321 WT-anchored candidate four-dimensional cubes were enumerated. Requiring all 16 vertices to have measured fitness retained 
+
+109 ,235 (90) complete cubes. The AA-identity-strict probe construction produced 
+
+7,352 probe-training cubes , (91) 
+
+245 probe-validation cubes , (92) and 
+
+613 probe-test cubes . (93) 23 Non-WT amino-acid identities are disjoint across these probe partitions at each position; the WT identity is intentionally shared. 
+
+## A.2 End-to-End Execution Order 
+
+The frozen primary GB1 analysis was executed in the following order: 1. validate Walsh-transform unit tests; 2. validate ORBIT-Synth unit tests; 3. run the ORBIT-Synth ground-truth benchmark; 4. prepare the GB1 dataset; 5. freeze and validate the official FLIP split; 6. construct complete WT-anchored fitness cubes; 7. audit cube overlap; 8. construct the AA-identity-strict probe split; 9. train the GB1 models; 10. evaluate FLIP prediction; 11. compute function-level Walsh recovery; 12. compute representation accessibility and Walsh energy; 13. run the pre-specified statistical tests; 14. generate manuscript tables; 15. generate manuscript figures; 16. generate statistical summary tables; and 17. generate statistical summary figures. The complete primary pipeline was rerun from clean archived outputs before final reporting. 
+
+## A.3 Stochastic Replication 
+
+All stochastic neural models use the same 20 paired seeds, 
+
+42 , . . . , 61 . (94) Using paired seeds preserves seed-level correspondence across model and depth comparisons. Ridge regression is deterministic and is not treated as a stochastic replicate. 24 A.4 Depth/Capacity Experiment 
+
+The depth/capacity experiment evaluates 
+
+4 architectures × 3 depths × 20 paired seeds = 240 (95) trained neural-model configurations. The architectures are MLP, Independent tokens, Nonlinear independent tokens, and RIT. The evaluated backbone depths are 2, 3, and 4. Depths 3 and 4 add 32-dimensional hidden layers after H2. Consequently, this analysis tests depth/capacity sensitivity rather than a parameter-matched causal effect of depth. The confirmatory depth contrasts were frozen before inspection of the depth results: 
+
+d3 − d2 and d4 − d2. (96) The d4 − d3 contrast is not treated as confirmatory. 
+
+## A.5 Probe Fitting 
+
+For each representation stage and interaction order, ridge-probe regularization is selected using the probe-validation partition only. The selected probe is then refit on the union of probe-training and probe-validation data and evaluated once on the 613 strict probe-test cubes. No probe-test results are used for hyperparameter selection. 
+
+## A.6 Confirmatory Statistical Inference 
+
+All stochastic confirmatory comparisons use a two-sided exact paired sign-flip test over 
+
+220 = 1 ,048 ,576 (97) possible sign assignments. For each contrast we report the mean paired difference, a 95% paired percentile-bootstrap confidence interval based on 20,000 resamples, paired effect size dz , the raw exact permutation p-value, and the Holm-adjusted p-value. The final frozen analysis contains 57 confirmatory tests grouped into four multiplicity families: • prediction: 11 tests; • higher-order functional recovery: 22 tests; • final-layer higher-order accessibility: 22 tests; • token-stage pairwise accessibility: 2 tests. Holm correction is performed separately within each family. Representation Walsh energy and intermediate-layer trajectories are treated descriptively and do not generate additional confirmatory hypotheses. 
+
+## A.7 Frozen Analysis and Provenance 
+
+The depth hypotheses were frozen before inspection of the depth results. The archived experimental package contains the frozen hypothesis plan, analysis scripts, statistical outputs, and machine-readable provenance manifest with SHA-256 checksums. This separates pre-specified confirmatory inference from descriptive post hoc interpretation and provides a direct record of the code and analysis artifacts used to generate the reported results. 25 B Complete Primary GB1 Results 
+
+This appendix provides the complete numerical results for the primary two-hidden-layer GB1 experiment. The tables report order-resolved functional recovery, representation accessibility, and normalized representation Walsh energy for the evaluated architectures and representation stages. Functional recovery is reported for interaction orders 1–4, while representation-level results distinguish the presence of order-specific variation from its linear accessibility with respect to experimentally measured Walsh coefficients. For the token-based models, results are shown at Ztok , H1, and H2; the MLP is evaluated at H1 and H2. Neural-model entries summarize the same 20 stochastic training seeds used throughout the primary analysis. 
+
+Functional recovery. The functional-recovery table shows how faithfully each model reproduces the experimentally measured Walsh coefficients at each interaction order. Across the primary models, recovery is strongest at first and second order and becomes progressively weaker and more variable at third and fourth order. The nonlinear models substantially outperform the additive Ridge baseline at the lower orders. At higher orders, descriptive differences between neural architectures are present, but the pre-specified paired comparisons do not support a reliable architecture-level advantage. Table 3: Order-resolved functional Walsh recovery on the 613 AA-identity-strict probe-test cubes. Values are pooled 
+
+R2 across coefficients of each interaction order. Neural-model values are mean ± standard deviation across 20 seeds (42–61); Ridge is deterministic under the frozen configuration. Model R21 R22 R23 R24
+
+Ridge 0.4126 ± 0.0000 -0.0012 ± 0.0000 -0.0147 ± 0.0000 -0.0218 ± 0.0000 MLP 0.5397 ± 0.0764 0.4969 ± 0.0657 0.1230 ± 0.0858 -0.0423 ± 0.0787 Independent tokens 0.5498 ± 0.1187 0.4903 ± 0.1406 0.2117 ± 0.0864 0.0190 ± 0.0965 Nonlinear tokens 0.6356 ± 0.1011 0.6769 ± 0.0972 0.2257 ± 0.1218 0.0129 ± 0.1091 RIT 0.5516 ± 0.1160 0.4951 ± 0.1287 0.2043 ± 0.0955 0.0545 ± 0.1037 
+
+Representation accessibility. The accessibility table addresses a different question: whether experimentally measured order-specific epistasis can be linearly decoded from each internal representation stage. The most prominent architecture-specific pattern occurs at the token stage, where RIT makes pairwise epistatic information substantially more accessible than either independent-token control. This early advantage does not persist as a significant third-or fourth-order advantage at the final hidden layer, illustrating that early accessibility and downstream functional recovery need not coincide. Table 4: Linear accessibility of experimentally derived order-specific Walsh coefficients from learned representations. Probe alpha is selected on probe validation, the probe is refit on probe train plus validation, and evaluated once on the 613 AA-identity-strict probe-test cubes. Values are mean ± standard deviation across 20 seeds. Model Layer Aℓ, 1 Aℓ, 2 Aℓ, 3 Aℓ, 4
+
+MLP H1 0.7016 ± 0.0348 0.4721 ± 0.0675 0.0413 ± 0.0808 -0.3206 ± 0.1733 MLP H2 0.7481 ± 0.0469 0.5534 ± 0.0633 0.1774 ± 0.0715 -0.2187 ± 0.2091 Independent tokens Ztoken 0.3908 ± 0.0798 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Independent tokens H1 0.6091 ± 0.0516 0.4336 ± 0.0974 0.0976 ± 0.1133 -0.3316 ± 0.1537 Independent tokens H2 0.7491 ± 0.0715 0.5791 ± 0.1244 0.2245 ± 0.1058 -0.1726 ± 0.1777 Nonlinear tokens Ztoken 0.5127 ± 0.0483 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Nonlinear tokens H1 0.7889 ± 0.0701 0.4094 ± 0.3183 0.0817 ± 0.2432 -0.4549 ± 0.3133 Nonlinear tokens H2 0.7912 ± 0.0789 0.6937 ± 0.0953 0.2179 ± 0.1176 -0.2273 ± 0.1319 RIT Ztoken 0.4302 ± 0.0632 0.1929 ± 0.1475 -0.3334 ± 0.3081 -0.3468 ± 0.2544 RIT H1 0.6204 ± 0.0573 0.4603 ± 0.0747 0.1027 ± 0.0784 -0.3397 ± 0.1993 RIT H2 0.7532 ± 0.0605 0.6023 ± 0.1004 0.2094 ± 0.1053 -0.2302 ± 0.2087 
+
+Representation Walsh energy. The representation-energy table describes where order-specific variation is present, independently of whether that variation is aligned with the experimental epistatic coefficients. First-order 26 components dominate most representations. Independent and Nonlinear-independent tokens contain only first-order structure at the initial token stage by construction, whereas RIT introduces second-order energy through its explicit pairwise interaction mechanism. Subsequent nonlinear layers redistribute some energy toward higher orders, although third- and fourth-order components remain comparatively small. Table 5: Normalized representation Walsh energy on the 613 strict probe-test cubes. The order-0 component is excluded from the normalization denominator. Ek denotes total energy at order k, not average coefficient magnitude. Values are mean ± standard deviation across 20 seeds. Model Layer Eℓ, 1 Eℓ, 2 Eℓ, 3 Eℓ, 4
+
+MLP H1 0.937370 ± 0.006139 0.057134 ± 0.005665 0.004840 ± 0.000519 0.000656 ± 0.000097 MLP H2 0.878389 ± 0.034318 0.111567 ± 0.029501 0.009065 ± 0.004603 0.000979 ± 0.000480 Independent tokens Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Independent tokens H1 0.922745 ± 0.008103 0.070863 ± 0.007632 0.005628 ± 0.000612 0.000764 ± 0.000126 Independent tokens H2 0.856304 ± 0.038567 0.128730 ± 0.033405 0.013499 ± 0.004856 0.001467 ± 0.000551 Nonlinear tokens Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Nonlinear tokens H1 0.949630 ± 0.011800 0.046110 ± 0.011042 0.003862 ± 0.000914 0.000397 ± 0.000122 Nonlinear tokens H2 0.845361 ± 0.038371 0.138808 ± 0.033379 0.014711 ± 0.005295 0.001120 ± 0.000491 RIT Ztoken 0.999993 ± 0.000008 0.000007 ± 0.000008 0.000000 ± 0.000000 0.000000 ± 0.000000 RIT H1 0.918471 ± 0.011520 0.074989 ± 0.010910 0.005776 ± 0.000549 0.000764 ± 0.000151 RIT H2 0.852641 ± 0.039291 0.132332 ± 0.034785 0.013602 ± 0.004435 0.001425 ± 0.000441 Taken together, these complementary measurements show why ORBIT does not collapse representation analysis into a single quantity. Order-specific variation may be present without being experimentally aligned, and experimentally aligned information may become accessible at an internal stage without producing a corresponding improvement in the final predicted fitness landscape. Complete confirmatory inference for the primary architecture contrasts is reported in Appendix D. 27 C Complete Depth/Capacity Results 
+
+This appendix provides the complete numerical results from the pre-specified depth/capacity sensitivity analysis. The experiment evaluates MLP, Independent-token, Nonlinear-independent-token, and RIT models with two, three, and four hidden layers using the same 20 paired training seeds as the primary analysis. The tables report four complementary views of the depth experiment: official FLIP test prediction, order-resolved functional Walsh recovery, layer- and order-resolved representation accessibility, and normalized representation Walsh energy. Representation stages are reported through the final available hidden layer at each depth, allowing the full trajectory of order-specific structure to be inspected rather than only the final representation. Because the three- and four-hidden-layer models contain additional parameters, these results characterize sensitivity to increased downstream depth and capacity rather than a parameter-matched causal effect of depth alone. Repre-sentation Walsh energy and intermediate-layer accessibility trajectories are descriptive; confirmatory inference is restricted to the pre-specified prediction, higher-order functional recovery, and final-layer accessibility endpoints defined in the main text. Complete statistical results for the corresponding pre-specified depth contrasts are reported in Appendix D. Table 6: Prediction performance in the ORBIT-GB1 deeper-backbone ablation. Values are mean ± sample standard deviation across 20 paired training seeds (42–61). Depths 3 and 4 add 32-wide hidden layers, so the comparison measures depth/capacity sensitivity rather than a parameter-matched causal effect of depth. Model Backbone depth Official FLIP test R2
+
+MLP 2 0.1392 ± 0.1531 MLP 3 0.2729 ± 0.0729 MLP 4 0.2953 ± 0.0435 Independent tokens 2 0.2556 ± 0.0862 Independent tokens 3 0.3110 ± 0.0520 Independent tokens 4 0.3249 ± 0.0429 Nonlinear tokens 2 0.2109 ± 0.1298 Nonlinear tokens 3 0.2338 ± 0.0743 Nonlinear tokens 4 0.2339 ± 0.0856 RIT 2 0.2340 ± 0.1085 RIT 3 0.3004 ± 0.0534 RIT 4 0.2748 ± 0.0636 Table 7: Order-resolved functional Walsh recovery on the 613 AA-identity-strict probe-test cubes in the deeper-backbone ablation. Each value is mean ± sample standard deviation across 20 paired training seeds (42–61). Model Backbone depth R21 R22 R23 R24
+
+MLP 2 0.5397 ± 0.0764 0.4969 ± 0.0657 0.1230 ± 0.0858 -0.0423 ± 0.0787 MLP 3 0.7003 ± 0.0623 0.6243 ± 0.0506 0.2963 ± 0.0727 -0.0263 ± 0.0758 MLP 4 0.7081 ± 0.0492 0.6503 ± 0.0443 0.3399 ± 0.0487 -0.0042 ± 0.0872 Independent tokens 2 0.5498 ± 0.1187 0.4903 ± 0.1406 0.2117 ± 0.0864 0.0190 ± 0.0965 Independent tokens 3 0.6251 ± 0.1331 0.5445 ± 0.1128 0.2493 ± 0.1074 -0.0023 ± 0.1561 Independent tokens 4 0.6589 ± 0.1099 0.5757 ± 0.1097 0.2618 ± 0.1426 0.0064 ± 0.1675 Nonlinear tokens 2 0.6356 ± 0.1011 0.6769 ± 0.0972 0.2257 ± 0.1218 0.0129 ± 0.1091 Nonlinear tokens 3 0.6847 ± 0.0891 0.7022 ± 0.0685 0.2406 ± 0.1176 0.0434 ± 0.0963 Nonlinear tokens 4 0.7175 ± 0.0769 0.7238 ± 0.0568 0.2505 ± 0.1572 0.0145 ± 0.1138 RIT 2 0.5516 ± 0.1160 0.4951 ± 0.1287 0.2043 ± 0.0955 0.0545 ± 0.1037 RIT 3 0.6154 ± 0.0933 0.5559 ± 0.1268 0.2458 ± 0.1115 -0.0066 ± 0.1285 RIT 4 0.6036 ± 0.1686 0.5595 ± 0.1395 0.2676 ± 0.1203 -0.0452 ± 0.1420 28 Table 8: Layer- and order-resolved linear accessibility in the deeper-backbone ablation. The same AA-identity-strict probe protocol is used at every stage. Values are mean ± sample standard deviation across 20 paired training seeds (42–61). Model Depth Stage Aℓ, 1 Aℓ, 2 Aℓ, 3 Aℓ, 4
+
+MLP 2 H1 0.7016 ± 0.0348 0.4721 ± 0.0675 0.0413 ± 0.0808 -0.3206 ± 0.1733 MLP 2 H2 0.7481 ± 0.0469 0.5534 ± 0.0633 0.1774 ± 0.0715 -0.2187 ± 0.2091 MLP 3 H1 0.6383 ± 0.0531 0.4138 ± 0.1491 0.0047 ± 0.1240 -0.4583 ± 0.5004 MLP 3 H2 0.7632 ± 0.0453 0.5663 ± 0.0737 0.1977 ± 0.0762 -0.1943 ± 0.1115 MLP 3 H3 0.7998 ± 0.0337 0.6669 ± 0.0408 0.2831 ± 0.0604 -0.0535 ± 0.0639 MLP 4 H1 0.6419 ± 0.0559 0.4104 ± 0.0622 0.0193 ± 0.0636 -0.2850 ± 0.1378 MLP 4 H2 0.7688 ± 0.0445 0.5656 ± 0.1068 0.1578 ± 0.0887 -0.1963 ± 0.0872 MLP 4 H3 0.7953 ± 0.0347 0.6654 ± 0.0476 0.3048 ± 0.0494 -0.0960 ± 0.1234 MLP 4 H4 0.7925 ± 0.0442 0.6705 ± 0.0347 0.3074 ± 0.0581 -0.0417 ± 0.0946 Independent tokens 2 Ztoken 0.3908 ± 0.0798 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Independent tokens 2 H1 0.6091 ± 0.0516 0.4336 ± 0.0974 0.0976 ± 0.1133 -0.3316 ± 0.1537 Independent tokens 2 H2 0.7491 ± 0.0715 0.5791 ± 0.1244 0.2245 ± 0.1058 -0.1726 ± 0.1777 Independent tokens 3 Ztoken 0.3853 ± 0.0813 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Independent tokens 3 H1 0.5794 ± 0.0870 0.3909 ± 0.0738 0.0503 ± 0.0976 -0.3608 ± 0.1840 Independent tokens 3 H2 0.7368 ± 0.0915 0.5289 ± 0.2099 0.1457 ± 0.2096 -0.2312 ± 0.2511 Independent tokens 3 H3 0.7630 ± 0.0757 0.6037 ± 0.0934 0.2351 ± 0.1137 -0.1095 ± 0.1301 Independent tokens 4 Ztoken 0.3810 ± 0.0830 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Independent tokens 4 H1 0.5698 ± 0.0689 0.3687 ± 0.0730 0.0656 ± 0.1128 -0.3166 ± 0.1874 Independent tokens 4 H2 0.7377 ± 0.0749 0.5414 ± 0.1065 0.1462 ± 0.1290 -0.2377 ± 0.1928 Independent tokens 4 H3 0.7953 ± 0.0597 0.6239 ± 0.0885 0.2298 ± 0.1296 -0.1266 ± 0.1994 Independent tokens 4 H4 0.8070 ± 0.0621 0.6463 ± 0.0886 0.2522 ± 0.1312 -0.0675 ± 0.1515 Nonlinear tokens 2 Ztoken 0.5127 ± 0.0483 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Nonlinear tokens 2 H1 0.7889 ± 0.0701 0.4094 ± 0.3183 0.0817 ± 0.2432 -0.4549 ± 0.3133 Nonlinear tokens 2 H2 0.7912 ± 0.0789 0.6937 ± 0.0953 0.2179 ± 0.1176 -0.2273 ± 0.1319 Nonlinear tokens 3 Ztoken 0.4961 ± 0.0631 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Nonlinear tokens 3 H1 0.7734 ± 0.0809 0.2947 ± 0.9017 0.0416 ± 0.2699 -0.6515 ± 1.3515 Nonlinear tokens 3 H2 0.8186 ± 0.0366 0.7059 ± 0.0631 0.2180 ± 0.1110 -0.1956 ± 0.1231 Nonlinear tokens 3 H3 0.8142 ± 0.0561 0.7082 ± 0.0651 0.2399 ± 0.1130 -0.1964 ± 0.1076 Nonlinear tokens 4 Ztoken -8.0518 ± 37.1861 -0.0539 ± 0.0000 -0.0355 ± 0.0000 -0.1758 ± 0.0000 Nonlinear tokens 4 H1 0.7719 ± 0.0607 0.4116 ± 0.3245 -0.1555 ± 0.6327 -1.5320 ± 3.3408 Nonlinear tokens 4 H2 0.7355 ± 0.4067 -0.6521 ± 6.1046 0.2018 ± 0.2135 -1.2509 ± 4.6885 Nonlinear tokens 4 H3 0.8218 ± 0.0536 0.7357 ± 0.0517 0.2898 ± 0.1156 -0.2446 ± 0.1843 Nonlinear tokens 4 H4 0.8034 ± 0.0603 0.7178 ± 0.0571 0.2637 ± 0.1295 -0.1943 ± 0.1282 RIT 2 Ztoken 0.4302 ± 0.0632 0.1929 ± 0.1475 -0.3334 ± 0.3081 -0.3468 ± 0.2544 RIT 2 H1 0.6204 ± 0.0573 0.4603 ± 0.0747 0.1027 ± 0.0784 -0.3397 ± 0.1993 RIT 2 H2 0.7532 ± 0.0605 0.6023 ± 0.1004 0.2094 ± 0.1053 -0.2302 ± 0.2087 RIT 3 Ztoken 0.4020 ± 0.0695 0.1531 ± 0.1527 -0.4135 ± 0.5199 -0.4051 ± 0.3181 RIT 3 H1 0.5889 ± 0.0923 0.4274 ± 0.0706 0.0672 ± 0.0893 -0.3250 ± 0.1452 RIT 3 H2 0.7329 ± 0.0727 0.5839 ± 0.0898 -0.0525 ± 0.9347 -1.3024 ± 4.8170 RIT 3 H3 0.7914 ± 0.0485 0.6426 ± 0.0851 0.2412 ± 0.0739 -0.1003 ± 0.1316 RIT 4 Ztoken 0.3950 ± 0.0794 0.0903 ± 0.2133 -0.2287 ± 0.3339 -0.3211 ± 0.2802 RIT 4 H1 0.6002 ± 0.0551 0.4080 ± 0.0625 0.0655 ± 0.0884 -0.3379 ± 0.1435 RIT 4 H2 0.7340 ± 0.0532 0.5530 ± 0.0893 0.1876 ± 0.1013 -0.2346 ± 0.1370 RIT 4 H3 0.7749 ± 0.0649 0.6289 ± 0.0979 0.2279 ± 0.1203 -0.0763 ± 0.1322 RIT 4 H4 0.7892 ± 0.0697 0.6374 ± 0.0957 0.2275 ± 0.1713 -0.0469 ± 0.1655 29 Table 9: Normalized representation Walsh energy in the deeper-backbone ablation. The order-0 component is excluded from the normalization denominator; Eℓ,k is a descriptive representation-energy metric, not a biochemical interaction-strength estimate. Values are mean ± sample standard deviation across 20 paired training seeds (42–61). Model Depth Stage Eℓ, 1 Eℓ, 2 Eℓ, 3 Eℓ, 4
+
+MLP 2 H1 0.937370 ± 0.006139 0.057134 ± 0.005665 0.004840 ± 0.000519 0.000656 ± 0.000097 MLP 2 H2 0.878389 ± 0.034318 0.111567 ± 0.029501 0.009065 ± 0.004603 0.000979 ± 0.000480 MLP 3 H1 0.944213 ± 0.004841 0.050727 ± 0.004442 0.004466 ± 0.000424 0.000595 ± 0.000095 MLP 3 H2 0.918602 ± 0.019442 0.076230 ± 0.018444 0.004638 ± 0.001154 0.000530 ± 0.000154 MLP 3 H3 0.806304 ± 0.025654 0.169747 ± 0.021498 0.021968 ± 0.004587 0.001981 ± 0.000457 MLP 4 H1 0.945460 ± 0.004794 0.049532 ± 0.004442 0.004416 ± 0.000406 0.000593 ± 0.000079 MLP 4 H2 0.932448 ± 0.016934 0.062848 ± 0.015257 0.004239 ± 0.001853 0.000465 ± 0.000159 MLP 4 H3 0.874361 ± 0.030773 0.114294 ± 0.026456 0.010440 ± 0.004359 0.000904 ± 0.000308 MLP 4 H4 0.790237 ± 0.032651 0.179857 ± 0.026453 0.027734 ± 0.006754 0.002173 ± 0.000581 Independent tokens 2 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Independent tokens 2 H1 0.922745 ± 0.008103 0.070863 ± 0.007632 0.005628 ± 0.000612 0.000764 ± 0.000126 Independent tokens 2 H2 0.856304 ± 0.038567 0.128730 ± 0.033405 0.013499 ± 0.004856 0.001467 ± 0.000551 Independent tokens 3 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Independent tokens 3 H1 0.932010 ± 0.008604 0.062169 ± 0.008013 0.005146 ± 0.000603 0.000674 ± 0.000132 Independent tokens 3 H2 0.909889 ± 0.024845 0.081982 ± 0.022571 0.007286 ± 0.002206 0.000842 ± 0.000303 Independent tokens 3 H3 0.810329 ± 0.048222 0.169700 ± 0.040859 0.018188 ± 0.007719 0.001783 ± 0.000873 Independent tokens 4 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Independent tokens 4 H1 0.938384 ± 0.008950 0.056152 ± 0.008384 0.004846 ± 0.000642 0.000619 ± 0.000093 Independent tokens 4 H2 0.928759 ± 0.019462 0.065141 ± 0.018108 0.005460 ± 0.001456 0.000641 ± 0.000172 Independent tokens 4 H3 0.869924 ± 0.042093 0.119620 ± 0.039262 0.009488 ± 0.003554 0.000968 ± 0.000315 Independent tokens 4 H4 0.773630 ± 0.052995 0.200181 ± 0.045783 0.024109 ± 0.008176 0.002080 ± 0.000749 Nonlinear tokens 2 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Nonlinear tokens 2 H1 0.949630 ± 0.011800 0.046110 ± 0.011042 0.003862 ± 0.000914 0.000397 ± 0.000122 Nonlinear tokens 2 H2 0.845361 ± 0.038371 0.138808 ± 0.033379 0.014711 ± 0.005295 0.001120 ± 0.000491 Nonlinear tokens 3 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Nonlinear tokens 3 H1 0.963286 ± 0.011526 0.033704 ± 0.010886 0.002748 ± 0.000774 0.000261 ± 0.000084 Nonlinear tokens 3 H2 0.923384 ± 0.030029 0.071929 ± 0.028808 0.004345 ± 0.001690 0.000342 ± 0.000192 Nonlinear tokens 3 H3 0.833816 ± 0.048796 0.144605 ± 0.041788 0.020034 ± 0.007770 0.001545 ± 0.000662 Nonlinear tokens 4 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 Nonlinear tokens 4 H1 0.964249 ± 0.010711 0.033036 ± 0.010013 0.002435 ± 0.000714 0.000280 ± 0.000233 Nonlinear tokens 4 H2 0.921552 ± 0.027599 0.074431 ± 0.026422 0.003628 ± 0.001533 0.000389 ± 0.000302 Nonlinear tokens 4 H3 0.861184 ± 0.037826 0.127568 ± 0.033528 0.010404 ± 0.004543 0.000845 ± 0.000528 Nonlinear tokens 4 H4 0.791632 ± 0.042018 0.179425 ± 0.035648 0.026795 ± 0.007445 0.002148 ± 0.000934 RIT 2 Ztoken 0.999993 ± 0.000008 0.000007 ± 0.000008 0.000000 ± 0.000000 0.000000 ± 0.000000 RIT 2 H1 0.918471 ± 0.011520 0.074989 ± 0.010910 0.005776 ± 0.000549 0.000764 ± 0.000151 RIT 2 H2 0.852641 ± 0.039291 0.132332 ± 0.034785 0.013602 ± 0.004435 0.001425 ± 0.000441 RIT 3 Ztoken 0.999999 ± 0.000001 0.000001 ± 0.000001 0.000000 ± 0.000000 0.000000 ± 0.000000 RIT 3 H1 0.927286 ± 0.009729 0.066650 ± 0.009155 0.005358 ± 0.000623 0.000707 ± 0.000111 RIT 3 H2 0.897444 ± 0.026828 0.093739 ± 0.024782 0.007942 ± 0.002173 0.000876 ± 0.000226 RIT 3 H3 0.798484 ± 0.052272 0.179259 ± 0.044776 0.020428 ± 0.008180 0.001829 ± 0.000585 RIT 4 Ztoken 1.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 0.000000 ± 0.000000 RIT 4 H1 0.935997 ± 0.011001 0.058431 ± 0.010144 0.004923 ± 0.000780 0.000649 ± 0.000154 RIT 4 H2 0.921058 ± 0.024282 0.072660 ± 0.022447 0.005650 ± 0.001804 0.000632 ± 0.000213 RIT 4 H3 0.859682 ± 0.045986 0.128283 ± 0.041055 0.011041 ± 0.005361 0.000994 ± 0.000412 RIT 4 H4 0.757734 ± 0.052513 0.212853 ± 0.044375 0.027211 ± 0.010056 0.002202 ± 0.000842 30 D Complete Confirmatory Statistical Results 
+
+This appendix reports the complete pre-specified confirmatory statistical analysis underlying the primary architecture comparison and the depth/capacity sensitivity experiment. The final frozen hypothesis set contains 57 seed-paired comparisons. For each comparison, we report the mean paired difference, the 95% paired-bootstrap confidence interval, paired standardized effect size dz , the raw two-sided exact paired sign-flip permutation p-value, and the Holm-adjusted p-value. Holm correction is performed separately within the four pre-specified multiplicity families: • prediction: 11 tests; • higher-order functional recovery: 22 tests; • final-layer higher-order accessibility: 22 tests; and • token-stage pairwise accessibility: 2 tests. The architecture-level comparisons correspond to the frozen primary two-hidden-layer experiment. The depth/capacity comparisons evaluate, within each neural architecture, the pre-specified contrasts depth 3 minus depth 2 and depth 4 minus depth 2. Depth 4 minus depth 3 was not designated as a confirmatory comparison. Representation Walsh energy and intermediate-layer accessibility trajectories are descriptive and are therefore excluded from the confirmatory hypothesis families. All pre-specified comparisons are reported below regardless of statistical significance, effect direction, or whether additional depth improved the corresponding endpoint. 
+
+Table 10: Complete pre-specified confirmatory statistical results. Differences are defined as Model A − Model B for architecture contrasts and depth A − depth B for depth contrasts. Confidence intervals are paired-bootstrap 95% intervals; dz is the standardized paired effect size. praw is the two-sided exact paired sign-flip permutation p-value and pHolm is adjusted within the corresponding pre-specified family. Bold adjusted p-values satisfy pHolm ≤ 0.05 .Endpoint Comparison ∆ 95% CI dz praw pHolm 
+
+Prediction (11 tests) 
+
+FLIP test R2 Nonlinear − Independent -0.045 [-0.106, 0.014] -0.320 0.172 1.000 FLIP test R2 RIT − Independent -0.022 [-0.066, 0.019] -0.222 0.344 1.000 FLIP test R2 RIT − Nonlinear 0.023 [-0.049, 0.097] 0.136 0.548 1.000 FLIP test R2 MLP: d3 − d2 0.134 [0.071, 0.201] 0.876 5.68 × 10 −4 0.006 
+
+FLIP test R2 MLP: d4 − d2 0.156 [0.097, 0.221] 1.076 6.1 × 10 −5 6.71 × 10 −4
+
+FLIP test R2 Independent: d3 − d2 0.055 [0.015, 0.097] 0.581 0.015 0.105 FLIP test R2 Independent: d4 − d2 0.069 [0.034, 0.106] 0.816 0.002 0.015 
+
+FLIP test R2 Nonlinear: d3 − d2 0.023 [-0.022, 0.068] 0.215 0.348 1.000 FLIP test R2 Nonlinear: d4 − d2 0.023 [-0.026, 0.077] 0.191 0.418 1.000 FLIP test R2 RIT: d3 − d2 0.066 [0.021, 0.116] 0.598 0.010 0.081 FLIP test R2 RIT: d4 − d2 0.041 [-0.009, 0.098] 0.323 0.171 1.000 
+
+Higher-order functional recovery (22 tests) 
+
+Functional R23 Nonlinear − Independent 0.014 [-0.051, 0.077] 0.092 0.685 1.000 Functional R23 RIT − Independent -0.007 [-0.046, 0.031] -0.082 0.717 1.000 Functional R23 RIT − Nonlinear -0.021 [-0.079, 0.038] -0.156 0.491 1.000 Functional R24 Nonlinear − Independent -0.006 [-0.064, 0.054] -0.044 0.848 1.000 Functional R24 RIT − Independent 0.036 [-0.007, 0.077] 0.360 0.124 1.000 Functional R24 RIT − Nonlinear 0.042 [-0.019, 0.101] 0.301 0.197 1.000 Functional R23 MLP: d3 − d2 0.173 [0.138, 0.207] 2.115 1.91 × 10 −6 4.2 × 10 −5
+
+Functional R23 MLP: d4 − d2 0.217 [0.180, 0.256] 2.404 1.91 × 10 −6 4.2 × 10 −5
+
+Functional R23 Independent: d3 − d2 0.038 [0.007, 0.069] 0.520 0.032 0.601 Functional R23 Independent: d4 − d2 0.050 [0.000, 0.098] 0.440 0.065 1.000 Functional R23 Nonlinear: d3 − d2 0.015 [-0.031, 0.056] 0.148 0.521 1.000 Functional R23 Nonlinear: d4 − d2 0.025 [-0.030, 0.079] 0.193 0.401 1.000 Functional R23 RIT: d3 − d2 0.042 [-0.011, 0.092] 0.350 0.134 1.000 Functional R23 RIT: d4 − d2 0.063 [0.004, 0.122] 0.457 0.056 0.999 Functional R24 MLP: d3 − d2 0.016 [-0.026, 0.061] 0.154 0.500 1.000 Functional R24 MLP: d4 − d2 0.038 [-0.001, 0.077] 0.418 0.078 1.000 Functional R24 Independent: d3 − d2 -0.021 [-0.098, 0.047] -0.126 0.590 1.000 
+
+Continued on next page 
+
+31 Table 10 continued 
+
+Endpoint Comparison ∆ 95% CI dz praw pHolm 
+
+Functional R24 Independent: d4 − d2 -0.013 [-0.094, 0.072] -0.065 0.772 1.000 Functional R24 Nonlinear: d3 − d2 0.031 [-0.007, 0.071] 0.330 0.158 1.000 Functional R24 Nonlinear: d4 − d2 0.002 [-0.067, 0.062] 0.011 0.964 1.000 Functional R24 RIT: d3 − d2 -0.061 [-0.135, 0.010] -0.360 0.124 1.000 Functional R24 RIT: d4 − d2 -0.100 [-0.169, -0.034] -0.630 0.010 0.196 
+
+Final-layer higher-order accessibility (22 tests) 
+
+H2 accessibility A3 Nonlinear − Independent -0.007 [-0.065, 0.050] -0.049 0.828 1.000 
+
+H2 accessibility A3 RIT − Independent -0.015 [-0.055, 0.022] -0.168 0.461 1.000 
+
+H2 accessibility A3 RIT − Nonlinear -0.009 [-0.063, 0.050] -0.064 0.779 1.000 
+
+H2 accessibility A4 Nonlinear − Independent -0.055 [-0.156, 0.046] -0.231 0.317 1.000 
+
+H2 accessibility A4 RIT − Independent -0.058 [-0.158, 0.046] -0.240 0.300 1.000 
+
+H2 accessibility A4 RIT − Nonlinear -0.003 [-0.125, 0.119] -0.010 0.964 1.000 Final-layer A3 MLP: d3 − d2 0.106 [0.070, 0.138] 1.323 7.06 × 10 −5 0.001 
+
+Final-layer A3 MLP: d4 − d2 0.130 [0.087, 0.173] 1.280 3.24 × 10 −5 7.13 × 10 −4
+
+Final-layer A3 Independent: d3 − d2 0.011 [-0.023, 0.043] 0.137 0.547 1.000 Final-layer A3 Independent: d4 − d2 0.028 [-0.021, 0.076] 0.245 0.288 1.000 Final-layer A3 Nonlinear: d3 − d2 0.022 [-0.032, 0.070] 0.188 0.423 1.000 Final-layer A3 Nonlinear: d4 − d2 0.046 [-0.011, 0.106] 0.335 0.151 1.000 Final-layer A3 RIT: d3 − d2 0.032 [-0.009, 0.073] 0.333 0.156 1.000 Final-layer A3 RIT: d4 − d2 0.018 [-0.069, 0.093] 0.096 0.698 1.000 Final-layer A4 MLP: d3 − d2 0.165 [0.084, 0.262] 0.797 5.05 × 10 −4 0.010 
+
+Final-layer A4 MLP: d4 − d2 0.177 [0.087, 0.289] 0.748 9.73 × 10 −5 0.002 
+
+Final-layer A4 Independent: d3 − d2 0.063 [-0.012, 0.138] 0.353 0.133 1.000 Final-layer A4 Independent: d4 − d2 0.105 [0.029, 0.181] 0.592 0.016 0.252 Final-layer A4 Nonlinear: d3 − d2 0.031 [-0.032, 0.093] 0.212 0.356 1.000 Final-layer A4 Nonlinear: d4 − d2 0.033 [-0.034, 0.103] 0.205 0.373 1.000 Final-layer A4 RIT: d3 − d2 0.130 [0.046, 0.227] 0.610 0.007 0.111 Final-layer A4 RIT: d4 − d2 0.183 [0.077, 0.290] 0.737 0.004 0.071 
+
+Token-stage pairwise accessibility (2 tests) 
+
+Ztok accessibility A2 RIT − Independent 0.247 [0.183, 0.309] 1.673 5.72 × 10 −6 1.14 × 10 −5
+
+Ztok accessibility A2 RIT − Nonlinear 0.247 [0.182, 0.309] 1.673 5.72 × 10 −6 1.14 × 10 −5
+
+32

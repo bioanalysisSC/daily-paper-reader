@@ -1,0 +1,205 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-01T00:32:45.198715+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2608.24953v1",
+      "source": "arxiv",
+      "title": "Beyond Tokens: Probing Higher-Order Epistasis in Learned Protein Representations",
+      "abstract": "Protein fitness landscapes contain nonlinear interactions in which mutation effects depend on other residues. We introduce ORBIT, an Order-Resolved Benchmarking of Interaction Transformations framework that separates interaction presence, representation accessibility, and functional recovery. ORBIT first validates Walsh-based diagnostics on synthetic landscapes with known interaction order, then analyzes the experimentally measured GB1 fitness landscape under the FLIP 2-vs-rest setting. We compare ridge regression, a standard MLP, independent tokens, nonlinear independent tokens, and Residual Interaction Tokenization (RIT).   Across 20 paired training seeds, the primary two-hidden-layer comparison found no significant architecture differences in FLIP test R^2, third- or fourth-order functional recovery, or final-layer third- or fourth-order accessibility. However, RIT significantly increased pairwise accessibility at the token stage relative to both independent-token controls (Delta A_tok,2 = 0.2468, d_z = 1.67, Holm-adjusted p = 1.14 x 10^-5), without a detectable downstream higher-order advantage.   A pre-specified depth/capacity analysis showed that deeper MLPs improved FLIP prediction, third-order functional recovery, and final-layer third-order accessibility; fourth-order accessibility also improved relative to the shallow MLP but remained below zero in absolute held-out R^2. ORBIT therefore reveals representation-level changes hidden by conventional prediction metrics and distinguishes early interaction-aware encoding from higher-order structure constructed by downstream nonlinear capacity.",
+      "authors": [
+        "Maryam Rahimimovassagh",
+        "Ivan Garibay",
+        "Niloofar Yousefi"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG"
+      ],
+      "published": "2026-08-24T23:35:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.24953v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "mutation effects and higher-order epistasis in protein fitness landscapes",
+      "llm_evidence_cn": "蛋白质适应度景观中的突变效应与高阶上位效应",
+      "llm_evidence": "蛋白质适应度景观中的突变效应与高阶上位效应",
+      "canonical_evidence": "蛋白质适应度景观中的突变效应与高阶上位效应",
+      "llm_tldr_en": "The paper introduces ORBIT to benchmark how well learned protein representations capture higher-order epistatic interactions, showing its utility on synthetic landscapes and the GB1 experimental fitness landscape.",
+      "llm_tldr_cn": "针对蛋白质适应度景观中突变效应依赖于其他残基而呈现高阶上位相互作用、现有表示难以解析的问题，本文提出ORBIT框架，通过Walsh诊断分离相互作用的存在性、表示可访问性与功能恢复。在合成景观与GB1实验景观上的分析显示，不同模型的主要架构差异不显著。这为评估蛋白质学习表示中的上位效应提供了系统化基准，有助于功能基因组学中突变效应预测模型的设计。",
+      "llm_tldr": "针对蛋白质适应度景观中突变效应依赖于其他残基而呈现高阶上位相互作用、现有表示难以解析的问题，本文提出ORBIT框架，通过Walsh诊断分离相互作用的存在性、表示可访问性与功能恢复。在合成景观与GB1实验景观上的分析显示，不同模型的主要架构差异不显著。这为评估蛋白质学习表示中的上位效应提供了系统化基准，有助于功能基因组学中突变效应预测模型的设计。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.25466v1",
+      "source": "arxiv",
+      "title": "Homo-RAG: Homology-Guided Retrieval-Augmented Generation for Cross-Species Gene Function Prediction",
+      "abstract": "The functional annotation of genes in non-model organisms remains a significant challenge in computational biology, with 20-70% of sequenced genes lacking characterized functions. Traditional homology-based methods are often costly and strongly dependent on high sequence similarity. This study presents Homo-RAG, a framework for large language model-based gene function prediction that integrates homology-guided multi-hop retrieval with evidence-aware ranking. The framework exploits biological relationships between zebrafish and human orthologs to guide evidence acquisition from ZFIN, UniProt, and PubMed through hybrid dense and lexical retrieval. An Evidence Confidence Score (ECS) integrates semantic relevance, entity matching, orthology information, source reliability, and literature association signals to refine the ranking of retrieved evidence. Extensive evaluation across 150 queries and 7,200 retrieved documents shows that evidence weighting parameter of lambda=0.50 improves NDCG@10 to 0.9879 and MRR to 0.99, while retrieving relevant evidence for 99.33% of queries. Furthermore, 80% of the retrieved documents are query-exclusive, indicating that evidence quality complements rather than replaces retrieval relevance. These findings establish Homo-RAG as a practical and robust framework for reliable, evidence-grounded gene function prediction in understudied organisms. The study addresses important limitations of conventional annotation pipelines while identifying opportunities for future improvements in evidence features and attribution mechanisms.",
+      "authors": [
+        "Azrin Sultana"
+      ],
+      "primary_category": "cs.NE",
+      "categories": [
+        "cs.NE",
+        "cs.AI"
+      ],
+      "published": "2026-08-26T07:33:07+00:00",
+      "link": "https://arxiv.org/pdf/2608.25466v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM-based retrieval-augmented generation for gene function prediction",
+      "llm_evidence_cn": "基于大语言模型的检索增强生成用于基因功能预测",
+      "llm_evidence": "基于大语言模型的检索增强生成用于基因功能预测",
+      "canonical_evidence": "基于大语言模型的检索增强生成用于基因功能预测",
+      "llm_tldr_en": "Homo-RAG uses homology-guided multi-hop retrieval and evidence-aware ranking with LLMs to predict gene functions across species, reducing reliance on high sequence similarity.",
+      "llm_tldr_cn": "针对非模式生物中大量基因缺乏功能注释的问题，提出Homo-RAG框架，利用斑马鱼与人类直系同源关系引导多跳检索，结合混合稠密与词法检索从ZFIN、UniProt和PubMed获取证据，并通过证据置信度评分排序。该框架基于大语言模型进行基因功能预测，显著降低了对高序列相似性的依赖。实验表明其能有效提升跨物种基因功能预测性能，为基因扰动推断等任务提供了可迁移的LLM+检索方案。",
+      "llm_tldr": "针对非模式生物中大量基因缺乏功能注释的问题，提出Homo-RAG框架，利用斑马鱼与人类直系同源关系引导多跳检索，结合混合稠密与词法检索从ZFIN、UniProt和PubMed获取证据，并通过证据置信度评分排序。该框架基于大语言模型进行基因功能预测，显著降低了对高序列相似性的依赖。实验表明其能有效提升跨物种基因功能预测性能，为基因扰动推断等任务提供了可迁移的LLM+检索方案。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "large language model for gene perturbation prediction inference",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.22642v1",
+      "source": "arxiv",
+      "title": "Mol-JEPA: A multimodal Joint Embedding Predictive Architecture for Molecules",
+      "abstract": "Despite recent advances in molecular foundation models, several limitations remain, such as chemically invalid augmentations, modality collapse, and incomplete representation of biochemical environments. To address these challenges, we present \\textbf{Mol-JEPA}, a scalable framework for learning molecular world models. Rather than relying on suboptimal molecular perturbations, our model uses modality masking to exploit information from molecular structures, cellular phenotypes, binding affinities, ADMET profiles, quantum chemistry simulations and other drug discovery data. Across various benchmarks, we show that the representations learned by Mol-JEPA deliver strong performance, demonstrating the value of incorporating biochemical context through latent space prediction.",
+      "authors": [
+        "Florian Rottach",
+        "Sebastian Schieferdecker",
+        "William Rudman",
+        "Randall Balestriero",
+        "Carsten Eickhoff"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-23T22:55:38+00:00",
+      "link": "https://arxiv.org/pdf/2608.22642v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multimodal molecular world model incorporating cellular phenotypes; supports virtual cell-style modeling",
+      "llm_evidence_cn": "融合细胞表型的多模态分子世界模型；可支持虚拟细胞式建模",
+      "llm_evidence": "融合细胞表型的多模态分子世界模型；可支持虚拟细胞式建模",
+      "canonical_evidence": "融合细胞表型的多模态分子世界模型；可支持虚拟细胞式建模",
+      "llm_tldr_en": "Mol-JEPA is a scalable multimodal joint embedding predictive architecture that masks modalities to learn molecular world models from structures, cellular phenotypes, binding affinities, ADMET, and quantum chemistry, achieving strong benchmark performance.",
+      "llm_tldr_cn": "针对分子基础模型在增广无效、模态坍缩和生化环境表征不完整等问题，本文提出Mol-JEPA，一种可扩展的多模态联合嵌入预测架构。它通过模态掩码而非分子扰动来整合结构、细胞表型、结合亲和力、ADMET和量子化学等数据。在多个基准上，Mol-JEPA学到的表征展现出很强的性能。该工作为构建融合生化语境的计算生物系统建模提供了新范式，对虚拟细胞建模和扰动响应预测有参考价值。",
+      "llm_tldr": "针对分子基础模型在增广无效、模态坍缩和生化环境表征不完整等问题，本文提出Mol-JEPA，一种可扩展的多模态联合嵌入预测架构。它通过模态掩码而非分子扰动来整合结构、细胞表型、结合亲和力、ADMET和量子化学等数据。在多个基准上，Mol-JEPA学到的表征展现出很强的性能。该工作为构建融合生化语境的计算生物系统建模提供了新范式，对虚拟细胞建模和扰动响应预测有参考价值。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.24704v1",
+      "source": "arxiv",
+      "title": "Global geometry of the genotype-phenotype map illuminates a trade-off between penetrance and mutational adaptability",
+      "abstract": "Evolution in changing environments requires both reliable expression of the currently favored phenotype, as quantified by penetrance, and the capacity to reach alternative phenotypes through mutation. Previous studies suggest that high penetrance may restrict such mutational access. However, because these studies focus on evolved genotypes and local mutational neighborhoods, they cannot determine whether this local constraint limits mutational adaptability under environmental change. Such adaptability depends on a genotype's position relative to high-fitness regions for other environments. Addressing this question requires reconstructing the full probability distribution over phenotypes for every genotype and the resulting environment-specific fitness landscapes across genotype space. Such reconstruction is generally infeasible because genotype and phenotype spaces grow combinatorially. Here, an abstract model of stochastic genotype-phenotype mapping, inspired by interacting spins in statistical physics, permits exhaustive reconstruction of the map. We find that high-penetrance genotypes tend to occupy the interior of environment-specific high-fitness regions and are mutationally robust, whereas lower-penetrance genotypes tend to lie near their boundaries and have greater mutational access to high-fitness regions for alternative environments. This global geometry generates a trade-off between penetrance and mutational adaptability. In evolutionary simulations, stronger phenotypic noise in a fixed environment increases the selective advantage of reliable expression, thereby favoring high penetrance and mutational robustness. Frequent environmental change instead favors mutational accessibility at the expense of penetrance. Thus, penetrance and adaptability are opposing consequences of the same global geometry, with environmental conditions determining their evolutionary balance.",
+      "authors": [
+        "Yutaro Ikeda",
+        "Kunihiko Kaneko",
+        "Tetsuhiro S. Hatakeyama"
+      ],
+      "primary_category": "q-bio.PE",
+      "categories": [
+        "q-bio.PE",
+        "physics.bio-ph"
+      ],
+      "published": "2026-08-25T15:24:31+00:00",
+      "link": "https://arxiv.org/pdf/2608.24704v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "genotype-phenotype map and mutational effects on phenotype",
+      "llm_evidence_cn": "基因型-表型图谱与突变对表型的影响",
+      "llm_evidence": "基因型-表型图谱与突变对表型的影响",
+      "canonical_evidence": "基因型-表型图谱与突变对表型的影响",
+      "llm_tldr_en": "This paper studies the global geometry of the genotype-phenotype map, reconstructing phenotype distributions across all genotypes to reveal a trade-off between penetrance and mutational adaptability, with implications for genetic perturbation effects.",
+      "llm_tldr_cn": "针对以往仅聚焦局部突变邻域、难以评估环境变化下突变适应能力的问题，该研究通过重构每个基因型的完整表型概率分布，系统分析基因型-表型图谱的全局几何结构。结果显示高外显率与突变适应能力之间存在内在权衡，说明局部约束会限制表型可及性。这一全局视角为理解遗传扰动如何影响表型提供了新框架，有助于功能基因组学中的效应预测与进化研究。",
+      "llm_tldr": "针对以往仅聚焦局部突变邻域、难以评估环境变化下突变适应能力的问题，该研究通过重构每个基因型的完整表型概率分布，系统分析基因型-表型图谱的全局几何结构。结果显示高外显率与突变适应能力之间存在内在权衡，说明局部约束会限制表型可及性。这一全局视角为理解遗传扰动如何影响表型提供了新框架，有助于功能基因组学中的效应预测与进化研究。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "genetic perturbation effects in functional genomics",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.25631v1",
+      "source": "arxiv",
+      "title": "Propensity Straight-Through Gradients for Discrete Stochastic Systems",
+      "abstract": "Continuous-time Markov chains (CTMCs) provide the backbone for modeling discrete stochastic dynamics across applied, physical, and biological sciences. Their integration with modern gradient-based machine learning, however, is limited by the hard categorical event selection intrinsic to Gillespie-type simulation algorithms. We exploit the affine state update to obtain the exact one-step conditional-mean sensitivity by differentiating normalized reaction propensities. We pair this backward rule with exact forward trajectories to define the propensity straight-through (PST) estimator. At the trajectory level, we show that one-step sensitivities composed across events can depart from the exact multistep sensitivity. We derive the resulting per-step discrepancy in closed form and prove that it vanishes identically for affine downstream dependence. PST matches the accuracy of Gumbel-Softmax straight-through across all benchmarks: reversible dimerization (0.06% error), a genetic oscillator (1.7% error), a 50-task repressilator suite (0.17% median error), and patch-clamp ion-channel recordings ($R^2$ = 0.988). Under matched settings, PST converges 3.0-fold faster on the oscillator and 2.1-fold faster on the ion channel. At deep-learning scale, PST trains a 203,796-parameter stochastic reaction network with hard sampling, reaching 98.22% MNIST digit classification accuracy. By differentiating an exact conditional mean rather than a relaxed sample, PST offers a temperature- and Gumbel-free path to scalable gradient-based learning through exact stochastic trajectories.",
+      "authors": [
+        "Jose M. G. Vilar",
+        "Leonor Saiz"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM"
+      ],
+      "published": "2026-08-26T10:59:25+00:00",
+      "link": "https://arxiv.org/pdf/2608.25631v1",
+      "tags": [
+        "keyword:gene-perturb",
+        "query:gene-perturb"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Stochastic simulation and gradient estimation for CTMC biological models support virtual cell simulation",
+      "llm_evidence_cn": "面向CTMC生物随机模拟的梯度估计方法，可支持虚拟细胞级别的系统模拟",
+      "llm_evidence": "面向CTMC生物随机模拟的梯度估计方法，可支持虚拟细胞级别的系统模拟",
+      "canonical_evidence": "面向CTMC生物随机模拟的梯度估计方法，可支持虚拟细胞级别的系统模拟",
+      "llm_tldr_en": "PST estimator differentiates through continuous-time Markov chain simulations, enabling gradient-based learning for discrete stochastic biological systems; useful for parameter inference and virtual cell modeling.",
+      "llm_tldr_cn": "连续时间马尔可夫链是描述生物系统中离散随机动力学的基础模型，但吉尔式随机模拟的离散事件选择难以与机器学习梯度训练结合。本文提出倾向直通（PST）估计器，通过归一化反应倾向的导数获得精确单步条件均值灵敏度，并与精确前向轨迹配对形成可微模拟。轨迹级分析表明单步灵敏度组合会偏离真实多步灵敏度，并给出了每步误差。该工作为随机生化网络的参数估计和虚拟细胞建模提供了可微模拟工具。",
+      "llm_tldr": "连续时间马尔可夫链是描述生物系统中离散随机动力学的基础模型，但吉尔式随机模拟的离散事件选择难以与机器学习梯度训练结合。本文提出倾向直通（PST）估计器，通过归一化反应倾向的导数获得精确单步条件均值灵敏度，并与精确前向轨迹配对形成可微模拟。轨迹级分析表明单步灵敏度组合会偏离真实多步灵敏度，并给出了每步误差。该工作为随机生化网络的参数估计和虚拟细胞建模提供了可微模拟工具。",
+      "llm_tags": [
+        "query:gene-perturb"
+      ],
+      "matched_query_tag": "query:gene-perturb",
+      "matched_query_text": "computational modeling of virtual cells to simulate biological systems",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
