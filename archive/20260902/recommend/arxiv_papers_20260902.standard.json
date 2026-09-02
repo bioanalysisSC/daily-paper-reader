@@ -1,0 +1,466 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-02T21:24:44.970542+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 0,
+    "deep_divecandidates": 11,
+    "deep_cap": 5,
+    "deep_selected": 5,
+    "quick_candidates": 6,
+    "quick_skim_target": 10,
+    "quick_selected": 6
+  },
+  "deep_dive": [
+    {
+      "id": "2608.10694v2",
+      "source": "arxiv",
+      "title": "Optimize Cheap, Deploy Strong: Cost-Aware Cross-Tier Transfer for Evolutionary Optimization",
+      "abstract": "Evolutionary optimization of LLM prompts and agentic programs (e.g., GEPA) is dominated by fitness evaluation: scoring each candidate runs an answering LLM over a validation set, so the evaluator's price tier dictates total search cost. We restructure that search by decoupling the three roles an LLM plays, running the high-volume answering role on the cheapest tier, reserving a strong model for the rare reflection/variation operator, then exploiting upward cross-tier transfer to deploy the cheaply evolved prompt on a stronger target. We contribute a cost-controlled characterization of when cheap-tier search substitutes for target-tier search, and where it fails. Across four tasks (HotpotQA, IFBench, LiveBench-Math, HoVer) and eleven models in four model families, the resulting prompt matches or exceeds same-tier optimization while placing over 96% of search tokens on the cheapest tier, at 5.6-14x lower search cost, rising to 25-54x where reasoning tiers emit long chains of thought on every fitness call.",
+      "authors": [
+        "Tal Oved",
+        "Roi Pony",
+        "Oshri Naparstek",
+        "Udi barzelay"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL",
+        "cs.NE"
+      ],
+      "published": "2026-08-11T09:17:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.10694v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "evolutionary prompt optimization with cost-aware cross-tier transfer",
+      "llm_evidence_cn": "利用成本感知跨层迁移进行提示词进化优化，降低任务特定LLM推理调优开销",
+      "llm_evidence": "利用成本感知跨层迁移进行提示词进化优化，降低任务特定LLM推理调优开销",
+      "canonical_evidence": "利用成本感知跨层迁移进行提示词进化优化，降低任务特定LLM推理调优开销",
+      "llm_tldr_en": "Evolutionary prompt optimization is restructured so high-volume evaluation runs on a cheap LLM tier, while a strong model handles rare reflection/variation steps; evolved prompts are then deployed via cross-tier transfer. Four-task experiments show major cost savings and clarify when cheap search can replace target-tier search.",
+      "llm_tldr_cn": "针对进化搜索LLM提示词和智能体程序时适应度评估开销大、模型价格层级决定成本的问题，本文提出成本感知的跨层迁移优化方法。它将LLM在搜索中的三种角色解耦：高频回答与评估用最便宜层级，罕见的反思与变异操作保留给强模型，再将廉价层进化出的提示词通过向上迁移部署到更强目标模型。在HotpotQA、IFBench、LiveBench-Math和HoVer四个任务上的实验显示能大幅降低搜索成本并保持最终性能。该工作为任务专用提示优化提供了经济有效的推理方案。",
+      "llm_tldr": "针对进化搜索LLM提示词和智能体程序时适应度评估开销大、模型价格层级决定成本的问题，本文提出成本感知的跨层迁移优化方法。它将LLM在搜索中的三种角色解耦：高频回答与评估用最便宜层级，罕见的反思与变异操作保留给强模型，再将廉价层进化出的提示词通过向上迁移部署到更强目标模型。在HotpotQA、IFBench、LiveBench-Math和HoVer四个任务上的实验显示能大幅降低搜索成本并保持最终性能。该工作为任务专用提示优化提供了经济有效的推理方案。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.10694v2"
+    },
+    {
+      "id": "2608.11444v2",
+      "source": "arxiv",
+      "title": "Large-scale AI-Ready Data for Anti-Cancer Drug Response Modeling",
+      "abstract": "Drug response prediction (DRP) models are an active area of research in pharmacogenomics, with growing potential to accelerate the identification of effective anticancer drugs. However, their predictive performance is often constrained by limited dataset scale and insufficient coverages of cancer and chemical spaces. In addition, inconsistent benchmarking practices hinder reliable comparison across models. Standardized frameworks, such as the Innovative Methodologies and New Data for Predictive Oncology Model Evaluation (IMPROVE) project, provide unified data schemas and evaluation protocols for consistent benchmarking, but improving model generalizability requires larger and more diverse training data. In this work, we substantially expand the IMPROVE benchmark through large-scale integration of pharmacogenomic data, primarily from PharmacoDB, together with additional smaller data sources. The expanded resource includes millions of drug response measurements, broader multi-omics coverage, and a major increase in chemical diversity, adding more than 50,000 compounds. To evaluate the impact of the new dataset compared to the original IMPROVE benchmark dataset, we trained DRP models using the two datasets and assess their prediction performance using a common test set and several evaluation strategies, including drug-blind, cancer-blind, and disjoint data splits. While cancer-blind performance remained comparable to the original benchmark, models trained on the expanded dataset showed consistent improvements in drug-blind and disjoint settings, indicating enhanced generalization to previously unseen compounds. These results position the expanded dataset as a community resource that provides a richer foundation for developing DRP models intended to aid in the discovery of novel anticancer drugs.",
+      "authors": [
+        "Vincent Lavelle",
+        "Yitan Zhu",
+        "Kaitlyn Marlor",
+        "Thomas Brettin",
+        "Rick Stevens"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG"
+      ],
+      "published": "2026-08-11T21:21:51+00:00",
+      "link": "https://arxiv.org/pdf/2608.11444v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "directly extends large-scale AI-ready datasets and standardized benchmarking for anti-cancer drug response prediction across cell lines",
+      "llm_evidence_cn": "直接扩展抗癌药物应答预测的大规模AI就绪数据与标准化基准，支持跨细胞系药物应答建模",
+      "llm_evidence": "直接扩展抗癌药物应答预测的大规模AI就绪数据与标准化基准，支持跨细胞系药物应答建模",
+      "canonical_evidence": "直接扩展抗癌药物应答预测的大规模AI就绪数据与标准化基准，支持跨细胞系药物应答建模",
+      "llm_tldr_en": "This work substantially expands the IMPROVE benchmark into larger and more diverse AI-ready datasets for anti-cancer drug response prediction, addressing scale and inconsistent benchmarking to improve generalizability.",
+      "llm_tldr_cn": "抗癌药物应答预测受限于数据集规模小、覆盖面不足和基准评测方式不一致。作者在IMPROVE框架基础上大幅扩展AI就绪数据，扩大癌症与化学空间覆盖并统一评测协议。该工作为开发者提供更大、更多样化的训练和评价语料，有望增强DRP模型的可泛化性与可比性。",
+      "llm_tldr": "抗癌药物应答预测受限于数据集规模小、覆盖面不足和基准评测方式不一致。作者在IMPROVE框架基础上大幅扩展AI就绪数据，扩大癌症与化学空间覆盖并统一评测协议。该工作为开发者提供更大、更多样化的训练和评价语料，有望增强DRP模型的可泛化性与可比性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "drug perturbation prediction using transcriptomic response",
+      "matched_requirement_id": "req-3",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.11444v2"
+    },
+    {
+      "id": "2608.12219v1",
+      "source": "arxiv",
+      "title": "ScreenShot: A Foundation Model for Few-Shot Combination Drug Screening",
+      "abstract": "Treating patients with combinations of drugs reduces the risk of resistance to any individual drug. Finding effective combinations is difficult because the large search space makes combinatorial screens prohibitively expensive, time consuming, and often technically infeasible. Predictive models can fill this gap, yet existing methods typically require molecular profiling of each sample and per-cohort training, limiting their applicability when time and tissue are scarce. To address this challenge, we introduce ScreenShot, a hierarchical transformer pretrained on 40 drug screening datasets covering 3,700 drugs and 6,000 biological samples, whose architecture mirrors the nested structure of screening data. Given a few-shot context of observations from a new patient, ScreenShot predicts the response of the sample to combination therapies through in-context learning, operating directly on functional measurements with no fine-tuning and no molecular profiling. On four held-out datasets, ScreenShot outperforms all baselines in both prediction accuracy and identification of selectively effective treatments. ScreenShot's internal representations are directly useful for experimental design: we use them to drive a weighted k-means++ active learning strategy that selects which experiments to run, achieving the same hit detection as uniform screening with a third of the budget. Source code and interactive dashboard: https://github.com/tansey-lab/screenshot.",
+      "authors": [
+        "Antoine de Mathelin",
+        "Christopher Tosh",
+        "Wesley Tansey"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-12T16:13:50+00:00",
+      "link": "https://arxiv.org/pdf/2608.12219v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Pre-trained hierarchical transformer for few-shot combination drug screening across thousands of drugs and biological samples, structurally supporting cross-context prediction of drug effects",
+      "llm_evidence_cn": "在40个药物筛选数据上预训练层级Transformer，用样本的少样本上下文预测新条件下的组合药物响应，与跨情境药物效应预测需求高度契合",
+      "llm_evidence": "在40个药物筛选数据上预训练层级Transformer，用样本的少样本上下文预测新条件下的组合药物响应，与跨情境药物效应预测需求高度契合",
+      "canonical_evidence": "在40个药物筛选数据上预训练层级Transformer，用样本的少样本上下文预测新条件下的组合药物响应，与跨情境药物效应预测需求高度契合",
+      "llm_tldr_en": "Pretrains a hierarchical transformer on 40 drug screening datasets covering thousands of drugs and samples, enabling few-shot context-based combination drug response prediction in new, data-limited settings.",
+      "llm_tldr_cn": "组合药物的有效筛选因搜索空间巨大而难以全面开展，现有预测模型往往要求每个样本的分子谱并进行队列内训练。为此论文提出ScreenShot，一个在40个药物筛选数据集上预训练的层级Transformer，利用筛选数据本身的嵌套结构，在建模时加入小样本观测作为上下文，以预测此前未观察条件下的组合药物反应。该模型覆盖3700多种药物和6000个生物样本，能够缓解组织与时间稀缺场景下的预测困难。",
+      "llm_tldr": "组合药物的有效筛选因搜索空间巨大而难以全面开展，现有预测模型往往要求每个样本的分子谱并进行队列内训练。为此论文提出ScreenShot，一个在40个药物筛选数据集上预训练的层级Transformer，利用筛选数据本身的嵌套结构，在建模时加入小样本观测作为上下文，以预测此前未观察条件下的组合药物反应。该模型覆盖3700多种药物和6000个生物样本，能够缓解组织与时间稀缺场景下的预测困难。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "cross context prediction for drug effects in different cell lines",
+      "matched_requirement_id": "req-4",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12219v1"
+    },
+    {
+      "id": "2608.12821v1",
+      "source": "arxiv",
+      "title": "HiRoute: Hierarchical Routed Prompt Tuning for Safety Alignment of Large Language Models",
+      "abstract": "Large language models (LLMs) remain vulnerable to harmful requests and jailbreak attacks. Parameter-efficient safety alignment methods based on prompt tuning typically rely on a single global prompt or externally selected prompt modules. Such static designs struggle to maintain a cross-category safety boundary while generating constructive responses tailored to specific risks and avoiding over-refusal of benign inputs. To address these limitations, we propose HiRoute, an input-adaptive hierarchical prompt-tuning framework that separates category-agnostic safety control from category-specific response guidance. HiRoute first trains a lightweight hierarchical router on representations extracted from a frozen LLM to jointly detect harmful intent and predict multi-label risk scores. It then freezes both the backbone model and the router and uses preference optimization with alternating gradient updates to learn a shared coarse-grained prompt and a set of fine-grained prompt experts as continuous embeddings. At inference time, benign inputs bypass the safety branch, whereas risky inputs are processed using the shared prompt together with a router-weighted mixture of risk-specific prompt experts. Experiments across three instruction-tuned models show that HiRoute achieves high safety rates across multiple safety benchmarks while preserving safe-response helpfulness, reducing over-refusal, and maintaining competitive performance on general-purpose tasks.",
+      "authors": [
+        "Fangzhou Chen",
+        "Shiji Zhao",
+        "Mengyang Wang",
+        "Qihui Zhu",
+        "Ranjie Duan",
+        "Maoxun Yuan",
+        "Xingxing Wei"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-13T04:49:51+00:00",
+      "link": "https://arxiv.org/pdf/2608.12821v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "input-adaptive hierarchical router selects safety prompt modules dynamically for each harmful/benign request, i.e., dynamic prompt template adaptation during inference",
+      "llm_evidence_cn": "根据输入动态选择分层提示模块，使安全提示模板在推理时自适应变化",
+      "llm_evidence": "根据输入动态选择分层提示模块，使安全提示模板在推理时自适应变化",
+      "canonical_evidence": "根据输入动态选择分层提示模块，使安全提示模板在推理时自适应变化",
+      "llm_tldr_en": "HiRoute uses a lightweight hierarchical router trained on frozen LLM representations to select category-appropriate prompt modules per input, balancing global safety control and non-over-refusal in safety alignment.",
+      "llm_tldr_cn": "静态安全提示难以同时保持跨类别安全边界并避免过度拒绝。HiRoute提出输入自适应的分层提示微调框架，先由轻量路由网络基于冻结LLM表示判断类别并选择对应的提示模块，同时保留全局安全控制。在多个风险类别上可针对性地生成建设性回答，也降低了对良性输入的误拒。该方法展示了动态选择提示模板提升LLM安全对齐的有效性。",
+      "llm_tldr": "静态安全提示难以同时保持跨类别安全边界并避免过度拒绝。HiRoute提出输入自适应的分层提示微调框架，先由轻量路由网络基于冻结LLM表示判断类别并选择对应的提示模块，同时保留全局安全控制。在多个风险类别上可针对性地生成建设性回答，也降低了对良性输入的误拒。该方法展示了动态选择提示模板提升LLM安全对齐的有效性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "dynamic prompt template that adapts during inference",
+      "matched_requirement_id": "req-1",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12821v1"
+    },
+    {
+      "id": "2608.14026v2",
+      "source": "arxiv",
+      "title": "MMDynOpt-Agent: Dynamic Optimization for Multimodal Large Language Model Reasoning via Reinforcement Learning",
+      "abstract": "Recently, multimodal large language models (MLLMs) have demonstrated strong potential in visual understanding and complex reasoning tasks. However, existing methods often struggle to efficiently transform visual cues from multimodal inputs and the semantics of the question into effective reasoning conditions, thereby limiting the reasoning performance of multimodal large language models. To address this challenge, we propose MMDynOpt-Agent, which models the dynamic optimization of multimodal reasoning as a Markov decision process via end-to-end reinforcement learning. Specifically, a lightweight multimodal agent serves as the decision policy and interacts with the target MLLM as the environment, adaptively steering its reasoning through multi-turn dynamic optimization prompts. Furthermore, to reduce the cost of multimodal reasoning, a reward mechanism that combines format compliance, answer correctness, and budget awareness is designed to jointly ensure reasoning accuracy and efficiency. MMDynOpt-Agent is transferable and generalizable, enabling training with one target MLLM and inference-time transfer to others. Experimental results on fifteen public datasets show MMDynOpt-Agent achieves strong performance and outperforms baselines. Our project is available at https://github.com/QwenQKing/MMDynOpt-Agent.",
+      "authors": [
+        "Wenjin Liu",
+        "Haoran Luo",
+        "Fayuan Ke",
+        "Zhenghong Lin",
+        "Yue Lu",
+        "Zhe Cui",
+        "Anh Tuan Luu",
+        "Carl Yang"
+      ],
+      "primary_category": "cs.CE",
+      "categories": [
+        "cs.CE"
+      ],
+      "published": "2026-08-14T07:17:52+00:00",
+      "link": "https://arxiv.org/pdf/2608.14026v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "builds an LLM reasoning framework whose agent dynamically optimizes reasoning conditions via reinforcement learning",
+      "llm_evidence_cn": "用强化学习智能体在推理过程中动态优化多模态推理条件，提供了动态搜索提示模板的框架示例",
+      "llm_evidence": "用强化学习智能体在推理过程中动态优化多模态推理条件，提供了动态搜索提示模板的框架示例",
+      "canonical_evidence": "用强化学习智能体在推理过程中动态优化多模态推理条件，提供了动态搜索提示模板的框架示例",
+      "llm_tldr_en": "MMDynOpt-Agent models dynamic optimization of multimodal reasoning conditions as a Markov decision process and trains a lightweight agent by reinforcement learning to interact with the target MLLM. The agent adaptively steers reasoning at inference, converting visual cues and question semantics into effective conditions and improving multimodal reasoning performance.",
+      "llm_tldr_cn": "针对多模态大语言模型难以将视觉线索与问题语义高效转化为有效推理条件、从而限制推理性能的问题，本文提出MMDynOpt-Agent框架。该框架将多模态推理的动态优化建模为马尔可夫决策过程，用轻量级多模态智能体作为决策策略，并通过端到端强化学习训练。推理过程中，智能体与目标模型交互并自适应地调整推理条件。实验结果表明该方法能有效提升多模态复杂推理表现，为动态提示与条件搜索提供了强化学习的新范式。",
+      "llm_tldr": "针对多模态大语言模型难以将视觉线索与问题语义高效转化为有效推理条件、从而限制推理性能的问题，本文提出MMDynOpt-Agent框架。该框架将多模态推理的动态优化建模为马尔可夫决策过程，用轻量级多模态智能体作为决策策略，并通过端到端强化学习训练。推理过程中，智能体与目标模型交互并自适应地调整推理条件。实验结果表明该方法能有效提升多模态复杂推理表现，为动态提示与条件搜索提供了强化学习的新范式。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "How to build an LLM reasoning framework that dynamically searches for optimal prompt templates?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.14026v2"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.21265v2",
+      "source": "arxiv",
+      "title": "Memory Augmentation Unlocks Efficient Chain-of-Thought Reasoning",
+      "abstract": "Large language models often rely on Chain-of-Thought (CoT) reasoning to solve complex tasks, but verbose reasoning traces introduce substantial inference overhead. CoT compression shortens generation, yet aggressive compression may disrupt logical coherence and degrade performance. We formalize this trade-off as the Context-Generation Substitution Law, where explicit reasoning context substitutes for part of decode-time generation. Based on this principle, we propose Memory-Augmented Compression, a training-free framework that constructs reusable reasoning memories from historical traces and retrieves them as prefill-side scaffolds. Rather than using raw demonstrations, these memories summarize reusable reasoning patterns, key constraints, and critical operations to compensate for information lost during compression. Experiments show that Memory consistently improves prompt-based Chain-of-Draft (CoD) compression across mathematical reasoning, complex reasoning, and science question answering tasks, yielding accuracy gains of 21.4, 28.0, 29.5, and 6.61 points over CoD on GSM8K, MATH, BBH, and MMLU-Sci, while achieving a 1.14-1.49x latency speedup latency speedup over standard CoT. Memory is also compatible with token-level, reasoning-trace-level, and inference-state compression mechanisms.",
+      "authors": [
+        "Simeng Zhang",
+        "Yilong Chen",
+        "Wenyuan Zhang",
+        "Zhenyu Zhang",
+        "Yao Chen",
+        "Junyuan Shang",
+        "Tingwen Liu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-21T16:22:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.21265v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieves reusable reasoning memories as prefill-side scaffolds to form adaptive reasoning context at inference",
+      "llm_evidence_cn": "将历史推理记忆检索为预填充侧支架，动态构造提示上下文以压缩生成并增强推理",
+      "llm_evidence": "将历史推理记忆检索为预填充侧支架，动态构造提示上下文以压缩生成并增强推理",
+      "canonical_evidence": "将历史推理记忆检索为预填充侧支架，动态构造提示上下文以压缩生成并增强推理",
+      "llm_tldr_en": "This paper solves the CoT compression trade-off by retrieving reusable reasoning memories as prefill-side scaffolds instead of raw demonstrations. The training-free Memory-Augmented Compression framework summarizes historical traces into reusable patterns and constraints, reducing decode-time generation while preserving logical coherence.",
+      "llm_tldr_cn": "针对思维链推理冗长造成高推理开销、而压缩又容易破坏逻辑一致性的两难问题，本文提出免训练的Memory-Augmented Compression框架。其核心是预先从历史推理轨迹构建可复用的推理记忆，再以预填充侧支架的形式检索到当前输入前，代替原始示范。实验显示该方法能有效压缩解码所需的推理上下文并保持任务性能。这项工作为推理阶段的动态提示构造和上下文工程提供了直接的记忆增强范式。",
+      "llm_tldr": "针对思维链推理冗长造成高推理开销、而压缩又容易破坏逻辑一致性的两难问题，本文提出免训练的Memory-Augmented Compression框架。其核心是预先从历史推理轨迹构建可复用的推理记忆，再以预填充侧支架的形式检索到当前输入前，代替原始示范。实验显示该方法能有效压缩解码所需的推理上下文并保持任务性能。这项工作为推理阶段的动态提示构造和上下文工程提供了直接的记忆增强范式。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "dynamic prompt template that adapts during inference",
+      "matched_requirement_id": "req-1",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.21265v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.22753v1",
+      "source": "arxiv",
+      "title": "Beyond Factual Knowledge: Benchmarking and Learning Step-Level Procedural Rule Reasoning in Large Language Models",
+      "abstract": "Large language models (LLMs) excel at text understanding and generation, yet still struggle to reliably understand and apply externally provided procedural rules at scale. To evaluate this capability, we introduce RuleWorld, a large-scale benchmark that reformulates rules as globally reusable abstract units rather than instance-specific facts. In RuleWorld, several scenarios, including single-rule, parallel multi-rule, and multi-hop reasoning, are settled for comprehensive evaluation. We further propose DynaRule, an end-to-end framework that injects the given rules into the KV cache and turns retrieval into an internal, learnable, step-wise process. Specifically, DynaRule employs Stacked Step-Level Attention Training with a special <search> token to enable dynamic rule re-attention and updating during inference. In this way, the model can re-attend to the most relevant rules at each step, dynamically replacing outdated ones to support more stable multi-step reasoning. Experiments on RuleWorld show that existing LLMs face challenges under large rule pools, while DynaRule improves average QA accuracy by up to 19 points and achieves over 85% Recall@1 at 10K rules, outperforming strong baselines by large margins. We make our code and dataset available here: https://github.com/SharkSpicy-NLP/Beyond-Factual-Knowledge.",
+      "authors": [
+        "Bohan Yu",
+        "Pengfei Cao",
+        "Chen Han",
+        "Chenxi Zhou",
+        "Zhiheng Zhang",
+        "Zhiyang Xie",
+        "Wenhao Teng",
+        "Xiangwen Liao",
+        "Jun Zhao",
+        "Kang Liu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-24T03:22:45+00:00",
+      "link": "https://arxiv.org/pdf/2608.22753v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM reasoning with externally provided procedural rules via step-wise learnable rule retrieval into KV cache",
+      "llm_evidence_cn": "把外部程序性规则注入KV缓存，形成可学习的分步检索推理",
+      "llm_evidence": "把外部程序性规则注入KV缓存，形成可学习的分步检索推理",
+      "canonical_evidence": "把外部程序性规则注入KV缓存，形成可学习的分步检索推理",
+      "llm_tldr_en": "RuleWorld benchmarks step-level procedural rule reasoning while DynaRule injects external rules into the KV cache and learns step-wise retrieval for faithful multi-hop rule application in LLMs.",
+      "llm_tldr_cn": "LLM难以可靠理解和应用外部程序规则。作者提出RuleWorld基准，将规则作为全局可复用抽象单元，考察单规则、并行多规则与多跳推理；并提出DynaRule框架，把规则注入KV缓存，使检索成为内部可学习的分步过程。借助堆叠式分步注意力，模型可逐步利用外部规则完成推理，为从事实知识到规则化推理的LLM能力发展提供了基准与方法。",
+      "llm_tldr": "LLM难以可靠理解和应用外部程序规则。作者提出RuleWorld基准，将规则作为全局可复用抽象单元，考察单规则、并行多规则与多跳推理；并提出DynaRule框架，把规则注入KV缓存，使检索成为内部可学习的分步过程。借助堆叠式分步注意力，模型可逐步利用外部规则完成推理，为从事实知识到规则化推理的LLM能力发展提供了基准与方法。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.22753v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.23782v1",
+      "source": "arxiv",
+      "title": "GAP-Prompt: Gated Adaptive Prompting for Efficient Continual Learning",
+      "abstract": "Continual learning faces the persistent challenge of catastrophic forgetting, where sequential task updates degrade previously acquired knowledge. While prompt-based methods integrated with pre-trained models offer a compelling solution by freezing the backbone, they often rely on static, task-level prompting strategies that overlook fine-grained intra-task diversity. In this paper, we propose Gated Adaptive Prompting (GAP-Prompt), a novel method that introduces instance-level adaptability to the prompting process. GAP-Prompt consists of three synergistic modules: (1) instance-conditioned gating, which dynamically determines optimal prompt injection layers for each individual image; (2) dynamic knowledge fusion, which performs instance-aware aggregation of current and historical prompts, enabling knowledge integration across tasks; and (3) shared prompt distillation, which anchors foundational knowledge in early shared layers to mitigate forgetting. Extensive evaluations on CIFAR-100, ImageNet-R, and CUB-200 benchmarks demonstrate that GAP-Prompt consistently achieves state-of-the-art performance. Notably, on the fine-grained CUB-200 dataset, GAP-Prompt reaches 87.29% accuracy, approaching the joint training upper bound (88.00%) and outperforming existing methods by a significant margin.",
+      "authors": [
+        "Trung-Anh Dang",
+        "Duy-Cuong Bui",
+        "Ngoc-Son Vu",
+        "Christel Vrain",
+        "Vincent Nguyen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-24T19:25:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.23782v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Instance-level adaptive prompting dynamically chooses prompt injection layers and fuses knowledge during inference",
+      "llm_evidence_cn": "实例级自适应提示，推理时动态选择提示注入层并融合知识",
+      "llm_evidence": "实例级自适应提示，推理时动态选择提示注入层并融合知识",
+      "canonical_evidence": "实例级自适应提示，推理时动态选择提示注入层并融合知识",
+      "llm_tldr_en": "GAP-Prompt introduces instance-conditioned gating and dynamic knowledge fusion, dynamically determining optimal prompt injection layers for each sample and reducing catastrophic forgetting in continual learning.",
+      "llm_tldr_cn": "持续学习中基于提示的方法常用静态任务级提示，忽略任务内样本差异。GAP-Prompt增加实例级自适应：由实例条件门控决定每个图像的最佳提示注入层，并对各层提示做动态知识融合。在冻结预训练主干的情况下，该机制能有效缓解灾难性遗忘，验证了动态自适应提示相比静态提示在持续学习中的优势。",
+      "llm_tldr": "持续学习中基于提示的方法常用静态任务级提示，忽略任务内样本差异。GAP-Prompt增加实例级自适应：由实例条件门控决定每个图像的最佳提示注入层，并对各层提示做动态知识融合。在冻结预训练主干的情况下，该机制能有效缓解灾难性遗忘，验证了动态自适应提示相比静态提示在持续学习中的优势。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "dynamic prompt template that adapts during inference",
+      "matched_requirement_id": "req-1",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.23782v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.25100v2",
+      "source": "arxiv",
+      "title": "Towards Reliable, Generalizable, and Specific In-Context Knowledge Editing via Multi-Objective Reinforcement Learning",
+      "abstract": "Large Language Models (LLMs) are powerful but limited by static parametric knowledge that becomes outdated once pretraining ends. Knowledge editing addresses this problem by updating model behavior on target facts without full retraining. In particular, in-context knowledge editing has gained attention because it is training-free and readily applicable to black-box LLMs. Recent reinforcement learning (RL)-based approaches improve over fixed retrieval strategies by adapting prompt construction to the quantity-quality trade-off. Despite initial success, they fail to model the prompt as a structured entity under the distinct and often competing objectives of reliability, generality, and specificity. Previous methods largely optimize a single objective and make decisions over only part of the prompt construction process, thereby overlooking both the balance of different objectives and the global organization of demonstrations. We propose Multi-Objective In-context Knowledge Editing (MO-IKE), a multi-objective RL algorithm that formulates prompt construction for in-context knowledge editing as a Constrained Markov Decision Process. MO-IKE trains a dynamic retriever to optimize competing objectives in knowledge editing, enabling more balanced and globally coherent prompt construction. On Llama-3.2, MO-IKE improves edit success (reliability) from 85.0% to 92.0%, paraphrase consistency (generality) from 77% to 79%, while increasing retention rate (specificity) by 23.0% compared to prior RL-based methods.",
+      "authors": [
+        "Xuzhong Wang",
+        "Maiqi Jiang",
+        "Tejal Nair",
+        "Girija Bhusal",
+        "Yanfu Zhang",
+        "Haipeng Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-25T19:50:47+00:00",
+      "link": "https://arxiv.org/pdf/2608.25100v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Prompt construction for in-context knowledge editing optimized as a structured entity with multi-objective RL",
+      "llm_evidence_cn": "将提示作为结构化实体并用多目标强化学习优化上下文内知识编辑",
+      "llm_evidence": "将提示作为结构化实体并用多目标强化学习优化上下文内知识编辑",
+      "canonical_evidence": "将提示作为结构化实体并用多目标强化学习优化上下文内知识编辑",
+      "llm_tldr_en": "This paper formulates the prompt as a structured entity and uses multi-objective reinforcement learning to jointly optimize reliability, generality, and specificity for in-context knowledge editing in black-box LLMs.",
+      "llm_tldr_cn": "上下文内知识编辑能让大模型在不重训时更新事实，但现有基于强化学习的检索构造仅折中提示数量与质量，未考虑该任务中可靠性、泛化性和特异性等不同目标的冲突。论文将提示建模为结构化对象，并提出多目标强化学习方法，在构建上下文时同时优化这三个指标。在面向黑盒LLM的无训练场景下，这一框架能从检索策略层面实现更精准的知识注入。该方法凸显了提示构造应向结构化多目标学习方向演进。",
+      "llm_tldr": "上下文内知识编辑能让大模型在不重训时更新事实，但现有基于强化学习的检索构造仅折中提示数量与质量，未考虑该任务中可靠性、泛化性和特异性等不同目标的冲突。论文将提示建模为结构化对象，并提出多目标强化学习方法，在构建上下文时同时优化这三个指标。在面向黑盒LLM的无训练场景下，这一框架能从检索策略层面实现更精准的知识注入。该方法凸显了提示构造应向结构化多目标学习方向演进。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.25100v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.26836v1",
+      "source": "arxiv",
+      "title": "SymbolLKG: Towards Verifiable Logical Reasoning via Logical Knowledge Graph and Symbolic Solvers",
+      "abstract": "Large Language Models (LLMs) have demonstrated remarkable proficiency in natural language understanding, yet they struggle with strict multi-step reasoning, frequently suffering from hallucinations and inconsistency. Existing solutions like Chain-of-Thought (CoT) lack rigorous verification mechanisms, while standard Retrieval-Augmented Generation (RAG) often misses the complex, structural dependencies inherent in logical tasks. To bridge this gap, we propose a Neuro-Symbolic architecture that integrates a Logical Knowledge Graph (LKG) with dynamic solver routing. Specifically, we introduce an ontology-based LKG that treats logical rules and constraints as first-class topological nodes, enabling explicit modeling of dependencies extracted from text. We further design a Logic Router to dynamically dispatch tasks to the optimal symbolic engine, which is supported by a topology-aware hybrid retrieval mechanism. Experimental results on logical reasoning benchmarks demonstrate that our framework significantly outperforms state-of-the-art prompting and RAG baselines, delivering higher accuracy and verifiable reasoning paths.",
+      "authors": [
+        "Haizhao Fan",
+        "Yuchi Xiong",
+        "Jize Wang",
+        "Xinping Guan",
+        "Xinyi Le"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-08-27T09:06:52+00:00",
+      "link": "https://arxiv.org/pdf/2608.26836v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM reasoning enhanced by logical knowledge graph external structure and symbolic solvers",
+      "llm_evidence_cn": "用外部逻辑知识图谱和符号求解器增强LLM逻辑推理",
+      "llm_evidence": "用外部逻辑知识图谱和符号求解器增强LLM逻辑推理",
+      "canonical_evidence": "用外部逻辑知识图谱和符号求解器增强LLM逻辑推理",
+      "llm_tldr_en": "SymbolLKG builds an ontology-based logical knowledge graph with rules as first-class nodes and dynamic solver routing to give verifiable multi-step LLM reasoning, overcoming CoT verification gaps and RAG structural limitations.",
+      "llm_tldr_cn": "LLM在严格多步逻辑推理中常出现幻觉与不一致，CoT缺乏验证机制，标准RAG又忽略复杂结构依赖。SymbolLKG提出一种神经符号架构，通过本体逻辑知识图谱将规则和约束建模为可依赖的拓扑节点，并动态选择符号求解器完成推导。相比传统RAG，该方法能显式处理多步依赖，给出可验证的推理结果，为需要严密逻辑链的LLM推理场景提供了更可靠的增强方案。",
+      "llm_tldr": "LLM在严格多步逻辑推理中常出现幻觉与不一致，CoT缺乏验证机制，标准RAG又忽略复杂结构依赖。SymbolLKG提出一种神经符号架构，通过本体逻辑知识图谱将规则和约束建模为可依赖的拓扑节点，并动态选择符号求解器完成推导。相比传统RAG，该方法能显式处理多步依赖，给出可验证的推理结果，为需要严密逻辑链的LLM推理场景提供了更可靠的增强方案。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.26836v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.30426v1",
+      "source": "arxiv",
+      "title": "Learning to Reason and Use Tools through Unsupervised Fine-Tuning in Task-Oriented Dialog Systems",
+      "abstract": "Current dialogue systems struggle with dynamic information retrieval, often leading to hallucinations and lower response accuracy. We address this by adapting the ReAct framework for Task-Oriented Dialogue, enabling Large Language Models (LLMs) to access external knowledge and produce factual responses. Mainly, we propose an unsupervised fine-tuning pipeline that harvests reasoning trajectories via in-context learning inference. High-quality samples are filtered using an LLM-based judge to construct a robust training set. This is enhanced by a unsupervised self-improvement loop, where improved checkpoints generate increasingly better trajectories for subsequent fine-tuning iterations. Experiments on the SIMMC dataset demonstrate that ReAct-based systems outperform baselines due to superior reasoning and tool use. Notably, our fine-tuned 8B model surpasses a 70B in-context system. Finally, we present an error analysis, impact of scene complexity, and cross-domain generalization.",
+      "authors": [
+        "Markel Ferro",
+        "Oier Lopez de Lacalle"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-31T08:22:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.30426v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "adapting ReAct for task-oriented dialogue to reason with external tools and knowledge",
+      "llm_evidence_cn": "将ReAct适配到任务型对话，使用外部工具知识进行推理",
+      "llm_evidence": "将ReAct适配到任务型对话，使用外部工具知识进行推理",
+      "canonical_evidence": "将ReAct适配到任务型对话，使用外部工具知识进行推理",
+      "llm_tldr_en": "Adapts ReAct for task-oriented dialogue so LLMs can use external tools; harvests reasoning trajectories via in-context learning, filters with an LLM judge, and iteratively fine-tunes to improve factual responses and reduce hallucination.",
+      "llm_tldr_cn": "现有任务型对话系统难以在推理中动态获取信息，容易产生幻觉且回答准确性不高。该文将ReAct框架适配到任务型对话，让大模型通过工具访问外部知识，并用无监督微调管线收集情境学习产生的推理轨迹，再由大模型裁判筛选高质量样本。借助自改进循环，模型不断用更优轨迹迭代微调。实验显示该方法能有效缓解幻觉，提高事实性回答的准确性。",
+      "llm_tldr": "现有任务型对话系统难以在推理中动态获取信息，容易产生幻觉且回答准确性不高。该文将ReAct框架适配到任务型对话，让大模型通过工具访问外部知识，并用无监督微调管线收集情境学习产生的推理轨迹，再由大模型裁判筛选高质量样本。借助自改进循环，模型不断用更优轨迹迭代微调。实验显示该方法能有效缓解幻觉，提高事实性回答的准确性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.30426v1",
+      "quick_tier": "8plus"
+    }
+  ]
+}

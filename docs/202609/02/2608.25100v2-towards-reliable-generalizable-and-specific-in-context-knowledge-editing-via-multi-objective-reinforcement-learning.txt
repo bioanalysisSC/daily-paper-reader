@@ -1,0 +1,683 @@
+Title: Towards Reliable, Generalizable, and Specific In-Context Knowledge Editing via Multi-Objective Reinforcement Learning
+
+URL Source: https://arxiv.org/pdf/2608.25100v2
+
+Published Time: Tue, 01 Sep 2026 01:21:27 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Towards Reliable, Generalizable, and Specific In-Context Knowledge Editing via Multi-Objective Reinforcement Learning 
+
+Xuzhong Wang 1, Maiqi Jiang 1, Tejal Nair 1, Girija Bhusal 2, Yanfu Zhang 1, Haipeng Chen 11College of William and Mary 2Tribhuvan University 
+
+{xwang58, mjiang04, tnair, yzhang105, hchen23}@wm.edu girija.bhusal9@gmail.com 
+
+Abstract 
+
+Large Language Models (LLMs) are power-ful but limited by static parametric knowledge that becomes outdated once pretraining ends. Knowledge editing addresses this problem by updating model behavior on target facts without full retraining. In particular, in-context knowl-edge editing has gained attention because it is training-free and readily applicable to black-box LLMs. Recent reinforcement learning (RL)-based approaches improve over fixed re-trieval strategies by adapting prompt construc-tion to the quantity–quality trade-off. Despite initial success, they optimize reliability alone, and in doing so trade away specificity : reward-ing edit success drives the retriever to discard the demonstrations that protect neighboring facts. Previous methods also act over only part of the prompt construction process, over-looking the global organization of demonstra-tions. We propose Multi-Objective In-context 
+
+Knowledge Editing ( MO-IKE ), which casts prompt construction as a sequential decision process over COPY, UPDATE, RETAIN, and STOP actions, and trains a dynamic retriever with a multi-objective shaped reward that cou-ples edit success to explicit paraphrase and re-tention penalties. On Llama-3.2-3B, averaged over five seeds, MO-IKE raises edit success (reliability) from 87.1% to 91.1% and reten-tion rate (specificity) from 41.0% to 63.4% over the strongest RL baseline, while keeping paraphrase consistency (generality) compara-ble (79.1% to 77.7%), improving the harmonic-mean score from 61.7 to 75.7. Gains hold across five frozen LLMs and four datasets, in-cluding the 311K-example UniEdit benchmark. 
+
+1 Introduction 
+
+Large Language Models (LLMs) have become prevalent in natural language processing, excelling  
+
+> Code is publicly available at https://github.com/ wmd3i/MO-IKE .
+
+in domains ranging from autonomous workflows (Schick et al., 2023) to advanced mathematical reasoning (Chervonyi et al., 2025). However, a critical limitation remains: parametric knowledge in LLMs is static. Once training concludes, the stored information becomes susceptible to obsoles-cence (Mazzia et al., 2024). For instance, an LLM whose training precedes the 2026 Winter Olympics lacks parametric knowledge of the final medal tally. Consequently, relying solely on static memory in-variably fails to satisfy user needs for real-time or dynamic information. 
+
+Knowledge editing addresses this by updating an LLM’s response to a target fact while preserving unrelated knowledge (Wang et al., 2024b). While gradient-based methods (Mitchell et al., 2022) achieve this via weight updates, they are computa-tionally expensive and cannot be adapted to black-box LLMs (Meng et al., 2022). Recently, in-context knowledge editing has become popular due to its advantage of being training-free and naturally ap-plicable to black-box LLMs (Zheng et al., 2023): the model remains frozen, and the desired update is induced solely through prompt context, without access to model internals. The efficacy of in-context knowledge editing is highly dependent on the injected prompt. Thus, a critical question is how to construct the prompt .Precisely, the context must be reliable enough to successfully edit the LLM ( reliability ), general enough to apply to semantically equivalent queries (generality ), and specific enough to avoid chang-ing unrelated neighboring facts ( specificity ) (Meng et al., 2023). Although static retrieval strategies such as IKE (Zheng et al., 2023) propose construct-ing the prompt with different categories of demon-strations—specifically, COPY demonstrations that explicitly state the new fact for reliability, UPDATE demonstrations that state a paraphrased query for generality, and RETAIN demonstrations that state an unrelated fact for specificity—these methods arXiv:2608.25100v2 [cs.AI] 30 Aug 2026 Figure 1: Contradicting objectives of reliability and specificity in prompt construction in IKE – Increasing the number of RETAIN demonstrations leads to Reten-tion Success but Edit Failure. 
+
+remain insufficient, as they assume a fixed amount of context is adequate for distinct edits. To address this limitation, recent work such as Dynamic Retriever for In-Context Knowledge Editing (DR-IKE) (Nafee et al., 2025) formulates demonstration selection as a reinforcement learn-ing (RL) problem, enabling the system to adapt the number of retrieved examples based on each edit. Despite their initial success, DR-IKE exhibits two limitations. First, while it improves how much con-text is supplied, it leaves partially explored how that context should be organized by ranking only RE-TAIN candidates, as the effectiveness of in-context learning is known to be sensitive to demonstration ordering (Lu et al., 2022). Second, DR-IKE does not account for the pro-portion of demonstrations from distinct categories. Effective in-context prompt construction requires a 
+
+principled balance among distinct demonstration types to achieve reliability, generality, and speci-ficity. From the observation in Figure 1, these objectives are often contradictory (Zheng et al., 2023). On the one hand, achieving strong reliabil-ity and generality demands sufficient COPY and UPDATE examples to reinforce the factual change (Qiao et al., 2024). On the other hand, maintaining specificity requires RETAIN examples that anchor unedited neighboring knowledge (Youssef et al., 2025). Under a limited context budget, we have to carefully balance the proportion of different demon-strations and consider potential trade-offs. To alleviate the dilemma of competing objec-tives, we formulate the retrieval environment as a Constrained Markov Decision Process (Con-strained MDP) and introduce MO-IKE as its so-lution algorithm. We formulate the state as the currently constructed prompt, and the action of the retriever is to either select an additional demon-stration or terminates the prompt construction. We evaluate the final prompt based on its edit reliabil-ity given the constraints on generality and speci-ficity. During training, MO-IKE samples a group of candidate prompts under the current policy and optimizes the retriever via Group Relative Policy Optimization (GRPO). Our main contributions are as follows: • We identify two notable deficiencies in state-of-the-art RL-based in-context knowledge editing (notably, DR-IKE): they neglect the sequential ordering of the prompt context and overlook the balance of examples from different demonstra-tion categories. • We propose MO-IKE , a Multi-Objective RL al-gorithm that jointly optimizes the selection of distinctive demonstration categories. By fram-ing the task as a Constrained MDP and optimiz-ing it with multi-objective RL, we ensure stable training that balances reliability, generality, and specificity. • We introduce architectural improvements to a dynamic demonstration retriever. On stan-dard knowledge-editing benchmarks, includ-ing C OUNTER FACT , using Llama-3.2-3B and Mistral-7B-v0.3, MO-IKE improves edit success (reliability) by up to +7.0% (reaching 92.0% on Llama-3.2), paraphrase consistency (generality) by up to +2.5%, while yielding a +23.0% abso-lute improvement in retention rate (specificity). 
+
+2 Related Work 
+
+2.1 In-Context Knowledge Editing 
+
+Early work on knowledge editing largely relies on gradient-based approaches. For instance, MEND (Mitchell et al., 2022) trains a smaller editor net-work for targeted weight updates. Constrained by the heavy computational overhead (Wang et al., 2024a), researchers explore in-context knowledge editing as a gradient-free alternative. Initial explo-rations improve prompt engineering via prefixing (Cohen et al., 2024), chain-of-thought (Wang et al., 2025), and formalized IKE framework (Zheng et al., 2023), which utilizes k-NN to retrieve diverse COPY, UPDATE, and RETAIN demonstrations to address reliability, generality and specificity, re-spectively. Most relevantly, DR-IKE (Nafee et al., 2025) utilizes RL to train a BERT-based retriever (Devlin et al., 2019) to dynamically construct a prompt. Yet, while these approaches successfully improve edit reliability, they rarely address the bal-ance between reliability, generality, and specificity. A natural question is whether IKE is distinct from Retrieval-Augmented Generation (RAG). The two settings have underlying objectives that differ: RAG aims to supplement the model’s parametric knowledge with external documents (Lewis et al., 2021; Asai et al., 2023). IKE, by contrast, aims to overwrite specific parametric facts while pre-serving unrelated knowledge. The survey of Wang et al. (2024b) draws this boundary explicitly, con-cluding that RAG is unsuitable for the targeted, fact-level updates that knowledge editing seeks to achieve. As a consequence, RL-based RAG retriev-ers (Huang et al., 2026) are not designed to nav-igate the reliability–specificity–retention tradeoff that defines the IKE problem. We further discuss the question in Appendix C. 
+
+2.2 RL for Demonstration Selection 
+
+Selecting optimal demonstrations for in-context learning (ICL) is challenging due to the combi-natorial nature of the search space (Purohit et al., 2025) and the prompt’s sensitivity to example inter-actions (Gupta et al., 2023), demonstration order (Lu et al., 2022), and model biases (Xiang et al., 2024). Because static heuristics like embedding similarity (Liu et al., 2022) fail to capture inter-dependency, recent work has reframed inference-time optimization as a sequential decision-making process. RL algorithms—such as PPO (Schulman et al., 2017b) and GRPO (Shao et al., 2024)—have driven good advances in this direction. Beyond im-proving reasoning (Xu et al., 2025; Liu et al., 2025), RL has proven highly effective for enhancing tool use (Qian et al., 2025), training web agents (Qi et al., 2025), optimizing query rewriting (Ma et al., 2023), managing agent memory (Yan et al., 2026), and accelerating speculative decoding (Wang et al., 2026). However, applying RL to balance the competing objectives of knowledge editing remains underex-plored. DR-IKE (Nafee et al., 2025) pioneered this transition by formulating the IKE demonstra-tion selection as an RL process. Yet, by optimiz-ing primarily for a single objective (reliability), DR-IKE leads the retriever to suffer degradation in specificity and knowledge retention. While Con-strained MDPs (Ganguly and Ghosh, 2025) and multi-objective optimization frameworks (Efroni et al., 2025a,b) theoretically address such trade-offs, their practical application to inference-time selection is limited. 
+
+3 Problem Statement 
+
+Definition 3.1. (Knowledge Editing). Fix a frozen language model M and a factual triple KC en-coded in the model’s parametric memory. Knowl-edge editing f pursues a post-edited model M′ := 
+
+f (M, KC → K ′C ) such that: • Reliability. For the exact query q targeting the original fact KC , the output of M′ accurately reflects the revised fact K′ 
+
+> C
+
+.• Generality. For any query q∗ that is semantically equivalent to q (e.g., paraphrases) or whose an-swer logically depends on KC , the output of M′
+
+is consistent with K′ 
+
+> C
+
+.• Specificity. For any query q′ that depends on unrelated knowledge KS (i.e., KC ∩K S = ∅), the output of M′ aligns identically with the unedited model M.
+
+Definition 3.2. (In-context Knowledge Editing (IKE) ). Fix a language model M with frozen pa-rameters. In-context knowledge editing utilizes the base prompt P and a retriever to concatenate an augmented Prompt P ∗
+
+P∗ := P+ < d 1, d 2, . . . , d n > (1) for di from d1 to dn that are natural language demonstrations selected from the example pool by the retriever. To satisfy the competing constraints of reliabil-ity, generality, and specificity, IKE formulates the construction of the prompt P ∗ as follows 
+
+Definition 3.3. (Demonstration Categories (Zheng et al., 2023)) Each retrieved demonstration di from 
+
+d1 to dn is assigned to one of the three categories. • COPY - directly restates the targeted fact. Example: The newest iPhone is → iPhone 17 .• UPDATE - paraphrases the query before stating the targeted fact. Example: The latest iPhone in the generation is 
+
+→ iPhone 17 .• RETAIN - states the neighboring fact that should not change. Example: The newest iPad is → iPad M5 Pro .4 Methodology 
+
+Our primary goal is to train a retriever that can construct contexts to effectively overwrite LLM’s stored parametric knowledge. Ideally, we would desire the edited LLM’s output to be the newly in-jected fact for any query targeted at that specific information. Moreover, a successful edit should prevent the neighboring facts from being modified. Nevertheless, we identify that prior baselines, no-tably DR-IKE, only considers editing signal in the RL training. An obvious drawback of the previous approach is that editing specificity signal is totally neglected. Thus, the resulting policy is susceptible to “reward hacking” where the trained retriever fil-tered all RETAIN candidates in favor for editing success. To achieve a principled balance among dif-ferent objectives, we formulate the training process as a Constrained Markov Decision Process (Con-strained MDP) : besides edit reliability, we have to consider the constructed prompt’s impact on para-phrase consistency and knowledge retention. To op-erationalize this idea, we employ cost constraints in addition to editing reward to measure the retriever’s performance across all objectives. The final scalar reward signal is computed via multi-objective RL through individual rewards of reliability, generality, and specificity. Throughout the training process, our multi-objective framework helps the retriever optimize for a stable policy that balances distinc-tive and often competing objectives for an effective knowledge editing. We formalize this procedure as MO-IKE, a multi-objective in-context knowledge editing algorithm. 
+
+4.1 IKE as a Constrained MDP 
+
+To guarantee editing generality and specificity, the retriever should be aware of these constraints in the training. Hence, we model the sequential demon-stration selection process as a Constrained MDP 
+
+(S, A, T , R, C). The retriever operates sequen-tially over discrete time steps t, constructing a prompt to query the frozen LLM. 
+
+State. The state st ∈ S represents the prompt context at step t. It is constructed by appending a newly selected demonstration dt, formatted into a natural language string via a mapping function 
+
+ϕ(·), to the previous state. Thus, s0 is the original query q, and st = st−1 ⊕ ϕ(dt), where ⊕ denotes string concatenation. 
+
+Action. In contrast to DR-IKE, which considers only RETAIN candidates in its action space (Nafee et al., 2025), we formulate the action space over the full set of COPY, UPDATE, and RETAIN demon-strations. We introduce this change in order to encourage the exploration of a “global” optimal ordering between distinctive demonstration types. At step t, an action at selects a demonstration without replacement from the available pool Dt,or chooses a learnable pseudo-token astop to halt. The action space is thus At = Dt ∪ { astop }, where 
+
+Dt+1 = Dt \ { at}.
+
+State Transition. The transition function 
+
+T (st+1 |st, a t) is deterministic. If the agent selects a demonstration at ∈ D , it is appended to the cur-rent state, yielding st+1 = st ⊕ at. If the agent selects at = astop , the episode immediately termi-nates, and the constructed prompt is finalized for evaluation. 
+
+Reward. Our primary objective is Edit Success (ES), which represents edit reliability. Specifically, the primary reward is defined as 
+
+R(st, a t) = 1[ˆ yedit = ynew ], (2) where ˆyedit denotes the frozen LLM’s prediction on the edit instance by the constructed prompt, and 
+
+ynew denotes the desired edited target. 
+
+Cost Constraints. Different from prior baselines, we introduce cost constraints so as to “regularize” RL training. We treat Paraphrase Consistency (PC), which represents generality, and Retention Rate (RR), which represents specificity as constraints for our retriever. Let ˆypara and ˆyretain denote the frozen LLM’s predictions on the paraphrase query and retention query, respectively. Let ynew denote the desired edited target and ytrue denote LLM’s original stored answer for neighboring facts. We define each cost as the logical inverse of task suc-cess: 
+
+CP C (st, a t) = 1 − 1[ˆ ypara = ynew ], (3) 
+
+CRR (st, a t) = 1 − 1[ˆ yretain = ytrue ]. (4) 
+
+4.2 Multi-Objective Reward Shaping 
+
+To obtain the final objective, we scalarize the multi-objective problem into a single shaped reward, us-ing a fixed-multiplier Lagrangian relaxation as the bridge. We define a composite reward that penal-izes degradation on PC and RR: 
+
+r(st, a t) = R(st, a t) − X
+
+> k∈{ PC ,RR }
+
+λkCk(st, a t),
+
+(5) Figure 2: MO-IKE overview. Given a query, we first preselect COPY, UPDATE, and RETAIN candidates using kNN, then sample prompts under the current retriever policy. The LLM evaluates these prompts to produce rewards and constraint penalties, which are combined via Lagrangian relaxation into final rewards R1, R 2, R 3, . . . . These rewards are then used to compute group advantages A1, A 2, A 3, . . . for policy optimization. Dashed lines mark operations used for training, not inference. 
+
+where λPC and λRR are fixed hyperparameters rather than dual variables updated by ascent. We therefore do not solve a constrained program; the relaxation serves to derive the reward structure, and the resulting objective is multi-objective re-ward shaping optimized directly with GRPO. We give the derivation in Appendix B. 
+
+4.3 MO-IKE 
+
+In general, MO-IKE constructs editing prompts through a four-stage pipeline: candidate retrieval ,
+
+sequential selection , reward evaluation , and policy optimization . (i) First, for a given edit query, we retrieve an initial candidate pool of factual demon-strations. (ii) Next, a BERT-based (Devlin et al., 2019) retriever sequentially selects samples from this pool to build the prompt step-by-step, halting only when it chooses a “stop” token. (iii) The fully constructed prompt is then evaluated against both editing success (reliability), paraphrase consistency (generality) constraints, and retention (specificity). (iv) These competing objectives are combined us-ing a fixed-penalty coefficient, producing a final scalar reward. We illustrate the core idea of MO-IKE in Algorithm 1, and attach the full detailed Algorithm in Appendix A. 
+
+Demonstration Selection. For a given edit in-stance (x, y new ), we construct the prompt via a two-stage retrieval pipeline. First, we use a Sen-tence Transformer (Reimers and Gurevych, 2019) to extract an initial pool of C OPY , U PDATE , and RETAIN candidates via kNN. Our BERT-based re-
+
+Algorithm 1 MO-IKE 
+
+Require: Retriever πθ, dataset Dtrain , group size 
+
+G, fixed penalty λ 
+
+> 1:
+
+for each (x, y new ) ∈ D train do 
+
+▷ Sampling & Reward Evaluation:  
+
+> 2:
+
+Sample G prompt trajectories {τg}Gg=1 ∼
+
+πθ(· | x) based on current policy π 
+
+> 3:
+
+Compute composite reward rg for each τg
+
+using fixed penalty λ▷ Advantage Estimation:  
+
+> 4:
+
+Compute group-normalized advantages: 
+
+Ag ← (rg − μ)/σ ▷ Policy Update:  
+
+> 5:
+
+Update θ via gradient descent to minimize:           
+
+> J(θ) = 1
+> G
+> PGg=1 [Lclip (θ, τ g, A g)−βKL DKL (πθ∥πθold )]
+> 6:
+
+end for 
+
+triever then performs fine-grained sequential selec-tion from this pool to build the final prompt. 
+
+Policy and Action Sampling. The MO-IKE re-triever uses a frozen 4-layer BERT encoder (Devlin et al., 2019) with trainable projection matrices for the query ( Wp) and demonstrations ( Wd). We intro-duce a learned termination pseudo-embedding vstop 
+
+to represent the STOP action astop . As a sequen-tial decision making process, the policy samples based on current state pt as a partially constructed prompt, and the candidates pool At. At step t, with a partially constructed prompt pt from the previous 
+
+t − 1 steps and candidate pool At, the selection probability for any action ai ∈ ¯At is computed via a softmax over projected dot products: 
+
+P (ai|pt) = exp( v⊤ 
+
+> p
+
+vi)
+
+P   
+
+> aj∈¯At
+
+exp( v⊤ 
+
+> p
+
+vj ) (6) where vp = Wp · BERT (pt) and vi = Wd ·
+
+BERT (ai). During training, we sample a ∼
+
+P (·| pt) to encourage exploration. At inference, we select the highest-probability demonstration. If astop is chosen, prompt construction terminates. Otherwise, we update the state ( pt+1 = pt ⊕ a) and shrink the pool ( At+1 = At \ { a}). 
+
+Policy Update. For each instance (x, y new ),we sample a group of G prompt trajectories 
+
+{τ1, . . . , τ G} from the current policy πθ. We eval-uate these trajectories using the target LLM to compute a composite reward ri based on edit suc-cess, paraphrase consistency, and retention met-rics. Group-relative advantages are estimated as 
+
+Ai = ( ri−μr)/σ r, where μr and σr are the group’s reward mean and standard deviation. We optimize 
+
+θ by maximizing the clipped surrogate objective, penalized by the Kullback-Leibler (KL) divergence from a reference policy πref (the initial, reference retriever weights): 
+
+LGRPO (θ) = Lclip (θ) − βDKL [πθ∥πref ], (7) where Lclip (θ) is given by: 
+
+Lclip (θ) = 1
+
+G
+
+> G
+
+X
+
+> i=1
+
+min πθ(τi|q)
+
+πold (τi|q) Ai,
+
+clip πθ(τi|q)
+
+πold (τi|q) , 1 − ϵ, 1 + ϵ
+
+!
+
+Ai
+
+! (8) 
+
+5 Experiments 
+
+5.1 Experimental Setup Datasets. In this section, we present evaluations on MO-IKE and our baselines across three standard knowledge editing benchmarks: C OUNTER FACT 
+
+(Meng et al., 2022), Z SRE (Levy et al., 2017), and WIKI -C OUNTERFACT (Cohen et al., 2024). For each benchmark, we partition the factual records into two distinct sets: an editable sample pool for evaluation and a separate pool for constructing IKE demonstrations. Following Zheng et al. (2023), we allocate the first 2,000 samples (out of 21,919) from C OUNTER FACT to the editable pool. We ap-ply an analogous split to the other datasets, reserv-ing the first 500 samples from both Z SRE (out of 11,230) and W IKI DATA COUNTERFACT (out of 2,340) for editing. The remaining records in each dataset are utilized to build the demonstration pools. We additionally evaluate MO-IKE on larger datasets UniEdit (Chen et al., 2025), which is shown more in details in Appendix G. 
+
+Language Models. We evaluate our approach us-ing several instruction-tuned large language mod-els: Meta-Llama-3.1-8B-Instruct, Meta-Llama-3.2-3B-Instruct (Grattafiori et al., 2024), Mistral-7B-Instruct-v0.2 (Jiang et al., 2023), and Qwen2.5 (1.5B and 7B) (Yang et al., 2024). All model pa-rameters remain strictly frozen throughout our ex-periments. 
+
+Training Configuration. Similar to Nafee et al. (2025), we train our retriever on 300 randomly se-lected examples and evaluate it on held-out sets of 300 samples for C OUNTER FACT , and 100 sam-ples each for Z SRE and W IKI DATA COUNTERFACT .We provide detailed training configuration in Ap-pendix D. 
+
+Baselines. We compare our approach against four representative in-context knowledge editing base-lines: FactPrompt (Cohen et al., 2024), which prepends a narrative prefix to guide editing; Edit-CoT (Wang et al., 2025), which leverages chain-of-thought prompting; IKE (Zheng et al., 2023), which categorizes demonstrations into COPY, UP-DATE, and RETAIN types; and DR-IKE (Nafee et al., 2025), which utilizes policy optimization for dynamic demonstration selection. 
+
+Evaluation Metrics. We evaluate MO-IKE across three dimensions of knowledge editing: reliability, generality, and specificity. Let ynew and ytrue de-note the newly injected fact and the original stored truth, respectively. • Reliability: Measures post-editing efficacy on target prompts via Edit Success (ES), defined as 
+
+E[I[P (ynew ) > P (ytrue )]] , and Edit Magnitude (EM), defined as E[P (ynew ) − P (ytrue )] .• Generality: Evaluates accuracy on paraphrased prompts via Paraphrase Consistency (PC) and Paraphrase Magnitude (PM), which are calcu-lated identically to ES and EM, respectively. • Specificity: Assesses the preservation of unedited neighboring facts via Retention Rate (RR), defined as E[I[P (ytrue ) > P (ynew )]] ,and Retention Magnitude (RM), defined as 
+
+E[P (ytrue ) − P (ynew )] .Finally, we report the overall Score (S) as the harmonic mean of ES, PC, and RR. Editing Method S ↑ ES ↑ EM ↑ PC ↑ PM ↑ RR ↑ RM ↑                                                                      
+
+> Llama-3.2-3B-Instruct
+> FactPrompt 34.8 55.3 64.0 25.7 23.8 34.3 -7.1 EditCoT 42.5 70.5 62.4 43.5 21.6 29.9 1.0 IKE 63.9 78.0 67.9 68.0 60.0 52.0 29.9 DR-IKE 54.9 85.0 76.4 77.0 69.2 34.7 -4.2 MO-IKE 73.5 92.0 78.4 79.0 66.0 57.7 30.0 Mistral-7B-Instruct-v0.3
+> FactPrompt 41.8 36.3 73.4 42.3 34.3 48.3 -2.9 EditCoT 35.6 33.8 58.7 43.4 33.4 31.0 5.6 IKE 64.8 58.0 84.5 81.3 69.9 60.0 33.9
+> DR-IKE 62.0 74.7 91.8 88.3 78.4 42.3 -22.5 MO-IKE 77.4 80.1 92.0 90.7 74.9 65.0 32.1
+
+Table 1: Main results of in-context knowledge editing across Llama-3.2-3B-Instruct and Mistral-7B-Instruct-v0.3. We report Overall Score (S), Edit Success (ES), Edit Metric (EM), Paraphrase Consistency (PC), Paraphrase Metric (PM), Retention Rate (RR), and Retention Metric (RM). Bold indicates the best performance, and underline indicates the second best. 
+
+5.2 Main results 
+
+Table 1 presents the performance of MO-IKE on the C OUNTER FACT dataset. We highlight results for Llama-3.2 and Mistral-v0.3, with extended model evaluations provided in Table 9. We also include results from different datasets in Table 2. Furthermore, we include some additional experi-ments in Appendix G. Across both architectures, MO-IKE consistently outperforms across the majority of metrics: (1) Compared to the standard IKE baseline, MO-IKE yields substantial improvements in edit success and consistency. Against DR-IKE, it maintains or exceeds peak reliability, pushing Llama-3.2 ES from 85.0 to 92.0. (2) RL baselines like DR-IKE often drops below the IKE baseline in RR and overall Score. MO-IKE protects existing paramet-ric knowledge by enforcing retention. MO-IKE reverses the specificity degradation seen in prior methods. It improves RR by absolute margins of +23.0 for Llama-3.2 and +22.7 for Mistral-v0.3 over DR-IKE, while shifting Mistral’s negative RM from -22.5 to a positive +32.1. (3) As shown in Table 2, MO-IKE’s performs well also in Z SRE and W IKI -C OUNTERFACT . It achieves the highest overall Score (42.0 on Z SRE and 59.0 on Wiki) while simultaneously achieving the strongest RR.                                 
+
+> Method S↑ES ↑PC ↑RR ↑
+> ZsRE
+> IKE 34.0 64.0 50.0 19.0 DR-IKE 33.0 77.0 65.0 16.0 MO-IKE 42.0 75.0 79.0 22.0 Wiki Counterfact
+> IKE 55.0 70.0 54.0 46.0 DR-IKE 53.0 86.0 68.0 33.0 MO-IKE 59.0 80.0 59.0 47.0
+
+Table 2: Editing performance across the ZsRE and Wiki Counterfact datasets. 
+
+Zero-Shot Cross Model Evaluation. We observe that retriever trained via MO-IKE on one language model can effectively generalize to a completely different language model without any retraining. To prove this, we training the retriever purely on Llama-3.2, and evaluating it zero-shot on Mistral-7B. As demonstrated in Table 3, MO-IKE suffers no performance drop when transferred zero-shot to Mistral-7B. In fact, it performs practically identi-cally to the natively trained version, outperforming all other baselines.                         
+
+> Method S↑ES ↑PC ↑RR ↑
+> IKE 64.9 58.0 81.3 60.0 DR-IKE 62.3 74.7 88.3 42.3 MO-IKE (Native) 77.1 80.1 90.7 65.0 MO-IKE (Zero-Shot) 77.3 81.0 89.3 65.7
+
+Table 3: Zero-shot transfer performance: the retriever was trained exclusively on Llama-3.2 and evaluated zero-shot on Mistral-7B. 
+
+5.3 Reward Constrained Ablation 
+
+We conduct an ablation study on the reward func-tion to evaluate four configurations: (i) no con-straints, (ii) paraphrase constraint only, (iii) reten-tion constraint only, and (iv) all constraints. As shown in Table 4, omitting the retention penalty (row i and ii) leads to a noticeable drop in RR. This confirms that explicitly penalizing retention degradation is necessary to prevent editing suc-cess from negatively impacting the model’s pre-existing knowledge. Furthermore, the results im-plies a positive correlation between edit success and paraphrase consistency: optimizing for editing reliability inherently benefits generality. It is worth noting that the full multi-objective formulation (all constraints) achieves better Score compared to only retention constraint (row iii and Reward Constraint S↑ ES ↑ PC ↑ RR ↑                 
+
+> No Constraint 65.5 91.3 77.0 50.0 Only Paraphrase 68.8 92.0 79.0 52.0 Only Retention 70.1 86.0 71.0 57.7
+> All Constraints 73.5 92.0 79.0 57.7
+> Table 4: Ablation study on the components of the MO-IKE scalarized reward function using Llama-3.2. Bold
+> indicates the best performance.
+> Figure 3: Performance of Llama-3.2 using different demonstration selection scopes.
+
+iv). We hypothesize that it may comes from the me-chanics of group relative rewards. When the reward signal lacks multiple constraints, the group rewards tend to exhibit lower variance within a group. Con-sequently, the group-relative advantages become uninformative, which may downgrade the effect of the policy gradient updates. By incorporating all constraints, the reward landscape becomes more nuanced, providing the variance in advantage sig-nals necessary for RL training. In addition, we discuss reward weights sensitiv-ity in Appendix F. 
+
+5.4 Action Space Ablation 
+
+Previous approaches to in-context knowledge edit-ing have largely treated demonstration organiza-tion as a secondary concern. IKE (Zheng et al., 2023) constructs prompts using static format, essen-tially treating demonstrations as a fixed template. While DR-IKE (Nafee et al., 2025) introduces a dy-namic retrieval mechanism, it restricts its optimiza-tion to the ranking and construction of only RE-TAIN candidates, ignoring the inter-dependencies between different demonstration types. In con-trast, MO-IKE’s action space is expanded to in-clude all demonstrations across all categories. By conducting RL training across the entire sequence of demonstration types—COPY, UPDATE, and RE-TAIN—our method captures the global, synergis-
+
+> Figure 4: Left axis tracks filtered candidates; the right axis shows inverted retention degradation. The shaded gap highlights DR-IKE’s hard constraint failing (over-filtering by Epoch 3) versus MO-IKE’s soft embedding preserving stable retention.
+
+tic effects of context construction. As illustrated in Figure 3, our approach achieves better perfor-mance across all three metrics compared to opti-mizing solely for RETAIN. These empirical results confirms our decision to expand the action space across all demonstration categories. 
+
+5.5 Demonstration Structure and Analysis 
+
+The performance of our approach can be attributed to the resulting structural proportions of the demon-stration candidates. DR-IKE (Nafee et al., 2025) force a greedy optimization for edit success, which skews the prompt distribution by discarding RE-TAIN candidates. To resolve this structural im-balance, MO-IKE integrates a multi-objective RL framework and a soft stopping mechanism through a stop signal in the action space that is evalu-ated alongside other demonstration candidates. As shown in Figure 4, this allows the model to main-tain contextual heterogeneity rather than aggres-sively filtering out non-edit demonstrations. Conse-quently, MO-IKE achieves better editing specificity overall (Table 1). We provide detailed Case Study of the context structure in Appendix H. By main-taining a balanced proportion of COPY, UPDATE, and RETAIN types, our method achieves robust results without sacrificing the overall integrity of the model’s existing knowledge. 
+
+Conclusion 
+
+We introduce MO-IKE , a multi-objective RL algo-rithm for in-context knowledge editing that trains a retriever to dynamically construct prompts. We for-mulate demonstration retrieval as a Constrained MDP, casting prompt construction as a sequen-tial decision-making problem. MO-IKE explicitly optimizes the retriever over the often competing objectives of reliability, generalization, and speci-ficity. Experiments across multiple LLMs show that MO-IKE consistently outperforms existing re-trieval strategies, achieving strong effectiveness across all three objectives and cross-model gener-alization. Ablation studies further demonstrate the importance of our constraint formulation, as well as the embedding and ranking designs, to MO-IKE’s overall performance. 
+
+Limitations 
+
+Several limitations still exist in our work. First, the dataset scale for knowledge editing remains relatively small; for example, we train and eval-uate MO-IKE only on the first 2,000 records of the C OUNTER FACT dataset, which may not be sufficient to examine the model’s overall capabil-ities. Second, by formulating the problem as a Constrained MDP, we incorporate all constraints di-rectly into the reward function. Because we utilize fixed coefficients (e.g., a static lambda value) for these constraints, the precise impact of these hyper-parameters on the RL optimization process remains unexplored. Third, although MO-IKE achieves a better retention rate overall, its absolute perfor-mance is bottlenecked by the inherent limits of in-context learning. The retention rate is still rela-tively low (around 60%) compared to other metrics, suggesting this gradient-free method still has room for improvement. Future work may consider differ-ent approaches to surpass this limitation. Finally, we evaluate MO-IKE solely on a specific knowl-edge editing task, leaving it unclear whether this framework generalizes to other in-context learning applications, such as model reasoning. 
+
+Acknowledgements 
+
+This research was supported by the National Sci-ence Foundation under IIS-2348405, IIS-2451436, Commonwealth Cyber Initiative grant HC-2Q26-032, and the William & Mary Semester Research Grant. 
+
+References 
+
+Akari Asai, Zeqiu Wu, Yizhong Wang, Avirup Sil, and Hannaneh Hajishirzi. 2023. Self-RAG: Learning to retrieve, generate, and critique through self-reflection. 
+
+arXiv preprint arXiv:2310.11511 .Qizhou Chen, Dakan Wang, Taolin Zhang, Zaoming Yan, Chengsong You, Chengyu Wang, and Xiaofeng He. 2025. Uniedit: A unified knowledge editing benchmark for large language models. Preprint ,arXiv:2505.12345. Yuri Chervonyi, Trieu H. Trinh, Miroslav Olšák, Xi-aomeng Yang, Hoang Nguyen, Marcelo Menegali, Junehyuk Jung, Junsu Kim, Vikas Verma, Quoc V. Le, and Thang Luong. 2025. Gold-medalist performance in solving olympiad geometry with alphageometry2. 
+
+Preprint , arXiv:2502.03544. Roi Cohen, Eden Biran, Ori Yoran, Amir Globerson, and Mor Geva. 2024. Evaluating the ripple effects of knowledge editing in language models. Transac-tions of the Association for Computational Linguis-tics , 12:283–298. Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT: Pre-training of deep bidirectional transformers for language under-standing. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Tech-nologies, Volume 1 (Long and Short Papers) , pages 4171–4186, Minneapolis, Minnesota. Association for Computational Linguistics. Yonathan Efroni, Ben Kretzu, Daniel Jiang, Jalaj Bhandari, Zheqing, Zhu, and Karen Ullrich. 2025a. Aligned multi objective optimization. Preprint ,arXiv:2502.14096. Yonathan Efroni, Ben Kretzu, Daniel Jiang, Jalaj Bhandari, Zheqing Zhu, and Karen Ullrich. 2025b. Aligned multi objective optimization. In Forty-second International Conference on Machine Learn-ing .Sourav Ganguly and Arnob Ghosh. 2025. Provably effi-cient sample complexity for robust cmdp. Preprint ,arXiv:2511.07486. Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schel-ten, Alex Vaughan, Amy Yang, Angela Fan, Anirudh Goyal, Anthony Hartshorn, Aobo Yang, Archi Mi-tra, Archie Sravankumar, Artem Korenev, Arthur Hinsvark, and 542 others. 2024. The llama 3 herd of models. Preprint , arXiv:2407.21783. Shivanshu Gupta, Matt Gardner, and Sameer Singh. 2023. Coverage-based example selection for in-context learning. In Findings of the Association for Computational Linguistics: EMNLP 2023 , pages 13924–13950, Singapore. Association for Computa-tional Linguistics. Jerry Huang, Siddarth Madala, Risham Sidhu, Cheng Niu, Hao Peng, Julia Hockenmaier, and Tong Zhang. 2026. Tackling distractor documents in multi-hop qa with reinforcement and curriculum learning. In 
+
+Findings of the Association for Computational Lin-guistics: EACL 2026 , page 5548–5561. Association for Computational Linguistics. Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men-sch, Chris Bamford, Devendra Singh Chaplot, Diego de las Casas, Florian Bressand, Gianna Lengyel, Guil-laume Lample, Lucile Saulnier, Lélio Renard Lavaud, Marie-Anne Lachaux, Pierre Stock, Teven Le Scao, Thibaut Lavril, Thomas Wang, Timothée Lacroix, and William El Sayed. 2023. Mistral 7b. Preprint ,arXiv:2310.06825. Omer Levy, Minjoon Seo, Eunsol Choi, and Luke Zettlemoyer. 2017. Zero-shot relation extraction via reading comprehension. In Proceedings of the 21st Conference on Computational Natural Language Learning (CoNLL 2017) , pages 333–342, Vancouver, Canada. Association for Computational Linguistics. Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Hein-rich Küttler, Mike Lewis, Wen tau Yih, Tim Rock-täschel, Sebastian Riedel, and Douwe Kiela. 2021. Retrieval-augmented generation for knowledge-intensive nlp tasks. Preprint , arXiv:2005.11401. Fan Liu, Wen-Shuo Chao, Naiqiang Tan, and Hao Liu. 2025. Bag of tricks for inference-time computation of LLM reasoning. In The Thirty-ninth Annual Con-ference on Neural Information Processing Systems Datasets and Benchmarks Track .Jiachang Liu, Dinghan Shen, Yizhe Zhang, Bill Dolan, Lawrence Carin, and Weizhu Chen. 2022. What makes good in-context examples for GPT-3? In 
+
+Proceedings of Deep Learning Inside Out (DeeLIO 2022): The 3rd Workshop on Knowledge Extrac-tion and Integration for Deep Learning Architectures ,pages 100–114, Dublin, Ireland and Online. Associa-tion for Computational Linguistics. Yao Lu, Max Bartolo, Alastair Moore, Sebastian Riedel, and Pontus Stenetorp. 2022. Fantastically ordered prompts and where to find them: Overcoming few-shot prompt order sensitivity. In Proceedings of the 60th Annual Meeting of the Association for Compu-tational Linguistics (Volume 1: Long Papers) , pages 8086–8098, Dublin, Ireland. Association for Compu-tational Linguistics. Xinbei Ma, Yeyun Gong, Pengcheng He, Hai Zhao, and Nan Duan. 2023. Query rewriting in retrieval-augmented large language models. In Proceedings of the 2023 Conference on Empirical Methods in Natu-ral Language Processing , pages 5303–5315, Singa-pore. Association for Computational Linguistics. Vittorio Mazzia, Alessandro Pedrani, Andrea Caciolai, Kay Rottmann, and Davide Bernardi. 2024. A sur-vey on knowledge editing of neural networks. IEEE Transactions on Neural Networks and Learning Sys-tems , 36(7):11759–11775. Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. 2022. Locating and editing factual associ-ations in GPT. In Advances in Neural Information Processing Systems , volume 35, pages 17359–17372. Kevin Meng, Arnab Sen Sharma, Alex J Andonian, Yonatan Belinkov, and David Bau. 2023. Mass-editing memory in a transformer. In The Eleventh International Conference on Learning Representa-tions .Eric Mitchell, Charles Lin, Antoine Bosselut, Chelsea Finn, and Christopher D Manning. 2022. Fast model editing at scale. In International Conference on Learning Representations .Mahmud Wasif Nafee, Maiqi Jiang, Haipeng Chen, and Yanfu Zhang. 2025. Dynamic retriever for in-context knowledge editing via policy optimization. In Proceedings of the 2025 Conference on Empiri-cal Methods in Natural Language Processing , pages 16744–16757, Suzhou, China. Association for Com-putational Linguistics. Kiran Purohit, Venktesh V, Sourangshu Bhattacharya, and Avishek Anand. 2025. Sample efficient demon-stration selection for in-context learning. In Forty-second International Conference on Machine Learn-ing .Zehan Qi, Xiao Liu, Iat Long Iong, Hanyu Lai, Xueqiao Sun, Jiadai Sun, Xinyue Yang, Yu Yang, Shuntian Yao, Wei Xu, Jie Tang, and Yuxiao Dong. 2025. We-bRL: Training LLM web agents via self-evolving on-line curriculum reinforcement learning. In The Thir-teenth International Conference on Learning Repre-sentations .Cheng Qian, Emre Can Acikgoz, Qi He, Hongru WANG, Xiusi Chen, Dilek Hakkani-Tür, Gokhan Tur, and Heng Ji. 2025. ToolRL: Reward is all tool learning needs. In The Thirty-ninth Annual Confer-ence on Neural Information Processing Systems .Shanbao Qiao, Xuebing Liu, and Seung-Hoon Na. 2024. COMEM: In-context retrieval-augmented mass-editing memory in large language models. In 
+
+Findings of the Association for Computational Lin-guistics: NAACL 2024 , pages 2333–2347, Mexico City, Mexico. Association for Computational Lin-guistics. Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence embeddings using Siamese BERT-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natu-ral Language Processing (EMNLP-IJCNLP) , pages 3982–3992, Hong Kong, China. Association for Com-putational Linguistics. Timo Schick, Jane Dwivedi-Yu, Roberto Dessi, Roberta Raileanu, Maria Lomeli, Eric Hambro, Luke Zettle-moyer, Nicola Cancedda, and Thomas Scialom. 2023. Toolformer: Language models can teach themselves to use tools. In Thirty-seventh Conference on Neural Information Processing Systems .John Schulman, Sergey Levine, Philipp Moritz, Michael I. Jordan, and Pieter Abbeel. 2017a. Trust region policy optimization. Preprint ,arXiv:1502.05477. John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 2017b. Prox-imal policy optimization algorithms. Preprint ,arXiv:1707.06347. Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, Y. K. Li, Y. Wu, and Daya Guo. 2024. Deepseekmath: Pushing the limits of mathemati-cal reasoning in open language models. Preprint ,arXiv:2402.03300. Changyue Wang, Weihang Su, Qingyao Ai, Yichen Tang, and Yiqun Liu. 2025. Knowledge editing through chain-of-thought. In Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing , pages 10673–10693, Suzhou, China. Association for Computational Linguistics. Chenan Wang, Daniel H. Shi, and Haipeng Chen. 2026. Speculative sampling with reinforcement learning. 
+
+Preprint , arXiv:2601.12212. Peng Wang, Zexi Li, Ningyu Zhang, Ziwen Xu, Yunzhi Yao, Yong Jiang, Pengjun Xie, Fei Huang, and Hua-jun Chen. 2024a. WISE: Rethinking the knowledge memory for lifelong model editing of large language models. In The Thirty-eighth Annual Conference on Neural Information Processing Systems .Song Wang, Yaochen Zhu, Haochen Liu, Zaiyi Zheng, Chen Chen, and Jundong Li. 2024b. Knowledge edit-ing for large language models: A survey. Preprint ,arXiv:2310.16218. Yanzheng Xiang, Hanqi Yan, Lin Gui, and Yulan He. 2024. Addressing order sensitivity of in-context demonstration examples in causal language models. In Findings of the Association for Computational Linguistics: ACL 2024 , pages 6467–6481, Bangkok, Thailand. Association for Computational Linguistics. Fengli Xu, Qianyue Hao, Zefang Zong, Jingwei Wang, Yunke Zhang, Jingyi Wang, Xiaochong Lan, Jiahui Gong, Tianjian Ouyang, Fanjin Meng, Chenyang Shao, Yuwei Yan, Qinglong Yang, Yiwen Song, Si-jian Ren, Xinyuan Hu, Yu Li, Jie Feng, Chen Gao, and Yong Li. 2025. Towards large reasoning models: A survey of reinforced reasoning with large language models. Preprint , arXiv:2501.09686. Sikuan Yan, Xiufeng Yang, Zuchao Huang, Ercong Nie, Zifeng Ding, Zonggen Li, Xiaowen Ma, Jinhe Bi, Kristian Kersting, Jeff Z. Pan, Hinrich Schütze, Volker Tresp, and Yunpu Ma. 2026. Memory-r1: Enhancing large language model agents to manage and utilize memories via reinforcement learning. 
+
+Preprint , arXiv:2508.19828. An Yang, Baosong Yang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Zhou, Chengpeng Li, Chengyuan Li, Dayiheng Liu, Fei Huang, Guanting Dong, Hao-ran Wei, Huan Lin, Jialong Tang, Jialin Wang, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin Ma, and 43 others. 2024. Qwen2 technical report. Preprint ,arXiv:2407.10671. Paul Youssef, Zhixue Zhao, Jörg Schlötterer, and Christin Seifert. 2025. How to make LLMs forget: On reversing in-context knowledge edits. In Proceed-ings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computa-tional Linguistics: Human Language Technologies (Volume 1: Long Papers) , pages 12656–12669, Al-buquerque, New Mexico. Association for Computa-tional Linguistics. Ce Zheng, Lei Li, Qingxiu Dong, Yuxuan Fan, Zhiyong Wu, Jingjing Xu, and Baobao Chang. 2023. Can we edit factual knowledge by in-context learning? In The 2023 Conference on Empirical Methods in Natural Language Processing .A Training Procedure for Multi-objective GRPO 
+
+Algorithm 2 outlines the detailed MO-IKE algorithm. 
+
+Algorithm 2 Multi-Objective In-Context Knowledge Editing (MO-IKE) 
+
+Require: initial retriever parameters θ, training set Dtrain , group size G, clipping ϵ, KL weight βKL 
+
+1: for epoch = 1 to Nepochs do 
+
+2: for each (x, y new ) ∈ D train do 
+
+3: Initialize storage lists: D ← [] , rewards ← [] 
+
+4: 5: for g = 1 to G do 
+
+6: xcurr ← x
+
+7: Sequence Rg ← [] ; LogProbs πold  
+
+> g
+
+← [] 
+
+8: for step j = 1 to K do ▷ Sequentially select demonstrations 9: z ← Sθ (xcurr , C ); p ← softmax (z)
+
+10: Sample action aj ∼ p
+
+11: Append aj to Rg ; Append p[aj ] to πold 
+
+> g
+
+12: Remove selected action at from candidate pool Ct: Ct+1 ← C t \ { at}
+
+13: xcurr ← Concat (xcurr , a j ) ▷ Update prompt state 14: end for 
+
+15: Prompt LLM to get ˆyg and reward rg ▷ Compute composite reward 16: Append rg to rewards 17: Store trajectory data (Rg , π old  
+
+> g
+
+) in D
+
+18: end for 
+
+19: 20: μgroup ← 1
+
+> G
+
+P rg ▷ Compute group baseline 21: σgroup ←
+
+q 1
+
+> G
+
+P(rg − μgroup )2 + δ
+
+22: Ag ← (rg − μgroup )/σ group for each group g
+
+23: 24: for inner epoch = 1 to N ′ 
+
+> epochs
+
+do 
+
+25: Ltotal ← 0
+
+26: for g = 1 to G do 
+
+27: Reconstruct states xg, 0, . . . , x g,K using x and Rg
+
+28: for step j in Rg do 
+
+29: pnew  
+
+> g,j
+
+← softmax (Sθ (xg,j −1, C )) action j
+
+30: pold  
+
+> g,j
+
+← πold  
+
+> g
+
+[j]
+
+31: ratio ← pnew  
+
+> g,j
+
+/p old 
+
+> g,j
+
+32: LCLIP ← − min( ratio · Ag , clip (ratio, 1 − ϵ, 1 + ϵ) · Ag ) ▷ Compute clipped surrogate objective 33: LKL ← βKL · log( pnew  
+
+> g,j
+
+/p old  
+
+> g,j
+
+) ▷ Approximate KL penalty 34: Ltotal += ( LCLIP + LKL )
+
+35: end for 
+
+36: end for 
+
+37: θ ← θ − α∇θ ( 1 
+
+> G·K
+
+Ltotal ) ▷ Gradient descent update 38: end for 
+
+39: end for 
+
+40: end for 
+
+B Proof of the Final Reward via Lagrangian Relaxation 
+
+We model the problem as Constrained MDP. Our goal is to find a policy πθ that maximizes the Edit Success (ES) while ensuring that the expected costs associated with violating Paraphrase Consistency (PC) and Retention Rate (RR) remain below acceptable thresholds. 
+
+B.1 Problem Formulation 
+
+Let JR(π) denote the expected return for the primary editing task based on the reward R(st, a t). We introduce cost constraints for PC and RR, where JCk (π) represents the expected cumulative cost for constraint k ∈ { PC , RR }. Let dk represent the maximum tolerable expected cost for that metric. The CMDP optimization problem is defined as: 
+
+max 
+
+πθ
+
+JR(πθ)
+
+s.t. JCk (πθ) ≤ dk, ∀k ∈ { PC , RR }
+
+(9) where the expectations are taken over the trajectory distribution induced by the policy πθ.
+
+B.2 Lagrangian Relaxation 
+
+We apply the method of Lagrange multipliers. We define the Lagrangian objective function L(π, λ ) as: 
+
+L(π, λ ) = JR(π) − X
+
+> k∈{ PC ,RR }
+
+λk(JCk (π) − dk) (10) Here, λ = ( λPC , λ RR ) is a vector of Lagrange multipliers, with λk ≥ 0. The primal constrained problem is equivalent to the following unconstrained min-max dual problem: 
+
+min  
+
+> λ≥0
+
+max 
+
+> πθ
+
+L(π, λ ) (11) 
+
+B.3 Equivalence to Scalarized Reward 
+
+We can rewrite the Lagrangian function by expanding the expected return and expected cost terms over the trajectories τ ∼ π. Since expectations are linear, we have: 
+
+L(π, λ ) = Eτ ∼ π
+
+hX tR (st, a t)
+
+i
+
+− X
+
+> k∈PC ,RR
+
+λk
+
+
+
+Eτ ∼ π
+
+hX tC k(st, a t)
+
+i
+
+− dk
+
+
+
+= Eτ ∼ π
+
+X t
+
+R(st, a t) − X
+
+> k∈PC ,RR
+
+λkCk(st, a t)
+
+ + X
+
+> k∈PC ,RR
+
+λkdk
+
+(12) Notice that the term P 
+
+> k
+
+λkdk is constant with respect to the policy optimization step (the inner maxi-mization loop over π). Therefore, maximizing L(π, λ ) with respect to π is mathematically equivalent to maximizing the expected return of a new, composite reward function :
+
+r(st, a t) = R(st, a t) − X
+
+> k∈{ PC ,RR }
+
+λkCk(st, a t) (13) Thus, by optimizing this composite reward using GRPO with fixed hyperparameters λPC and λRR , we are equivalently solving the inner loop of the Lagrangian dual problem. The fixed coefficients λk act as the Lagrange multipliers that apply static penalty weightings to balance the trade-off between editing performance and the cost constraints. C Comparison to RL-Based RAG Retrieval 
+
+To test whether RL-based RAG retrievers can sub-stitute for an IKE-specific approach, we evaluate RAG-RL (Huang et al., 2026) on CounterFact with Qwen-2.5-7B-Instruct. RAG-RL was originally trained to optimize answer-F1 and citation-F1 on open-domain QA; we apply it directly to the IKE setting without modification. We observe that the LLM frequently produces refusals (“I cannot de-termine the answer based on the prompt”) when RAG-RL’s retrieval forces it into contradiction with its parametric knowledge. Methods S ↑ ES ↑ PC ↑ RR ↑
+
+RAG-RL 20.0 83.0 79.3 8.0 MO-IKE 78.1 96.0 88.3 60.0 
+
+Table 5: RAG-RL evaluated on CounterFact with Qwen-2.5-7B-Instruct. RAG-RL achieves moderate edit suc-cess but collapses on retention (8.0% RR), consistent with our claim in Section 2. 
+
+D Training Configuration 
+
+To ensure reproducibility, Table 6 details the com-plete set of hyperparameters used during the train-ing of MO-IKE. 
+
+Hyperparameter Value 
+
+Learning Rate 1 × 10 −5
+
+Epochs 3Group Size 8Random Seed 42 GRPO Clipping Parameter ( ϵ) 0.1 KL Coefficient ( β) 0.001 Lagrangian Penalty Weights 1
+
+Table 6: Hyperparameters used for MO-IKE training. 
+
+E Training Dynamics 
+
+To understand the learning efficiency of our RL-based retrieval optimization, we analyze the perfor-mance metrics of MO-IKE across training epochs. Figure 5 illustrates the progression of ES, PC and RR over the duration of the training process. A key observation is the rapid convergence of the policy. By the conclusion of the first epoch, the model establishes a strong, balanced demonstra-tion ordering, evidenced by the sharp initial peak in both ES and RR. Throughout subsequent epochs 0 1 2 3
+
+> Training Epoch
+> 40 50 60 70 80 90 100
+> Performance
+> ES PC RR
+
+Figure 5: Training dynamics with Llama-3.2. We eval-uate the performance of demonstration selection given different training epochs. 
+
+(Epoch 2 and 3), the performance largely plateaus; ES and PC demonstrate stable refinements, while RR maintains its rate without degrading. Because the reward includes a penalty for retention, pol-icy updates are regularized toward smaller devia-tions, which can reduce unstable exploratory shifts during early RL training (Schulman et al., 2017a). The model rapidly identifies a near-optimal struc-tural proportion for the demonstrations, proving that MO-IKE is not only effective at preventing structural collapse but also highly sample-efficient to train. 
+
+F Hyperparameter Sensitivity. 
+
+We conduct additional experiments to check hyper-parameter sensitivity for knowledge editing reward weight λES and constraint weights λP C , λ RR . We swept λP C and λRR by 100 × each, holding the other fixed. Shown by Table 7, ESR varies by ≤ 2.0
+
+points, PC by ≤ 3.3, RR is unchanged. MO-IKE still outperforms all baselines at every setting, with no monotonic degradation in any metric. The direc-tional pattern matches the design: upweighting PC modestly improves PC (+1.0), while upweighting RR modestly degrades PC (-2.3) without further improving RR, indicating (1, 1) sits in a flat region balancing both objectives.                           
+
+> Configuration S↑ES ↑PC ↑RR ↑
+> λP C = 100 , λ RR = 1 73.2 90.0 80.0 57.7
+> λP C = 1 , λ RR = 100 72.7 91.7 76.7 57.7
+> λP C = 1 , λ RR = 1 73.4 92.0 79.0 57.7
+
+Table 7: Hyperparameter sensitivity sweep over the Lagrangian penalty weights. G Additional Experiments 
+
+Evaluation on Large Datasets. We expand ex-periments with the U NI EDIT (Chen et al., 2025) dataset, a larger dataset composed of 311K editing examples drawn from a diverse mixture of relation types and knowledge domains, which is roughly a 15 × increase in scale over C OUNTER FACT . This setting provides a stricter test of whether MO-IKE’s gains generalize beyond the testing of a small benchmark. As indicated by Table 8, MO-IKE achieves the best Score and best RR. FactPrompt’s high ESR (81.7%) is misleading: its Score (15.0%), PC (22.7%), and RR (7%) are the lowest in the ta-ble, indicating FactPrompt does not let the model effectively learn factual updates — the model par-rots the injected editing prompt rather than inter-nalizing new knowledge. 
+
+Method S ↑ ES ↑ PC ↑ RR ↑
+
+FactPrompt 15.0 81.7 22.7 7.0 EditCoT 21.5 43.0 36.0 11.0 IKE 19.6 39.3 27.6 11.0 DR-IKE 17.2 38.0 27.3 9.0 MO-IKE 24.5 51.3 28.3 14.3 
+
+Table 8: Evaluation on the UniEdit dataset using Llama-3.2-3B-Instruct. 
+
+LLM Performance. Table 9 presents the perfor-mance of MO-IKE across various frozen LLMs. We observe a general positive scaling trend, where performance of Score (S) improves as model size increases. The highest overall rates are achieved by models with larger parameter scales ( ≥ 7B). 
+
+Model (Parameters) S↑ ES ↑ PC ↑ RR ↑
+
+Qwen 2.5 (7B) 75.0 96.0 88.3 60.0 Qwen 2.5 (1.5B) 63.7 69.7 67.7 54.7 Llama 3.1 (8B) 76.7 88.0 77.7 67.3 
+
+Llama 3.2 (3B) 73.5 92.0 79.0 57.7 Mistral v0.3 (7B) 77.4 80.1 90.7 65.0 
+
+Table 9: Editing performance across different LLMs. 
+
+Natural Baselines. We provide natural baselines that showcase the performance of the retriever, as we claim that selection and ordering and demon-strations matter. Precisely, we compare MO-IKE with random shuffling baseline and a duplication baseline where the target edit is repeated multiple times, while keeping UPDATE and RETAIN un-changed. Table10 shows that simple duplication or shuffling yields moderate performance but does not match the balance of ES/PC/RR achieved by our multi-objective RL framework.                               
+
+> Method ES ↑PC ↑RR ↑
+> Random Shuffling 77.0–91.0 70.0–74.0 52.0–60.0 Duplicate Target 2 ×79.3 72.3 51.0 Duplicate Target 4 ×76.7 73.7 50.7 Duplicate Target 8 ×78.3 77.0 52.0 Duplicate COPY 2 ×78.3 72.7 52.0 Duplicate COPY 4 ×79.0 73.7 49.7 Duplicate COPY 8 ×79.7 70.0 51.0 MO-IKE 96.0 88.3 60.0
+
+Table 10: Performance of heuristic prompt engineering strategies on C OUNTER FACT .
+
+Evaluation on 2025-era-SOTA LLMs. To directly test the long-term applicability of MO-IKE, we conducted an additional evaluation on a recently released 2025-era model, Qwen3-4B-Instruct. Re-sults are summarized in Table 11. We observe that base models exhibit high baseline robustness—for instance, standard static IKE achieves an impres-sive 98.67% Edit Success Rate (ESR) and 94.67% Paraphrase Consistency (PC) on Qwen-3. Since ESR and PC are near the ceiling in this model, RR becomes the key metric in differentiating MO-IKE from all other baselines. We can observe that MO-IKE exceeds the single objective baseline DR-IKE by approximately 23% on RR, confirming its effectiveness in preserving neighboring facts in knowledge editing. Moreover, MO-IKE success-fully preserves the high ESR and PC of the newer models. Therefore, in terms of the overall perfor-mance, MO-IKE achieves the highest overall score (S) of 70.2%. 
+
+Method S ↑ ES ↑ PC ↑ RR ↑
+
+FactPrompt 50.4 91.0 75.3 31.3 EditCoT 42.1 86.1 76.5 24.6 IKE 65.6 98.7 94.7 46.3 DR-IKE 49.6 99.3 96.0 30.0 MO-IKE 70.2 98.3 94.3 53.0 
+
+Table 11: Editing performance on Qwen3-4B-Instruct. While stronger base models exhibit high baseline robust-ness, MO-IKE remains the only framework capable of preserving knowledge specificity (RR), achieving the highest overall score. 
+
+Computation Cost. We evaluate inference latency Llama-3.2-3B-Instruct. The results are detailed in Table 12. Component Mean (ms) Median (ms) Std (ms) p95 (ms)             
+
+> Retrieval 812.2 808.5 36.2 871.8 Generation 112.3 112.8 45.6 181.3 End-to-End 924.4 915.4 55.4 1027.3
+
+Table 12: Inference latency per query evaluated on COUNTER FACT using Llama-3.2-3B-Instruct. Bench-marked on a single NVIDIA A100-SXM4-40GB GPU at batch size 1. 
+
+H Case Study 
+
+Table 13 use the record 676 in C OUNTERFACT to il-lustrate the relationship between the structural com-position of retrieved demonstrations and the result-ing performance tradeoffs in different in-context knowledge editing frameworks. We use edit suc-cess to represent Reliability Metric, and retention rate to represent Specificity Metric. 
+
+IKE. The baseline IKE framework relies on fixed prompt construction—statically ordering COPY, UPDATE, and RETAIN demonstrations. As shown in the Reliability Metric, this static template ap-proach fails to successfully execute the target edit (ytrue → ynew ). Because the retriever does not optimize for the edit signal, the model defaults to its pre-trained knowledge (Russian) rather than adopting the new fact. 
+
+DR-IKE. While DR-IKE successfully forces the edit (outputting “French” for Ivanov-Vano), it suf-fers from a “over-optimization” issue. By penaliz-ing only on non-edit-maximizing signals, the policy optimization entirely discards RETAIN candidates. This creates an unbalanced prompt heavily skewed toward the target concept. Consequently, DR-IKE exhibits fact forgetting, failing the Specificity met-ric by incorrectly altering the language of a related but distinct entity (Vladimir Smirnov) to French. 
+
+MO-IKE. MO-IKE resolves the tradeoff between edit success and knowledge retention. By avoiding rigid templates and maintaining a balanced struc-tural proportion of demonstration types, MO-IKE allows the retriever to dynamically interleave UP-DATE, RETAIN, and COPY examples. This un-fixed ordering provides sufficient contextual protec-tion for unrelated facts while still providing a strong enough edit signal to update the target knowledge. As a result, MO-IKE is the only framework in the case study that successfully achieves both Reliabil-ity (updating Ivanov-Vano to French) and Speci-ficity (retaining Russian for Smirnov). Component IKE DR-IKE MO-IKE Edit Request Target Edit: Ivan Ivanov-Vano spoke the language Russian (ytrue ) → French (ynew )
+
+Selected Demonstrations [COPY] Andrey Malakhov spoke the language French. 
+
+[COPY] Boris Shaposhnikov spoke the language French. . . . 
+
+[UPDATE] Andrey Malakhov is a native speaker of French. 
+
+[UPDATE] Fyodor Pavlovich Reshetnikov, a native French. . . . 
+
+[RETAIN] Roger Vitrac spoke the language Russian. 
+
+[RETAIN] Christophe Moreau spoke the language Russian. 
+
+. . . 
+
+(Note: Fixed category order. )
+
+[COPY] Andrey Malakhov spoke the language French. 
+
+[COPY] Boris Shaposhnikov spoke the language French. . . . 
+
+[UPDATE] Andrey Malakhov is a native speaker of French. 
+
+[UPDATE] Fyodor Pavlovich Reshetnikov, a native French. . . . 
+
+(Note: Fixed COPY and UP-DATE order. No RETAIN candidates, as they are filtered due to penalty on non-edit-maximizing signals) 
+
+[COPY] Andrey Malakhov spoke the language French. 
+
+[RETAIN] Christophe Moreau spoke the language Russian. 
+
+[UPDATE] Fyodor Pavlovich Reshetnikov, a native French. . . . 
+
+[UPDATE] Andrey Malakhov is a native speaker of French. . . . 
+
+[RETAIN] Roger Vitrac spoke the language Russian. 
+
+[COPY] Boris Shaposhnikov spoke the language French. 
+
+(Note: Unfixed order. Balanced structural proportion maintained via soft embedding) 
+
+Reliability Metric 
+
+Ivan Ivanov-Vano spoke the language? 
+
+Russian. ( Unsuccessful edit due to heuristic prompt construction )French. ( Success ) French. ( Success )
+
+Specificity Metric 
+
+Vladimir Smirnov, speaker of? 
+
+Russian. ( Success ) French. (Unsuccessful reten-tion due to unbalanced RETAIN demonstrations )Russian. ( Success )
+
+Table 13: Comparison of in-context editing frameworks highlighting the structure of the constructed prompt.
