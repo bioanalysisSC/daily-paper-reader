@@ -152,6 +152,49 @@ subscriptions:
             updated_at: '2026-08-28T12:59:28.309213+00:00'
       updated_at: '2026-08-28T12:53:27.361Z'
       paused: true
+    - tag: auto-prompt
+      description: 查找上下文工程、动态提示模板、推理过程中自动搜索最佳模板以及药物扰动预测中构建LLM推理框架与证据检索的相关文章。
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: dynamic prompt template
+          keyword_cn: 动态提示模板
+          query: dynamic prompt template that adapts during inference
+        - keyword: context engineering
+          keyword_cn: 上下文工程
+          query: context engineering for large language model prompting
+        - keyword: drug perturbation prediction
+          keyword_cn: 药物扰动预测
+          query: drug perturbation prediction using transcriptomic response
+        - keyword: cross context prediction
+          keyword_cn: 跨上下文预测
+          query: cross context prediction for drug effects in different cell lines
+        - keyword: large language model reasoning
+          keyword_cn: 大语言模型推理
+          query: large language model reasoning with external evidence
+        - keyword: prompt optimization
+          keyword_cn: 提示优化
+          query: prompt optimization for task-specific LLM inference
+      intent_queries:
+        - query: How to build an LLM reasoning framework that dynamically searches for optimal prompt templates?
+          query_cn: 如何构建在推理过程中动态搜索最佳提示模板的大语言模型推理框架？
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            What evidence retrieval strategies are effective for cross context drug perturbation prediction with unseen
+            drugs?
+          query_cn: 哪些证据检索策略对跨上下文、未见药物的药物扰动预测有效？
+          enabled: true
+          source: manual
+          note: ''
+        - query: How to design context aware prompt engineering for predicting drug response in novel biological contexts?
+          query_cn: 如何设计上下文感知的提示工程，以预测新生物学环境中的药物响应？
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-09-02T04:45:50.194Z'
 source_backends:
   arxiv:
     papers_table: arxiv_papers
