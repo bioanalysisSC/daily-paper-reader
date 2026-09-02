@@ -1,0 +1,643 @@
+Title: ANCHOR-RE: An Agentic Neuro-Symbolic Framework for Grounded Biomedical Relation Extraction
+
+URL Source: https://arxiv.org/pdf/2608.03154v1
+
+Published Time: Wed, 05 Aug 2026 00:32:59 GMT
+
+Number of Pages: 36
+
+Markdown Content:
+# ANCHOR-RE: An Agentic Neuro-Symbolic Framework for Grounded Biomedical Relation Extraction 
+
+Shufan Ming a, Yikun Han a, Gibong Hong a, Rui Zhang b, Halil Kilicoglu a
+
+> aSchool of Information Sciences, University of Illinois Urbana-Champaign, 501 E Daniel St., Champaign, 61820, IL, USA
+> bDivision of Computational Health Sciences, Department of Surgery, University of Minnesota, 516 Delaware St SE, Minneapolis, 55455, MN, USA
+
+Abstract Objective. Biomedical relation extraction (BioRE) extracts structured knowl-edge from biomedical literature for applications such as knowledge base con-struction and hypothesis generation. In real-world settings, BioRE systems must distinguish true relations from numerous candidate entity pairs, most of which are unrelated. Traditional symbolic systems, such as SemRep, provide high pre-cision and interpretability but have limited recall under linguistic variability and complex discourse structures. In contrast, large language models (LLMs) offer strong contextual reasoning capabilities but can produce false-positive relation predictions. This study aims to develop an agentic, neuro-symbolic framework that combines symbolic biomedical knowledge with LLM reasoning to improve BioRE reliability. 
+
+Methods. We developed ANCHOR-RE , a framework that integrates ontology-guided reasoning, external knowledge grounding, and data-driven verification rules into LLM inference. We evaluated it on three BioRE benchmarks (Sem-RepGS, DDI, and ChemProt) using both proprietary and open-weight LLMs. To assess generalizability beyond benchmark datasets while reducing potential evaluation bias from LLM pretraining contamination, we conducted a temporal evaluation using 100 biomedical articles published in 2026. 
+
+Results. With the proprietary backbone, ANCHOR-RE outperformed direct LLM prompting, improving micro-F1 from 0.654 to 0.676 on SemRepGS, from 0.769 to 0.872 on DDI, and from 0.939 to 0.941 on ChemProt. On DDI and ChemProt, it also outperformed previously reported inference-only methods and approached fine-tuned or instruction-tuned systems without parameter updates. Similar performance gains observed with open-weight LLMs indicate that the benefits were not limited to the proprietary backbone. On the post-cutoff set, arXiv:2608.03154v1 [cs.CL] 4 Aug 2026 manual assessment of 500 randomly sampled predictions yielded a precision of 69%, maintaining consistent precision on previously unseen biomedical litera-ture. 
+
+Conclusion. Neuro-symbolic reasoning can improve the reliability of LLM-based BioRE without fine-tuning. Results across multiple benchmarks, model families, and post-cutoff literature support ANCHOR-RE as a practical training-free approach to biomedical literature mining. Data and code are available at 
+
+https://github.com/COMBINI-Hub/Multi_Agent_Relation_Extraction .
+
+Keywords: Biomedical relation extraction, Large language models, Neuro-symbolic AI, Biomedical literature, SemRep 
+
+1. Introduction 
+
+Biomedical relation extraction (BioRE) automatically identifies semantic relationships between biomedical entities, transforming unstructured biomed-ical literature into structured knowledge for downstream applications such as biomedical knowledge graph construction [1, 2], literature-based discovery [3], and clinical decision support [4]. Previous BioRE approaches can generally be categorized into rule-based systems and supervised transformer-based models, each with distinct strengths and limitations. Rule-based systems such as Sem-Rep leverage handcrafted lexical triggers and curated semantic type constraints to achieve high precision and provide interpretable predictions [5], but have difficulty in generalizing across diverse linguistic expressions and complex dis-course structures. In contrast, transformer-based models learn rich contextual representations and achieve competitive performance on benchmark datasets [6]. However, these models typically rely on task-specific fine-tuning using large annotated corpora, making adaptation to new biomedical domains costly and limiting applicability where labeled data are scarce [7, 8]. Generative large language models (LLMs) have demonstrated strong zero-shot and few-shot capabilities across a wide range of biomedical NLP tasks. However, even state-of-the-art models remain prone to hallucinations and fac-tual inconsistencies, limiting their reliability in high-stakes biomedical applica-tions [9]. In BioRE, these failures often manifest as systematic over-prediction, where entity co-occurrences are incorrectly inferred as meaningful relations [10]. This challenge is particularly pronounced in real-world settings, where the ma-jority of candidate entity pairs do not correspond to any valid relation. These 2limitations motivate inference-time approaches that combine the complemen-tary strengths of symbolic knowledge and LLM reasoning without requiring additional model training. ReOnto [11] incorporates ontology-derived relational paths into BioBERT representations, providing explicit relational cues to improve predictions when textual evidence is weak or ambiguous. Similarly, Olasunkanmi et al. [12] in-tegrate ontology constraints into an LLM-based framework by restricting can-didate predicates before contextual reasoning. Despite their promising perfor-mance, these approaches generally require either task-specific model training or specialized multi-stage reasoning pipelines. Lightweight inference-time meth-ods that inject symbolic constraints without additional model training remain largely underexplored. To address this gap, we propose ANCHOR-RE , a neuro-symbolic, agentic framework that separates neural hypothesis generation from symbolic guidance and verification. It consists of two modules: a Decider that generates can-didate relation hypotheses using structured evidence from external knowledge-bases (KBs), and a Verifier that evaluates these predictions using learned error patterns derived from the training corpus. Entity semantic type con-straints further restrict candidate relations based on subject-object semantic type compatibility, reducing biologically implausible predictions. We evaluate ANCHOR-RE on three BioRE benchmarks spanning diverse relation schemas using both proprietary and open-weight models. To further as-sess robustness beyond standard benchmark settings, we additionally conduct a contamination-controlled temporal evaluation on biomedical articles published after the knowledge cutoff of the underlying LLM. We assess the contribution of each framework component through ablation studies and further investigate its effectiveness in reducing hallucinated false-positive predictions. Experimen-tal results demonstrate that incorporating symbolic guidance at inference time consistently improves LLM-based direct prompting baselines. The main contributions of this study are as follows: • We propose ANCHOR-RE , a neuro-symbolic framework that integrates KB evidence, semantic type constraints, and inference-time verification to improve LLM-based biomedical relation extraction. • We introduce a verification module ( Verifier ) that leverages learned er-ror patterns as soft constraints to reduce false positive BioRE predictions at inference time. 3Problem BioRE is a fundamental task in mining structured knowledge from biomedical literature that supports downstream applications such as knowledge graph construction, literature-based discovery, and clini-cal decision support. However, current LLM-based approaches re-main prone to hallucinations and often generate biologically unsup-ported false-positive predictions, limiting their reliability in real-world biomedical applications. What is already known Recent neuro-symbolic approaches incorporate structured biomedical knowledge into neural models to improve BioRE performance. How-ever, these methods typically require task-specific model training or complex multi-stage reasoning pipelines, limiting their flexibility and scalability across diverse BioRE settings. What this paper adds We propose ANCHOR-RE , a training-free framework that integrates knowledge base evidence, semantic type constraints, and inference-time verification to improve LLM-based BioRE. Experiments on three benchmark datasets and a contamination-controlled temporal eval-uation demonstrate improved reliability, reduced hallucinated false-positive predictions, and generalizability without additional model training. Who would benefit Researchers and practitioners developing biomedical text mining sys-tems, knowledge graphs, and AI-driven applications that leverage structured knowledge from the literature. 
+
+Table 1: Statement of significance. 
+
+• We demonstrate the robustness and generalizability of ANCHOR-RE through comprehensive evaluation on three BioRE benchmarks, contamination-controlled temporal evaluation, and experiments with both proprietary and open-weight LLM backbones. 
+
+2. Related Work 
+
+2.1. LLMs for Biomedical Relation Extraction 
+
+Generative LLMs (e.g., GPT, Qwen, LLaMA) have demonstrated strong zero-shot and few-shot capabilities for BioRE, substantially reducing the de-pendence on task-specific annotated corpora while achieving competitive per-formance on several BioRE benchmarks and, in some settings, approaching or surpassing supervised approaches [13–15]. Recent inference-only methods have further improved BioRE through prompt engineering and retrieval augmenta-tion. Liu et al. proposed a self-prompting framework that automatically gener-ates diverse synthetic examples that are subsequently used as in-context demon-strations for zero-shot relation extraction [16]. Retrieval-augmented generation (RAG) methods improve grounding by incorporating external biomedical evi-dence during inference. For example, BiomedRAG retrieves biomedical evidence and trains a relevance scorer to rank and filter candidate passages, ensuring that only the most informative content is provided to the LLM for reasoning and in-formation extraction [17]. Despite these advances, most inference-only BioRE 4approaches rely primarily on prompt engineering or retrieved unstructured text and therefore provide limited mechanisms for enforcing explicit biomedical se-mantic constraints or verifying relation predictions. 
+
+2.2. Neuro-symbolic Biomedical Relation Extraction 
+
+To improve the reliability of LLM-based BioRE, recent neuro-symbolic ap-proaches have incorporated structured biomedical knowledge, such as ontologies, semantic type constraints, and symbolic rules, into the inference process. Quan et al. [18] introduce a symbolic validation module that filters predictions violat-ing ontology-based constraints. Zhao et al. [19] incorporate entity synonym and hypernym knowledge into prompting, providing both positive and negative tex-tual evidence to guide reasoning. Li et al. [20] propose a recall–retrieve–reason framework that leverages ontology knowledge to generate retrieval queries for candidate entity pairs, which are then used to retrieve in-context demonstrations for relation extraction. Despite these advances, recent benchmarking studies show that LLM per-formance decreases as relation schemas become larger and semantically more complex, making BioRE particularly challenging in realistic open biomedical settings [21]. Moreover, LLMs remain prone to overconfident and unsupported relation predictions [22]. Our work investigates an inference-only framework that integrates multiple forms of symbolic guidance, including knowledge-base evidence, semantic type constraints, and learned verification rules, directly into LLM reasoning to improve the reliability of relation prediction. 
+
+3. Methods 
+
+3.1. Task Formulation 
+
+The goal of the BioRE is to predict the relation label between a given pair of entities within a sentence 1. Formally, given an input sentence s and a target entity pair (e1, e 2) together with their semantic types, the objective is to predict a relation label ˆr ∈ R , where R denotes a predefined relation set, including a 
+
+norel label that represents the absence of a valid relation. Our baseline follows a standard zero-shot LLM classification setting. The baseline prompt contains only the task instruction, dataset-specific relation 
+
+> 1While document-level RE is also an important setting, we focus on sentence-level RE in this work.
+
+5definitions, the input sentence, and the target entity pair (See Appendix A). 
+
+ANCHOR-RE extends this baseline by augmenting LLM inference with three complementary sources of symbolic guidance: retrieved in-context demonstra-tions selected from the training corpus, structured evidence retrieved from ex-ternal biomedical KBs, and verification rules learned offline from systematic false-positive predictions. 
+
+3.2. Overview of ANCHOR-RE 
+
+Figure 1 provides an overview of ANCHOR-RE , which consists of an of-fline preparation stage and an inference stage. The offline stage constructs two resources that support subsequent inference: (1) a vector database containing embeddings of labeled training examples for retrieval of in-context demonstra-tions, and (2) an Error Pattern Knowledge Bank that captures recurring false-positive patterns and corresponding verification rules. To construct the latter, we first perform zero-shot inference on the training corpus to identify system-atic false-positive errors. These errors are then analyzed using an additional LLM-based inference module ( Error Pattern Learner ) to derive reusable error patterns and verification rules. This preparation procedure is performed once for each dataset and backbone LLM and does not require model parameter updates or fine-tuning. During inference, ANCHOR-RE first generates a candidate relation pre-diction using the Decider , which leverages the input sentence, entity pair, retrieved demonstrations, and structured evidence from external KBs. The can-didate prediction is then examined by a verification module ( Verifier ) that evaluates it against the error patterns and rules in the Error Pattern Knowledge Bank and produces the final relation label. Formally, the overall prediction process is defined as 
+
+ˆr = g(fθ (s, e 1, e 2; Dretr , K ext ), K err ) ,
+
+where fθ represents the Decider , an LLM parameterized by θ which gener-ates a candidate relation hypothesis based on the input sentence s, entity pair 
+
+(e1, e 2), retrieved demonstrations Dretr , and structured evidence from external KBs Kext . Kerr denotes the Error Pattern Knowledge Bank constructed during offline preparation, and g(·) represents the verification module that refines the candidate prediction using the learned verification rules to produce the final relation label. 6Figure 1: Overview of ANCHOR-RE .
+
+3.3. Knowledge-Guided Relation Hypothesis Generation 
+
+The Decider is the inference module for generating a candidate relation hypothesis for a given sentence and target entity pair. Inspired by symbolic systems such as SemRep, which identify relations using lexical triggers (e.g., verbs, nominalizations, and prepositional cues), we incorporate trigger-oriented guidance into the Decider prompt. Specifically, prompts include structured descriptions of common relational triggers, their lexical forms, typical syntac-tic patterns, and trigger–relation mappings. These cues act as soft linguistic constraints that highlight plausible relational signals while allowing the LLM to generalize beyond hand-crafted rules. In addition to the task instructions (see Appendix A for the complete prompt), the Decider is provided with two complementary sources of supporting evi-dence: (i) retrieved training instances used as in-context demonstrations ( Dretr ), and (ii) structured relational evidence retrieved from external biomedical KBs (Kext ). Based on the augmented prompt, the Decider generates a structured prediction grounded in a trigger span copied from input sentence, a brief expla-nation, and the predicted relation label. 
+
+3.3.1. Demonstration Selection 
+
+For each training instance xi, we construct a structured representation by serializing the sentence s, target entity pair (e1, e 2), and relation label r into a templated sequence. By jointly embedding the relation label together with the entity names and semantic types, the resulting representation captures relation-specific semantics and semantic-type compatibility beyond surface-level sentence similarity. This sequence is then encoded using a PubMedBERT-based encoder to obtain a representation hxi ∈ Rd.7At inference time, given a test instance x, we consider each candidate relation label r ∈ R (x) independently and retrieve demonstrations conditioned on this label hypothesis. Retrieved examples are ranked using the similarity score: score r (x, x i) = α · sim( hx, h xi ) + β · 1[type( x) = type( xi)] ,
+
+where sim denotes cosine similarity, and the indicator function prioritizes exam-ples whose subject–object semantic type pair matches that of the test instance. We incorporate contrastive in-context demonstrations by retrieving a balanced set of positive examples (instances labeled with relation r) and negative exam-ples (instances labeled as norel ). The number of retrieved demonstrations, k,is tuned on the validation set. 
+
+3.3.2. Structured Relational Evidence Retrieval 
+
+In addition to retrieved demonstrations, we query KBs conditioned on the target entity pair (e1, e 2). We leverage dataset-specific sources, including the UMLS Metathesaurus [23] for SemRepGS, DrugBank [24] for DDI [25], and CTD [26] for ChemProt [27]. For SemRepGS, we query concepts and relations from controlled biomedical vocabularies integrated in UMLS (e.g., SNOMED CT, MeSH, RxNorm, and NCI Thesaurus), and explicitly incorporate semantic relations defined in the UMLS Semantic Network (e.g., sulfonylureas -TREATS -
+
+type 2 diabetes ). The retrieved knowledge is serialized into structured evidence blocks and appended to the Decider prompt to provide KB-level grounding. These evi-dence blocks include direct relations between the target entities when available, neighboring relations involving each entity, and textual description fields al-ready provided by the underlying KBs (e.g., DrugBank or CTD). No additional LLM-based processing is used to generate these evidence blocks. Examples of retrieved external knowledge are provided in Appendix F. 
+
+3.4. Learning Verification Rules from False Positives 
+
+We perform zero-shot inference with the frozen Decider on a stratified sub-set of the training corpus without retrieval augmentation. For each relation label 
+
+r, we construct a failure pool Fr consisting of instances incorrectly predicted as 
+
+r despite having no valid relation: 
+
+Fr = {x | ˆy(x) = r ∧ y(x) = norel }.
+
+8This pool captures examples of systematic over-predictions and serves as the basis for learning verification rules. 
+
+Error Pattern Learner , an offline LLM-based module, induces verifica-tion rules from systematic false-positive predictions. The LLM is prompted with examples from the failure pool, together with true-positive examples and previ-ously learned verification rules, to induce abstract verification rules represented as structured questions (see Appendix A for the full prompt). During each refinement iteration, the LLM is instructed to revise, merge, or introduce new rules when existing rules are overly broad, overly specific, redundant, or likely to reject valid positive predictions. Through iterative refinement, this process gen-eralizes from instance-level errors to label-level soft constraints, forming a per-label Error Pattern Knowledge Bank that captures systematic over-prediction biases of the Decider . After each refinement iteration, the resulting Error Pat-tern Knowledge Bank is evaluated on a held-out validation set, and the version achieving the highest validation micro-F1 is selected for inference. 
+
+3.5. Verification 
+
+During inference, the Verifier is invoked only when the Decider predicts a positive relation. It retrieves the verification rules for the predicted relation from the precomputed Error Pattern Knowledge Bank and evaluates whether any rule applies to the current prediction. If any verification rule is triggered, the prediction is rejected and relabeled as norel ; otherwise, the original prediction is retained. The full verification prompt is provided in Appendix A. The overall procedure for error pattern learning is summarized in Algo-rithm 1. In the algorithm, ExtractVerificationRules extracts candidate verification rules from batches of failure cases and uses them to construct the 
+
+Error Pattern Knowledge Bank . ValidationSelect evaluates the resulting pattern bank on the validation set, and retains the version that achieves the highest validation micro-F1. During inference, the Verifier applies the se-lected Error Pattern Knowledge Bank .
+
+3.6. Datasets 
+
+We evaluate our framework on three benchmark BioRE datasets, each formu-lated as a sentence-level multi-class relation classification task over predefined entity pairs. Dataset statistics are provided in Appendix C. 9Algorithm 1 Error Pattern Learning for Verification                  
+
+> Require: Training set Dtrain with gold labels y(x); validation set Dval ; relation set Rwith semantic definitions {δr}; frozen Decider model fθ; batch size B; maximum refinement iterations T
+> Ensure: Validation-selected Error Pattern Knowledge Bank P
+
+1: P ← ∅ 
+
+2: /* Stage 1: Probe model decision behavior */ 
+
+3: S ← StratifiedSample (Dtrain )
+
+4: for each instance x ∈ S do 
+
+5: ˆy(x) ← fθ (x)
+
+6: end for 
+
+7: for each relation r ∈ R do 
+
+8: Fr ← { x ∈ S | ˆy(x) = r ∧ y(x) = norel }
+
+9: Tr ← { x ∈ S | ˆy(x) = r ∧ y(x) = r}
+
+10: Pr ← ∅ 
+
+11: /* Stage 2: Iterative rule learning */ 
+
+12: for t = 1 , . . . , T do 
+
+13: B ← NextBatch (Fr , B )
+
+14: ∆r ← ExtractVerificationRules (B, Tr , δ r , Pr )
+
+15: Pr ← ReviseAndUpdate (Pr , ∆r )
+
+16: if NoNewPatterns (∆ r ) then 
+
+17: break 
+
+18: end if 
+
+19: end for 
+
+20: P ← P ∪ P r
+
+21: end for 
+
+22: /* Stage 3: Validation-set selection */ 
+
+23: P ← ValidationSelect (P, Dval )
+
+24: return P
+
+SemRepGS . We evaluate our framework on SemRepGS [28] adapted from the original SemRep gold standard dataset [29]. The dataset consists of sentence-level subject–predicate–object annotations and includes 23 relation types (in-cluding norel ). For each instance, the candidate relation set is pruned using UMLS Semantic Network constraints, retaining only relations compatible with the semantic types of the target subject and object. For example, treats is only considered when the subject is a therapeutic agent or procedure and the object is a disorder. On average, 3 candidate relations per entity pair remain after filtering. This pruning step reduces implausible relation candidates prior to inference and reflects the ontology-driven constraints used in prior rule-based relation extraction systems [5]. 
+
+DDI . We evaluate on the Drug–Drug Interaction (DDI) extraction dataset released in the SemEval-2013 shared task [25]. The dataset contains annotations of pharmacological interactions between drug entity pairs. Since all entities are drugs, semantic type-based constraints are not required for this dataset. 
+
+ChemProt . ChemProt contains relations between chemical and protein enti-ties. Following prior work [27, 30], we evaluate performance on five positive re-lation categories using the official data splits: CPR:3 (activation/upregulation), 10 CPR:4 (inhibition/downregulation), CPR:5 (agonist), CPR:6 (antagonist), and CPR:9 (substrate or product-of). Since the norel class is not considered, we do not apply the Verifier module for this dataset. 
+
+3.7. Experimental Setup 
+
+We use GPT-5 ( gpt-5-mini-2025-08-07 ) as the backbone LLM for all components of ANCHOR-RE , including the Error Pattern Learner , De-cider , and Verifier . This model is selected for its favorable balance between reasoning capability and inference efficiency. To assess the generalizability of the framework beyond a proprietary model, we additionally evaluate two open-weight LLMs from the Qwen family ( Qwen3.5-2B and Qwen3-32B ) using an identical prompting and inference pipeline. For GPT-5, inference was conducted through the OpenAI API. For the open-weight models, decoding was deterministic (temperature = 0 , seed = 42 ). In-ference was performed using vLLM on a single NVIDIA H200 GPU (141 GB VRAM) with 10 CPU cores and 32 GB host memory. Inference latency and API cost are reported in Appendix B. For in-context demonstration retrieval, we retrieve up to k examples per input instance, where k is selected based on validation performance for each dataset (SemRepGS: 3, DDI: 4, ChemProt: 2). KB retrieval provides struc-tured evidence consisting of the direct relation between the target entities, when available, together with up to five neighboring relations for each entity retrieved from the corresponding KB. 
+
+3.8. Evaluation 
+
+We evaluate predictions at the entity-pair level using dataset-specific pro-tocols. For SemRepGS, following prior work, norel is excluded when com-puting evaluation metrics because it denotes the absence of a relation rather than a positive semantic relation type. We therefore report micro- and macro-averaged precision, recall, and F1 over the positive relation types. For DDI and ChemProt, we follow their standard evaluation protocols and evaluate all rela-tion classes, including norel for DDI. Because both are single-label multiclass tasks, micro-precision, micro-recall, and micro-F1 are identical. We therefore report only micro-F1 together with macro-averaged precision, recall, and F1.11 Configuration Micro Macro Precision Recall F1 Precision Recall F1    
+
+> SemRepGS
+> Baseline 0.534 [0.509, 0.560] 0.844 [0.821, 0.866] 0.654 [0.630, 0.677] 0.473 [0.439, 0.507]
+> 0.793
+> [0.757, 0.828] 0.573 [0.535, 0.600] + KB 0.534 [0.510, 0.560] 0.846 [0.823, 0.869] 0.655 [0.632, 0.679] 0.470 [0.435, 0.503] 0.790 [0.754, 0.824] 0.569 [0.530, 0.596] + KB + Retrieval 0.541 [0.516, 0.567]
+> 0.853
+> [0.831, 0.874] 0.662 [0.640, 0.684] 0.480 [0.446, 0.514] 0.791 [0.754, 0.828] 0.579 [0.541, 0.607] + KB + Retrieval w/ Verifier 0.576 ∗∗∗†††
+> [0.551, 0.603] 0.816 ∗∗∗†††
+> [0.792, 0.839]
+> 0.676 ∗∗∗†††
+> [0.654, 0.698]
+> 0.512 ∗∗∗†††
+> [0.475, 0.549] 0.766 ∗†††
+> [0.728, 0.803]
+> 0.597 ∗∗†††
+> [0.557, 0.626]
+
+Numbers in brackets denote 95% confidence intervals obtained from bootstrap evaluation ( n =1,000 ). Statistical significance is calculated using a paired bootstrap test against Baseline (∗p < 
+
+0.1, ∗∗ p < 0.05 , and ∗∗∗ p < 0.01 ) and against the + KB + Retrieval configuration ( ††† p < 0.01 ). 
+
+Table 2: Evaluation results on the SemRepGS test set. The norel class was excluded when computing micro- and macro-averaged metrics. 
+
+3.8.1. Contamination-controlled Evaluation using Post-cutoff Articles 
+
+LLMs may have been exposed to benchmark datasets during pretraining, which can lead to overly optimistic performance estimates due to data con-tamination [31]. To mitigate this concern and assess generalization beyond the pretraining period, we construct a temporal out-of-distribution evaluation set using 100 articles published in 2026. Titles and abstracts are processed with PubTator3 [32] to obtain biomedical entity annotations. The recognized entities are mapped to UMLS semantic types using rule-based heuristics (e.g., Disease 
+
+entities are mapped to Disease or Syndrome ). Candidate relation filtering based on UMLS Semantic Network constraints is then applied to reduce implausible relation types. The resulting dataset contains 3,890 candidate instances, with an average of 5 candidate relation labels per instance after filtering. A subset of the predictions (500 instances) is manually evaluated for accuracy by one of the authors, who participated in SemGrepGS annotation (HK). 
+
+4. Results 
+
+4.1. ANCHOR-RE performance on three benchmarks 
+
+SemRepGS . We first analyze how different components of ANCHOR-RE 
+
+contribute to performance on the SemRepGS benchmark (Table 2). Incorporat-ing KB grounding alone yields no significant improvement over the Baseline ,with micro F1 increasing marginally from 0.654 to 0.655 and a slight decrease in macro F1 (0.573 → 0.569). Combining KB evidence with contrastive, label-conditioned demonstration retrieval yields more noticeable gains, increasing mi-cro F1 to 0.662 and macro F1 to 0.579, along with improvements in micro precision (0.541) and micro recall (0.853). 12 Configuration Micro-F1 Macro Precision Recall F1       
+
+> DDI
+> Baseline 0.769 [0.758, 0.781] 0.528 [0.505, 0.552] 0.799 [0.779, 0.822] 0.595 [0.572, 0.618] + KB 0.774 [0.763, 0.785] 0.526 [0.503, 0.549] 0.798 [0.777, 0.820] 0.596 [0.572, 0.618] + KB + Retrieval 0.839 ∗∗∗
+> [0.830, 0.849] 0.590 ∗∗∗
+> [0.565, 0.616]
+> 0.812 ∗∗∗
+> [0.790, 0.835] 0.661 ∗∗∗
+> [0.637, 0.684] + KB + Retrieval w/ Verifier 0.872 ∗∗∗†††
+> [0.863, 0.881]
+> 0.640 ∗∗∗†††
+> [0.612, 0.669] 0.773 ∗∗∗†††
+> [0.747, 0.797]
+> 0.688 ∗∗∗†††
+> [0.661, 0.713]
+> ChemProt
+> Baseline 0.939 [0.931, 0.947]
+> 0.916
+> [0.902, 0.928]
+> 0.939
+> [0.928, 0.948]
+> 0.926
+> [0.914, 0.936] + KB 0.937 [0.929, 0.946] 0.912 [0.899, 0.925]
+> 0.939
+> [0.930, 0.948] 0.924 [0.913, 0.934] + KB + Retrieval 0.941
+> [0.933, 0.949] 0.913 [0.899, 0.926]
+> 0.939
+> [0.929, 0.949] 0.924 [0.913, 0.935]
+
+Numbers in brackets denote 95% confidence intervals from bootstrap evaluation ( n =1,000 ). Statistical significance is calculated using a paired bootstrap test against the 
+
+Baseline (∗∗∗ p < 0.01 ) and against the + KB + Retrieval configuration ( ††† p < 0.01 ). 
+
+Table 3: Evaluation results on the DDI and ChemProt test sets. Because the evaluation includes all labels in these single-label multiclass benchmarks, micro-precision, micro-recall, and micro-F1 are identical; therefore, only micro-F1 is reported. 
+
+The Verifier provides the largest performance improvement. The best configuration (+ KB + Retrieval + Verifier ) significantly increases micro 
+
+F1 to 0.676 ( p < 0.01 ) and macro F1 to 0.597 ( p < 0.05 ) compared to the 
+
+Baseline . Compared to + KB + Retrieval, the Verifier increases precision while reducing recall, reflecting its precision-oriented filtering behavior. The corresponding bootstrap confidence intervals show that these improvements are statistically significant. Appendix Table D.3 provides a per-label performance breakdown on SemRepGS. 
+
+DDI . A similar pattern is observed on the DDI dataset (Table 3). KB ground-ing alone yields marginal gains over Baseline , increasing micro F1 from 0.769 to 0.774 with little change in macro F1 (0.595 → 0.596). Combining KB evidence with contrastive demonstration retrieval significantly improves performance, in-creasing micro F1 to 0.839 ( p < 0.01 vs. Baseline ), macro F1 from 0.595 to 0.661 ( p < 0.01 ). Applying the Verifier further increases micro F1 to 0.872 and macro F1 to 0.688, yielding the best overall performance. Appendix Ta-ble D.4 provides a per-label performance breakdown on DDI dataset. 
+
+ChemProt . Performance gains on ChemProt are more modest (Table 3). In-corporating KB grounding alone leads to negligible changes relative to the Base-line . Since ChemProt evaluation focuses on discrimination among positive relation labels, retrieved demonstrations contain only supporting (positive) ex-13 amples rather than contrastive norel cases. Under the best configuration (+ KB + Retrieval), micro F1 increases slightly from 0.939 to 0.943, although the difference is not statistically significant. The Verifier is not applied in this setting. Appendix Table D.5 provides a per-label performance breakdown for ChemProt. 
+
+4.2. Contamination-controlled Evaluation 
+
+Using the best-performing configuration, ANCHOR-RE predicted 824 of the 3,890 candidate instances as containing a positive relation. Expert evalua-tion of 500 randomly sampled positive predictions showed that 69% were correct. This precision exceeds that reported for SemRepGS (micro precision = 0.576; macro precision = 0.512). The higher precision may partially reflect differences in entity annotation quality, as the post-cutoff evaluation used PubTator3 for entity recognition. These results suggest that the framework maintains preci-sion on newly published biomedical literature and can accommodate outputs from different biomedical entity recognition systems. 
+
+4.3. Generalization Across Open-weight LLM Backbones 
+
+To examine whether the proposed framework generalizes beyond the pro-prietary backbone, we evaluate ANCHOR-RE using two open-weight LLMs. Results on SemRepGS are provided in Appendix Table E.6. Although the GPT backbone yields higher absolute scores than the two open-weight models, a sim-ilar component-wise improvement pattern is observed for both Qwen3.5-2B and 
+
+Qwen3-32B . Incorporating structured knowledge alone provides only marginal improvements over the Baseline , whereas adding retrieved demonstrations consistently yields modest gains. The largest improvements are achieved after introducing the Verifier , which consistently increases precision and achieves the highest overall micro-F1 and macro-F1. For Qwen3.5-2B , micro-precision increases from 0.346 to 0.373, while micro-F1 improves from 0.447 to 0.465; similarly, for Qwen3-32B , micro-precision increases from 0.472 to 0.477, result-ing in the highest micro-F1 of 0.577. Appendix Table E.7 further evaluates the framework on DDI and ChemProt using the same open-weight models. Incorporating knowledge grounding, demon-stration retrieval, and verification consistently improves performance on DDI. The largest gains are achieved after introducing the Verifier , increasing micro-
+
+F1 from 0.199 to 0.488 for Qwen3.5-2B and from 0.567 to 0.772 for Qwen3-32B .On ChemProt, knowledge grounding has little effect, whereas retrieval improves 14 Dataset Method Strategy Micro-F1 Macro-F1                                     
+
+> SemRepGS Ming et al. [28] Fine-tuning 0.702 0.620
+> ANCHOR-RE Inference only 0.676 0.597 DDI Yuan et al. [33] Prompt tuning + fine-tuning 0.838 0.768 Jia et al. [34] Fine-tuning 0.878 –Nachid-Idrissi et al. [35] Inference only 0.693 –
+> ANCHOR-RE Inference only 0.872 0.688 ChemProt Yuan et al. [33] Prompt tuning + fine-tuning 0.805 0.771 Nachid-Idrissi et al. [35] Fine-tuning 0.934 –Nachid-Idrissi et al. [35] Inference only 0.766 –Zhang et al. [36] Inference only 0.820 –Zhou et al. [30] Instruction tuning 0.951 –
+> ANCHOR-RE Inference only 0.941 0.924
+
+Table 4: Comparison of ANCHOR-RE with representative supervised, instruction-tuned, and inference-only methods on the SemRepGS, DDI, and ChemProt benchmarks. Results follow the standard evaluation protocol for each dataset; for SemRepGS, micro- and macro-
+
+F1 are computed over the positive relation classes only. Macro-F1 values are omitted when unavailable in the original publications. 
+
+macro-F1 and achieves the best overall performance. Overall, the proposed neuro-symbolic components consistently improve upon the baseline prompting strategy across both open-weight LLMs and BioRE benchmarks, indicating that the framework can generalize beyond the proprietary GPT backbone. 
+
+4.4. Comparison with Prior Work 
+
+Comparison with representative prior methods (Table 4) shows that ANCHOR-RE outperforms the inference-only approaches while achieving performance competitive with supervised and instruction-tuned methods. 
+
+5. Discussion 
+
+Across three benchmarks, ANCHOR-RE demonstrates that structured knowl-edge and explicit verification can improve the reliability of LLM-based BioRE without task-specific fine-tuning or parameter updates. The performance gains are driven primarily by reductions in false-positive predictions, whereas the contribution of structured knowledge varies with the availability of relevant re-lational evidence. Evaluation with two open-weight backbones suggests that the framework’s benefits are not limited to the proprietary GPT backbone, although absolute performance depends on the underlying model. The remaining errors highlight challenges involving implicitly expressed and ambiguous relations. 
+
+5.1. Controlling Over-Prediction through Verification 
+
+In BioRE, LLMs offer flexible contextual reasoning but may generate plau-sible yet unsupported relation predictions. This behavior reflects broader chal-lenges associated with hallucination and overconfidence in generative LLMs [37]. 15 ANCHOR-RE mitigates this limitation by integrating ontological constraints and KB evidence into LLM reasoning, followed by a data-driven verification stage that verify predictions using learned soft constraints. This design is par-ticularly effective for norel -dominant datasets such as DDI and SemRepGS, where negative instances constitute 83% and 68% of candidate pairs, respec-tively. In these settings, reducing false-positive predictions leads to substantial performance improvements, consistently outperforming the direct prompting baseline. A relation-level analysis further shows that the Verifier reduces false pos-itive predictions across nearly all SemRepGS relation types. The largest re-ductions in false positive rate (FPR = FP / total negatives) are observed for relations with weak lexical cues, such as part_of (0.031 →0.019), coexists_with 
+
+(0.033 →0.025), and location_of (0.036 →0.030). Unlike manually engineered rules, these verification rules are learned automatically from empirical error patterns observed during zero-shot LLM inference, allowing the framework to adapt to different relation schemas without manual rule design. Representative examples are shown in Table 5. Reducing false positive predictions is partic-ularly important for downstream applications such as biomedical knowledge graph construction and literature-based discovery, where erroneous relations may propagate and affect subsequent analyses.                                                            
+
+> Error Pattern Verification Rejection Crite-rion Example Sentence (Gold:
+> norel )Incorrect
+> Decider
+> Prediction 1. Surface trigger ambiguity
+> Causal lexical triggers align su-perficially with relation defini-tions, but the causal effect is me-diated by another entity or com-plex. Mut PML interacts with PML-
+> RARalpha subj and potentiates PML-RARalpha-mediated inhibi-tion of RA-dependent transcrip-tion obj .
+> disrupts
+> 2. Contextual co-occurrence
+> Entities co-occur in sentences containing relation-like verbs, but no intrinsic semantic relation holds. Detection of circulating
+> DNA subj has been investi-gated for identifying various forms of cancer obj .
+> associated_with
+> 3. Directionality /polarity confu-sion
+> Entities appear in parallel causal structures or outcome descrip-tions, leading to over-prediction of direct relations.
+> Olanzapine subj was associated with more discontinuation due to
+> weight gain obj or metabolic ef-fects.
+> causes
+
+Table 5: Qualitative analysis of representative false-positive error patterns and how the Ver-ifier corrects them. Error patterns denote high-level categories of failure, while each verifica-tion rejection criterion corresponds to a specific rule learned by the Error Pattern Learner 
+
+and applied during verification. 
+
+5.2. Role of Symbolic Knowledge 
+
+The effectiveness of symbolic knowledge depends on the coverage of rela-tional grounding in the underlying KB. For SemRepGS, the KB is constructed 16 primarily from UMLS Metathesaurus concept linking and concept-level rela-tions. Direct pair-level evidence is sparse, with only 7.16% of instances con-taining explicit relations between the subject and object, limiting the effective-ness of knowledge-base grounding. In contrast, the DDI dataset contains more frequent interaction records retrieved from DrugBank between drug pairs, pro-viding richer symbolic grounding, with 57.4% of test instances having direct KB grounding evidence. This difference in coverage is reflected in the observed performance gains. Overall, these findings suggest that KB grounding is most effective when target entity pairs are well supported by explicit relational struc-tures, and may offer limited benefits when such coverage is sparse. 
+
+5.3. Generalizability of ANCHOR-RE 
+
+In comparison to representative BioRE methods reported in the literature, ANCHOR-RE substantially narrows the gap between inference-only and su-pervised approaches without requiring task-specific fine-tuning, although su-pervised and instruction-tuned models remain the strongest performers overall. Importantly, ANCHOR-RE improvements are not tied to a single proprietary LLM. Similar contributions from KB grounding, retrieval, and verification are observed across the two evaluated Qwen models, suggesting that the proposed neuro-symbolic components generalize across different model architectures and parameter scales. Finally, the strong performance on recently published biomed-ical literature in a contamination-controlled temporal evaluation beyond stan-dard BioRE benchmarks suggests that the proposed framework is applicable to real-world biomedical literature mining.  
+
+> Figure 2: Performance and computational cost of offline verification rule learning across refinement iterations.
+
+17 5.4. Practicality of Offline Error Pattern Learning 
+
+Although ANCHOR-RE does not require task-specific fine-tuning, it in-troduces an offline error pattern learning stage to construct the Error Pattern Knowledge Bank . To evaluate the efficiency of this stage and understand how the accumulated verification rules affect downstream performance, we analyze the relationship between refinement iterations, predictive performance, and con-struction cost. We analyze this process on the DDI benchmark, which provides the largest training corpus among the evaluated datasets. Following the exper-imental setup described in Section 3.4, the original training set is divided into error pattern learning and validation splits to track performance throughout the refinement process. Figure 2 shows that both micro-F1 and macro-F1 improve rapidly during the first few refinement iterations before gradually converging, indicating that most useful verification knowledge is acquired early in the learning process. Meanwhile, the computational cost increases approximately linearly with the number of refinement iterations, false-positive cases, and generated verification rules, while remaining modest overall. Importantly, this cost is incurred only once for each dataset and backbone model. Once the Error Pattern Knowledge Bank is constructed, the learned verification rules can be reused for subsequent inference without additional refinement, indicating that offline error pattern learning a lightweight preprocessing step rather than a recurring inference cost. 
+
+5.5. Error Analysis on SemRepGS 
+
+Analysis of the remaining errors shows that most confusions occur between relations such as coexists_with , location_of , and process_of and the norel 
+
+class. These relations are often expressed without explicit lexical triggers or involve ambiguous discourse cues, making them difficult to distinguish based on surface-level patterns alone. As summarized in Table 6, the remaining er-rors fall into four main categories: (i) discourse-level relation misinterpretation, (ii) semantic or ontological relation confusion, (iii) implicit or multi-step bio-logical reasoning failures, and (iv) long-range compositional reasoning failures. These findings suggest that, although the Verifier effectively mitigates over-prediction, further improvements will require stronger contextual grounding and enhanced compositional reasoning to better capture complex biological relation-ships. 18 Error Category Representative Example (Subject & Object with Seman-tic Types) Type 1: Discourse-level Relation Misinterpreta-tion                                                    
+
+> ‘Once toxicity obj [Injury or Poisoning] develops, supportive
+> therapy subj [Therapeutic or Preventive Procedure] should be given, but there is no specific therapy to reduce toxicity or to enhance elimination.’
+> (Gold: none →Pred: treats)
+> Type 2: Semantic or On-tological Relation Confu-sion
+> ‘Clinically approved multi-kinase inhibitors subj [Amino Acid, Peptide, or Protein], such as nilotinib, inhibit DDR1-mediated
+> tumor growth obj [Neoplastic Process] in xenograft models...’
+> (Gold: disrupts →Pred: prevents)
+> Type 3: Implicit or Multi-step Biological Reasoning Failures
+> ‘It was also suggested that spinosad-induced free-radicals subj
+> [Biologically Active Substance] were eliminated by GSH-related antioxidant system in the brain obj [Body Part, Organ, or Or-gan Component] of Oreochromis niloticus.’
+> (Gold: part_of →Pred: none)
+> Type 4: Long-range Com-positional Reasoning Fail-ures
+> ‘We recently showed that the atypical PKC subj [Amino Acid, Peptide, or Protein] (aPKC) isozyme PKCiota is overexpressed in human non-small cell lung cancer (NSCLC) cells and that PKCiota plays a critical role in the transformed growth of the human lung adenocarcinoma A549 cell line in vitro and tumori-genicity obj [Pathologic Function] in vivo.’
+> (Gold: none →Pred: causes)
+
+Table 6: Error type classification. Target entities are highlighted in bold with subscripts indicating their roles ( MENTION subj for subject, MENTION obj for object), followed by their corresponding UMLS semantic types in brackets. 
+
+5.6. Limitations and Future Work 
+
+The current verification framework is designed as a one-sided rejection mech-anism that primarily reduces false positive predictions. Future work could ex-tend the Verifier beyond false-positive rejection to improve discrimination among semantically similar positive relation types, for example treats versus 
+
+prevents or coexists_with versus associated_with . Second, our findings show that the effectiveness of knowledge grounding depends on the coverage of the underlying biomedical knowledge base and the relevance of the retrieved ev-idence. Future work should investigate more selective evidence retrieval strate-gies that prioritize informative symbolic evidence while filtering irrelevant or potentially distracting context. Although ANCHOR-RE eliminates the need for task-specific fine-tuning and provides improved interpretability through explicit verification, it remains computationally more expensive than supervised transformer models once those models have been trained. Rather than viewing them as competing paradigms, future work may investigate hybrid triaging systems that allocate computa-tional resources according to prediction confidence and downstream impor-tance. For example, only predictions with low model confidence or relation types that are important for downstream applications (e.g., causal relations for 19 biomedical knowledge graph construction) could be routed to ANCHOR-RE 
+
+for knowledge-grounded reasoning and verification, while high-confidence pre-dictions would be handled by lightweight supervised models. 
+
+6. Conclusion 
+
+BioRE remains challenging in realistic settings due to the scarcity of an-notated data and the predominance of norel candidate pairs. In this work, we presented ANCHOR-RE , a training-free, neuro-symbolic, agentic frame-work that improves the reliability of LLM-based BioRE through KB grounding, demonstration retrieval, and explicit verification. Results across three BioRE benchmarks demonstrate that ANCHOR-RE narrows the gap to supervised approaches. Furthermore, the proposed framework generalizes across both pro-prietary and open-weight LLMs and remains effective under a contamination-controlled temporal evaluation. Future work could investigate hybrid triaging strategies that combine the computational efficiency of supervised encoder mod-els with the reasoning capabilities of ANCHOR-RE .
+
+Acknowledgments 
+
+This work was supported by funding from the National Center for Com-plementary and Integrative Health (NCCIH) and the Office of Data Science Strategy (ODSS) (grant number: U01AT012871). Its contents are solely the responsibility of the authors and do not necessarily represent the official views of the NCCIH, ODSS, and the NIH. 
+
+Author Contributions 
+
+SM: Conceptualization, Methodology, Software, Visualization, Validation, Formal Analysis, Writing – original draft, and Writing – review and editing; YH: Methodology, Software, Visualization, Validation, Formal Analysis, Writ-ing – original draft, and Writing – review and editing; GH: Methodology, Soft-ware, Validation, Writing – original draft, and Writing – review and editing; RZ: Funding acquisition, Writing – review and editing; HK: Conceptualization, Methodology, Data Curation, Funding acquisition, Supervision, Writing – orig-inal draft, and Writing – review and editing. 20 References 
+
+[1] R. Zhang, D. Hristovski, D. Schutte, A. Kastrin, M. Fiszman, H. Kilicoglu, Drug repurposing for COVID-19 via knowledge graph completion, Journal of Biomedical Informatics 115 (2021) 103696. [2] J. Xu, C. Yu, J. Xu, V. I. Torvik, J. Kang, M. Sung, M. Song, Y. Bu, Y. Ding, Pubmed knowledge graph 2.0: Connecting papers, patents, and clinical trials in biomedical science, Scientific data 12 (2025) 1018. [3] S. Henry, B. T. McInnes, Literature based discovery: models, methods, and trends, Journal of Biomedical Informatics 74 (2017) 20–32. [4] H. Eguia, C. L. Sánchez-Bocanegra, F. Vinciarelli, F. Alvarez-Lopez, F. Saigí-Rubió, Clinical decision support and natural language process-ing in medicine: Systematic literature review, Journal of Medical Internet Research 26 (2024) e55315. [5] H. Kilicoglu, G. Rosemblat, M. Fiszman, D. Shin, Broad-coverage biomed-ical relation extraction with SemRep, BMC Bioinformatics 21 (2020) 1–28. [6] M. Jullien, M. Valentino, A. Freitas, SemEval-2024 task 2: Safe biomedical natural language inference for clinical trials, in: Proceedings of the 18th International Workshop on Semantic Evaluation (SemEval-2024), 2024, pp. 1947–1962. [7] W. Meesawad, J.-C. Han, C.-Y. Hsueh, Y. Zhang, H.-C. Hung, R. T.-H. Tsai, Enhancing biomedical relation extraction through data-centric and preprocessing-robust ensemble learning approach, Database 2025 (2025) baae127. [8] M. Delmas, M. Wysocka, A. Freitas, Relation extraction in underexplored biomedical domains: A diversity-optimized sampling and synthetic data generation approach, Computational Linguistics 50 (2024) 953–1000. [9] M. Frasca, D. La Torre, G. Pravettoni, I. Cutica, Explainable and inter-pretable artificial intelligence in medicine: a systematic bibliometric review, Discover Artificial Intelligence 4 (2024) 15. [10] Y. Yang, F. Feng, L. Yang, W. Deng, L. Qu, B. Huang, S. Tu, L. Xu, Depth: Hallucination-free relation extraction via dependency-aware sen-tence simplification and two-tiered hierarchical refinement, arXiv preprint arXiv:2508.14391 (2025). 21 [11] M. Jain, K. Singh, R. Mutharaju, Reonto: A neuro-symbolic approach for biomedical relation extraction, in: Joint European Conference on Machine Learning and Knowledge Discovery in Databases, Springer, 2023, pp. 230– 247. [12] O. Olasunkanmi, M. J. Satusky, H. Yi, C. Bizon, H. Lee, S. Ahalt, RE-LATE: Relation Extraction in Biomedical Abstracts with LLMs and On-tology Constraints, in: Machine Learning for Healthcare, 2025. [13] A. Brokman, X. Ai, Y. Jiang, S. Gupta, R. Kavuluru, A benchmark for end-to-end zero-shot biomedical relation extraction with LLMs: experiments with OpenAI models, in: Proceedings of the Third Workshop for Artificial Intelligence for Scientific Publications, 2025, pp. 44–55. [14] F. S. Gade, O. Lund, M. L. Z. Mendoza, Benchmarking zero-shot biomedi-cal relation triplet extraction across language model architectures, BioNLP 2025 and Shared Tasks (2025) 88. [15] G. Li, P. Wang, W. Ke, Revisiting large language models as zero-shot relation extractors, in: Findings of the Association for Computational Linguistics: EMNLP 2023, 2023, pp. 6877–6892. [16] S. Liu, Y. Li, J. Li, S. Yang, Y. Lan, Unleashing the power of large language models in zero-shot relation extraction via self-prompting, in: Findings of the Association for Computational Linguistics: EMNLP 2024, 2024, pp. 13147–13161. [17] M. Li, H. Kilicoglu, H. Xu, R. Zhang, Biomedrag: A retrieval augmented large language model for biomedicine, Journal of Biomedical Informatics 162 (2025) 104769. [18] X. Quan, M. Valentino, D. Carvalho, D. Dalal, A. Freitas, Peirce: Unifying material and formal reasoning via llm-driven neuro-symbolic refinement, in: Proceedings of the 63rd Annual Meeting of the Association for Computa-tional Linguistics (Volume 3: System Demonstrations), 2025, pp. 11–21. [19] L. Zhao, L. Kang, Q. Guo, Zero-shot document-level biomedical relation extraction via scenario-based prompt design in two-stage with llm, Com-putational Biology and Chemistry (2026) 108978. 22 [20] G. Li, P. Wang, W. Ke, Y. Guo, K. Ji, Z. Shang, J. Liu, Z. Xu, Recall, retrieve and reason: towards better in-context relation extraction, in: Pro-ceedings of the Thirty-Third International Joint Conference on Artificial Intelligence, 2024, pp. 6368–6376. [21] M. Sänger, U. Leser, Knowledge-augmented pre-trained language models for biomedical relation extraction, BMC bioinformatics 26 (2025) 240. [22] R. de Oliveira, M. Garber, J. M. Gwinnutt, E. Rashidi, J.-H. Hwang, W. Gilmour, J. Nanavati, K. Zine El Abidine, C. D. Mack, A study of calibration as a measurement of trustworthiness of large language models in biomedical natural language processing, JAMIA open 8 (2025) ooaf058. [23] O. Bodenreider, The unified medical language system (UMLS): integrating biomedical terminology, Nucleic acids research 32 (2004) D267–D270. [24] D. S. Wishart, C. Knox, A. C. Guo, D. Cheng, S. Shrivastava, D. Tzur, B. Gautam, M. Hassanali, DrugBank: a knowledgebase for drugs, drug actions and drug targets, Nucleic acids research 36 (2008) D901–D906. [25] M. Herrero-Zazo, I. Segura-Bedmar, P. Martínez, T. Declerck, The DDI corpus: An annotated corpus with pharmacological substances and drug– drug interactions, Journal of Biomedical Informatics 46 (2013) 914–920. [26] C. J. Mattingly, M. C. Rosenstein, G. T. Colby, J. Forrest Jr, J. Boyer, The Comparative Toxicogenomics Database (CTD): a resource for com-parative toxicological studies, Journal of Experimental Zoology Part A: Comparative Experimental Biology 305 (2006) 689–692. [27] M. Krallinger, O. Rabal, S. A. Akhondi, M. P. Pérez, J. Santamaría, G. P. Rodríguez, G. Tsatsaronis, A. Intxaurrondo, J. A. López, U. Nandal, et al., Overview of the BioCreative VI chemical-protein interaction Track, in: Pro-ceedings of the sixth BioCreative challenge evaluation workshop, volume 1, 2017, pp. 141–146. [28] S. Ming, R. Zhang, H. Kilicoglu, Enhancing the coverage of SemRep using a relation classification approach, Journal of biomedical informatics 155 (2024) 104658. [29] H. Kilicoglu, G. Rosemblat, M. Fiszman, T. C. Rindflesch, Constructing a semantic predication gold standard from the biomedical literature, BMC bioinformatics 12 (2011) 1–17. 23 [30] H. Zhou, M. Li, Y. Xiao, H. Yang, R. Zhang, LEAP: LLM instruction-example adaptive prompting framework for biomedical relation extraction, Journal of the American Medical Informatics Association 31 (2024) 2010– 2018. [31] O. Sainz, J. Campos, I. García-Ferrero, J. Etxaniz, O. L. de Lacalle, E. Agirre, Nlp evaluation in trouble: On the need to measure llm data contamination for each benchmark, in: Findings of the Association for Computational Linguistics: EMNLP 2023, 2023, pp. 10776–10787. [32] C.-H. Wei, A. Allot, P.-T. Lai, R. Leaman, S. Tian, L. Luo, Q. Jin, Z. Wang, Q. Chen, Z. Lu, Pubtator 3.0: an ai-powered literature resource for unlock-ing biomedical knowledge, Nucleic Acids Research 52 (2024) W540–W546. [33] J. Yuan, W. Du, X. Liu, Y. Zhang, Biomedical relation extraction via domain knowledge and prompt learning., in: EEKE/AII@ iConference, 2024, pp. 51–59. [34] Y. Jia, Z. Yuan, L. Zhu, Z.-l. Xiang, A meta-contrastive learning ap-proach for clinical drug-drug interaction extraction from biomedical litera-ture, PLOS Computational Biology 21 (2025) e1013722. [35] Y. Nachid-Idrissi, M. Sarrouti, S. Najah, et al., Exploring transformer models: Fine-tuning vs inference on relation extraction from biomedical texts, Computational and Structural Biotechnology Journal (2025). [36] J. Zhang, M. Wibert, H. Zhou, X. Peng, Q. Chen, V. K. Keloth, Y. Hu, R. Zhang, H. Xu, K. Raja, A study of biomedical relation extraction using gpt models, AMIA Summits on Translational Science Proceedings 2024 (2024) 391. [37] L. Huang, W. Yu, W. Ma, W. Zhong, Z. Feng, H. Wang, Q. Chen, W. Peng, X. Feng, B. Qin, T. Liu, A survey on hallucination in large language models: Principles, taxonomy, challenges, and open questions, ACM Trans. Inf. Syst. 43 (2025). URL: https://doi.org/10.1145/3703155 . doi: 10.1145/ 3703155 .
+
+Appendix A. Prompts Used in ANCHOR-RE 
+
+This appendix presents the complete prompts used for the direct-prompting baseline, Decider , Verifier , and Error Pattern Learner .24 Baseline prompt 
+
+You are an expert Biomedical Information Extraction Agent. Your primary function is to accurately extract semantic relationships between biomedical entities from scientific text. 
+
+Task Description 
+
+Given a biomedical sentence and a target pair of entities (SUBJECT and OBJECT), determine which biomedical relation label best describes their relationship. Use the provided sentence together with the relation definitions to determine the most appropriate relation. If the sentence expresses no explicit or verifiable relationship, output none .
+
+Linguistic and Semantic Guidance 
+
+1. Trigger Identification 
+
+• Verbs indicate causal or action-based relations (e.g., inhibits , causes , pre-vents , treats ). • Nominalizations may express events (e.g., treatment , activation , expression ). • Prepositions often indicate static associations or locations. • Implicit triggers may occur in noun phrases (e.g., “aspirin therapy” implies 
+
+TREATS ). 2. Trigger Positioning 
+
+• Verbs typically occur between SUBJECT and OBJECT. • Nominalizations may occur before, between, or after the entity pair. • Prepositions frequently precede the OBJECT. • Carefully resolve coordinated entities connected by conjunctions. 3. Entity-Type Heuristics 
+
+• Pharmacologic Substance → Disease: TREATS , PREVENTS , CAUSES 
+
+• Gene / Protein → Chemical / Protein: INTERACTS_WITH , ASSOCI-ATED_WITH , STIMULATES , INHIBITS 
+
+• Disease → Finding: ASSOCIATED_WITH , CAUSES , COEXISTS_WITH 
+
+• Anatomical Structure → Disease: LOCATION_OF , PART_OF , PRO-CESS_OF 
+
+4. Decision Rules 
+
+• Identify the trigger phrase connecting SUBJECT and OBJECT. • Consider both linguistic context and semantic types. • Predict the most specific relation supported by the evidence. • Output none if 
+
+25 – no explicit relation is expressed, 
+
+– the statement is purely descriptive, 
+
+– the connection is semantically unsupported 
+
+Required JSON Output 
+
+> {"subject": "<exact entity text>", "subject_type": "<entity type>", "object": "<exact entity text>", "object_type": "<entity type>", "trigger_span": "<supporting phrase>", "frame": "<brief explanation>", "label": "<candidate relation or ’none’>" }
+
+Input 
+
+• Subject: [SUBJECT ENTITY MENTION] (type: [SUBJECT ENTITY TYPE]) • Object: [OBJECT ENTITY MENTION] (type: [OBJECT ENTITY TYPE]) • Sentence: [SENTENCE WHERE SUBJECT AND OBJECT MENTIONS ARE LOCATED] • Candidate Relations: [LIST OF CANDIDATE RELATION TYPES AND THEIR DEFINITIONS] 
+
+Decision Guidelines 
+
+1. Consider none as the default prediction. 2. Assign a relation label only if the sentence contains a clear and explicit trigger connecting the subject and object. 3. If the evidence is ambiguous, uncertain, or not directly supported by the sentence, predict none .
+
+Question 
+
+What relation, if any, is expressed between the subject and object in the given sen-tence? 
+
+Decider prompt 
+
+You are an expert Biomedical Information Extraction Agent. Your primary function is to accurately extract semantic relationships between biomedical entities from scientific text. 
+
+Task Description 
+
+Given a biomedical sentence and a target pair of entities (SUBJECT and OBJECT), determine which biomedical relation label best describes their relationship. Use the provided sentence together with the relation definitions to determine the most appropriate 
+
+26 relation. If the sentence expresses no explicit or verifiable relationship, output none .
+
+Linguistic and Semantic Guidance 
+
+1. Trigger Identification 
+
+• Verbs indicate causal or action-based relations (e.g., inhibits , causes , pre-vents , treats ). • Nominalizations may express events (e.g., treatment , activation , expression ). • Prepositions often indicate static associations or locations. • Implicit triggers may occur in noun phrases (e.g., “aspirin therapy” implies 
+
+TREATS ). 2. Trigger Positioning 
+
+• Verbs typically occur between SUBJECT and OBJECT. • Nominalizations may occur before, between, or after the entity pair. • Prepositions frequently precede the OBJECT. • Carefully resolve coordinated entities connected by conjunctions. 3. Entity-Type Heuristics 
+
+• Pharmacologic Substance → Disease: TREATS , PREVENTS , CAUSES 
+
+• Gene / Protein → Chemical / Protein: INTERACTS_WITH , ASSOCI-ATED_WITH , STIMULATES , INHIBITS 
+
+• Disease → Finding: ASSOCIATED_WITH , CAUSES , COEXISTS_WITH 
+
+• Anatomical Structure → Disease: LOCATION_OF , PART_OF , PRO-CESS_OF 
+
+4. Decision Rules 
+
+• Identify the trigger phrase connecting SUBJECT and OBJECT. • Consider both linguistic context and semantic types. • Predict the most specific relation supported by the evidence. • Output none if 
+
+– no explicit relation is expressed, 
+
+– the statement is purely descriptive, 
+
+– the connection is semantically unsupported 
+
+Required JSON Output 
+
+27 {"subject": "<exact entity text>", "subject_type": "<entity type>", "object": "<exact entity text>", "object_type": "<entity type>", "trigger_span": "<supporting phrase>", "frame": "<brief explanation>", "label": "<candidate relation or ’none’>" }
+
+Input 
+
+• Subject: [SUBJECT ENTITY MENTION] (type: [SUBJECT ENTITY TYPE]) • Object: [OBJECT ENTITY MENTION] (type: [OBJECT ENTITY TYPE]) • Sentence: [SENTENCE WHERE SUBJECT AND OBJECT MENTIONS ARE LOCATED] • Candidate Relations: [LIST OF CANDIDATE RELATION TYPES AND THEIR DEFINITIONS] • Retrieved Demonstrations: [LIST OF RETRIEVED EXAMPLES] Reason over the examples above, paying particular attention to the negative examples labeled none .• Knowledge Base Evidence: [EXTRACTED KNOWLEDGE FOR SUBJECT AND OBJECT] 
+
+Decision Guidelines 
+
+1. Consider none as the default prediction. 2. Assign a relation label only if the sentence contains a clear and explicit trigger connecting the subject and object. 3. If the evidence is ambiguous, uncertain, or not directly supported by the sentence, predict none .
+
+Question 
+
+What relation, if any, is expressed between the subject and object in the given sen-tence? 
+
+Verifier prompt 
+
+You are a biomedical relation verification expert. 
+
+Decision Rubric 1. Evidence-first 
+
+• If the sentence explicitly states or strongly implies the predicted relation between the subject and object, ACCEPT the prediction. • Quote the strongest supporting phrase as evidence. 
+
+28 2. Apply Verification Checks 
+
+• Only REJECT the prediction if both conditions are satisfied: 1. no strong supporting evidence can be quoted from the sentence; and 2. at least one verification check is clearly supported by the sentence. • If the decision is uncertain or borderline, ACCEPT the prediction. 
+
+Input 
+
+• Sentence: [SENTENCE WHERE SUBJECT AND OBJECT MENTIONS ARE LOCATED IN] • Subject: [SUBJECT ENTITY MENTION] ([SUBJECT ENTITY TYPE]) • Object: [OBJECT ENTITY MENTION] ([OBJECT ENTITY TYPE]) • Predicted Relation: [PREDICTED RELATION TYPE] • Relation Definition: [DEFINITION OF PREDICTED RELATION TYPE] • Verification Checks for <PREDICTED RELATION TYPE> : [VERIFICATION RULES] 
+
+Required JSON Output 
+
+> {"evidence": "<quoted phrase from the sentence, or ’none found’>", "final_label": "<predicted relation if accepted, otherwise ’none’>", "reasoning": "<one-sentence explanation>" }
+
+Error Pattern Learner prompt 
+
+The Error Pattern Learner uses an initialization prompt during the first iteration and a refinement prompt during subsequent iterations. 
+
+Initialization Prompt: 
+
+You are creating verification checks for the label <LABEL> against false positives ("no relation"). Definition: <DEFINITIONS> 
+
+True Positives: • TP1: Sentence, Subject, Object • TP2: ... False Positives: • FP1: Sentence, Subject, Object, Decider reasoning, Evidence span • FP2: ... Your Tasks: 1. Describe 3–5 conceptual semantic properties that must hold for relation <LABEL> .
+
+29 2. Group false positives into 2–4 conceptual error categories. 3. Generate at most three verification checks satisfying: • Each check may cover multiple related error categories. • Store covered categories in negative_patterns .• Questions should target semantic failures rather than lexical patterns. • No check should reject any true positive. 
+
+Required JSON Output 
+
+> {"positive_patterns": ["<semantic property 1>", "<semantic property 2>", ...], "new_checks": [ {"pattern_id": "<LABEL>_NON_CONFUSION_iter1_<N>", "negative_patterns": ["<FP subcategory this check targets>", "<another subcategory if combined with OR>"], "question": "<broad YES/NO question covering all listed subcategories>", "if_yes": "flip_to_none", "if_no": "accept" }], "check_revisions": [], "positive_pattern_revisions": [] }
+
+Refinement Prompt: 
+
+Existing Checks: • Pattern 1: ... • Pattern 2: ... New Batch of False Positives: • FP1: Sentence, Subject, Object, Decider reasoning, Evidence span • FP2: ... True Positives: • TP1: Sentence, Subject, Object • TP2: ... Your Tasks: 1. Revise existing positive patterns if new FPs reveal they are too broad or incom-plete. Use "positive_pattern_revisions" with the index and revised text. Leave [] if unchanged. 
+
+30 2. Broaden existing checks if a new FP represents the same semantic failure as an ex-isting check’s negative_pattern but the current question would NOT catch it (too narrow). Use "check_revisions" with the pattern_id, a broader revised_question, and optionally revised_negative_patterns if the category description should be widened too. Leave [] if no broadening needed. 3. Add new checks for genuinely new FP categories not covered by any existing check. Each new check lists ALL the FP subcategories it covers in "negative_patterns" (array). The question must be OVERARCHING — use OR to combine related subcategories when possible. Leave "new_checks" as [] if everything is already covered. Each new check MUST NOT fire on any true positive. 
+
+Required JSON Output 
+
+{"positive_pattern_additions": ["<new positive property, if any>"], "positive_pattern_revisions": [{"index": <int>, "revised": "<revised text>"}], "check_revisions": [ {"pattern_id": "<existing pattern_id>", "revised_question": "<broader YES/NO question>", "revised_negative_patterns": ["<updated FP subcategory list>"], "revision_note": "<what new FP this now catches>" }], "new_checks": [ {"pattern_id": "<LABEL>_NON_CONFUSION_iter<N>_<ID>", "negative_patterns": ["<FP subcategory 1>", "<FP subcategory 2 if combined with OR>"], "question": "<broad YES/NO question covering all listed subcategories; YES => flip_to_none>", "if_yes": "flip_to_none", "if_no": "accept" }]}
+
+Appendix B. Cost Analysis 
+
+Table B.1 summarizes the inference latency and computational cost under the best-performing configuration for each dataset. For gpt-5-mini-2025-08-07 ,we report the API cost based on OpenAI pricing. For open-weight Qwen models, we report inference latency only. 31 Backbone Dataset #Instances Time / Inst (s) Cost / Inst ($) Total Cost ($)                                     
+
+> gpt-5-mini-2025-08-07
+> SemRepGS 3,211 17.0 0.0017 5.71 DDI 5,716 12.7 0.0016 9.17 ChemProt 3,469 7.8 0.0017 5.97
+> Qwen3.5-2B
+> SemRepGS 3,211 2.3 ––DDI 5,716 1.9 ––ChemProt 3,469 1.4 ––
+> Qwen3-32B
+> SemRepGS 3,211 5.4 ––DDI 5,716 4.1 ––ChemProt 3,469 2.5 ––
+
+Table B.1: Inference latency and cost under the best-performing ANCHOR-RE configuration. API costs are reported only for gpt-5-mini-2025-08-07 .
+
+Appendix C. Dataset Label Distribution 
+
+Table C.2 reports the label distribution across train, dev/validation, and test splits for SemRepGS, DDI, and ChemProt. DDI (SemEval-2013) has no official development split. ChemProt labels are reported at the CPR subgroup level used for evaluation (cpr:3–cpr:9). 
+
+Appendix D. Per-Label Performance Breakdown Across SemRepGS, DDI, and ChemProt 
+
+Tables D.3, D.4, and D.5 present the per-label performance breakdown for SemRepGS, DDI, and ChemProt, respectively. 
+
+Appendix E. Evaluation with Open-Weight LLM Backbones 
+
+Detailed results for ANCHOR-RE with the Qwen3.5-2B and Qwen3-32B 
+
+backbones on SemRepGS, DDI, and ChemProt are presented below. 
+
+Appendix F. KB Evidence Format Examples 
+
+Figure F.3 shows representative examples of the structured KB evidence blocks used across datasets, as formatted in the Decider prompt. Each block is dataset-specific and reflects the information retrieved from the corresponding external knowledge resource. 32 (a) SemRepGS – UMLS evidence block (subject: Prostate Cancer , object: PSA )
+
+KB Report for Prostate Cancer -> PSA: Direct Relations: - ASSOCIATED_WITH Direct CUI evidence: - Prostate Cancer -> prostate specific antigen: ASSOCIATED_WITH - Prostate Cancer -> PSA: ASSOCIATED_WITH Possible relations Prostate Cancer -> PSA: - PROCESS_OF, AFFECTS, ASSOCIATED_WITH Related concepts of Prostate Cancer: - Prostate Neoplasms - Prostatic Intraepithelial Neoplasia - Benign Prostatic Hyperplasia Related concepts of PSA: - Biomarkers, Tumor - kininogenase - KLK3 gene 
+
+(b) DDI – DrugBank evidence block (subject: nalidixic acid , object: quinidine )
+
+DrugBank KB report for nalidixic acid <-> quinidine: Subject: Nalidixic acid (DrugBank ID: DB00779) Class: Diazanaphthalenes Indication: For the treatment of urinary tract infections caused by susceptible gram-negative microorganisms, including E. Coli, Enterobacter species, Klebsiella species, and Proteus species. Mechanism: The active metabolite hydroxynalidixic acid binds strongly, but reversibly, to DNA, interfering with RNA and protein synthesis. Related interactions: - Ivabradine: Ivabradine may increase the QTc-prolonging activities of Nalidixic acid. - Melphalan: The risk or severity of gastrointestinal bleeding can be increased when Nalidixic acid is combined with Melphalan. - Didanosine: Didanosine can cause a decrease in the absorption of Nalidixic acid resulting in a reduced serum concentration. Object: Quinidine (DrugBank ID: DB00908) Class: Cinchona alkaloids Indication: Quinidine is indicated for the management and prophylactic therapy of atrial fibrillation/flutter and ventricular arrhythmias. Mechanism: Quinidine blocks the rapid sodium channel (INa) in Purkinje fibers, decreasing the phase zero of rapid depolarization. It also reduces repolarizing K+ currents and the L-type calcium current. Related interactions: - Afatinib: The serum concentration of Afatinib can be increased when it is combined with Quinidine. - Modafinil: The metabolism of Quinidine can be increased when combined with Modafinil. - Armodafinil: The metabolism of Quinidine can be increased when combined with Armodafinil. 
+
+(c) ChemProt – CTD evidence block (chemical: AR , protein: bicalutamide )
+
+CTD KB report for AR <-> bicalutamide: Entity1 (standardized): AR Entity2 (standardized): bicalutamide Relevant one-hop CTD interactions: 1. Gene ’AR’ -> Chemical ’6-fluorotestosterone’: bicalutamide inhibits the reaction [6-fluorotestosterone binds to and results in increased activity of AR protein] 2. Gene ’AR’ -> Chemical ’10074-G5’: 10074-G5 results in decreased expression of AR protein 3. Chemical ’bicalutamide’ -> Gene ’ABCB11’: bicalutamide results in decreased activity of ABCB11 protein 4. Chemical ’bicalutamide’ -> Gene ’ACP3’: bicalutamide results in decreased expression of ACP3 mRNA 5. Chemical ’bicalutamide’ -> Gene ’ACSL1’: bicalutamide results in increased expression of ACSL1 mRNA 
+
+Figure F.3: Representative structured evidence blocks used to augment the Decider prompt 33 Dataset Label Train Dev Test 
+
+SemRepGS administered_to 188 14 21 affects 118 8 79 associated_with 278 10 12 augments 91 11 12 causes 165 11 43 coexists_with 290 25 24 compared_with 74 11 8diagnoses 155 14 16 disrupts 105 9 12 inhibits 311 24 12 interacts_with 1,030 109 34 isa 108 13 85 location_of 223 7 170 part_of 262 10 129 precedes 98 12 13 predisposes 88 17 11 prevents 99 10 13 process_of 666 72 190 produces 113 13 15 stimulates 232 33 16 treats 363 35 96 uses 277 30 26 
+
+norel 2,750 258 2,174 
+
+Total 8,084 756 3,211 
+
+DDI advise 826 — 221 effect 1,687 — 360 int 188 — 96 mechanism 1,319 — 302 
+
+norel 23,771 — 4,737 
+
+Total 27,792 — 5,716 
+
+ChemProt cpr:3 777 552 667 cpr:4 2,260 1,103 1,667 cpr:5 170 116 198 cpr:6 235 199 293 cpr:9 727 457 644 
+
+Total 4,169 2,427 3,469 
+
+Table C.2: Label distribution across dataset splits. “—” indicates no official split exists. 
+
+34 Label Precision Recall F1
+
+administered_to 0.395 0.714 0.509 affects 0.510 0.658 0.575 associated_with 0.117 0.583 0.194 augments 0.290 0.750 0.419 causes 0.629 0.907 0.743 coexists_with 0.205 0.667 0.314 compared_with 0.471 1.000 0.640 diagnoses 0.750 0.938 0.833 disrupts 0.545 0.500 0.522 inhibits 0.421 0.667 0.516 interacts_with 0.346 0.794 0.482 isa 0.812 0.918 0.862 location_of 0.660 0.817 0.730 part_of 0.657 0.672 0.664 precedes 0.556 0.833 0.667 predisposes 0.400 0.364 0.381 prevents 0.867 1.000 0.929 process_of 0.773 0.984 0.866 produces 0.316 0.429 0.364 stimulates 0.385 0.938 0.546 treats 0.667 0.842 0.744 uses 0.500 0.885 0.639 
+
+Macro avg 0.512 0.766 0.597 
+
+Micro avg 0.576 0.816 0.676 
+
+Table D.3: Per-label performance on SemRepGS test set (positive labels only) under the best configuration (+ KB + Retrieval + Verifier ). 
+
+Label Precision Recall F1
+
+advice 0.606 0.950 0.741 effect 0.530 0.878 0.661 int 0.476 0.406 0.438 mechanism 0.614 0.742 0.672 none 0.976 0.887 0.929 
+
+Macro avg 0.641 0.773 0.688 
+
+Weighted avg 0.903 0.873 0.881 
+
+Table D.4: Per-label performance on the DDI test set (including the norel class) under the best configuration (+ KB + Retrieval + Verifier ). 
+
+Label Precision Recall F1
+
+cpr:3 0.934 0.894 0.913 cpr:4 0.962 0.956 0.959 cpr:5 0.858 0.944 0.899 cpr:6 0.829 0.959 0.889 cpr:9 0.982 0.941 0.961 
+
+Macro avg 0.913 0.939 0.924 
+
+Weighted avg 0.943 0.941 0.941 
+
+Table D.5: Per-label performance on the ChemProt test set under the best configuration (+ KB + Retrieval). 
+
+35 (a) Qwen3.5-2B 
+
+Micro Macro Configuration Precision Recall F1 Precision Recall F1
+
+Baseline 0.346 0.632 0.447 0.330 0.647 0.395 + KB 0.349 0.630 0.449 0.345 0.661 0.410 + KB + Retrieval 0.356 0.632 0.455 0.333 0.639 0.404 + KB + Retrieval + Verifier 0.373 0.616 0.465 0.350 0.628 0.412 (b) Qwen3-32B 
+
+Micro Macro Configuration Precision Recall F1 Precision Recall F1
+
+Baseline 0.472 0.723 0.571 0.399 0.721 0.484 + KB 0.476 0.689 0.563 0.409 0.712 0.486 + KB + Retrieval 0.467 0.746 0.575 0.414 0.719 0.503 + KB + Retrieval + Verifier 0.477 0.729 0.577 0.423 0.706 0.506 
+
+Table E.6: Generalization of ANCHOR-RE to two open-weight LLM backbones on the SemRepGS benchmark. 
+
+Qwen3.5-2B Qwen3-32B Dataset Configuration Micro-F1 Macro-F1 Micro-F1 Macro-F1
+
+DDI 
+
+Baseline 0.199 0.237 0.567 0.435 + KB 0.227 0.262 0.593 0.448 + KB + Retrieval 0.268 0.300 0.683 0.514 + KB + Retrieval + Verifier 0.488 0.399 0.772 0.577 
+
+ChemProt 
+
+Baseline 0.808 0.648 0.914 0.900 
+
++ KB 0.806 0.653 0.912 0.898 + KB + Retrieval 0.822 0.666 0.914 0.899 
+
+Table E.7: Generalization of ANCHOR-RE to two open-weight LLM backbones on the DDI and ChemProt benchmarks. Following the standard evaluation protocols for these datasets, micro-F1 is computed over all relation classes, including norel .
+
+36

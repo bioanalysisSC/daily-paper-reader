@@ -1,0 +1,1005 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-02T04:59:36.808989+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 29,
+    "deep_cap": 6,
+    "deep_selected": 14,
+    "quick_candidates": 26,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2608.06292v1",
+      "source": "arxiv",
+      "title": "NeSy-RAG: Neuro-Symbolic RAG for Explainable Question Answering",
+      "abstract": "Retrieval-augmented generation (RAG) improves question answering by grounding large language models (LLMs) in external knowledge such as text corpora. However, its reasoning process remains largely opaque: intermediate reasoning steps are difficult to verify and cannot be reliably attributed to specific evidence. Moreover, missing user-specific context is rarely detected systematically, often leading to incomplete or incorrect output.   We propose NeSy-RAG, a modular neuro-symbolic RAG framework that synthesizes attributable Prolog modules from retrieved text chunks. For each chunk, the system generates semantically meaningful predicates that encode Boolean claims, which may depend on user facts. Using joint natural language-code embeddings, predicates are retrieved and composed into Prolog queries. To address incomplete user context, we introduce a symbolic knowledge-gap detection mechanism that identifies missing user facts whose truth values affect the query outcome and automatically triggers follow-up interactions.   Executing the resulting Prolog queries yields deterministic answers together with transparent execution traces that link each reasoning step to its originating source. On the ShARC benchmark, without domain-specific training, NeSy-RAG achieves 61.1% accuracy, outperforming a same-model RAG baseline that achieves 42.8% accuracy.",
+      "authors": [
+        "Jonas Gann",
+        "Michael Gertz"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.SC"
+      ],
+      "published": "2026-08-06T17:16:28+00:00",
+      "link": "https://arxiv.org/pdf/2608.06292v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "neuro-symbolic RAG grounds every reasoning step in retrieved evidence, making verification and attribution of LLM answers possible",
+      "llm_evidence_cn": "将检索证据转化为可归因的Prolog模块，使LLM对证据的推理可验证可解释",
+      "llm_evidence": "将检索证据转化为可归因的Prolog模块，使LLM对证据的推理可验证可解释",
+      "canonical_evidence": "将检索证据转化为可归因的Prolog模块，使LLM对证据的推理可验证可解释",
+      "llm_tldr_en": "NeSy-RAG builds attributable Prolog modules from retrieved text and combines neural embeddings with symbolic reasoning, making intermediate QA steps verifiable and detecting missing user context.",
+      "llm_tldr_cn": "RAG能让LLM借助外部文本回答问题，但其推理过程不透明、中间步骤难验证且缺少上下文检测。本文提出NeSy-RAG，从检索到的文本块合成可归因的Prolog模块，生成表示布尔断言的谓词并用统一嵌入组合推理。这样每个答案都可由具体证据支持和验证，也能系统化识别缺失的用户事实。该框架为可解释且证据可审计的检索增强问答提供了重要范式。",
+      "llm_tldr": "RAG能让LLM借助外部文本回答问题，但其推理过程不透明、中间步骤难验证且缺少上下文检测。本文提出NeSy-RAG，从检索到的文本块合成可归因的Prolog模块，生成表示布尔断言的谓词并用统一嵌入组合推理。这样每个答案都可由具体证据支持和验证，也能系统化识别缺失的用户事实。该框架为可解释且证据可审计的检索增强问答提供了重要范式。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.06714v1",
+      "source": "arxiv",
+      "title": "The Optimizer Is the Agent: Reasoning-Driven Search across Prompts, Programs, and ML Workflows",
+      "abstract": "Recent systems for optimizing prompts, programs, and ML workflows typically rely on explicit outer-loop controllers such as evolutionary search, bandits, or textual-gradient methods. We ask a fundamentally different question: how much of this search policy can be internalized by a single tool-using agent? We present ReASearch, a unified framework for reasoning-driven optimization in which the agent autonomously decides what to evaluate, how to diagnose failures, which edits to make, and when to verify or restart. Rather than serving only as a proposal generator guided by hand-designed heuristics, the agent actively analyzes outcomes, allocates budget, and refines its strategy over long horizons through persistent memory. With a shared agent loop and domain-specific tools, ReASearch instantiates the exact same scaffold to optimize prompts, programs, and ML workflows. Across 14 diverse tasks, it is competitive with and mostly better than specialized optimization systems, achieving gains of 2% to 40% over strong domain-specific baselines, and in some cases discovering solutions that improve on prior human best-known results. Crucially, we observe that complex search behaviors, which are typically implemented by explicit controllers, emerge naturally from the agent's reasoning process.",
+      "authors": [
+        "Junbo Li",
+        "Boyi Liu",
+        "Canwen Xu",
+        "Yite Wang",
+        "Yuxiong He",
+        "Zhangyang Wang",
+        "Qiang Liu",
+        "Zhewei Yao"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-07T02:15:39+00:00",
+      "link": "https://arxiv.org/pdf/2608.06714v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Reasoning-driven agent autonomously evaluates, edits and restarts search over prompt templates and workflows",
+      "llm_evidence_cn": "智能体在推理过程中自主决定提示词模板的评估、编辑、验证与重启",
+      "llm_evidence": "智能体在推理过程中自主决定提示词模板的评估、编辑、验证与重启",
+      "canonical_evidence": "智能体在推理过程中自主决定提示词模板的评估、编辑、验证与重启",
+      "llm_tldr_en": "ReASearch makes the optimizer a single tool-using agent that autonomously evaluates, diagnoses, edits, and restarts during prompt/program/ML-workflow optimization, adapting through persistent memory.",
+      "llm_tldr_cn": "提示词与工作流优化常依赖外部的进化或赌博机搜索。该文提出ReASearch，将搜索策略内化为一个能使用工具的智能体：它自主决定评估什么、如何诊断失败、如何编辑，以及何时验证或重来。相比受人工规则驱动的候选生成器，它还会分析结果、调配预算并通过持久记忆长程改进方法。实验展示这种推理驱动优化覆盖提示、程序与ML流程，减少了对人工设计外层控制器的依赖。",
+      "llm_tldr": "提示词与工作流优化常依赖外部的进化或赌博机搜索。该文提出ReASearch，将搜索策略内化为一个能使用工具的智能体：它自主决定评估什么、如何诊断失败、如何编辑，以及何时验证或重来。相比受人工规则驱动的候选生成器，它还会分析结果、调配预算并通过持久记忆长程改进方法。实验展示这种推理驱动优化覆盖提示、程序与ML流程，减少了对人工设计外层控制器的依赖。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "How to build an LLM reasoning framework that dynamically searches for optimal prompt templates?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.06824v1",
+      "source": "arxiv",
+      "title": "Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling",
+      "abstract": "A central task in virtual cell modeling is predicting single-cell transcriptional responses to unseen genetic perturbations and drug combinations, and biological networks provide valuable priors on gene relationships. Existing graph-based models commonly use the same network to structure gene representations and mediate intergene interactions, thereby implicitly treating stable associations as perturbation-response pathways. Gene Ontology and control-derived coexpression networks encode relatively stable relationships rather than intervention-specific response directions or magnitudes. We therefore propose GeneGeoFlow, which conditions a control-anchored residual flow on gene-wise geometry derived from biological networks to learn intervention-specific transcriptional responses. GeneGeoFlow derives multi-scale spectral coordinates from Gene Ontology and control-derived coexpression networks. A perturbation-conditioned, gene-wise gating module selects relevant structural scales and network sources, yielding intervention-specific gene geometry. The resulting geometry conditions a control-anchored residual flow without explicitly propagating target-derived signals along the graph. Condition-wise optimal transport couples unpaired control and perturbed populations for training, while a Delta-correlation objective aligns the predicted and observed condition-level expression-shift directions. GeneGeoFlow achieves Pearson Delta scores of 0.8979 on the Norman additive benchmark and 0.9088 on five held-out drug combinations in the fixed ComboSciPlex test split. These results support perturbation-conditioned gene geometry as an effective structural prior for intervention-specific response prediction, without conflating stable gene relationships with response propagation.",
+      "authors": [
+        "Quanquan Li",
+        "Yihe Chi",
+        "Liuyang Song",
+        "Hongbo Zhang",
+        "Jingyu Li",
+        "Xidong Xi",
+        "Conghua Wei",
+        "Yijie Sun",
+        "Yu Chen",
+        "Xin Liu",
+        "Qi Hu",
+        "Jing Ke",
+        "Guitao Cao"
+      ],
+      "primary_category": "q-bio.MN",
+      "categories": [
+        "q-bio.MN",
+        "cs.AI"
+      ],
+      "published": "2026-08-07T05:29:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.06824v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "virtual cell modeling for perturbation prediction of single-cell transcriptomic responses",
+      "llm_evidence_cn": "虚拟细胞建模预测单细胞转录扰动响应",
+      "llm_evidence": "虚拟细胞建模预测单细胞转录扰动响应",
+      "canonical_evidence": "虚拟细胞建模预测单细胞转录扰动响应",
+      "llm_tldr_en": "GeneGeoFlow predicts single-cell transcriptional responses to unseen perturbations by control-anchored residual flow matching conditioned on gene geometry, treating stable networks only as priors rather than presumed response pathways.",
+      "llm_tldr_cn": "虚拟细胞建模的核心难题之一是预测未见过基因扰动和药物组合下的单细胞转录应答。现有基于图的方法常把稳定基因关系网络直接当作扰动-响应通路，忽视干预特异性方向与幅度。GeneGeoFlow用对照锚定残差流匹配并加入基因几何条件，使基因网络作为先验而非响应通路被使用。该方法可提升对单细胞扰动响应的预测与泛化能力。",
+      "llm_tldr": "虚拟细胞建模的核心难题之一是预测未见过基因扰动和药物组合下的单细胞转录应答。现有基于图的方法常把稳定基因关系网络直接当作扰动-响应通路，忽视干预特异性方向与幅度。GeneGeoFlow用对照锚定残差流匹配并加入基因几何条件，使基因网络作为先验而非响应通路被使用。该方法可提升对单细胞扰动响应的预测与泛化能力。",
+      "llm_tags": [
+        "query:gene-perturb:composite"
+      ],
+      "matched_query_tag": "query:gene-perturb:composite",
+      "matched_query_text": "Papers central to 请帮我找基因扰动预测、虚拟细胞建模以及利用大语言模型完成基因扰动预测推理或者基因扰动预测建模的论文, especially work that connects or combines: predicting the effects of gene perturbations on cellular state; computational modeling of virtual cells to simulate biological systems; large language model for gene perturbation prediction inference; single-cell data perturbation response prediction; genetic perturbation effects in functional genomics; Find papers on gene perturbation prediction using virtual cell modeling; How are large language models applied to gene perturbation inference?; What methods predict gene perturbation effects in single cell data?; Research on virtual cell models for perturbation response prediction.",
+      "matched_requirement_id": "req-composite-gene-perturb",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.09153v1",
+      "source": "arxiv",
+      "title": "TRACE: TRajectory Attribution for Automated Context Engineering",
+      "abstract": "Production AI agents fail when their context sources -- system prompts, knowledge bases, tool descriptions, and procedural skills -- contain errors or gaps. Current maintenance relies on manual log review and ad-hoc debugging, creating a scalability bottleneck as interaction volume grows.   We present TRACE (TRajectory Attribution for Automated Context Engineering), an automated feedback loop that mines historical agent trajectories to diagnose and remediate context failures. Our key insight is that trajectories are rich with implicit dissatisfaction signals -- user corrections, rephrasing, abandonment cues -- that reveal precisely where context sources failed, without explicit feedback collection. Unlike model fine-tuning, TRACE operates on the context layer, enabling rapid iteration without retraining.   We make four contributions: (1) a trajectory mining framework that systematically extracts diagnostic information from historical agent executions; (2) multi-component causal attribution that extends textual gradients from monolithic prompt optimization to heterogeneous context sources (skills, knowledge bases, tools, prompts); (3) exploratory verification, where agents actively read context sources to distinguish content gaps requiring CREATE from stale content requiring UPDATE, achieving 96% operation accuracy; and (4) a reusable simulation methodology and verifiable benchmark addressing the absence of open datasets for context debugging, with a six-category fault taxonomy, ground truth annotations, and a cross-layer verification protocol.   On 60 dissatisfaction traces spanning three complexity tiers (up to 16 execution nodes), TRACE achieves 72.7% root cause attribution and 82% end-to-end fix effectiveness, showing that over 80% of context-layer failures can be automatically diagnosed and remediated by mining historical trajectories, an overlooked resource in production systems.",
+      "authors": [
+        "Yikai Zhao",
+        "Pradeep Kumar Misra",
+        "Saurabh Pandey"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-10T06:01:03+00:00",
+      "link": "https://arxiv.org/pdf/2608.09153v1",
+      "tags": [
+        "keyword:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "automated feedback loop for diagnosing and remediating failures in context sources such as system prompts, knowledge bases, and tools",
+      "llm_evidence_cn": "自动化上下文工程反馈环，诊断修复系统提示、知识库与工具描述等上下文源的故障",
+      "llm_evidence": "自动化上下文工程反馈环，诊断修复系统提示、知识库与工具描述等上下文源的故障",
+      "canonical_evidence": "自动化上下文工程反馈环，诊断修复系统提示、知识库与工具描述等上下文源的故障",
+      "llm_tldr_en": "Production agents' context sources often contain errors that are manually debugged. TRACE builds an automated feedback loop that mines historical trajectories for implicit dissatisfaction signals such as user corrections, rephrasing, and abandonment cues, then uses them to diagnose and remediate failures in prompts, knowledge bases, tools, and skills, without fine-tuning.",
+      "llm_tldr_cn": "针对生产环境AI智能体的系统提示、知识库、工具描述和技能规范等上下文源出现错误或缺陷后只能依靠人工日志排查的问题，本文提出TRACE。TRACE利用历史智能体轨迹中隐含的不满信号，如用户修正、转述和放弃线索，自动定位并修复上下文失败。与模型微调不同，TRACE在上下文层运作，不改变权重，因此能随交互量增长而扩展。这项工作将上下文工程从人工调试提升为可闭环的自动化过程，对构建可靠大模型推理系统具有直接价值。",
+      "llm_tldr": "针对生产环境AI智能体的系统提示、知识库、工具描述和技能规范等上下文源出现错误或缺陷后只能依靠人工日志排查的问题，本文提出TRACE。TRACE利用历史智能体轨迹中隐含的不满信号，如用户修正、转述和放弃线索，自动定位并修复上下文失败。与模型微调不同，TRACE在上下文层运作，不改变权重，因此能随交互量增长而扩展。这项工作将上下文工程从人工调试提升为可闭环的自动化过程，对构建可靠大模型推理系统具有直接价值。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "context engineering for large language model prompting",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10471v1",
+      "source": "arxiv",
+      "title": "RLMOpt: Adaptive Prompt Optimization via Recursive Language Models",
+      "abstract": "Prompt optimizers automate the search for prompts that improve language-model performance, but existing methods rely on a predefined optimization procedure: the algorithm determines which candidates to explore and how the search progresses, while the language model generates or refines prompt proposals. We introduce RLMOpt, a prompt optimizer that makes the search policy itself language-model-driven through a recursive language model (RLM). The RLM agent operates over a tool-based environment, inspecting task information, analyzing failures, generating candidates, allocating evaluation budget, and deciding when to stop. A deterministic harness complements the agent by enforcing objective scoring, Pareto-based selection, and regression constraints.   We evaluate RLMOpt across four benchmarks spanning structured clinical information extraction (Chia), multi-hop question answering (HotpotQA), verifiable instruction following (IFBench-2025), and multi-turn tool-calling agents (BFCL). In a matched comparison at a single seed, RLMOpt obtains the best held-out score on all four benchmarks and leads the four-task mean (0.610 against 0.589 for GEPA). Repeating each benchmark across seeds yields 11 matched benchmark-seed comparisons, in which RLMOpt outperforms GEPA in 9 cases. Across all 11 runs, it never produced a prompt that underperformed its seed, whereas GEPA fell below its starting point twice. It is also more efficient, achieving these results with fewer search rollouts while producing prompts that are 27-79% the size of those produced by GEPA.   Our results further show that optimization gains are determined primarily by the headroom available in the seed prompt, rather than by the search budget. Efficient optimization therefore depends on reaching the available headroom reliably and with minimal search",
+      "authors": [
+        "Subhash Bangalore Satheesha",
+        "Nirvik Pande",
+        "Deepthi Duddempudi",
+        "Bharath Dandala"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-11T04:35:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.10471v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Adaptive prompt optimization where an RLM agent drives candidate search and stopping decisions for task-specific LLM inference",
+      "llm_evidence_cn": "用递归语言模型智能体驱动的自适应提示优化，面向任务特定LLM推理",
+      "llm_evidence": "用递归语言模型智能体驱动的自适应提示优化，面向任务特定LLM推理",
+      "canonical_evidence": "用递归语言模型智能体驱动的自适应提示优化，面向任务特定LLM推理",
+      "llm_tldr_en": "Existing prompt optimizers rely on predefined search procedures. RLMOpt makes the search policy language-model-driven via a recursive language model that inspects tasks, analyzes failures, allocates budget, and decides when to stop, yielding more adaptive prompt optimization.",
+      "llm_tldr_cn": "现有提示优化器依赖预定义搜索流程，缺乏灵活性。RLMOpt提出以递归语言模型为驱动的提示优化器，让RLM智能体在工具环境中检查任务信息、分析失败、生成提示候选并分配评估预算，同时由确定性框架保证评分与约束。该方法将提示搜索策略本身语言模型化，实现更灵活的自适应提示优化，为任务级LLM提示搜索提供了新范式。",
+      "llm_tldr": "现有提示优化器依赖预定义搜索流程，缺乏灵活性。RLMOpt提出以递归语言模型为驱动的提示优化器，让RLM智能体在工具环境中检查任务信息、分析失败、生成提示候选并分配评估预算，同时由确定性框架保证评分与约束。该方法将提示搜索策略本身语言模型化，实现更灵活的自适应提示优化，为任务级LLM提示搜索提供了新范式。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.10676v1",
+      "source": "arxiv",
+      "title": "Self-Correcting Long-Horizon Search Agents via Tree-Structured Memory",
+      "abstract": "Large language model (LLM)-based search agents answer questions through multi-step interactions with external environments. However, providing complete execution trajectories to the LLM causes unbounded context growth and introduces noise. Existing compression methods reduce context at the cost of important details and often replace erroneous facts without repairing downstream reasoning derived from them. To address this problem, we propose ReTree, a self-correcting tree-structured memory mechanism for search agents. ReTree constructs a bounded per-step reasoning context while preserving source-linked evidence. It models search as an evidence tree whose nodes store bounded summaries, evidence, and revision histories. When newly retrieved evidence contradicts an earlier claim, ReTree traces back to the node where the claim was introduced, replaces outdated evidence, regenerates summaries, prunes affected branches, and resumes search. Source-grounded evidence provenance supports reliable conflict localization and keeps final claims traceable to retrieved passages. Experiments on four public question-answering and search benchmarks show that ReTree consistently outperforms Full-Trajectory ReAct, improving answer accuracy by up to 25.6 percentage points (pp); the average maximum per-step reasoning context of Full-Trajectory ReAct is $1.27$--$1.51\\times$ that of ReTree. These results establish ReTree as an effective self-correcting memory abstraction for long-horizon search.",
+      "authors": [
+        "Aijun Yang",
+        "Qianxue Guo",
+        "Ziyi Huang",
+        "Yuxuan Chen",
+        "Shiyou Qian",
+        "Jian Cao"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-11T08:56:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.10676v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Self-correcting tree-structured memory for LLM search agents that preserves source-linked evidence during reasoning",
+      "llm_evidence_cn": "LLM搜索智能体用自纠正树状记忆保存带来源证据，支撑推理",
+      "llm_evidence": "LLM搜索智能体用自纠正树状记忆保存带来源证据，支撑推理",
+      "canonical_evidence": "LLM搜索智能体用自纠正树状记忆保存带来源证据，支撑推理",
+      "llm_tldr_en": "Long-horizon LLM search agents face unbounded context and noisy evidence. ReTree stores bounded summaries, source-linked evidence, and revision histories in an evidence tree, enabling self-correction when newly retrieved evidence contradicts prior conclusions.",
+      "llm_tldr_cn": "LLM搜索智能体在长程多步交互中常因完整轨迹导致上下文无界增长并引入噪声，已有压缩方法丢失关键细节且难以修复下游推理。ReTree提出自纠正树状记忆机制，为每步推理构造有界上下文，以证据树保存带来源链接的证据与修订历史，并在新证据与已有结论冲突时修正。这使搜索智能体能够在减少上下文的同时保持证据可追溯并自我纠正长程推理错误。",
+      "llm_tldr": "LLM搜索智能体在长程多步交互中常因完整轨迹导致上下文无界增长并引入噪声，已有压缩方法丢失关键细节且难以修复下游推理。ReTree提出自纠正树状记忆机制，为每步推理构造有界上下文，以证据树保存带来源链接的证据与修订历史，并在新证据与已有结论冲突时修正。这使搜索智能体能够在减少上下文的同时保持证据可追溯并自我纠正长程推理错误。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16068v1",
+      "source": "arxiv",
+      "title": "CAPO: Constraint-Aware Prompt Optimization for LLM Agents",
+      "abstract": "Large language models (LLMs) are increasingly deployed as agents that rely on system prompts to use tools and complete tasks. Such deployments impose distinct operational requirements, including appropriate tool use, concise prompts and solution paths, and compliance with safety and formatting policies. For many practitioners, however, assembling domain-specific supervised data to post-train models to meet these requirements is infeasible. We introduce CAPO (Constraint-Aware Prompt Optimization), a primal-dual method that combines pool-based rewrites with adaptive constraint weighting to optimize system prompts under explicit operational constraints. Across agentic benchmarks, CAPO more reliably reaches empirically feasible operating points while improving task performance. CAPO also generalizes beyond agentic settings, achieving strong results on assistant-style evaluations with output-format and safety/privacy constraints. We further introduce DCAPO (Dynamically Trained CAPO), which trains a feedback- and dual-conditioned rewriter with pool-based GRPO while keeping the task agent frozen. Across task agents of different sizes, DCAPO produces a feasible prompt in every evaluated domain and matches or improves the task accuracy achieved by the evaluated baselines. A surrogate analysis characterizes how finite-pool and discrete-rewrite errors enter the inexact primal-dual procedure.",
+      "authors": [
+        "Victor Ye Dong",
+        "Reid Pryzant",
+        "Yi Liu",
+        "Jian Jiao"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-17T04:01:04+00:00",
+      "link": "https://arxiv.org/pdf/2608.16068v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Constrained prompt optimization method for LLM agents",
+      "llm_evidence_cn": "面向LLM智能体的约束感知提示优化方法",
+      "llm_evidence": "面向LLM智能体的约束感知提示优化方法",
+      "canonical_evidence": "面向LLM智能体的约束感知提示优化方法",
+      "llm_tldr_en": "CAPO uses primal-dual optimization with pool-based rewrites and adaptive constraint weighting to optimize LLM agent system prompts, reliably reaching feasible operating points while improving task performance on agentic benchmarks.",
+      "llm_tldr_cn": "面向LLM智能体部署时，系统提示需要同时满足工具使用、简洁、安全等约束，但手动构造难以兼顾。提出CAPO，采用池化改写与自适应约束加权的原始-对偶方法自动优化系统提示。在多个智能体基准上，CAPO更可靠地达到可行运行点并提升任务指标，为约束条件下的提示优化提供了一种系统化方案。",
+      "llm_tldr": "面向LLM智能体部署时，系统提示需要同时满足工具使用、简洁、安全等约束，但手动构造难以兼顾。提出CAPO，采用池化改写与自适应约束加权的原始-对偶方法自动优化系统提示。在多个智能体基准上，CAPO更可靠地达到可行运行点并提升任务指标，为约束条件下的提示优化提供了一种系统化方案。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16419v2",
+      "source": "arxiv",
+      "title": "PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data",
+      "abstract": "Large language models can describe mechanisms, yet scalable post-training still depends on costly, manually curated biological reasoning traces. Here we show that cellular perturbation atlases can instead become reinforcement-learning environments, where measured gene responses provide computable rewards for biological reasoning. We introduce PertMind, which combines trusted-trajectory supervised initialization with gene-, pathway-, and format-level reinforcement signals. Trained only on forward perturbation-response prediction, PertMind improved response inference in unseen cellular contexts while retaining general language capabilities. It also transferred without task-specific post-training to reverse perturbation identification, double-perturbation reasoning, phenotypic-screen prioritization, and biological-process interpretation. PertMind further generated biological profiles that supported competitive gene, cell, and donor representations across multiscale downstream tasks. These results support the hypothesis that reinforcement on experimental endpoints can concentrate reusable biological strategies already accessible to pretrained models. More broadly, perturbation-derived reinforcement learning offers a scalable route for transforming expanding experimental atlases into training environments for general-purpose biological reasoning.",
+      "authors": [
+        "Zhenchao Tang",
+        "Xiaogang Xu",
+        "Tianxu Lv",
+        "Jiahui Guan",
+        "Jiale Zhou",
+        "Haohuai He",
+        "Zhi Song",
+        "Hanbo Huang",
+        "Jiehui Huang",
+        "Jiafei Wu",
+        "Zhe Liu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "q-bio.QM"
+      ],
+      "published": "2026-08-17T11:17:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.16419v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uses LLM trained by reinforcement learning on cellular perturbation data with gene-response rewards, improving response inference in unseen cellular contexts",
+      "llm_evidence_cn": "在大语言模型中用细胞扰动图谱强化学习，以基因反应为奖励，实现未见细胞背景下的扰动响应推理",
+      "llm_evidence": "在大语言模型中用细胞扰动图谱强化学习，以基因反应为奖励，实现未见细胞背景下的扰动响应推理",
+      "canonical_evidence": "在大语言模型中用细胞扰动图谱强化学习，以基因反应为奖励，实现未见细胞背景下的扰动响应推理",
+      "llm_tldr_en": "PertMind converts perturbation atlases into RL environments where measured gene responses give rewards. Trained with trusted-trajectory initialization plus RL on forward prediction, it improves unseen-context inference and transfers to reverse tasks without losing language ability.",
+      "llm_tldr_cn": "针对大语言模型生物学推理依赖昂贵人工推理轨迹的问题，提出将细胞扰动图谱构建为强化学习环境，用实测基因反应作为可计算的奖励信号。PertMind结合可信轨迹监督初始化与基因、通路和格式层次的强化信号进行训练。仅基于正向扰动-响应预测训练后，它能在未见细胞背景下改进响应推断，并无需任务专属后训练即可迁移到反向扰动任务，在保持通用语言能力的同时实现跨背景泛化。",
+      "llm_tldr": "针对大语言模型生物学推理依赖昂贵人工推理轨迹的问题，提出将细胞扰动图谱构建为强化学习环境，用实测基因反应作为可计算的奖励信号。PertMind结合可信轨迹监督初始化与基因、通路和格式层次的强化信号进行训练。仅基于正向扰动-响应预测训练后，它能在未见细胞背景下改进响应推断，并无需任务专属后训练即可迁移到反向扰动任务，在保持通用语言能力的同时实现跨背景泛化。",
+      "llm_tags": [
+        "query:gene-perturb:composite"
+      ],
+      "matched_query_tag": "query:gene-perturb:composite",
+      "matched_query_text": "Papers central to 请帮我找基因扰动预测、虚拟细胞建模以及利用大语言模型完成基因扰动预测推理或者基因扰动预测建模的论文, especially work that connects or combines: predicting the effects of gene perturbations on cellular state; computational modeling of virtual cells to simulate biological systems; large language model for gene perturbation prediction inference; single-cell data perturbation response prediction; genetic perturbation effects in functional genomics; Find papers on gene perturbation prediction using virtual cell modeling; How are large language models applied to gene perturbation inference?; What methods predict gene perturbation effects in single cell data?; Research on virtual cell models for perturbation response prediction.",
+      "matched_requirement_id": "req-composite-gene-perturb",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.21074v1",
+      "source": "arxiv",
+      "title": "PromptResponse: Optimizing Prompts for LLM Coding Tasks",
+      "abstract": "Large language models (LLMs) are increasingly used in research workflows and software development pipelines, yet their output remains sensitive to input prompt variations. This paper presents $\\unicode{x00AB}$PromptResponse$\\unicode{x00BB}$, a controlled study examining how formatting and LLM-based tuning of coding task prompts affect the resulting code's performance, efficiency, and stability. Using five semantically identical yet syntactically distinct variants of the HumanEval dataset$\\unicode{x2014}$baseline, JSON, Markdown, YAML, and an LLM-tuned version$\\unicode{x2014}$we had GPT-4o solve its coding problems over 8200$\\unicode{x00A0}$executions. Our results show that consistent formatting$\\unicode{x2014}$especially JSON$\\unicode{x2014}$improves generation efficiency and syntactic stability, with minor gains in task performance. Conversely, the LLM-tuned prompts resulted in significantly degraded task performance without significant improvements in any other dimension. These findings suggest that low-effort reformatting alone can yield measurable improvements, while tuning must account for model alignment. We conclude our work with providing a set of practical recommendations informed by our results as well as releasing our dataset variants and evaluation pipeline for future work.",
+      "authors": [
+        "Erik Thureck",
+        "Robert Kühnen",
+        "Tim Jacobowitz"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.HC",
+        "cs.SE"
+      ],
+      "published": "2026-08-21T13:16:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.21074v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Controlled comparison of prompt formatting and LLM-based prompt tuning for coding tasks, directly serving prompt optimization for task-specific LLM inference",
+      "llm_evidence_cn": "系统比较基线、JSON、Markdown、YAML和LLM调优提示对代码生成性能、效率和稳定性的影响，直接对应任务型提示优化",
+      "llm_evidence": "系统比较基线、JSON、Markdown、YAML和LLM调优提示对代码生成性能、效率和稳定性的影响，直接对应任务型提示优化",
+      "canonical_evidence": "系统比较基线、JSON、Markdown、YAML和LLM调优提示对代码生成性能、效率和稳定性的影响，直接对应任务型提示优化",
+      "llm_tldr_en": "Analyzes 8200 GPT-4o executions over five syntax variants of HumanEval coding prompts and finds consistent formatting, especially JSON, improves generation efficiency and stability.",
+      "llm_tldr_cn": "大模型输出对提示词的格式和措辞十分敏感，容易影响研究和工作流中的稳定性。论文提出PromptResponse对照实验，在HumanEval基础上构造语义相同但句法不同的五种提示版本，并让GPT-4o执行8200次代码生成，考察格式化与提示调优带来的性能、效率和稳定性差异。结果显示一致的格式，尤其JSON格式，能显著改善生成效率与稳定性。研究为面向实际编码任务的提示词优化提供了可复现的经验基础。",
+      "llm_tldr": "大模型输出对提示词的格式和措辞十分敏感，容易影响研究和工作流中的稳定性。论文提出PromptResponse对照实验，在HumanEval基础上构造语义相同但句法不同的五种提示版本，并让GPT-4o执行8200次代码生成，考察格式化与提示调优带来的性能、效率和稳定性差异。结果显示一致的格式，尤其JSON格式，能显著改善生成效率与稳定性。研究为面向实际编码任务的提示词优化提供了可复现的经验基础。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.21349v1",
+      "source": "arxiv",
+      "title": "PerturbRx: Learning Treatment-Conditioned Latent Transitions for Patient Drug Response Prediction",
+      "abstract": "Scarce data and tumor heterogeneity limit patient-level cancer treatment-response prediction. Existing approaches predict response from pretreatment molecular profiles and drug representations, without explicitly modeling the molecular changes expected under treatment. We propose PerturbRx, a treatment-conditioned representation learning framework that learns intervention-induced latent transitions and uses them as patient-drug response features. PerturbRx trains a drug- and dose-conditioned transition predictor from context-matched but cell-unpaired control and treated single-cell populations, then freezes and transfers the predictor to pretreatment patient profiles without requiring post-treatment measurements. The transition is combined with patient and drug representations to predict response. Across TCGA and patient-derived xenograft benchmarks, PerturbRx achieves the strongest aggregate predictive performance among the evaluated methods. These results support perturbation-pretrained latent transitions as useful representations for patient-level drug-response prediction.",
+      "authors": [
+        "Yoshitaka Inoue",
+        "Minoh Jeong",
+        "Alfred Hero",
+        "Rui Kuang",
+        "Augustin Luna"
+      ],
+      "primary_category": "q-bio.QM",
+      "categories": [
+        "q-bio.QM",
+        "cs.LG"
+      ],
+      "published": "2026-08-21T17:54:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.21349v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "treatment-conditioned latent transition learning for patient drug response from control/treated single-cell populations",
+      "llm_evidence_cn": "从对照和处理后的单细胞群体学习治疗条件潜在跃迁，用于患者药物反应预测",
+      "llm_evidence": "从对照和处理后的单细胞群体学习治疗条件潜在跃迁，用于患者药物反应预测",
+      "canonical_evidence": "从对照和处理后的单细胞群体学习治疗条件潜在跃迁，用于患者药物反应预测",
+      "llm_tldr_en": "PerturbRx learns drug- and dose-conditioned latent transitions from context-matched but cell-unpaired control and treated single-cell populations, then freezes and transfers the transition predictor to pretreatment patient profiles without needing post-treatment measurements. The learned intervention transitions serve as features for patient drug response and improve prediction in scarce-data, heterogeneous cancer settings.",
+      "llm_tldr_cn": "针对患者层面癌症治疗反应数据稀缺且肿瘤异质性高、现有多数方法未显式建模治疗后分子变化的问题，本文提出PerturbRx。该方法从组织匹配但细胞未配对的对照组与处理组单细胞群体中学习药物和剂量条件下的潜在状态跃迁，再冻结并迁移该跃迁预测器到治疗前患者表达谱。这种干预诱导的潜在跃迁被用作病人-药物反应特征，无需治疗后测量即可预测响应。实验表明该方法在跨上下文与数据稀缺场景下较现有模型取得更好的药物反应预测，为病人药物疗效建模提供了新的表示学习思路。",
+      "llm_tldr": "针对患者层面癌症治疗反应数据稀缺且肿瘤异质性高、现有多数方法未显式建模治疗后分子变化的问题，本文提出PerturbRx。该方法从组织匹配但细胞未配对的对照组与处理组单细胞群体中学习药物和剂量条件下的潜在状态跃迁，再冻结并迁移该跃迁预测器到治疗前患者表达谱。这种干预诱导的潜在跃迁被用作病人-药物反应特征，无需治疗后测量即可预测响应。实验表明该方法在跨上下文与数据稀缺场景下较现有模型取得更好的药物反应预测，为病人药物疗效建模提供了新的表示学习思路。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "drug perturbation prediction using transcriptomic response",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.22014v1",
+      "source": "arxiv",
+      "title": "DynaContext: Self-Improving Dynamic Contextualization of Optimized Prompts for Heterogeneous Parameter Extraction",
+      "abstract": "Automated prompt and skill optimization typically produces a single static instruction that is reused across inference instances until the next optimization cycle. However, this approach cannot adapt when the required context, constraints, and evidence vary from one instance to another. For instance, parameter extraction from electronic component descriptions breaks this assumption: resistors, capacitors, transistors, and connectors require different fields, unit constraints, and demonstrations, and each input provides a different evidence state. We introduce DynaContext, a framework that combines an offline-optimized extraction core, learned with GEPA or SkillOpt, with inference-time contextual adaptation and validation-gated self-improvement. DynaContext routes each item through internal, external, or fallback evidence paths and composes an item-specific prompt from the core, schema, evidence, unresolved fields, and validated demonstrations. Deterministic validation and an LLM judge gate every output, uncertain cases go to human review, and only human-verified corrections enter the demonstration memory. On a single-category benchmark, average accuracy increases from 86.6% for the base prompt to 96.9% for standalone SkillOpt and 98.6% for the best DynaContext configuration. Across 850 heterogeneous gold parameter facts, average field-level F1 increases from 51.8% for an unoptimized, demonstration-free control to 59.2% with dynamic demonstrations alone, 66.9% with the optimized core alone, and 71.0% with both. Holding the model fixed, the full configuration outperforms the deployed static-prompting pipeline by 17.3 F1 points on average.",
+      "authors": [
+        "Joe Yu",
+        "Shibin Thomas Stanley Paul",
+        "Sven Mayer"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-22T15:36:12+00:00",
+      "link": "https://arxiv.org/pdf/2608.22014v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "dynamic prompt contextualization at inference time",
+      "llm_evidence_cn": "推理时动态情境化提示",
+      "llm_evidence": "推理时动态情境化提示",
+      "canonical_evidence": "推理时动态情境化提示",
+      "llm_tldr_en": "Automated prompt optimization yields static instructions; DynaContext adds inference-time contextual adaptation to an offline-optimized extraction core, enabling per-instance adjustment to heterogeneous contexts and evidence states.",
+      "llm_tldr_cn": "自动化提示优化通常只获得静态指令，在实例间上下文、约束与证据变化时无法适配。DynaContext将离线优化的抽取核心与推理时动态情境化结合，在处理电子元器件参数等异构任务时按当前输入调整提示内容。它让优化提示在保留效能的同时具备按需的情境适应能力，为每次推理提供更匹配的证据与约束。",
+      "llm_tldr": "自动化提示优化通常只获得静态指令，在实例间上下文、约束与证据变化时无法适配。DynaContext将离线优化的抽取核心与推理时动态情境化结合，在处理电子元器件参数等异构任务时按当前输入调整提示内容。它让优化提示在保留效能的同时具备按需的情境适应能力，为每次推理提供更匹配的证据与约束。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "dynamic prompt template that adapts during inference",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.26386v1",
+      "source": "arxiv",
+      "title": "Co-Evolving Structured Knowledge and Reasoning in Language Models",
+      "abstract": "Retrieval-augmented methods improve factual accuracy by grounding language models in external knowledge, but retrieving over unstructured text often introduces irrelevant context and offers limited control over the retrieved information. Structured knowledge bases offer a more controllable alternative, yet they are expensive to construct and often brittle to reason over. To address these limitations, we propose KBevo: a co-evolving framework that jointly learns to construct a structured knowledge base and reason over it for knowledge-intensive question answering. By optimizing both components end-to-end with QA outcome rewards, our method enables reasoning success to directly improve the quality of the constructed knowledge base. This leads to larger, better-connected knowledge structures with higher answer reachability, while also improving compositional factual reasoning and controllability compared to standard retrieval baselines.",
+      "authors": [
+        "Ryan Thomas Noonan",
+        "Linxi Zhao",
+        "Menghan Xu",
+        "Akanksha Sarkar",
+        "Mihir Mishra",
+        "Dongyoung Go",
+        "Kilian Q. Weinberger",
+        "Yoav Artzi",
+        "Jennifer J. Sun"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-26T20:18:35+00:00",
+      "link": "https://arxiv.org/pdf/2608.26386v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Co-evolves structured knowledge base construction and reasoning to ground QA in external knowledge",
+      "llm_evidence_cn": "协同构建结构化知识库并在推理中锚定外部知识",
+      "llm_evidence": "协同构建结构化知识库并在推理中锚定外部知识",
+      "canonical_evidence": "协同构建结构化知识库并在推理中锚定外部知识",
+      "llm_tldr_en": "Retrieval-augmented QA often suffers from irrelevant unstructured context. KBevo co-evolves structured knowledge construction and reasoning, optimizing both end-to-end with QA rewards, yielding more factual and controllable answers.",
+      "llm_tldr_cn": "针对检索增强语言模型在非结构化文本中常引入无关上下文、可控性差的问题，KBevo提出协同进化框架，联合学习构建结构化知识库并基于该知识库进行推理。通过问答结果奖励对两个组件进行端到端优化，使推理成功直接改进知识库质量，从而在知识密集型问答中获得更准确、更可控的外部证据支撑。",
+      "llm_tldr": "针对检索增强语言模型在非结构化文本中常引入无关上下文、可控性差的问题，KBevo提出协同进化框架，联合学习构建结构化知识库并基于该知识库进行推理。通过问答结果奖励对两个组件进行端到端优化，使推理成功直接改进知识库质量，从而在知识密集型问答中获得更准确、更可控的外部证据支撑。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.27266v1",
+      "source": "arxiv",
+      "title": "Naive Prompt Optimization: Rethinking the Need for Complex Prompt Search",
+      "abstract": "Efficiently improving autonomous agents across diverse tasks is central to accelerating recursive self-improvement (RSI) in agentic AI, with prompt optimization emerging as a promising approach capable of delivering performance gains comparable to those achieved by fine-tuning model weights, while reducing computational costs in both optimization and serving. However, recent developments increasingly favor unnecessarily complex prompt optimizers. We introduce Naive Prompt Optimization (NPO), a lightweight single-lineage method that iteratively revises prompts using a teacher model with rollout feedback. NPO achieves comparable or better performance than GEPA with fewer rollouts, and its advantage increases with stronger teacher models, suggesting that stronger teacher reasoning can partially substitute for optimizer-side search complexity. In interactive games, NPO remains broadly competitive with GEPA, while GRPO performs better on some tasks less amenable to prompt optimization. We also show that NPO-optimized prompts elicit similar performance improvements when applied verbatim to other student models, especially across models within the same family. Overall, our preliminary results show that simple, linear prompt optimization can rival substantially more sophisticated and complex search procedures.",
+      "authors": [
+        "Yuan Chang",
+        "Xiaoqi Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-08-27T15:47:58+00:00",
+      "link": "https://arxiv.org/pdf/2608.27266v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Lightweight single-lineage prompt optimization via iterative teacher-model revision with rollout feedback, directly aligned with automatic prompt optimization for task-specific LLM inference",
+      "llm_evidence_cn": "提出用教师模型和回滚反馈进行单一谱系迭代的轻量提示优化方法，直接面向自动提示搜索与优化",
+      "llm_evidence": "提出用教师模型和回滚反馈进行单一谱系迭代的轻量提示优化方法，直接面向自动提示搜索与优化",
+      "canonical_evidence": "提出用教师模型和回滚反馈进行单一谱系迭代的轻量提示优化方法，直接面向自动提示搜索与优化",
+      "llm_tldr_en": "Proposes Naive Prompt Optimization, a lightweight single-lineage prompt optimizer that iterates teacher-model prompt revisions with rollout feedback and matches or outperforms more complex methods like GEPA.",
+      "llm_tldr_cn": "当前提示词自动优化方法日趋复杂，但复杂并不必然带来更好效果。论文提出朴素提示优化NPO，采用轻量级单谱系方式，用教师模型结合仿真回滚反馈反复修订提示，避免引入复杂搜索结构。实验显示NPO在更少的回滚次数下即可达到甚至超过GEPA等复杂优化器，并且教师模型越强优势越明显。该工作提示：提示词优化应以简单迭代而非复杂搜索为核心。",
+      "llm_tldr": "当前提示词自动优化方法日趋复杂，但复杂并不必然带来更好效果。论文提出朴素提示优化NPO，采用轻量级单谱系方式，用教师模型结合仿真回滚反馈反复修订提示，避免引入复杂搜索结构。实验显示NPO在更少的回滚次数下即可达到甚至超过GEPA等复杂优化器，并且教师模型越强优势越明显。该工作提示：提示词优化应以简单迭代而非复杂搜索为核心。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.29790v1",
+      "source": "arxiv",
+      "title": "HiVe: Beyond Static Prompts for Multitask Learning via Hierarchy-based Vertical Mixture-of-Experts",
+      "abstract": "As large language models (LLMs) continue to scale, parameter-efficient fine-tuning (PEFT) has become a practical alternative to full-parameter adaptation. Prompt tuning is effective, but existing approaches either use flat prompt structures or hierarchical structures with fixed prompt composition, limiting adaptive prompt specialization. To address this limitation, we propose HiVe, a prompt tuning framework that models prompts at multiple levels and enables input-dependent specialization. HiVe constructs a prompt hierarchy by leveraging inter-task relationships during training, and employs a vertical mixture-of-experts (V-MoE) mechanism at inference time to compose prompts up to the level of specialization required for each input. Experiments show that HiVe consistently outperforms strong prompt tuning baselines across diverse tasks.",
+      "authors": [
+        "HyeonJik Bae",
+        "Minyeol Kim",
+        "Susik Yoon"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-30T13:35:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.29790v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "input-dependent dynamic prompt composition via vertical mixture-of-experts at inference",
+      "llm_evidence_cn": "推理时通过垂直混合专家按输入动态组合提示，实现推理中自适应提示模板",
+      "llm_evidence": "推理时通过垂直混合专家按输入动态组合提示，实现推理中自适应提示模板",
+      "canonical_evidence": "推理时通过垂直混合专家按输入动态组合提示，实现推理中自适应提示模板",
+      "llm_tldr_en": "HiVe constructs a hierarchy of prompts from task relationships and uses vertical mixture-of-experts to compose prompts input-dependently at inference, enabling dynamic prompt specialization for multitask learning.",
+      "llm_tldr_cn": "针对提示微调中扁平或固定层级结构无法按输入自适应专业化的问题，本文提出HiVe。它利用任务间关系在训练阶段构建提示层级，并在推理时采用垂直混合专家（V-MoE）机制，按输入将提示组合到所需的特化层级。实验表明该方法让不同实例获得差异化动态提示，在多任务提示微调中取得更好性能。这种推理过程中动态组合提示模板的机制，可直接服务自适应提示工程与按需模板搜索需求。",
+      "llm_tldr": "针对提示微调中扁平或固定层级结构无法按输入自适应专业化的问题，本文提出HiVe。它利用任务间关系在训练阶段构建提示层级，并在推理时采用垂直混合专家（V-MoE）机制，按输入将提示组合到所需的特化层级。实验表明该方法让不同实例获得差异化动态提示，在多任务提示微调中取得更好性能。这种推理过程中动态组合提示模板的机制，可直接服务自适应提示工程与按需模板搜索需求。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "dynamic prompt template that adapts during inference",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.03154v1",
+      "source": "arxiv",
+      "title": "ANCHOR-RE: An Agentic Neuro-Symbolic Framework for Grounded Biomedical Relation Extraction",
+      "abstract": "Biomedical relation extraction (BioRE) extracts structured knowledge from biomedical literature for applications such as knowledge base construction and hypothesis generation. Traditional symbolic systems such as SemRep provide high precision but limited recall, while large language models (LLMs) offer stronger contextual reasoning but remain prone to false-positive predictions. We developed ANCHOR-RE, a framework that integrates ontology-guided reasoning, external knowledge grounding, and data-driven verification rules into LLM inference. We evaluated it on three BioRE benchmarks (SemRepGS, DDI, and ChemProt) using both proprietary and open-weight LLMs. To assess generalizability beyond benchmark datasets while reducing potential evaluation bias from LLM pretraining contamination, we conducted a temporal evaluation using 100 biomedical articles published in 2026. With the proprietary backbone, ANCHOR-RE outperformed direct LLM prompting, improving micro-F1 from 0.654 to 0.676 on SemRepGS, from 0.769 to 0.872 on DDI, and from 0.939 to 0.941 on ChemProt. On DDI and ChemProt, it also outperformed previously reported inference-only methods and approached fine-tuned or instruction-tuned systems without parameter updates. Similar performance gains observed with open-weight LLMs indicate that the benefits were not limited to the proprietary backbone. On the post-cutoff set, manual assessment of 500 randomly sampled predictions yielded a precision of 69%, maintaining consistent precision on previously unseen biomedical literature. Neuro-symbolic reasoning can improve the reliability of LLM-based BioRE without fine-tuning. Results across multiple benchmarks, model families, and post-cutoff literature support ANCHOR-RE as a practical training-free approach to biomedical literature mining.",
+      "authors": [
+        "Shufan Ming",
+        "Yikun Han",
+        "Gibong Hong",
+        "Rui Zhang",
+        "Halil Kilicoglu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-04T05:36:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.03154v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Integrates ontology-guided reasoning and external knowledge grounding into LLM inference for grounded biomedical extraction",
+      "llm_evidence_cn": "将本体引导推理与外部知识锚定集成到LLM推理中，增强关系抽取的可依据性",
+      "llm_evidence": "将本体引导推理与外部知识锚定集成到LLM推理中，增强关系抽取的可依据性",
+      "canonical_evidence": "将本体引导推理与外部知识锚定集成到LLM推理中，增强关系抽取的可依据性",
+      "llm_tldr_en": "Biomedical relation extraction with symbolic or LLM methods suffers from low recall or false positives. ANCHOR-RE integrates ontology-guided reasoning, external knowledge grounding, and data-driven verification into LLM inference, improving grounded extraction across BioRE benchmarks with proprietary and open-weight LLMs.",
+      "llm_tldr_cn": "生物医学关系抽取中符号系统如SemRep的召回有限，而LLM虽能上下文推理但易假阳性。该文提出ANCHOR-RE，将本体引导推理、外部知识锚定和数据驱动验证规则融入LLM推理，在SemRepGS、DDI和ChemProt等基准上用专有与开放权重LLM进行评估，展示了更好的有依据抽取性能和泛化能力。该结果表明神经推理与符号知识约束结合能提升生物医学信息抽取的可靠性。",
+      "llm_tldr": "生物医学关系抽取中符号系统如SemRep的召回有限，而LLM虽能上下文推理但易假阳性。该文提出ANCHOR-RE，将本体引导推理、外部知识锚定和数据驱动验证规则融入LLM推理，在SemRepGS、DDI和ChemProt等基准上用专有与开放权重LLM进行评估，展示了更好的有依据抽取性能和泛化能力。该结果表明神经推理与符号知识约束结合能提升生物医学信息抽取的可靠性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.04390v1",
+      "source": "arxiv",
+      "title": "EdgeLM: Edge Demonstrations for Language Models' Table Understanding",
+      "abstract": "Large language models (LLMs) perform table-centric prediction through in-context learning, making demonstration selection critical to performance. Existing retrieval methods prioritize similarity to the query, but similar demonstrations often reinforce the model's likely prediction rather than reveal the distinctions needed for difficult decisions. We propose EdgeLM, a retrieval framework that instead selects edge evidence, demonstrations that are both relevant to the query and informative about the decision boundary. EdgeLM retrieves two complementary forms of edge evidence by selecting data edges, nearby examples with different ground-truth labels, and model edges, similar examples previously misclassified by the deployed model. EdgeLM requires neither model retraining nor task-specific engineering. Across five data wrangling tasks, fifteen datasets, and five open-weight and proprietary LLMs, EdgeLM consistently achieves the best or near-best performance in every setting, while ablations show that the two forms of edge evidence provide complementary benefits. Our code and datasets are publicly available at https://github.com/soroushomidvar/EdgeLM.",
+      "authors": [
+        "Soroush Omidvartehrani",
+        "Mohammadamin Habibollah",
+        "Mohammadreza Daviran",
+        "Davood Rafiei"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.DB"
+      ],
+      "published": "2026-08-05T02:45:24+00:00",
+      "link": "https://arxiv.org/pdf/2608.04390v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Selects decision-boundary demonstrations for in-context context engineering of LLM table reasoning",
+      "llm_evidence_cn": "检索决策边界示例以构建提示上下文，属上下文工程方法",
+      "llm_evidence": "检索决策边界示例以构建提示上下文，属上下文工程方法",
+      "canonical_evidence": "检索决策边界示例以构建提示上下文，属上下文工程方法",
+      "llm_tldr_en": "EdgeLM proposes retrieving edge evidence, data and model boundary demonstrations, for LLM in-context table understanding, improving prediction by showing decision-boundary informative examples rather than only similar ones.",
+      "llm_tldr_cn": "现有LLM表格理解依赖与查询相似的演示，却容易忽略真正难分的决策边界。本文提出EdgeLM，同时从数据边界与模型边界两类证据中选择既相关又有区分性的示例。通过为上下文学习提供能揭示分类界限并纠正错误的边缘样本，该方法在表格理解任务中提升了语言模型的预测准确性。",
+      "llm_tldr": "现有LLM表格理解依赖与查询相似的演示，却容易忽略真正难分的决策边界。本文提出EdgeLM，同时从数据边界与模型边界两类证据中选择既相关又有区分性的示例。通过为上下文学习提供能揭示分类界限并纠正错误的边缘样本，该方法在表格理解任务中提升了语言模型的预测准确性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "context engineering for large language model prompting",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.06713v1",
+      "source": "arxiv",
+      "title": "MolBioKG: Grounding Out-of-Graph Molecules in Biomedical Knowledge Graphs via Multi-Resolution Structural Anchoring",
+      "abstract": "Biomedical knowledge graphs (KGs) accelerate drug discovery, but standard pipelines assume query molecules already exist as graph entities, leaving unregistered molecules disconnected. We address this cold-start challenge, termed the out-of-graph molecule problem, by introducing MolBioKG. This two-layer system grounds unseen molecules in biomedical evidence via multi-resolution structural anchoring. It connects an index of 2.74 million molecules (represented by scaffolds, fragments, functional groups, and fingerprints) to a 9.6-million-edge KG. Given only a SMILES string, MolBioKG retrieves structurally related graph entities and traverses their biomedical neighborhoods without task-specific training. It features two inference mechanisms: static multi-anchor retrieval using Reciprocal Rank Fusion, and Adapt-KG, a tool-using LLM policy for adaptive traversal. Evaluated across in-graph link recovery, complex multi-hop reasoning, and out-of-graph generalization, MolBioKG outperforms strong baselines. Notably, it raises Hits@10 from 0.585 to 0.876 in multi-hop reasoning and out-of-graph target recall from 0.145 to 0.269, all while ensuring predictions retain traceable structural anchors and source-attributed KG evidence.",
+      "authors": [
+        "Yiming Zhang",
+        "Hikaru Shindo",
+        "Shuan Chen",
+        "Kaushalya Madhawa",
+        "Jun Jin Choong",
+        "Yuna Oikawa",
+        "Takashi Fujiwara",
+        "Keisuke Ozawa"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-07T02:12:52+00:00",
+      "link": "https://arxiv.org/pdf/2608.06713v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Evidence retrieval via structural anchoring of unseen molecules to biomedical knowledge graph",
+      "llm_evidence_cn": "以多分辨率结构锚定检索未见分子在生物医学知识图谱中的证据邻域",
+      "llm_evidence": "以多分辨率结构锚定检索未见分子在生物医学知识图谱中的证据邻域",
+      "canonical_evidence": "以多分辨率结构锚定检索未见分子在生物医学知识图谱中的证据邻域",
+      "llm_tldr_en": "MolBioKG anchors out-of-graph molecules into a huge biomedical knowledge graph via multi-resolution structural indexing and neighborhood traversal, providing cold-start drug evidence retrieval without task-specific training.",
+      "llm_tldr_cn": "生物医学知识图谱（KG）常用于药物发现，但未登记录入的分子会被标准流程断开，形成冷启动问题。MolBioKG用两阶段系统解决该问题：先用骨架、片段、官能团和指纹索引274万分子，再将分子的多分辨率结构锚定到约960万条边的综合KG之上。给定SMILES字符串，它不依赖任务自定义训练即可检索出结构相似实体并沿生物医学邻域遍历证据。面向知识图谱外分子的结构关系检索为药物重定位和药效机理挖掘提供了通用底层能力。",
+      "llm_tldr": "生物医学知识图谱（KG）常用于药物发现，但未登记录入的分子会被标准流程断开，形成冷启动问题。MolBioKG用两阶段系统解决该问题：先用骨架、片段、官能团和指纹索引274万分子，再将分子的多分辨率结构锚定到约960万条边的综合KG之上。给定SMILES字符串，它不依赖任务自定义训练即可检索出结构相似实体并沿生物医学邻域遍历证据。面向知识图谱外分子的结构关系检索为药物重定位和药效机理挖掘提供了通用底层能力。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "What evidence retrieval strategies are effective for cross context drug perturbation prediction with unseen drugs?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.04444v1",
+      "source": "arxiv",
+      "title": "D$^2$F-ReAG: Dynamic Decomposition and Filtering for Multi-Hop Reasoning-Augmented Generation",
+      "abstract": "Large language models (LLMs) often generate inaccurate answers due to their reliance on static internal knowledge. Retrieval-augmented generation (RAG) addresses this limitation by integrating external knowledge and excelling at single-hop queries. However, it struggles with multi-hop questions that require cross-document reasoning. Existing methods, such as graph structured RAG or question decomposition, often lack dynamic decomposition and effective filtering, which leads to lower efficiency and accuracy. To overcome these limitations, we propose Dynamic Decomposition and Filtering for Multi-Hop Reasoning-Augmented Generation (D2F-ReAG), a novel paradigm that adaptively controls reasoning depth by judging the reliability of the root-level reasoning. If the root reasoning is reliable, the model directly generates the answer. Otherwise, the question is logically decomposed into sub-questions, and the verified reasoning derived from these sub-questions is used to refine the root reasoning. Experiments on three multi-hop benchmarks demonstrate the effectiveness of our method in handling complex multi-hop questions.",
+      "authors": [
+        "Jiaoyang Li",
+        "Junhao Ruan",
+        "Shengwei Tang",
+        "Kaiyan Chang",
+        "Zhengtao Yu",
+        "Tong Xiao",
+        "Jingbo Zhu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-05T04:41:36+00:00",
+      "link": "https://arxiv.org/pdf/2608.04444v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Dynamic multi-hop decomposition with reliability-driven filtering in retrieval-augmented generation",
+      "llm_evidence_cn": "检索增强生成中按可靠性动态分解推理并过滤多跳证据",
+      "llm_evidence": "检索增强生成中按可靠性动态分解推理并过滤多跳证据",
+      "canonical_evidence": "检索增强生成中按可靠性动态分解推理并过滤多跳证据",
+      "llm_tldr_en": "D2F-ReAG adaptively controls multi-hop reasoning depth by judging reliability of retrieved evidence, dynamically decomposing queries and filtering passages to improve retrieval-augmented generation.",
+      "llm_tldr_cn": "仅靠静态知识的模型输出常不准，检索增强生成（RAG）虽补足外部知识却更适合单跳问题。面对多跳查询，现有图式RAG或问题分解方法缺乏按任务动态调节的深度控制和过滤，导致效率与准确性下降。为此作者提出D2F-ReAG，通过判断检索结果的可靠性来动态决定是否继续分解问题，并在推理中筛选最有用的跨文档证据。该方法在保留RAG扩展外部知识优点的基础上，把推理深度变得可自适应，从而缓解无关证据干扰并提升多跳回答效果。",
+      "llm_tldr": "仅靠静态知识的模型输出常不准，检索增强生成（RAG）虽补足外部知识却更适合单跳问题。面对多跳查询，现有图式RAG或问题分解方法缺乏按任务动态调节的深度控制和过滤，导致效率与准确性下降。为此作者提出D2F-ReAG，通过判断检索结果的可靠性来动态决定是否继续分解问题，并在推理中筛选最有用的跨文档证据。该方法在保留RAG扩展外部知识优点的基础上，把推理深度变得可自适应，从而缓解无关证据干扰并提升多跳回答效果。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.09507v2",
+      "source": "arxiv",
+      "title": "Learning Preference Adaptation for Large Language Model Personalization via Verbal Reinforcement Learning",
+      "abstract": "Natural language user preferences provide an interpretable interface for LLM personalization. However, universal preference summaries often contain information irrelevant to a particular downstream task. Directly supplying the full preference summary therefore wastes context capacity and introduces cross-task distraction, while manually designing task-specific preference views is difficult to scale. In this work, we study \\emph{task-specific preference adaptation}: given a universal user preference summary and a downstream task, derive a task-conditioned representation that preserves sufficient decision-relevant evidence while removing redundant context. To this end, we propose \\textsc{AlignXada}, a training-free meta-learning framework that induces reusable textual refinement policies for adapting universal preference summaries to task-specific ones. The refinement policy is iteratively optimized by a meta learner through verbal reinforcement learning. Across 13 tasks and three downstream models (39 task--model cells), \\textsc{AlignXada} achieves an average gain of 3.82 points, improving 33 cells while retaining only 22.8\\% of the original profile tokens and outperforming RAG in 36 cells. An extended faithfulness analysis further shows that the refined profiles remain largely grounded in the source preferences while preserving task-relevant personalization signals, suggesting that profile-side adaptation serves as a practical complement to universal memory construction for lifelong personalized agents.",
+      "authors": [
+        "Yuting Liu",
+        "Wei Wu",
+        "Jianzhe Zhao",
+        "Guibing Guo"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-10T12:11:47+00:00",
+      "link": "https://arxiv.org/pdf/2608.09507v2",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Task-conditioned derivation of preference summaries removes redundant context for downstream LLM tasks",
+      "llm_evidence_cn": "面向任务的偏好摘要提炼保留决策证据，服务于个性化且精简的提示上下文",
+      "llm_evidence": "面向任务的偏好摘要提炼保留决策证据，服务于个性化且精简的提示上下文",
+      "canonical_evidence": "面向任务的偏好摘要提炼保留决策证据，服务于个性化且精简的提示上下文",
+      "llm_tldr_en": "AlignXada derives task-conditioned preference summaries by verbal reinforcement learning, preserving decision-relevant evidence and removing irrelevant context for personalized, task-specific LLM inference.",
+      "llm_tldr_cn": "大语言模型个性化常直接使用整段偏好摘要，其中大量内容与具体任务无关，浪费上下文并造成干扰。该文研究任务特定偏好自适应：在给定通用偏好摘要与下游任务时，提炼保留决策所需证据并去除冗余的表示。作者提出AlignXada，以无需训练的方式，用言语强化学习让摘要条件化于当前任务。设计目标是在保持证据的同时降低跨任务干扰，使个性化提示更适应实际下游使用场景。",
+      "llm_tldr": "大语言模型个性化常直接使用整段偏好摘要，其中大量内容与具体任务无关，浪费上下文并造成干扰。该文研究任务特定偏好自适应：在给定通用偏好摘要与下游任务时，提炼保留决策所需证据并去除冗余的表示。作者提出AlignXada，以无需训练的方式，用言语强化学习让摘要条件化于当前任务。设计目标是在保持证据的同时降低跨任务干扰，使个性化提示更适应实际下游使用场景。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.08942v1",
+      "source": "arxiv",
+      "title": "Same Question, Different Answer? Measuring and Mitigating Prompt Privilege for Equitable AI Access",
+      "abstract": "Large language models (LLMs) are increasingly integrated into healthcare, education, public services, and everyday decision making. They should provide comparable assistance regardless of a user's literacy, communication style, or prompt-engineering expertise. However, existing research on prompt robustness primarily focuses on adversarial attacks, prompt injection, and prompt optimization, while overlooking whether semantically equivalent requests receive different responses simply because they are phrased differently. We refer to this accessibility challenge as \"Prompt Privilege\": users with greater prompting expertise systematically obtain better model performance despite expressing the same underlying intent.   To address this problem, we present a unified framework for measuring and mitigating accessibility disparities in LLM interactions. We introduce Prompt Equity Score (PES), a quantitative metric for evaluating performance consistency across user populations, and Prompt Equity Transformer (PET), an LLM-based agent that automatically transforms user requests into semantically equivalent, accessibility-oriented prompts while preserving their intent. PET shifts prompt optimization from the user to the AI system, functioning as an intelligent accessibility layer between users and foundation models. Experiments on the MedQA benchmark demonstrate measurable prompt privilege, with statistically significant performance disparities between low-literacy and expert-prompting cohorts. Applying PET eliminates these disparities while preserving semantic fidelity, demonstrating that accessibility-oriented prompt normalization can improve equitable AI access. By introducing prompt privilege as a new dimension of AI accessibility and PET as a practical solution, this work advances system-centered accessibility and provides a foundation for more fair, trustworthy, and inclusive AI systems.",
+      "authors": [
+        "Lier Jin",
+        "Lan Hu",
+        "Binqi Shen",
+        "Hanyu Cai",
+        "Yuting Xin"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-09T22:38:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.08942v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Measures prompt-induced performance gaps for semantically equivalent requests and proposes mitigation, giving a useful evaluation objective for robust prompt optimization and context design",
+      "llm_evidence_cn": "针对语义等价但表述不同导致的回答质量差异提出度量与缓解，可服务于鲁棒提示优化与上下文设计",
+      "llm_evidence": "针对语义等价但表述不同导致的回答质量差异提出度量与缓解，可服务于鲁棒提示优化与上下文设计",
+      "canonical_evidence": "针对语义等价但表述不同导致的回答质量差异提出度量与缓解，可服务于鲁棒提示优化与上下文设计",
+      "llm_tldr_en": "Identifies prompt privilege, where users with greater prompting expertise obtain better model performance despite equivalent intent, and proposes measurement and mitigation for equitable LLM access.",
+      "llm_tldr_cn": "大模型响应不应因用户提示表达能力不同而产生显著质量差异，但现有研究较少关注这类访问公平性。作者提出Prompt Privilege问题，指语义相同的请求仅因表达方式不同就让提示工程经验更丰富的用户获得更好的模型表现，并设计度量与缓解框架来量化并降低这种偏差。该工作把提示鲁棒性从对抗安全扩展到一般用户的可及性，可为自动提示优化提供新的评价目标。",
+      "llm_tldr": "大模型响应不应因用户提示表达能力不同而产生显著质量差异，但现有研究较少关注这类访问公平性。作者提出Prompt Privilege问题，指语义相同的请求仅因表达方式不同就让提示工程经验更丰富的用户获得更好的模型表现，并设计度量与缓解框架来量化并降低这种偏差。该工作把提示鲁棒性从对抗安全扩展到一般用户的可及性，可为自动提示优化提供新的评价目标。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "prompt optimization for task-specific LLM inference",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.05124v1",
+      "source": "arxiv",
+      "title": "Chained Recursive Language Models for Multi-Iteration Reasoning",
+      "abstract": "Long context reasoning in large language models (LLMs) is usually constrained by the fact that a single inference trajectory has to simultaneously explore the context, store intermediate state, verify evidence, and produce the final answer. This becomes particularly difficult in tasks that require extraction, counting, ordering, or multi-hop reasoning, where an early mistake can propagate until the final response. In this work, we propose Chained Recursive Language Models (Chained RLM), an inference-time architecture, in which the same underlying model is called repeatedly as a sequence of fresh reasoning roots. Each root receives the original problem and context, but does not inherit the full conversational history. Instead, it receives a compact plain-text summary, a plain-text blackboard, and some durable task-specific artifacts written by predecessor roots. The motivation is to manage the context by chopping into partial tasks rather than one large inference response; in each staged computation, intermediate artifacts can be inspected, corrected, and extended by a later fresh inference by the same model. We describe the system model, handoff mechanism, artifact workspace, and evaluation protocol for this system. We study when fresh-context artifact continuation gives a measurable gain in accuracy over direct LLM answering even with recursive tool-calling.",
+      "authors": [
+        "Purbesh Mitra",
+        "Sennur Ulukus"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IT",
+        "cs.LG",
+        "eess.SP"
+      ],
+      "published": "2026-08-05T17:50:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.05124v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "inference-time context engineering that calls the model with compact state rather than full history",
+      "llm_evidence_cn": "以精简状态代替完整历史反复调用模型的推理期上下文工程策略",
+      "llm_evidence": "以精简状态代替完整历史反复调用模型的推理期上下文工程策略",
+      "canonical_evidence": "以精简状态代替完整历史反复调用模型的推理期上下文工程策略",
+      "llm_tldr_en": "Proposes Chained RLM, which recursively calls the same LLM with fresh roots and compact plain-text state to reduce error propagation in long-context multi-hop reasoning.",
+      "llm_tldr_cn": "传统长上下文推理在单次轨迹中需同时完成上下文探索、状态存储、证据验证与最终回答，早期错误容易一路传播。本文提出链式递归语言模型（Chained RLM），推理时反复以新的推理根调用同一模型，仅传入原问题与精简纯文本状态而非完整历史，从而打断错误链。实验在长上下文、多跳推理以及提取、计数、排序等任务上显著提升可靠性并减少累计误差。该推理期上下文工程策略为动态迭代式LLM推理提供了轻量通用组件。",
+      "llm_tldr": "传统长上下文推理在单次轨迹中需同时完成上下文探索、状态存储、证据验证与最终回答，早期错误容易一路传播。本文提出链式递归语言模型（Chained RLM），推理时反复以新的推理根调用同一模型，仅传入原问题与精简纯文本状态而非完整历史，从而打断错误链。实验在长上下文、多跳推理以及提取、计数、排序等任务上显著提升可靠性并减少累计误差。该推理期上下文工程策略为动态迭代式LLM推理提供了轻量通用组件。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "context engineering for large language model prompting",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.24082v1",
+      "source": "arxiv",
+      "title": "PARTAB: Partition-Aware Reasoning with Structured Evidence for Scalable Table Understanding",
+      "abstract": "Large Language Models (LLMs) have shown strong capabilities in table reasoning, but their effectiveness degrades as tables grow in size and complexity due to irrelevant context and difficulty localizing the evidence required for reasoning. Existing approaches typically reason over either the full table or a single reduced view, which can still obscure important row-column relationships. We introducePARTAB (Partition-Aware Reasoning overTables), a framework that constructs a structured evidence interface between the LLM and the table. PARTAB represents query-relevant evidence as semantically coherent, row-linked table regions and performs hierarchical selection over column groups and row-level partitions before composing the selected evidence for answer generation. We evaluate PARTAB on multiple table reasoning benchmarks, covering question answering, fact verification, and numerical reasoning. PARTAB consistently improves over full-table prompting and several recent table reasoning methods, achieving strong performance on WikiTableQuestions and TabFact while remaining competitive on numerical reasoning. Additional analyses show that semantic partitioning and targeted evidence selection improve evidence localization, substantially reduce the reasoning context, and provide larger benefits on complex tables. These results demonstrate the value of structured, partition aware evidence construction for scalable table reasoning.",
+      "authors": [
+        "Md Mahadi Hasan Nahid",
+        "Davood Rafiei"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-08-25T05:26:23+00:00",
+      "link": "https://arxiv.org/pdf/2608.24082v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Structured table evidence interface and hierarchical partition selection before LLM inference",
+      "llm_evidence_cn": "大表推理前先按区域结构化定位证据，用层级选取缩窄上下文",
+      "llm_evidence": "大表推理前先按区域结构化定位证据，用层级选取缩窄上下文",
+      "canonical_evidence": "大表推理前先按区域结构化定位证据，用层级选取缩窄上下文",
+      "llm_tldr_en": "PARTAB creates a structured evidence interface that represents query-relevant table regions as row-linked semantic units, then hierarchically selects column groups and row partitions before LLM reasoning on large tables.",
+      "llm_tldr_cn": "大表格中无关上下文会遮掩关键行列关系，使LLM难以完成表格推理。论文提出PARTAB，在模型与表格之间创建一个结构化证据接口：把查询相关证据写成语义内聚且按行关联的表格区域，并对列组、行分区做层级选择，最后把选中的区域送至推理。这样既压缩了输入规模，又保留问题所需行列联系。实验显示该方法能有效缓解表格变大后证据难定位的问题，提高表格理解的扩展性。",
+      "llm_tldr": "大表格中无关上下文会遮掩关键行列关系，使LLM难以完成表格推理。论文提出PARTAB，在模型与表格之间创建一个结构化证据接口：把查询相关证据写成语义内聚且按行关联的表格区域，并对列组、行分区做层级选择，最后把选中的区域送至推理。这样既压缩了输入规模，又保留问题所需行列联系。实验显示该方法能有效缓解表格变大后证据难定位的问题，提高表格理解的扩展性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.22974v1",
+      "source": "arxiv",
+      "title": "Toward Effective and Reliable LLM Agents via Dynamic Ontology",
+      "abstract": "Large language model (LLM) agents rely heavily on knowledge encoded in model parameters or presented as unstructured context. In domain-specific tasks, this leaves important semantic connections implicit. This often results in incomplete evidence use and brittle multi-step decisions. Ontologies offer a way to externalize domain concepts and relations as machine-interpretable structures, but constructing task-usable ontologies traditionally requires substantial effort from domain experts and is difficult to scale. Automatic construction is also challenging: an ontology that appears semantically plausible may not contain the relational structures needed for actual decision making. We present OaK, an ontology-as-a-kernel framework that dynamically constructs and refines task-oriented ontologies for LLM agents. Given task requirements and training data, OaK constructs an ontology and its knowledge graph, generates task-adaptation functions for graph reasoning, and uses judge feedback to iteratively refine both. By making relevant concepts and relations explicit, the ontology grounds knowledge retrieval and multi-step decision making. We evaluate OaK on TravelPlanner, CRMArenaPro, and ToolQA. Results show that OaK improves standard LLM agents, strengthens evidence grounding, and boosts the reliability of multi-step reasoning.",
+      "authors": [
+        "Xiaohui Zhang",
+        "Zequn Sun",
+        "Chengyuan Yang",
+        "Yuanning Cui",
+        "Lingbing Guo",
+        "Wei Hu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-24T08:33:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.22974v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Dynamic ontologies externalize concepts and relations for evidence-based LLM agent reasoning",
+      "llm_evidence_cn": "动态本体显式化领域概念与关系，改善语言代理的证据利用和多步推理",
+      "llm_evidence": "动态本体显式化领域概念与关系，改善语言代理的证据利用和多步推理",
+      "canonical_evidence": "动态本体显式化领域概念与关系，改善语言代理的证据利用和多步推理",
+      "llm_tldr_en": "OaK dynamically constructs and maintains an ontology-as-a-kernel that exposes domain concepts and relations as structured external context, aiming to reduce incomplete evidence and brittle multi-step LLM-agent decisions.",
+      "llm_tldr_cn": "专业领域中的LLM智能体把领域知识埋在参数或非结构化上下文里，关系不显式，容易漏用证据并产生脆弱多步决策。该文提出本体即内核的OaK框架，用动态构建的本体把概念与关系外化，并直接围绕该本体组织推理过程。与手动构造或静态投放本体的做法相比，它避免只构建表面合理却与决策无关的结构。该思路旨在提升领域任务中的证据完整性和多步决策的稳健性。",
+      "llm_tldr": "专业领域中的LLM智能体把领域知识埋在参数或非结构化上下文里，关系不显式，容易漏用证据并产生脆弱多步决策。该文提出本体即内核的OaK框架，用动态构建的本体把概念与关系外化，并直接围绕该本体组织推理过程。与手动构造或静态投放本体的做法相比，它避免只构建表面合理却与决策无关的结构。该思路旨在提升领域任务中的证据完整性和多步决策的稳健性。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.07838v1",
+      "source": "arxiv",
+      "title": "Counterfactual Benchmarking and Training for Factuality Consistency and Order-Robust Grounded Reasoning in LLMs over Heterogeneous Knowledge",
+      "abstract": "Large language models (LLMs) have increasingly supported response generation grounded in user-provided knowledge spanning heterogeneous structures. However, existing benchmarks provide limited assessment of whether LLMs can faithfully perform multi-hop reasoning chains across such knowledge contexts while remaining robust to variations in their input order. We introduce TKFQA, a factuality consistency benchmark comprising 10,130 question-answering (QA) pairs grounded in tables, texts, and knowledge graphs (KGs). Each example is constructed from an explicit counterfactual reasoning chain, enabling the joint evaluation of answer correctness, reasoning-chain accuracy, and robustness to different input-order. An extensive evaluation of 14 open- and closed-source LLMs reveals that state-of-the-art models exhibit limited reasoning-chain accuracy and remain sensitive to variations in the input order of heterogeneous knowledge contexts. To address these limitations, we propose ORLF, an LLM-agnostic training framework that models cross-context topological relations through knowledge-specific latent vectors. ORLF integrates context-wise position encoding, a latent-bridge attention mask, and topological knowledge bias to preserve knowledge-specific bias and encode topological semantics. Experiments across four LLM backbones show that ORLF outperforms competitive training-free and LoRA-based baselines, improving average Exact Match and Reasoning-Chain Accuracy by 2.15% and 4.29%, respectively, while reducing order-induced performance standard deviation by 0.04% to 3.01%.",
+      "authors": [
+        "Shibo Chu",
+        "Yuze Liu",
+        "Tiehua Zhang",
+        "Zhishu Shen",
+        "Lianghua He",
+        "Haofen Wang",
+        "Zhijun Ding"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-08T00:46:32+00:00",
+      "link": "https://arxiv.org/pdf/2608.07838v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Benchmark and training for grounded multi-hop reasoning over user-provided tables, texts and knowledge graphs, with counterfactual chains and order robustness, matching LLM reasoning with external evidence",
+      "llm_evidence_cn": "提出面向表格、文本和知识图谱等外部异构证据的接地推理基准与训练，并用反事实链评估顺序鲁棒性，直接匹配外部证据上的LLM推理",
+      "llm_evidence": "提出面向表格、文本和知识图谱等外部异构证据的接地推理基准与训练，并用反事实链评估顺序鲁棒性，直接匹配外部证据上的LLM推理",
+      "canonical_evidence": "提出面向表格、文本和知识图谱等外部异构证据的接地推理基准与训练，并用反事实链评估顺序鲁棒性，直接匹配外部证据上的LLM推理",
+      "llm_tldr_en": "Introduces TKFQA, a counterfactual grounded reasoning benchmark over tables, texts, and knowledge graphs, jointly evaluating answer correctness, reasoning-chain accuracy, and order robustness.",
+      "llm_tldr_cn": "大模型需要基于用户提供的多种异构知识进行多跳推理，但现有grounded问答评测较少检验推理链的事实一致性与顺序鲁棒性。论文提出TKFQA基准，包含10130个基于表格、文本和知识图谱构建的问答对，并显式构造反事实推理链，使答案正确性、推理链准确性和输入顺序鲁棒性可以联合评测。该任务可作为引导大模型在外部证据环境中稳定推理的评测与训练工具。",
+      "llm_tldr": "大模型需要基于用户提供的多种异构知识进行多跳推理，但现有grounded问答评测较少检验推理链的事实一致性与顺序鲁棒性。论文提出TKFQA基准，包含10130个基于表格、文本和知识图谱构建的问答对，并显式构造反事实推理链，使答案正确性、推理链准确性和输入顺序鲁棒性可以联合评测。该任务可作为引导大模型在外部证据环境中稳定推理的评测与训练工具。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.27036v1",
+      "source": "arxiv",
+      "title": "Reasoning about In-Context Samples for Machine-Translation",
+      "abstract": "Large Language Models (LLMs) can be trained to perform chain-of-thoughts reasoning in order to improve the reliability of their responses. In this work, we investigate how explicit reasoning can be leveraged for LLM-Based Machine Translation (MT) with in-context samples. We introduce a novel fragment-based reasoning framework in which the model first extracts parallel source-target fragments from retrieved similar exemplars, and uses these fragments as intermediate reasoning traces to produce the final translation. To train our model, we distill silver fragments and drafts from a large teacher model. Our experiments with the Qwen3 model family, over 6 languages, including up to 5 domains per language, demonstrate that fragment-based MT significantly outperforms alternative methods like standard k-shot or basic drafting.",
+      "authors": [
+        "Maxime Bouthors",
+        "Josep Crego",
+        "François Yvon"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-27T12:22:11+00:00",
+      "link": "https://arxiv.org/pdf/2608.27036v1",
+      "tags": [
+        "keyword:auto-prompt",
+        "query:auto-prompt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "explicit fragment-based reasoning over retrieved parallel exemplars as intermediate evidence for LLM output",
+      "llm_evidence_cn": "对检索到的相似示例进行片段级显式推理，将其作为中间证据链提升LLM生成的可靠性",
+      "llm_evidence": "对检索到的相似示例进行片段级显式推理，将其作为中间证据链提升LLM生成的可靠性",
+      "canonical_evidence": "对检索到的相似示例进行片段级显式推理，将其作为中间证据链提升LLM生成的可靠性",
+      "llm_tldr_en": "Fragment-based reasoning for LLM MT extracts parallel source-target fragments from retrieved exemplars and uses them as intermediate reasoning traces before final translation. Trained with silver fragments from a large teacher, experiments across six languages and multiple domains significantly outperform previous in-context methods.",
+      "llm_tldr_cn": "针对LLM机器翻译中检索到的上下文示例未得到充分显式利用、输出可靠性受限的问题，本文提出碎片化推理方法。模型先从与当前源句相似的已检索范例中抽取平行的源-目标语言片段，再利用这些片段作为中间推理轨迹生成最终翻译。作者用大型教师模型蒸馏出银级片段和草稿进行训练，在Qwen3模型族、6种语言和每语言最多5个领域上进行评测。结果表明基于片段的翻译方法显著优于已有上下文学习方法，为LLM中的外部证据推理提供了生成型任务范式。",
+      "llm_tldr": "针对LLM机器翻译中检索到的上下文示例未得到充分显式利用、输出可靠性受限的问题，本文提出碎片化推理方法。模型先从与当前源句相似的已检索范例中抽取平行的源-目标语言片段，再利用这些片段作为中间推理轨迹生成最终翻译。作者用大型教师模型蒸馏出银级片段和草稿进行训练，在Qwen3模型族、6种语言和每语言最多5个领域上进行评测。结果表明基于片段的翻译方法显著优于已有上下文学习方法，为LLM中的外部证据推理提供了生成型任务范式。",
+      "llm_tags": [
+        "query:auto-prompt"
+      ],
+      "matched_query_tag": "query:auto-prompt",
+      "matched_query_text": "large language model reasoning with external evidence",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

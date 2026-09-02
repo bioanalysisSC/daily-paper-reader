@@ -1,0 +1,409 @@
+{
+  "date": "20260804-20260902",
+  "date_label": "2026-08-04 ~ 2026-09-02",
+  "generated_at": "2026-09-02 05:15:02 UTC",
+  "recommend_exists": true,
+  "run_count": 1,
+  "papers": [
+    {
+      "paper_id": "2608.06292v1",
+      "route": "20260804-20260902/2608.06292v1-nesy-rag-neuro-symbolic-rag-for-explainable-question-answering",
+      "title": "NeSy-RAG: Neuro-Symbolic RAG for Explainable Question Answering",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "将检索证据转化为可归因的Prolog模块，使LLM对证据的推理可验证可解释",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.06714v1",
+      "route": "20260804-20260902/2608.06714v1-the-optimizer-is-the-agent-reasoning-driven-search-across-prompts-programs-and-ml-workflows",
+      "title": "The Optimizer Is the Agent: Reasoning-Driven Search across Prompts, Programs, and ML Workflows",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "智能体在推理过程中自主决定提示词模板的评估、编辑、验证与重启",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.06824v1",
+      "route": "20260804-20260902/2608.06824v1-control-anchored-residual-flow-matching-conditioned-on-gene-geometry-for-virtual-cell-perturbation-modeling",
+      "title": "Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "虚拟细胞建模预测单细胞转录扰动响应",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.09153v1",
+      "route": "20260804-20260902/2608.09153v1-trace-trajectory-attribution-for-automated-context-engineering",
+      "title": "TRACE: TRajectory Attribution for Automated Context Engineering",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "自动化上下文工程反馈环，诊断修复系统提示、知识库与工具描述等上下文源的故障",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.10471v1",
+      "route": "20260804-20260902/2608.10471v1-rlmopt-adaptive-prompt-optimization-via-recursive-language-models",
+      "title": "RLMOpt: Adaptive Prompt Optimization via Recursive Language Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "用递归语言模型智能体驱动的自适应提示优化，面向任务特定LLM推理",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.10676v1",
+      "route": "20260804-20260902/2608.10676v1-self-correcting-long-horizon-search-agents-via-tree-structured-memory",
+      "title": "Self-Correcting Long-Horizon Search Agents via Tree-Structured Memory",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "LLM搜索智能体用自纠正树状记忆保存带来源证据，支撑推理",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.16068v1",
+      "route": "20260804-20260902/2608.16068v1-capo-constraint-aware-prompt-optimization-for-llm-agents",
+      "title": "CAPO: Constraint-Aware Prompt Optimization for LLM Agents",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "面向LLM智能体的约束感知提示优化方法",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.16419v2",
+      "route": "20260804-20260902/2608.16419v2-pertmind-eliciting-emergent-biological-reasoning-in-llm-via-reinforcement-learning-on-cellular-perturbation-data",
+      "title": "PertMind: Eliciting Emergent Biological Reasoning in LLM via Reinforcement Learning on Cellular Perturbation Data",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "gene-perturb"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "在大语言模型中用细胞扰动图谱强化学习，以基因反应为奖励，实现未见细胞背景下的扰动响应推理",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.21074v1",
+      "route": "20260804-20260902/2608.21074v1-promptresponse-optimizing-prompts-for-llm-coding-tasks",
+      "title": "PromptResponse: Optimizing Prompts for LLM Coding Tasks",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "系统比较基线、JSON、Markdown、YAML和LLM调优提示对代码生成性能、效率和稳定性的影响，直接对应任务型提示优化",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.21349v1",
+      "route": "20260804-20260902/2608.21349v1-perturbrx-learning-treatment-conditioned-latent-transitions-for-patient-drug-response-prediction",
+      "title": "PerturbRx: Learning Treatment-Conditioned Latent Transitions for Patient Drug Response Prediction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "从对照和处理后的单细胞群体学习治疗条件潜在跃迁，用于患者药物反应预测",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.22014v1",
+      "route": "20260804-20260902/2608.22014v1-dynacontext-self-improving-dynamic-contextualization-of-optimized-prompts-for-heterogeneous-parameter-extraction",
+      "title": "DynaContext: Self-Improving Dynamic Contextualization of Optimized Prompts for Heterogeneous Parameter Extraction",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "推理时动态情境化提示",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.26386v1",
+      "route": "20260804-20260902/2608.26386v1-co-evolving-structured-knowledge-and-reasoning-in-language-models",
+      "title": "Co-Evolving Structured Knowledge and Reasoning in Language Models",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "协同构建结构化知识库并在推理中锚定外部知识",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.27266v1",
+      "route": "20260804-20260902/2608.27266v1-naive-prompt-optimization-rethinking-the-need-for-complex-prompt-search",
+      "title": "Naive Prompt Optimization: Rethinking the Need for Complex Prompt Search",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "提出用教师模型和回滚反馈进行单一谱系迭代的轻量提示优化方法，直接面向自动提示搜索与优化",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.29790v1",
+      "route": "20260804-20260902/2608.29790v1-hive-beyond-static-prompts-for-multitask-learning-via-hierarchy-based-vertical-mixture-of-experts",
+      "title": "HiVe: Beyond Static Prompts for Multitask Learning via Hierarchy-based Vertical Mixture-of-Experts",
+      "section": "deep",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 9.0,
+      "evidence": "推理时通过垂直混合专家按输入动态组合提示，实现推理中自适应提示模板",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.03154v1",
+      "route": "20260804-20260902/2608.03154v1-anchor-re-an-agentic-neuro-symbolic-framework-for-grounded-biomedical-relation-extraction",
+      "title": "ANCHOR-RE: An Agentic Neuro-Symbolic Framework for Grounded Biomedical Relation Extraction",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "将本体引导推理与外部知识锚定集成到LLM推理中，增强关系抽取的可依据性",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.04444v1",
+      "route": "20260804-20260902/2608.04444v1-d2f-reag-dynamic-decomposition-and-filtering-for-multi-hop-reasoning-augmented-generation",
+      "title": "D$^2$F-ReAG: Dynamic Decomposition and Filtering for Multi-Hop Reasoning-Augmented Generation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "检索增强生成中按可靠性动态分解推理并过滤多跳证据",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.05124v1",
+      "route": "20260804-20260902/2608.05124v1-chained-recursive-language-models-for-multi-iteration-reasoning",
+      "title": "Chained Recursive Language Models for Multi-Iteration Reasoning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "以精简状态代替完整历史反复调用模型的推理期上下文工程策略",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.07838v1",
+      "route": "20260804-20260902/2608.07838v1-counterfactual-benchmarking-and-training-for-factuality-consistency-and-order-robust-grounded-reasoning-in-llms-over-heterogeneous-knowledge",
+      "title": "Counterfactual Benchmarking and Training for Factuality Consistency and Order-Robust Grounded Reasoning in LLMs over Heterogeneous Knowledge",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 8.0,
+      "evidence": "提出面向表格、文本和知识图谱等外部异构证据的接地推理基准与训练，并用反事实链评估顺序鲁棒性，直接匹配外部证据上的LLM推理",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.04390v1",
+      "route": "20260804-20260902/2608.04390v1-edgelm-edge-demonstrations-for-language-models-table-understanding",
+      "title": "EdgeLM: Edge Demonstrations for Language Models' Table Understanding",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "检索决策边界示例以构建提示上下文，属上下文工程方法",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.09507v2",
+      "route": "20260804-20260902/2608.09507v2-learning-preference-adaptation-for-large-language-model-personalization-via-verbal-reinforcement-learning",
+      "title": "Learning Preference Adaptation for Large Language Model Personalization via Verbal Reinforcement Learning",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "面向任务的偏好摘要提炼保留决策证据，服务于个性化且精简的提示上下文",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.24082v1",
+      "route": "20260804-20260902/2608.24082v1-partab-partition-aware-reasoning-with-structured-evidence-for-scalable-table-understanding",
+      "title": "PARTAB: Partition-Aware Reasoning with Structured Evidence for Scalable Table Understanding",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "大表推理前先按区域结构化定位证据，用层级选取缩窄上下文",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.27036v1",
+      "route": "20260804-20260902/2608.27036v1-reasoning-about-in-context-samples-for-machine-translation",
+      "title": "Reasoning about In-Context Samples for Machine-Translation",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 7.0,
+      "evidence": "对检索到的相似示例进行片段级显式推理，将其作为中间证据链提升LLM生成的可靠性",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.06713v1",
+      "route": "20260804-20260902/2608.06713v1-molbiokg-grounding-out-of-graph-molecules-in-biomedical-knowledge-graphs-via-multi-resolution-structural-anchoring",
+      "title": "MolBioKG: Grounding Out-of-Graph Molecules in Biomedical Knowledge Graphs via Multi-Resolution Structural Anchoring",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "以多分辨率结构锚定检索未见分子在生物医学知识图谱中的证据邻域",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.08942v1",
+      "route": "20260804-20260902/2608.08942v1-same-question-different-answer-measuring-and-mitigating-prompt-privilege-for-equitable-ai-access",
+      "title": "Same Question, Different Answer? Measuring and Mitigating Prompt Privilege for Equitable AI Access",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "针对语义等价但表述不同导致的回答质量差异提出度量与缓解，可服务于鲁棒提示优化与上下文设计",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    },
+    {
+      "paper_id": "2608.22974v1",
+      "route": "20260804-20260902/2608.22974v1-toward-effective-and-reliable-llm-agents-via-dynamic-ontology",
+      "title": "Toward Effective and Reliable LLM Agents via Dynamic Ontology",
+      "section": "quick",
+      "tags": [
+        {
+          "kind": "query",
+          "label": "auto-prompt"
+        }
+      ],
+      "score": 6.0,
+      "evidence": "动态本体显式化领域概念与关系，改善语言代理的证据利用和多步推理",
+      "first_seen_at": "2026-09-02 05:15:02 UTC",
+      "updated_at": "2026-09-02 05:15:02 UTC"
+    }
+  ]
+}

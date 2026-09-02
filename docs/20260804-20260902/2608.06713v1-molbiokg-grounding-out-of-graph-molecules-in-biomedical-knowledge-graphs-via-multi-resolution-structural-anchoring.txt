@@ -1,0 +1,604 @@
+Title: MolBioKG: Grounding Out-of-Graph Molecules in Biomedical Knowledge Graphs via Multi-Resolution Structural Anchoring
+
+URL Source: https://arxiv.org/pdf/2608.06713v1
+
+Published Time: Mon, 10 Aug 2026 00:20:53 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+# MolBioKG: Grounding Out-of-Graph Molecules in Biomedical Knowledge Graphs via Multi-Resolution Structural Anchoring 
+
+## Yiming Zhang 1,2 , Hikaru Shindo 2,* , Shuan Chen 2, Kaushalya Madhawa 2, Jun Jin Choong 2,Yuna Oikawa 1,2 , Takashi Fujiwara 3,2 , Keisuke Ozawa 2,* 
+
+> 1
+
+The University of Tokyo 
+
+> 2
+
+SB Intuitions 
+
+> 3
+
+Department of AI Systems Medicine, Institute of Science Tokyo 
+
+> *
+
+{hikaru.shindo, keisuke.ozawa}@sbintuitions.co.jp 
+
+Abstract 
+
+Biomedical knowledge graphs (KGs) accelerate drug discov-ery, but standard pipelines assume query molecules already exist as graph entities, leaving unregistered molecules dis-connected. We address this cold-start challenge, termed the 
+
+out-of-graph molecule problem , by introducing MolBioKG. This two-layer system grounds unseen molecules in biomedi-cal evidence via multi-resolution structural anchoring. It con-nects an index of 2.74 million molecules (represented by scaf-folds, fragments, functional groups, and fingerprints) to a 9.6-million-edge KG. Given only a SMILES string, MolBioKG retrieves structurally related graph entities and traverses their biomedical neighborhoods without task-specific training. It features two inference mechanisms: static multi-anchor re-trieval using Reciprocal Rank Fusion, and Adapt-KG, a tool-using LLM policy for adaptive traversal. Evaluated across in-graph link recovery, complex multi-hop reasoning, and out-of-graph generalization, MolBioKG outperforms strong baselines. Notably, it raises Hits@10 from 0.585 to 0.876 in multi-hop reasoning and out-of-graph target recall from 0.145 to 0.269, all while ensuring predictions retain traceable struc-tural anchors and source-attributed KG evidence. 
+
+## Introduction 
+
+Large-scale biomedical knowledge graphs (KGs) are essen-tial for computational drug discovery, integrating diverse evidence across drugs, proteins, and diseases. By mapping biological relationships, these resources enable AI architec-tures, such as Graph Neural Networks (GNNs), Knowledge-Graph Embeddings (KGEs), and Large Language Models (LLMs), to achieve core objectives, such as drug repurposing, biomedical question answering, and link prediction. Foun-dational resources (e.g., Hetionet (Himmelstein et al. 2017), DRKG (Ioannidis et al. 2020), PrimeKG (Chandak, Huang, and Zitnik 2023), and RTX-KG2 (Wood et al. 2022)) make these pipelines highly effective (Bordes et al. 2013; Sun et al. 2019; Huang et al. 2024; Hu et al. 2026; Soman et al. 2024). However, a persistent limitation remains: these systems gen-erally assume the query molecule already exists in the graph. This dependency restricts multiple algorithmic paradigms. Transductive KGE models require a fixed training vocab-ulary, preventing direct scoring of unindexed molecules. Zero-shot reasoning models, such as TxGNN (Huang et al. 2024), generalize to unseen associations among graph-resident entities, not unregistered structures. Inductive meth-ods (GRAIL (Teru, Denis, and Hamilton 2020), UL-TRA (Galkin et al. 2024)) broaden generalization but still require inference-time relational context. Multimodal ap-proaches (BioBLP (Daza et al. 2023)) incorporate molecular features but remain confined to fixed KG schemas. Conse-quently, a valid molecule lacking a graph node and incident edges falls entirely outside standard inference capabilities. This architectural blind spot is increasingly problematic. Molecular generative models (Tang et al. 2024; Zhang et al. 2026), AI-enabled screening (Stokes et al. 2020), and lagging database curation cycles (Zdrazil et al. 2024; Hunter et al. 2025) routinely yield structures absent from KG snapshots. Consider foscarbidopa , a prodrug approved in October 2024 for Parkinson’s disease (Soileau et al. 2022). While its parent carbidopa has been characterized in KGs for decades (Wurt-man and Watkins 1977), a pre-2024 KG snapshot would com-pletely isolate foscarbidopa, even though both share nearly identical Bemis–Murcko scaffolds (Bemis and Murcko 1996) and BRICS fragments (Degen et al. 2008). We formulate this cold-start scenario as the out-of-graph molecule problem :
+
+how can a system connect a molecule to existing biomedical knowledge when it is not yet a registered graph entity? 
+
+Our approach relies on structural compositionality : even globally novel molecules consist of familiar, biologically characterized substructures. An unseen molecule may share a Bemis–Murcko scaffold, BRICS fragments, functional groups (Ertl 2017), or fingerprint environments (Rogers and Hahn 2010) with established compounds. Operating at vary-ing resolutions to structural shifts, these combined signals provide multiple complementary entry points from a raw SMILES string into an existing evidence base. Building on this insight, we present MolBioKG, a dual-layer architecture designed to ground out-of-graph molecules via multi-resolution structural anchoring (Figure 1(a)). In-stead of modifying underlying graph algorithms, MolBioKG uses a specialized molecular layer to map structural signa-tures to a comprehensive biomedical graph layer. By bridg-ing chemical and biological spaces through identifier equiv-alence, the system allows an unseen SMILES string to re-trieve well-characterized analogues and seamlessly traverse their graph neighborhoods to infer targets, indications, and effects. We provide two complementary inference mecha-nisms: a training-free retrieval pipeline for robust evidence aggregation, and Adapt-KG, an LLM-driven policy dynam-arXiv:2608.06713v1 [cs.AI] 7 Aug 2026 ically orchestrating structural retrieval and graph traversal without task-specific fine-tuning. We evaluate MolBioKG across three reasoning scenar-ios: (i) in-graph link recovery , masking known drug edges to benchmark retrieval against vocabulary-restricted GNNs; (ii) complex multi-hop reasoning , using a custom bench-mark (MolBioKG-KGQA) to test natural language bridging of molecular and biological data; and (iii) out-of-graph gen-eralization , predicting indications and targets for 199 post-2011 approved drugs. These tracks separate standard graph traversal from true cold-start discovery. Our primary contributions are as follows: 
+
+• We introduce MolBioKG, a novel framework that ad-dresses the out-of-graph molecule problem by bridging a large-scale, multi-resolution structural index with a com-prehensive biomedical KG. 
+
+• We develop two complementary reasoning pathways: a static multi-anchor retrieval system using Reciprocal Rank Fusion (RRF) (Cormack, Clarke, and Buettcher 2009), and Adapt-KG, an LLM-driven policy adaptively orchestrating structural retrieval and KG traversal tools. 
+
+• We introduce a rigorous three-track evaluation suite en-compassing in-graph masked-edge retrieval, cross-layer multi-hop question answering, and true out-of-graph an-notation for recently approved drugs. 
+
+• We empirically demonstrate the complementary strengths of our inference mechanisms. Adapt-KG improves multi-hop Hits@10 from 0.585 to 0.876 over the strongest non-adaptive baseline, while RRF raises out-of-graph LLM-judge recall over zero-shot from 0.186 to 0.239 for indi-cations and 0.145 to 0.269 for targets. 
+
+## Related Work 
+
+Biomedical KGs for drug discovery. Large biomedi-cal KGs, including Hetionet (Himmelstein et al. 2017), DRKG (Ioannidis et al. 2020), PrimeKG (Chandak, Huang, and Zitnik 2023), and RTX-KG2 (Wood et al. 2022), support KGE methods such as TransE (Bordes et al. 2013), Dist-Mult (Yang et al. 2015), and RotatE (Sun et al. 2019), as well as GNN systems such as TxGNN (Huang et al. 2024) and BioPathNet (Hu et al. 2026). LLM-based systems further use graph or provenance-structured retrieval to ground reasoning over domain knowledge (Soman et al. 2024; Zhang, Tamura, and Tsuda 2026). These approaches are effective when the query entities are available within the graph’s entity universe, but standard formulations do not directly address a molecule supplied only as a previously unseen chemical structure. 
+
+Generalization beyond training entities. Inductive KGE methods infer over entities not observed during train-ing by exploiting their test-time relational neighborhoods. GRAIL (Teru, Denis, and Hamilton 2020) reasons over en-closing subgraphs, while ULTRA (Galkin et al. 2024) trans-fers relational patterns across KGs. Multimodal approaches such as BioBLP (Daza et al. 2023) encode molecular struc-ture alongside graph context, and GenSPARC (Zhang et al. 2025) targets transfer across KG schemas. These methods re-lax the fixed-training-vocabulary assumption, but they gen-erally presuppose that the query entity is represented in an inference graph, accompanied by relational context or a reg-istered entity record. MolBioKG instead begins with a stan-dalone SMILES and constructs an evidence path through structurally related graph entities. 
+
+Generative molecules and post-generation annotation. 
+
+Generative models based on variational, autoregressive, and diffusion architectures can propose molecules outside cur-rent databases (Tang et al. 2024; Zhang et al. 2026). Their outputs must subsequently be connected to putative targets, indications, and safety evidence. Existing similarity search can identify close analogues, but it does not by itself organize heterogeneous biomedical relations or support multi-hop rea-soning. MolBioKG combines multi-resolution chemical re-trieval with an explicit biomedical KG, positioning structural analogues as auditable anchors. 
+
+## MolBioKG 
+
+Biomedical knowledge graphs (KGs) are limited to analyz-ing molecules already registered in their network, leaving newly discovered molecules disconnected. To overcome this cold-start problem, we leverage the chemical similarity prin-ciple. By identifying known, graph-resident drugs that share structural features with an unseen query molecule, we can transfer their established biological relationships to evaluate the new compound. Given a standalone molecular representation (e.g., aSMILES string q), MolBioKG finds structurally related molecules within the biomedical KG. As shown in Figure 1, a bridging index connects the molecular and biomedical layers. The retrieved molecules act as structural anchors , providing entry points into the graph. MolBioKG traverses from these anchors to gather and rank candidate evidence, such as targets and indications, for the new molecule. Crucially, MolBioKG ensures traceable hypothesis generation by treating the an-chors’ biological relationships as ranked candidate evidence rather than definitive clinical proof. 
+
+MolBioKG Architecture 
+
+To connect an unregistered molecule to existing biological knowledge, MolBioKG uses a decoupled, two-layer architec-ture. First, a molecular layer analyzes the new query’s chem-ical structure to retrieve similar, known molecules. Second, a biomedical layer provides the established biological rela-tionships (such as targets and indications) for those known entities. A bridge index maps the chemical identifiers to these biomedical nodes. This design allows the system to infer bi-ological evidence for a completely new molecule without needing it to be present in the underlying knowledge graph. 
+
+Molecular structure layer. This structural index locates out-of-graph queries using 2.74 million molecules mapped from RTX-KG2c. These structures originate from canon-ical registries, such as PubChem (Kim et al. 2025), ChEMBL (Zdrazil et al. 2024), and ChEBI (Degtyarenko et al. 2007). For robust retrieval, the layer indexes each molecule at multiple resolutions: Bemis–Murcko scaf-folds (Bemis and Murcko 1996) for the central framework, Noradren aline                 
+
+> 1Query 2Anchors & retrieved drugs on Molecular Graph 3Biomedical Knowledge Graph 4Predictions
+> ⊘not in KG
+> Foscarbidopa Noradrenaline Parkinson disease Glutamate Diastasis Carbidopa
+> AADC ✓
+> Parkinson disease ✓
+> Scaffold Fragment Functional Group Fingerprint
+> alpha-MSOP Carbidopa alpha-MSOP
+> Target Indication (disease)
+> Carbidopa
+> t1
+> hop drug → target?
+> t2
+> hop target → disease?
+> Single-pass
+> RRF
+> LLM-driven
+> Adapt-KG
+> Tool set — LLM selects
+> ✓
+> ✓
+> Cross-Layer Bridge
+> LLM
+> LLM
+> t3 · decide
+> ✓
+> Yes
+> No → Next turn t + 1
+> ✓Suggested by the LLM
+> What are the indications and targets for foscarbidopa?
+> Structural retrieval
+> ✓
+> Typed KG hops
+> Task :Connecting unregistered molecules to established biomedical networks.
+> ✓✓
+> e.g., Drug → Target All views
+> Enough
+> evidence?
+> Carbidopa AADC Foscarbidopa
+> Fragment Match Target Edge
+> Retains structural provenance Source-attributed KG evidence
+> 🔍 Traceable Evidence Path
+> Adrenergic Receptor AADC
+
+Figure 1: MolBioKG inference pipeline. (1) An out-of-graph query molecule is given. (2) Four structural anchors retrieve drug analogues, combined via two complementary mechanisms: static RRF fusion over all views, and Adapt-KG, an LLM-driven cross-layer bridge that selects typed KG tools. (3) The KG is traversed from these anchors, with Adapt-KG iterating over multiple turns until the LLM deems evidence sufficient. (4) Evidence across anchors is aggregated, where multi-anchor consensus strengthens a prediction, ensuring every final candidate is backed by a fully traceable structural and graph path. BRICS fragments (Degen et al. 2008) for substructures, functional groups (Ertl 2017) for broad characteristics, and ECFP4 fingerprints (Rogers and Hahn 2010) for local envi-ronments. These complementary views capture distinct as-pects of chemical similarity, recovering pharmacologically relevant anchors that a single representation might miss. 
+
+Biomedical evidence layer. This layer serves as the bi-ological ground truth for the system, storing established clinical and molecular relationships. To ensure that candi-date predictions are backed by empirical evidence rather than chemical similarity alone, we populate this layer using RTX-KG2c (Wood et al. 2022), a comprehensive biomedical knowledge graph that integrates over 70 public biological databases into a single standardized network. It is structured as a network of 12 drug-discovery-relevant node categories (e.g., drugs, diseases, genes, proteins) connected by specific predicates, such as drug–target and protein-interaction evi-dence. The resulting graph contains approximately 860,000 nodes and 9.6 million edges. 
+
+Cross-layer bridge. This component acts as the transla-tion mechanism between the chemical and biological do-mains. Because the two distinct layers rely on different iden-tifier systems, a retrieved structural analogue cannot natively query the biomedical graph. To resolve this, the bridge maps molecular-layer results to their corresponding biomedical en-tities using shared identifiers, universal chemical barcodes (matching InChIKeys), and explicit equivalence edges within the graph (RTX-KG2 same_as links). Isolating this trans-lation step ensures that the system safely grounds structural anchors without introducing new biological claims, keeping the overall architecture modular. See Supp. Sec. 1 for details. 
+
+Static Multi-Anchor Retrieval 
+
+To establish reliable entry points into the biomedical layer, this inference mechanism employs a static, multi-faceted re-trieval strategy. Because chemical similarity spans multi-ple scales, relying on a single structural representation often yields matches that are either too narrow to be useful or too broad to be accurate. To overcome this, MolBioKG pro-cesses an unseen query SMILES q by independently search-ing across four distinct structural views and aggregating the resulting anchors, ensuring a robust connection to the graph. 
+
+Structural anchor retrieval. To execute this search, the retrieval module evaluates graph-resident molecules against the query using four complementary dimensions of chemical similarity. Specifically, the Scaffold view favors molecules with the same core framework and falls back to broader ring-based matches. The Fragment view identifies molecules that share BRICS substructures while reducing the influence of very common fragments. The Functional group (FG) view compares the types and frequencies of chemical groups, and the Fingerprint (FP) view uses ECFP4 Tanimoto similar-ity to capture overall agreement across local atomic envi-ronments. Ties and residual ordering within a channel are further resolved using each candidate’s connectivity in the biomedical graph (See Supp. Sec. 5). 
+
+Rank fusion and evidence aggregation. Because the four views produce scores with different meanings, we com-bine their ranked lists rather than comparing their raw scores. We use Reciprocal Rank Fusion (RRF) (Cormack, Clarke, and Buettcher 2009), which gives more support to molecules that appear near the top of one or more lists: 
+
+RRF( a) = P   
+
+> r∈R 1
+> c+rank r(a)
+
+, where R is the set of avail-able rankings and c is a fixed offset. We exclude the query itself using canonical-SMILES and InChIKey checks. The highest-ranked anchors are then mapped through the bridge index, and their biomedical neighbors are collected as can-didate relations. Each candidate retains the supporting an-chor, structural score, KG predicate, and source record. This final aggregation step turns chemical similarity into trace-able biomedical evidence while preserving the distinction between an analogue and the query molecule. 
+
+Adapt-KG: LLM-Guided Graph Traversal 
+
+To answer complex biomedical queries requiring multi-hop reasoning, a system must dynamically compose evidence. Since static RRF’s fixed retrieval cannot navigate multi-hop reasoning chains, we introduce Adapt-KG. This agen-tic framework uses a pretrained Large Language Model (LLM) to dynamically orchestrate structural-retrieval and KG-traversal actions through sequential decision-making, re-quiring no parameter updates. At each turn, the LLM selects actions, observes evidence, and continues or answers. It uses four structural tools for out-of-graph queries to find entry points, and nine KG-hop tools for natural-language queries to compose evidence. Retaining exact graph identifiers ensures the final response explicitly cites its reasoning path (See Supp. Sec. 6). 
+
+Task-specific inference. For in-graph link recovery , static RRF directly ranks the biomedical entities collected from structural anchors, with no LLM in the loop. In out-of-graph generalization , evidence for a molecule with no biomedical annotations comes from either static RRF or Adapt-KG’s own retrieval loop; in both cases, an LLM synthesizes candidate targets, indications, or other properties from the resulting context. Finally, complex multi-hop reasoning uses typed traversal tools to connect relations across the molecular and biomedical layers, with Adapt-KG selecting and interleaving these tools for at most six turns, with KGQA policies, KGQA benchmark construction, and out-of-graph protocols detailed in Supp. Sec. 7, 9, and 11, respectively. 
+
+## Experiments 
+
+To evaluate MolBioKG, we design three experiments: In-graph link recovery compares retrieval against standard graph models using known drugs; Complex multi-hop reasoning 
+
+tests cross-layer evidence composition; and out-of-graph generalization evaluates the core cold-start challenge where queries lack biomedical annotations. 
+
+In-Graph Link Recovery 
+
+This experiment evaluates how well static structural retrieval can predict missing edges between known entities. The task is formulated as a ranking problem: given a test drug, the system must score and rank a vast pool of candidate nodes (e.g., all possible diseases or targets) to recover the drug’s true, held-out relations. To ensure a fair comparison with standard graph models, MolBioKG is restricted to using structural anchors from training drugs whose relations remain visible in the graph. Unlike the cold-start experiment, the query molecule is a known graph entity, allowing us to isolate retrieval performance under controlled conditions. 
+
+Tasks and generalization regimes. We define four spe-cific link prediction tasks spanning key drug-discovery de-cisions: predicting whether a drug could treat (T1) or is contraindicated in (T2) a disease (DrugCentral (Avram et al. 2023)), which protein the drug interacts with (T3; Drug-Bank (Knox et al. 2024), ChEMBL (Zdrazil et al. 2024), and DrugCentral), and whether the drug directionally in-creases or decreases a given pharmacological effect (T4; 58,261 object–direction labels from RTX-KG2c). We evalu-ate these tasks across four data splits to measure robustness to distribution shift: L1 is a standard random split; L2 withholds complete Bemis–Murcko scaffold groups from the training set; L3 withholds Butina clusters (Butina 1999); and L4 with-holds entire MONDO (Vasilevsky et al. 2025) disease areas for T1 and T2. Crucially, L1–L3 all perturb the chemical 
+
+novelty of the query drug (random, scaffold, and fingerprint-cluster holdouts on the drug side), whereas L4 holds the query chemistry in-distribution and instead withholds entire disease areas on the answer side. L4 therefore probes an or-thogonal generalization axis: whether structural anchoring recovers indications and contraindications for disease fami-lies unseen during training, rather than for chemically novel query molecules (See Supp. Sec. 2). 
+
+Baseline and metrics. We compare against TxGNN (Huang et al. 2024), a state-of-the-art graph foundation model for drug repurposing. Its zero-shot gen-eralization is over diseases within a fixed drug vocabulary, and as a transductive model it cannot score drugs outside that vocabulary. We therefore evaluate both methods on the intersection of test drugs with TxGNN’s vocabulary, ensuring a fair comparison on the same molecules. We report Hits@1, Hits@10, and mean reciprocal rank (MRR). 
+
+Complex Multi-Hop Reasoning 
+
+This experiment evaluates the system’s ability to answer complex, natural-language biomedical questions that span multiple domains. Unlike direct link prediction, these queries require multi-hop reasoning—the ability to dynamically chain together evidence across several different entity types (e.g., inferring shared molecular functional groups among drugs that treat a specific disease). We formulate this as a Question Answering (QA) task to test whether an LLM can navigate both the chemical and biological layers of the graph, comparing our adaptive traversal strategy (Adapt-KG) against baselines that rely on fixed retrieval plans. 
+
+Benchmark. To evaluate the multi-hop reasoning ca-pability, we construct MolBioKG-KGQA , a dataset of 460 complex questions spanning 2–5 reasoning hops. The questions are categorized into five path families that cross the molecular-biological boundary: Disease-to-Target, Target-to-Disease, Disease-to-Functional-Group, Target-Modulation-to-Functional-Group, and Functional-Group-to-Phenotype. To ensure linguistic variety, the phras-ing for each question is sampled from five human-written paraphrases. Because all questions and answers are rigor-ously instantiated from the frozen KG (with each query guar-anteeing at least three gold endpoints and five intermediate drugs), this benchmark explicitly measures a model’s ability Table 1: Static structural anchoring is highly competitive for missing link prediction. To establish this baseline, MolBioKG is evaluated against TxGNN, a state-of-the-art graph foundation model, on a shared entity vocabulary across four relation types (T1: indication, T2: contraindication, T3: target, T4: directional effect). Generalization is tested under random (L1), scaffold (L2), ECFP4-cluster (L3), and disease-area (L4) distribution shifts. Bold indicates the highest score per column.                                                                                                                     
+
+> L1 L2 L3 L4 Task Method H@1 H@10 MRR H@1 H@10 MRR H@1 H@10 MRR H@1 H@10 MRR T1 TxGNN (Huang et al. 2024) .542 .843 .656 .602 .847 .695 .618 .841 .700 .570 .859 .666 MolBioKG (ours) .660 .885 .750 .387 .794 .543 .563 .879 .679 .582 .875 .691
+> T2 TxGNN (Huang et al. 2024) .604 .727 .670 .690 .795 .746 .592 .715 .659 .717 .861 .790
+> MolBioKG (ours) .416 .812 .536 .246 .778 .395 .307 .709 .430 .472 .900 .602 T3 TxGNN (Huang et al. 2024) .235 .757 .402 .295 .780 .460 .293 .778 .452 ———MolBioKG (ours) .710 .855 .763 .320 .718 .465 .548 .773 .629 ———T4 TxGNN (Huang et al. 2024) .285 .748 .447 .302 .780 .468 .335 .753 .486 ———MolBioKG (ours) .739 .898 .802 .346 .865 .531 .607 .892 .708 ———
+
+to retrieve and compose graph evidence without relying on memorized clinical knowledge. See Supp. Sec. 9 for details. 
+
+Baselines and metrics. All retrieval-based methods use the same nine typed traversal tools, so the comparison iso-lates how evidence is selected and organized. Zero-shot uses no tools. RAG plans a small set of transitions and an-swers from flat retrieved context, whereas Graph-RAG (Edge et al. 2024) preserves typed and aggregate structure. Graph-CoT (Jin et al. 2024) chooses one transition at a time, and Think-on-Graph (Sun et al. 2024) maintains a beam of can-didate entities. Adapt-KG adaptively selects among the same tools. We report Hits@1/5/10, and entity-set macro-F1. Mol-only and Bio-only variants restrict access to one graph layer, testing whether successful reasoning depends on their con-nection (See Supp. Sec. 7). RRF and TxGNN are not in-cluded: RRF’s structural-similarity functions have no coun-terpart for the non-molecular entities (disease, gene) this benchmark starts from, and TxGNN has no natural-language interface and scores only fixed drug-disease pairs; its multi-hop paths are a post-hoc explanation via GraphMask edge-importance scoring of a precomputed prediction, not a mech-anism to compose evidence for a new query. 
+
+Out-of-Graph Generalization 
+
+The final experiment turns to the setting for which MolBioKG is primarily designed: annotating a molecule when its own graph record provides no biomedical relations. 
+
+Benchmark. The out-of-graph problem is best tested prospectively, on molecules the system could not have seen, rather than on a hand-curated holdout. We therefore impose a temporal cutoff: both the molecular and biomedical lay-ers are restricted to ChEMBL release 10 (June 2011), and evaluation drugs are drawn from compounds first approved afterward. This construction needs no manual leakage check, since a drug approved after the cutoff cannot appear in the pre-cutoff KG by definition. It yields 199 approved drugs (2012–2024), all confirmed absent from the 2011 snapshot at both the structural and biomedical level, with reference in-dications and targets (4.0 and 1.3 per drug on average) drawn directly from ChEMBL mechanism-of-action records, inde-pendent of the KG. See Supp. Sec. 11 for details. 
+
+Baselines and metrics. Zero-shot measures prediction from the SMILES alone, while Random Context controls for the effect of providing an equally formatted but structurally irrelevant candidate list. The four single-anchor strategies test each structural view independently. RRF combines all four rankings, and Adapt-KG chooses which views to consult. We additionally include Label Propagation, which removes the LLM synthesis step and predicts directly from RRF-weighted anchor votes. We report exact recall (Rec ex ) using normalized surface-form matching and LLM-judge recall (Rec llm ) for semanti-cally equivalent predictions. The former is deterministic but sensitive to naming differences; the latter is more tolerant to paraphrases but depends on the judge model. 
+
+Results 
+
+We report results in the same order as the three evaluation questions above. The first experiment establishes the behav-ior of static structural retrieval under controlled graph cover-age, the second evaluates adaptive composition over multiple hops, and the third tests genuine out-of-graph annotation. 
+
+In-Graph Link Recovery Comparison with TxGNN. MolBioKG provides strong broad-recall performance on graph-resident drugs, exceeding TxGNN in Hits@10 on 9 of the 14 comparable task–regime combinations (Table 1). The gains are most consistent for directional effects (T4), where MolBioKG leads under every available regime, and for indications (T1), where it leads un-der L1, L3, and L4. Contraindication recovery (T2) is more mixed: TxGNN achieves higher Hits@1 and MRR across all regimes, whereas MolBioKG yields higher Hits@10 under L1 and L4. Thus, while TxGNN ranks the correct contraindi-cation first more reliably, MolBioKG recovers a broader set of relevant candidates within the top ten. 
+
+Generalization under structural shift. Across regimes, comparative performance is strongly shaped by structural Scaffold BRICS FG FP FP+Scaf. FP+S+F All 0.0 0.2 0.4 0.6       
+
+> Score
+> 0.41 0.41
+> Individual Combination
+> H@1
+> Scaffold BRICS FG FP FP+Scaf. FP+S+F All 0.0 0.2 0.4 0.6
+> 0.66 0.68
+> Individual Combination
+> H@10
+> Scaffold BRICS FG FP FP+Scaf. FP+S+F All 0.0 0.2 0.4 0.6
+> 0.50 0.52
+> Individual Combination
+> MRR
+> L2 Scaffold hold-out L3 Cluster hold-out
+
+Figure 2: Combining multiple structural views provides complementary evidence that outperforms any single an-chor. Anchor ablation for indication recovery (T1) under scaffold (L2) and ECFP4-cluster (L3) holdouts ( K = 5 ). While Functional Group and Fingerprint perform strongly in individual regimes, fusing all views via RRF yields the high-est overall performance across different distribution shifts. Table 2: Adapt-KG outperforms existing graph-reasoning baselines on natural-language multi-hop questions. Per-formance on the MolBioKG-KGQA benchmark, where all tool-using methods share the same nine typed traversal tools and differ only in how they select transitions. The Mol-only and Bio-only variants act as layer-restriction ablations, show-ing that successful reasoning requires traversing both the molecular and biomedical domains (Best scores in bold). 
+
+Full KG Mol-only Bio-only Method H@1 H@5 H@10 F1 H@10 H@10 Zero-shot .059 .163 .196 .029 — —RAG .328 .385 .407 .259 .204 .396 Think-on-Graph .337 .470 .476 .165 .248 .389 Graph-CoT .435 .570 .585 .332 .133 .298 Graph-RAG .454 .557 .583 .298 .000 .394 Adapt-KG .776 .872 .876 .570 .180 .628 
+
+distribution shift. In particular, removing exact scaffold over-lap (L2) represents the most challenging setting for Mol-BioKG: TxGNN leads on T1, T2, and T3 because struc-tural retrieval must rely on less specific fragment, functional-group, and fingerprint evidence. However, performance re-covers under ECFP4-cluster holdout (L3) for T1 and T4, where clustering by fingerprint similarity, unlike scaffold holdout, does not prevent a test drug from sharing its exact scaffold with training data (Detailed results in Supp. Sec. 3). 
+
+Fusing structural views is complementary. These regime-dependent variations highlight why combining multi-ple structural representations is essential. Our ablation analy-sis confirms that the four structural views contribute comple-mentary evidence across distinct shifts (Figure 2). Functional Group serves as the strongest individual view under scaffold shift (L2), whereas Fingerprint performs best under cluster shift (L3), demonstrating that no single feature family dom-inates both regimes. Fusing all four views yields the highest overall performance throughout, reaching Hits@1 of 0.408 Table 3: Fusing structural anchors yields the highest out-of-graph annotation recall. Performance is evaluated using gpt-oss-120b, reporting mean ±std over 3 runs. The com-bined RRF strategy consistently outperforms single-anchor views and baseline contexts (Best scores in bold).                                          
+
+> Exact Recall (Rec ex )LLM-Judge Recall (Rec llm )Strategy Ind. Tgt. Ind. Tgt. Zero-shot (no KG) 0.085 ±0.003 0.144 ±0.016 0.186 ±0.006 0.145 ±0.016 Random Context 0.086 ±0.006 0.114 ±0.017 0.181 ±0.009 0.115 ±0.016 Label Propagation 0.038 ±0.000 0.156 ±0.000 0.105 ±0.000 0.161 ±0.000 Fingerprint (FP) 0.105 ±0.003 0.206 ±0.008 0.221 ±0.013 0.208 ±0.009 Scaffold 0.115 ±0.008 0.184 ±0.008 0.208 ±0.009 0.186 ±0.009 BRICS Fragment 0.116 ±0.007 0.215 ±0.010 0.215 ±0.006 0.219 ±0.010 Funct. Group (FG) 0.119 ±0.002 0.211 ±0.013 0.223 ±0.003 0.212 ±0.012 RRF 0.125 ±0.003 0.266 ±0.008 0.239 ±0.005 0.269 ±0.009
+> Adapt-KG 0.123 ±0.006 0.216 ±0.014 0.232 ±0.009 0.218 ±0.015
+
+under L2 and 0.414 under L3. The benefit of RRF therefore stems from integrating distinct structural relationships rather than repeatedly measuring a single similarity signal. 
+
+Complex Multi-Hop Reasoning Adaptive traversal drives reasoning gains. When eval-uating complex multi-hop queries, adaptive graph traver-sal proves essential for effective evidence synthesis. Adapt-KG achieves the top performance on MolBioKG-KGQA, reaching 0.876 Hits@10 and 0.570 macro-F1 (Table 2). By comparison, the strongest non-adaptive policy, Graph-CoT, reaches only 0.585 Hits@10 and 0.332 macro-F1, while even flat RAG, the least structured of the tool-using poli-cies, already exceeds Zero-shot across every full-KG metric, roughly doubling its Hits@10 (0.407 vs. 0.196). Merely re-trieving larger volumes of entities is therefore insufficient; the primary advantage stems from dynamically selecting transi-tions aligned with the question’s specific entity types and preserving the resulting evidence path. 
+
+Chemical and biological layers act synergistically. Be-yond traversal strategy, successful multi-hop reasoning de-pends heavily on the synergy between chemical and bio-logical information. Restricting access to either individual graph layer significantly reduces performance relative to the integrated full graph, for every method. Under Mol-only restriction, Think-on-Graph is the most robust pol-icy (0.248 Hits@10), ahead of Adapt-KG (0.180); under Bio-only restriction, Adapt-KG remains the strongest policy (0.628 Hits@10). Both single-layer outcomes for Adapt-KG fall well short of its 0.876 full-KG baseline. These compar-isons highlight the critical value of cross-layer connectivity, though they should be interpreted as layer-restriction tests since withholding a layer also removes its evidence. Addi-tional backbones are compared in Supp. Sec. 13. 
+
+Out-of-Graph Generalization Structural relevance drives out-of-graph recovery. 
+
+While the preceding evaluations demonstrate effective ev-idence synthesis for established graph entities, out-of-graph generalization directly assesses whether MolBioKG can gen-erate actionable, traceable biomedical annotations for unreg-istered compounds. In this strict cold-start regime, we inter-Table 4: Retrieved structural anchors enable novel biomedical synthesis beyond direct copying. Attribution and Novel Recall for out-of-graph annotation. Novel Recall evaluates recovery of gold entities absent from retrieved con-text. n represents the mean number of target entities. Strategy KG-Attr. Novel Ind. Rec. ( n) Novel Tgt. Rec. ( n)Zero-shot (no KG) 0.000 0.085 (199) 0.144 (199) Random Context 0.045 0.067 (199) 0.106 (194) Fingerprint (FP) 0.182 0.088 (197) 0.152 (183) Scaffold 0.023 0.111 (199) 0.163 (194) BRICS Fragment 0.087 0.108 (199) 0.168 (188) Funct. Group (FG) 0.052 0.113 (199) 0.193 (194) RRF 0.200 0.106 (197) 0.199 (181) Adapt-KG 0.118 0.113 (197) 0.174 (182) pret the reported recall metrics as evidence-backed candidate recovery against reference indications and targets, measuring structural retrieval quality rather than a definitive confirma-tion of biological validity. Providing additional entities is not sufficient unless they are structurally related to the query. Random Context reaches only 0.181 indication and 0.115 target Rec llm , both below Zero-shot at 0.186 and 0.145 (Ta-ble 3). RRF gives the strongest recovery on every column, reaching 0.239 indication and 0.269 target Rec llm (0.125 and 0.266 Rec ex ), ahead of every single-anchor view. The single Fingerprint (FP) anchor is functionally analogous to classi-cal ECFP4–Tanimoto similarity search, serving as a classical chemoinformatics reference point. RRF surpasses it on every column (0.269 vs. 0.208 target Rec llm ), showing that fusing structural resolutions recovers annotations single-fingerprint search alone misses. Fusing structural views is therefore the more reliable strategy once evaluation is anchored to a gen-uine temporal cutoff, where no candidate can share an exact pre-cutoff structure with the query. 
+
+LLM synthesis adds value beyond anchor voting. While static RRF provides strong structural anchors, directly pre-dicting from them is insufficient. A Label Propagation base-line, which bypasses the LLM and votes directly on the RRF-fused anchors, reaches only 0.038 exact indication recall and 0.156 exact target recall. By contrast, allowing the LLM to synthesize an answer from the exact same retrieved evidence boosts performance to 0.125 and 0.266, respectively. This substantial gap, particularly for indications, highlights that the LLM contributes far more than simple output formatting; it actively reconciles diverse nomenclatures and integrates evidence spanning several retrieved anchors. 
+
+Gains reflect genuine synthesis rather than verbatim ex-traction. While the LLM actively integrates retrieved evi-dence, its success is not driven merely by copying entities in the context window. We demonstrate this using Novel Recall ,which restricts evaluation to gold entities absent from the re-trieved context. Under this metric, RRF maintains a strong advantage over Random Context for both indications (0.106 vs. 0.067) and targets (0.199 vs. 0.106) (Table 4). Across the individual strategies, RRF secures the highest Novel Tar-get Recall, whereas Functional Group and Adapt-KG tie for the highest Novel Indication Recall at 0.113. This demon-strates that structurally retrieved anchors provide essential context that supports genuine biomedical synthesis, rather than surface-level entity repetition. 
+
+Reasoning complexity dictates the optimal inference strategy. Comparing the two inference mechanisms re-veals that they excel in different contexts. For this focused annotation task, static RRF outperforms Adapt-KG, which reaches 0.232 indication and 0.218 target Rec llm despite re-quiring more inference steps. In multi-hop KGQA, an op-posite pattern emerges: Adapt-KG benefits from dynami-cally choosing typed transitions as the evidence path un-folds. These results indicate that static fusion is the stronger default when a task primarily requires relevant structural ev-idence, whereas adaptive traversal is essential for composi-tional questions. See Supp. Sec. 12 for additional backbones. 
+
+Case studies validate multi-resolution fusion and se-mantic evaluation. Tracing individual molecules through their retrieved analogues reveals why no single structural view is uniformly reliable. For example, Ensartinib has no scaffold match, yet BRICS identifies substructures shared with Crizotinib and recovers relevant ALK evidence (See Supp. Sec. 15). Conversely, other cases demonstrate finger-prints capturing broader similarity when exact local struc-tures do not match. Alongside these structural variations, disease synonyms and ontology granularity often obscure true performance under rigid metrics (See Supp. Sec. 14). Overall, these observations validate our dual approach: fus-ing multiple structural resolutions for robust retrieval, and using semantic recall to accurately measure it. 
+
+## Conclusion 
+
+Before concluding, we note a few limitations. MolBioKG’s performance decreases when query molecules lack exact scaffold overlap with known entities, and its true accuracy can occasionally be obscured by rigid evaluation metrics. Future work could address these constraints by integrating more flexible structural embeddings and nuanced semantic evaluation paradigms. To conclude, we introduced MolBioKG to resolve the out-of-graph molecule problem by grounding unregistered com-pounds within biomedical knowledge graphs. By integrat-ing multi-resolution structural anchors with source-attributed graph evidence, it bridges novel chemical structures and es-tablished biological knowledge without retraining models. Our evaluations demonstrate the complementary strengths of MolBioKG’s dual inference mechanisms. Static rank fu-sion consistently outperforms state-of-the-art graph models in link recovery, while LLM-guided adaptive traversal nearly doubles retrieval accuracy for complex multi-hop reasoning. Crucially, on a strict temporal hold-out of recently approved drugs, the system substantially elevates out-of-graph recall for both indications and targets. Overall, MolBioKG trans-forms isolated molecular structures into traceable candidate evidence, establishing a transparent and scalable foundation for AI-driven drug discovery. References 
+
+Avram, S.; Wilson, T. B.; Curpan, R.; Halip, L.; Borota, A.; Bora, A.; Bologa, C. G.; Holmes, J.; Knockel, J.; Yang, J. J.; et al. 2023. DrugCentral 2023 extends human clinical data and integrates veterinary drugs. Nucleic acids research ,51(D1): D1276–D1287. Bemis, G. W.; and Murcko, M. A. 1996. The properties of known drugs. 1. Molecular frameworks. Journal of Medici-nal Chemistry , 39(15): 2887–2893. Bordes, A.; Usunier, N.; Garcia-Duran, A.; Weston, J.; and Yakhnenko, O. 2013. Translating Embeddings for Modeling Multi-relational Data. In Proceedings of the Conference on Advances in Neural Information Processing Systems .Butina, D. 1999. Unsupervised data base clustering based on daylight’s fingerprint and Tanimoto similarity: A fast and automated way to cluster small and large data sets. Journal of Chemical Information and Computer Sciences , 39(4): 747– 750. Chandak, P.; Huang, K.; and Zitnik, M. 2023. Building a knowledge graph to enable precision medicine. Scientific Data , 10: 67. Cormack, G. V.; Clarke, C. L. A.; and Buettcher, S. 2009. Reciprocal rank fusion outperforms condorcet and individual rank learning methods. In Proceedings of the International ACM SIGIR Conference on Research and Development in Information Retrieval .Daza, D.; Alivanistos, D.; Mitra, P.; Pijnenburg, T.; Cochez, M.; and Groth, P. 2023. BioBLP: a modular framework for learning on multimodal biomedical knowledge graphs. 
+
+Journal of Biomedical Semantics , 14(1): 20. Degen, J.; Wegscheid-Gerlach, C.; Zaliani, A.; and Rarey, M. 2008. On the art of compiling and using ‘drug-like’ chemical fragment spaces. ChemMedChem , 3(10): 1503–1507. Degtyarenko, K.; De Matos, P.; Ennis, M.; Hastings, J.; Zbinden, M.; McNaught, A.; Alcántara, R.; Darsow, M.; Guedj, M.; and Ashburner, M. 2007. ChEBI: a database and ontology for chemical entities of biological interest. Nucleic acids research , 36(suppl_1): D344–D350. Edge, D.; Trinh, H. T.; Cheng, N.; Bradley, J.; Chao, A.; Mody, A.; Truitt, S.; and Larson, J. 2024. From Local to Global: A Graph RAG Approach to Query-Focused Summa-rization. arXiv preprint arXiv:2404.16130 .Ertl, P. 2017. An algorithm to identify functional groups in organic molecules. Journal of cheminformatics , 9(1): 36. Galkin, M.; Yuan, X.; Mostafa, H.; Tang, J.; and Zhu, Z. 2024. Towards Foundation Models for Knowledge Graph Reasoning. In Proceedings of the International Conference on Learning Representations .Himmelstein, D. S.; Lizee, A.; Hessler, C.; Brueggeman, L.; Chen, S. L.; Hadley, D.; Green, A.; Khankhanian, P.; and Baranzini, S. E. 2017. Systematic integration of biomedi-cal knowledge prioritizes drugs for repurposing. eLife , 6: e26726. Hu, E. Y.; Oleshko, S.; Firmani, S.; Cheng, H.; Zhu, Z.; Ulmer, M.; Arnold, M.; Colomé-Tatché, M.; Tang, J.; Xhon-neux, S.; and Marsico, A. 2026. Enhancing link prediction in biomedical knowledge graphs with BioPathNet. Nature Biomedical Engineering .Huang, K.; Chandak, P.; Wang, Q.; Havaldar, S.; Vaid, A.; Leskovec, J.; Nadkarni, G. N.; Glicksberg, B. S.; Gehlen-borg, N.; and Zitnik, M. 2024. A foundation model for clinician-centered drug repurposing. Nature Medicine , 30: 3601–3613. Hunter, F. M.; Ioannidis, H.; Bento, A. P.; Bosc, N.; Corbett, S.; Felix, E.; Magarinos, M. P.; Manners, E.; Smit, I. A.; de Veij, M.; et al. 2025. Drug and Clinical Candidate Drug Data in ChEMBL. Journal of Medicinal Chemistry , 68(19): 19800–19827. Ioannidis, V. N.; Song, X.; Manchanda, S.; Li, M.; Pan, X.; Zheng, D.; Ning, X.; Zeng, X.; and Karypis, G. 2020. DRKG: Drug Repurposing Knowledge Graph for COVID-19. Technical report, GitHub. Available at: https://github.c om/gnn4dr/DRKG. Jin, B.; Xie, C.; Zhang, J.; Roy, K. K.; Zhang, Y.; Li, Z.; Li, R.; Tang, X.; Wang, S.; Meng, Y.; et al. 2024. Graph chain-of-thought: Augmenting large language models by reasoning on graphs. In Findings of the Association for Computational Linguistics: ACL 2024 .Kim, S.; Chen, J.; Cheng, T.; Gindulyte, A.; He, J.; He, S.; Li, Q.; Shoemaker, B. A.; Thiessen, P. A.; Yu, B.; et al. 2025. PubChem 2025 update. Nucleic acids research , 53(D1): D1516–D1525. Knox, C.; Wilson, M.; Klinger, C. M.; Franklin, M.; Oler, E.; Wilson, A.; Pon, A.; Cox, J.; Chin, N. E.; Strawbridge, S. A.; et al. 2024. DrugBank 6.0: the DrugBank knowledgebase for 2024. Nucleic acids research , 52(D1): D1265–D1275. Rogers, D.; and Hahn, M. 2010. Extended-connectivity fin-gerprints. Journal of Chemical Information and Modeling ,50(5): 742–754. Soileau, M. J.; Aldred, J.; Budur, K.; Fisseha, N.; Fung, V. S.; Jeong, A.; Kimber, T. E.; Klos, K.; Litvan, I.; O’Neill, D.; Robieson, W. Z.; Spindler, M. A.; Talapala, S.; Vaou, E. O.; Zheng, H.; Facheris, M. F.; and Hauser, R. A. 2022. Safety and efficacy of continuous subcutaneous foslevodopa-foscarbidopa in patients with advanced Parkinson’s disease: a randomised, double-blind, active-controlled, phase 3 trial. 
+
+The Lancet Neurology , 21(12): 1099–1109. Soman, K.; Rose, P. W.; Morris, J. H.; Akbas, R. E.; Smith, B.; Peetoom, B.; Villouta-Reyes, C.; Cerono, G.; Shi, Y.; Rizk-Jackson, A.; Israni, S.; Nelson, C. A.; Huang, S.; and Baranzini, S. E. 2024. Biomedical knowledge graph-optimized prompt generation for large language models. 
+
+Bioinformatics , 40(9): btae560. Stokes, J. M.; Yang, K.; Swanson, K.; Jin, W.; Cubillos-Ruiz, A.; Donghia, N. M.; MacNair, C. R.; French, S.; Carfrae, L. A.; Bloom-Ackerman, Z.; Tran, V. M.; Chiappino-Pepe, A.; Badran, A. H.; Andrews, I. W.; Chory, E. J.; Church, G. M.; Brown, E. D.; Jaakkola, T. S.; Barzilay, R.; and Collins, J. J. 2020. A deep learning approach to antibiotic discovery. Cell , 180(4): 688–702. Sun, J.; Xu, C.; Tang, L.; Wang, S.; Lin, C.; Gong, Y.; Ni, L.; Shum, H.-Y.; and Guo, J. 2024. Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowl-edge Graph. In Proceedings of the International Conference on Learning Representations .Sun, Z.; Deng, Z.-H.; Nie, J.-Y.; and Tang, J. 2019. Ro-tatE: Knowledge Graph Embedding by Relational Rotation in Complex Space. In Proceedings of the International Con-ference on Learning Representations .Tang, X.; Dai, H.; Knight, E.; Wu, F.; Li, Y.; Li, T.; and Gerstein, M. 2024. A survey of generative AI for de novo drug design: new frontiers in molecule and protein generation. 
+
+Briefings in Bioinformatics , 25(4): bbae338. Teru, K. K.; Denis, E.; and Hamilton, W. L. 2020. Inductive Relation Prediction by Subgraph Reasoning. In Proceedings of the International Conference on Machine Learning .Vasilevsky, N. A.; Toro, S.; Matentzoglu, N.; Flack, J. E.; Mullen, K. R.; Hegde, H.; Gehrke, S.; Whetzel, P. L.; Shwe-tar, Y.; Harris, N. L.; et al. 2025. Mondo: Integrating disease terminology across communities. Genetics , iyaf215. Wood, E. C.; Glen, A. K.; Kvarfordt, L. G.; Womack, F.; Acevedo, L.; Yoon, T. S.; Ma, C.; Flores, V.; Sinha, M.; Chodpathumwan, Y.; Termehchy, A.; Roach, J. C.; Mendoza, L.; Hoffman, A. S.; Deutsch, E. W.; Koslicki, D.; and Ramsey, S. A. 2022. RTX-KG2: a system for building a semantically standardized knowledge graph for translational biomedicine. 
+
+BMC Bioinformatics , 23: 400. Wurtman, R. J.; and Watkins, C. J. 1977. Suppression of noradrenaline synthesis in sympathetic nerves by car-bidopa, an inhibitor of peripheral dopa decarboxylase. Na-ture , 265(5589): 79–80. Yang, B.; Yih, W.-t.; He, X.; Gao, J.; and Deng, L. 2015. Embedding Entities and Relations for Learning and Inference in Knowledge Bases. In Proceedings of the International Conference on Learning Representations .Zdrazil, B.; Felix, E.; Hunter, F.; Manners, E. J.; Blackshaw, J.; Corbett, S.; De Veij, M.; Ioannidis, H.; Lopez, D. M.; Mosquera, J. F.; et al. 2024. The ChEMBL Database in 2023: a drug discovery platform spanning multiple bioactivity data types and time periods. Nucleic acids research , 52(D1): D1180–D1192. Zhang, Y.; Choong, J. J.; Madhawa, K.; and Ozawa, K. 2026. AutoLead: An LLM-Guided Bayesian Optimization Frame-work for Multi-Objective Lead Optimization. Journal of Chemical Information and Modeling , 66(9): 5091–5100. Zhang, Y.; Ishitani, R.; Takemoto, M.; and Tomita, A. 2025. Generalizable compound protein interaction prediction with a model incorporating protein structure aware and compound property aware language model representations. Communi-cations Chemistry .Zhang, Y.; Tamura, R.; and Tsuda, K. 2026. ProvMind: Provenance-grounded reasoning for materials synthesis. 
+
+arXiv preprint arXiv:2605.28487 .MolBioKG: Supplementary Material 
+
+This supplement is organized around three goals. Sec-tions 1, 5, and 6 describe how MolBioKG is constructed and how its static multi-anchor retrieval and Adapt-KG policy are implemented. Sections 2, 7, 9, and 11 define the three evalua-tion settings, their protocols, and comparison baselines. The remaining sections provide complete results and ablations, inference-cost analyses, robustness experiments, normaliza-tion studies, and qualitative examples that complement the main paper. 
+
+## 1 MolBioKG Construction 
+
+This section explains how the two-layer knowledge system is constructed. The biomedical layer provides source-attributed biological and clinical relations, the molecular layer makes chemical structures searchable at multiple resolutions, and the bridge index connects equivalent molecule records across the two layers. 
+
+1.1 Biomedical Layer 
+
+The biomedical layer supplies the relations used to sup-port candidate answers. We derive it from RTX-KG2c v2.10.0 (Wood et al. 2022), retaining the 12 drug-discovery-relevant node categories and the eight relation types sum-marized in Table S1. We call a node bio-annotated when it participates in at least one of these relations. This defi-nition determines whether a molecular record can provide biomedical evidence after cross-layer mapping. 
+
+1.2 Molecular Layer 
+
+The molecular layer provides several ways to locate ana-logues when the query itself has no biomedical record. It contains 2.74 million molecules whose SMILES originate primarily from PubChem, ChEMBL, and ChEBI records in RTX-KG2c. We represent each molecule through four com-plementary structural views: 
+
+• Scaffold. RDKit computes each molecule’s Bemis– Murcko scaffold, and molecules with the same canonical scaffold SMILES share a scaffold node. A coarser generic scaffold is obtained by replacing atom and bond types with generic carbon and single-bond representations and removing aromaticity. This representation provides a fall-back when no other molecule shares the exact decorated scaffold. 
+
+• BRICS fragment. Each molecule is decomposed into BRICS fragments, and molecules containing the same canonical fragment share a fragment node. For every frag-ment f , we record the number of indexed molecules con-taining it as cf ; this document frequency is used to reduce the influence of ubiquitous fragments during ranking. 
+
+• Functional group. We use all 85 functional-group de-scriptors provided by RDKit rather than selecting pat-terns manually. Molecules share a functional-group node whenever the corresponding descriptor has a nonzero count, while the count itself is retained for similarity scor-ing. 
+
+• Fingerprint. An ECFP4 fingerprint (Morgan radius 2; 2,048 bits) is computed for every molecule. Unlike the other views, a fingerprint supports direct pairwise Tani-moto comparison and therefore does not require an inter-vening structure node. 
+
+1.3 Bridge Index 
+
+The bridge index allows a structurally retrieved molecule to reach biomedical evidence even when the two layers use dif-ferent identifiers. For every molecular-layer entity, we iden-tify all equivalent bio-annotated entities by applying the fol-lowing matching rules in order: 1. direct identifier match. both layers already use the same identifier, as for shared ChEBI entries. 2. declared equivalence. Records from different names-paces, such as PubChem and DrugBank, are connected via an RTX-KG2 biolink:same_as relation. 3. InChIKey. the molecule’s SMILES is converted to an InChIKey with RDKit; a bio-annotated entity with the same InChIKey is treated as an equivalent molecular record. We retain both the matched entity and the rule that estab-lished the equivalence. Retrieval and traversal use this map-ping before entering the biomedical layer, so an anchor with no biomedical relations of its own can still reach evidence attached to an equivalent record. Because the bridge is main-tained separately from both layers, either layer can be re-placed or updated without changing the representation of the other. 
+
+## 2 In-Graph Link Recovery: Benchmark Construction 
+
+This benchmark evaluates whether structural anchors can recover biomedical relations that have been hidden from oth-erwise known drug entities. It separates the definition of each task from the masking protocol and the generalization regime, making clear which evidence remains available at evaluation time. 
+
+2.1 Tasks and Candidate Spaces 
+
+Table S2 specifies the predicates, evidence sources, and can-didate spaces used in the four masked-edge retrieval tasks. T1 and T2 use source-restricted edges from DrugCentral; T3 uses source-restricted edges from DrugBank, ChEMBL, and DrugCentral; T4 uses directional affects edges from the frozen RTX-KG2c snapshot. 
+
+2.2 Masking and Evaluation Protocol 
+
+For each task and generalization regime, evaluation proceeds as follows: 1. Drugs are partitioned into training and test sets according to the regime defined below. 2. For every test drug, the task-relevant outgoing biomed-ical edges are removed from the evaluation graph. The corresponding edges of training drugs remain available as retrieval evidence. Table S1: Biomedical relation types retained for retrieval, bridging, and evaluation. 
+
+Biolink relation Role in MolBioKG 
+
+treats_or_applied_or_studied_to_treat Treatment and indication evidence 
+
+physically_interacts_with ; directly_physically_interacts_with Drug–target interaction evidence 
+
+contraindicated_in Contraindication evidence 
+
+causes Causal and adverse-effect evidence 
+
+affects Directional pharmacological effects 
+
+gene_associated_with_condition Gene–disease associations 
+
+biomarker_for Biomarker relations 
+
+Table S2: Masked-edge task definitions. T4 candidates are composite labels ⟨object | direction ⟩, where direction is increased 
+
+or decreased .Task Evaluated relation Gold-edge source Candidate space Regimes T1: Indication treats_or_applied_or_studied_to_treat DrugCentral Disease and phenotype nodes L1–L4 T2: Contraindication contraindicated_in DrugCentral Objects of contraindicated_in L1–L4 T3: Drug–target affects , physically_interacts_with , directly_physically_interacts_with DrugBank, ChEMBL, DrugCentral Gene and protein nodes L1–L3 T4: Directional effect affects with a direction annotation RTX-KG2c 58,261 object–direction pairs L1–L3 3. The query drug is mapped to structural anchors among the unmasked molecules. Candidate endpoints are collected only through the anchors’ retained biomedical relations; the held-out endpoints of the query drug are not directly accessible. 4. The ranking pool contains the gold endpoints and 99 negatives sampled from the task-specific candidate space. Negative sampling is seeded by the query-drug identifier and is therefore deterministic across methods. The reported metrics are Hits@1, Hits@10, and mean reciprocal rank (MRR). Query molecules are excluded from their own anchor sets by canonical-SMILES and InChIKey matching. 
+
+2.3 Generalization Regimes 
+
+The four regimes test different forms of generalization. L1 measures performance under a random split, L2 and L3 intro-duce increasingly different structural neighborhoods, and L4 evaluates transfer across disease areas rather than chemical novelty. 
+
+• L1 (random): drugs are randomly split into 80% training and 20% test sets. Close structural neighbors may remain across the split. 
+
+• L2 (scaffold holdout): complete Bemis–Murcko scaffold groups are assigned to one split, so a test drug cannot share its exact scaffold with a training drug. 
+
+• L3 (ECFP4-cluster holdout): drugs are grouped by greedy Butina clustering over ECFP4 similarities at threshold τ = 0 .4, and complete clusters are assigned to one split. This creates a fingerprint-level distribution shift, but does not impose scaffold disjointness or a strict pairwise similarity bound on every training–test pair. 
+
+• L4 (disease-area holdout; T1/T2 only): complete MONDO disease areas are withheld. L4 measures trans-fer across therapeutic areas rather than structural novelty. 
+
+## 3 Masked-Edge Coverage and Complete Results 
+
+3.1 Evaluation-Set Statistics 
+
+Table S3 reports the complete evaluatable test-set size and gold-label counts. The TxGNN comparison in the main paper is restricted to drugs represented in the TxGNN vocabulary; Table S4 reports this overlap for L1. 
+
+3.2 Complete-Set Performance 
+
+Table S5 reports MolBioKG on every evaluatable drug, with-out restricting the test set to the TxGNN vocabulary. These values are complementary to the controlled overlap compar-ison in the main paper and should not be compared directly across different test-set scopes. Table S6 shows the effect of evaluation scope at L1. The overlap rows reproduce the controlled comparison in the main paper; the complete rows evaluate MolBioKG on all available test drugs. 
+
+## 4 Retrieval Strategy Ablation 
+
+This ablation tests whether the four structural views provide complementary evidence or merely duplicate one another. We fix the retrieval budget at K = 5 for every enabled fam-ily, ensuring that adding a family changes the type of evidence available without increasing the budget assigned to any in-dividual family. Table S7 provides the values underlying the main-paper ablation figure. No individual family is strongest in both regimes. Func-tional groups provide the highest standalone H@1 at L2, fingerprints provide the highest standalone H@1 at L3, and the four-family combination is best on all reported metrics in both regimes. Under L2, Fingerprint and Fingerprint + Scaf-fold report identical metrics because the Scaffold channel contributes weakly in this regime; adding it to the fused ranking does not change the top-K order for any query, so the RRF output is unaffected. Table S3: Complete test-set statistics for the masked-edge benchmark. “Total gold” is the sum of the per-drug gold-set sizes.                                               
+
+> Task Regime Test drugs Total gold Median gold per drug T1: Indication L1 2,097 44,143 3L2 2,106 59,897 3L3 2,096 66,478 4L4 2,096 57,936 5T2: Contraindication L1 260 4,286 10 L2 264 6,333 16 L3 260 5,572 12 L4 260 6,578 18 T3: Drug–target L1 4,315 112,753 3L2 4,318 162,767 3L3 4,315 198,222 4T4: Directional effect L1 3,738 109,889 3L2 3,751 158,440 4L3 3,748 192,298 4
+
+Table S4: TxGNN vocabulary coverage for the L1 test sets. The main-paper comparison evaluates both methods on the overlap subset.                
+
+> Task Complete set Overlap Coverage T1 2,097 312 14.9% T2 260 154 59.2% T3 4,315 366 8.5% T4 3,738 333 8.9%
+
+## 5 Static Multi-Anchor Retrieval Details 
+
+Static inference consists of two stages. Each structural view first ranks graph-resident molecules according to its own no-tion of similarity; Reciprocal Rank Fusion (RRF) then com-bines these rankings before biomedical evidence is collected. The definitions below provide the scoring and retrieval de-tails omitted from the main paper. 
+
+5.1 Anchor Extraction and Ranking 
+
+1. Scaffold. The query’s Bemis–Murcko scaffold is matched against the scaffold index. If no indexed molecule shares the exact scaffold, retrieval falls back to the scaffold’s generic form – its ring/connectivity skeleton with all het-eroatoms replaced by carbon and all bonds set to single bonds – at half the exact-match score to reflect the coarser match. 2. BRICS fragment. The query is decomposed by BRICS. For query fragments Fq and candidate fragments Fa, the score is 
+
+sfrag (a) = 
+
+P   
+
+> f∈Fq∩Fa
+
+idf( f )
+
+P  
+
+> f∈Fq
+
+idf( f ) , (1) where idf( f ) = log(( N + 1) /(cf + 1)) + 1 and cf is the number of indexed molecules containing fragment f .3. Functional group. Each molecule is represented as an 85-dimensional vector over RDKit’s fr_* descriptors, where entry f holds idf( f ) · count f (a) rather than a bi-nary indicator of whether the descriptor is active. Candi-dates are ranked by cosine similarity between the query’s and the candidate’s vectors. 4. Fingerprint. ECFP4 fingerprints use radius 2 and 2,048 bits. A popcount-ratio filter with threshold 0.3 – retaining only candidates whose bit count lies within [0 .3, 1/0.3] of the query’s, the necessary range for Tanimoto similarity of at least 0.3 – removes clearly dissimilar candidates before the remaining molecules are ranked by exact Tanimoto similarity (see Supplementary Section 5.2 for the bio-degree-adjusted re-ranking applied within this pool). 
+
+5.2 Role of Biomedical Connectivity (bio-degree) in Ranking 
+
+In addition to the four structural scores above, every molecule node carries a bio-degree attribute: the number of edges incident to it in the biomedical (Layer-2) KG, summed across all Layer-2 sources. bio-degree is not a fifth structural view and never contributes to the fused RRF ranking directly; instead, it is consulted within individual channels to decide between candidates, and its role differs qualitatively across channels rather than uniformly acting as a tie-break. 
+
+• Scaffold. Every candidate sharing a given (generic) scaf-fold receives an identical scaffold score, so the score itself cannot distinguish which candidates fill the top-K slots for this channel. bio-degree, taken in descending order, is the criterion that does: it is not a tie-break layered on top of an already-differentiated ranking, but the sole ordering signal within a shared-scaffold group. 
+
+• BRICS fragment. Candidates are primarily ordered by the IDF-weighted fragment score sfrag (Equation 2); bio-degree is consulted only as a secondary key to break exact ties in sfrag , which occur when two candidates match an identical multiset of query fragments. 
+
+• Functional group. The cosine-similarity ranking over 85-dimensional FG vectors does not consult bio-degree at any stage. Table S5: MolBioKG performance on the complete evaluatable test sets ( K = 20 anchors per family, 99 sampled negatives). L4 does not apply to T3 or T4.                                               
+
+> Task Regime H@1 H@10 MRR T1: Indication L1 .355 .601 .453 L2 .131 .430 .246 L3 .313 .601 .420 L4 .312 .551 .413 T2: Contraindication L1 .385 .765 .503 L2 .224 .701 .362 L3 .304 .689 .424 L4 .465 .850 .589 T3: Drug–target L1 .386 .610 .465 L2 .114 .521 .246 L3 .303 .612 .408 T4: Directional effect L1 .373 .640 .464 L2 .127 .584 .275 L3 .316 .661 .430
+
+Table S6: L1 results on the TxGNN-covered overlap and on the complete MolBioKG test set.                                                      
+
+> Task Scope Method H@1 H@10 MRR T1 Overlap TxGNN .542 .843 .656 MolBioKG .660 .885 .750 Complete MolBioKG .355 .601 .453 T2 Overlap TxGNN .604 .727 .670 MolBioKG .416 .812 .536 Complete MolBioKG .385 .765 .503 T3 Overlap TxGNN .235 .757 .402 MolBioKG .710 .855 .763 Complete MolBioKG .386 .610 .465 T4 Overlap TxGNN .285 .748 .447 MolBioKG .739 .898 .802 Complete MolBioKG .373 .640 .464
+
+• Fingerprint. Within the Tanimoto-filtered candidate pool, candidates are ordered by stan (a) · (1 + log(1 + bio − degree( a))) rather than by stan (a) alone. This is a continuous multiplicative re-ranking, not a tie-break: it can change the relative order of two candidates whose Tanimoto scores differ. The value passed on to Reciprocal Rank Fusion is the raw Tanimoto score, but the position each candidate occupies in the list RRF consumes is de-termined by the bio-degree-adjusted order, so the effect still propagates into the fused ranking. 
+
+5.3 Rank Fusion and Evidence Collection 
+
+For a candidate anchor a, reciprocal rank fusion combines the available anchor rankings: 
+
+RRF( a) = X
+
+> r∈R
+
+1
+
+c + rank r (a) , (2) where R is the set of enabled retrieval families and c is held fixed across experiments. Each family contributes at most K candidates before deduplication. The masked-edge experiments use K = 20 ; the controlled strategy ablation uses K = 5 .After fusion, the top anchors are traversed through identifier-equivalence edges into the biomedical layer. The system retains the anchor identity, structural score, traversed predicate, endpoint, and source record for every collected candidate. 
+
+## 6 Adapt-KG Prompts and Tool Definitions 
+
+Adapt-KG is the adaptive counterpart to static RRF. It uses the same iterative decision process for molecule annotation and multi-hop question answering, while the prompt, avail-able actions, and turn budget reflect the needs of each task. At every turn, the model selects an action in a structured format, observes the returned evidence, and either continues gathering evidence or produces its final answer. This sec-tion records the prompts and action definitions used in our experiments. 
+
+6.1 Out-of-Graph Generalization 
+
+System prompt: Table S7: T1 anchor-strategy ablation on the complete L2 and L3 test sets ( K = 5 per enabled family). Multi-family rankings are combined by reciprocal rank fusion. Bold : best result in each column. 
+
+L2: Scaffold holdout L3: ECFP4-cluster holdout Strategy H@1 H@10 MRR H@1 H@10 MRR Scaffold only .131 .430 .246 .221 .528 .338 BRICS fragment only .185 .463 .291 .176 .487 .292 Functional group only .343 .592 .438 .311 .585 .415 Fingerprint only .294 .528 .387 .327 .572 .419 Fingerprint + Scaffold .294 .528 .387 .370 .609 .463 Fingerprint + Scaffold + Fragment .324 .548 .413 .384 .617 .475 All four families .408 .656 .504 .414 .676 .517 
+
+"You are a drug discovery expert. Predict biomedical properties of novel molecules based on SMILES and structural context. Always respond with valid JSON." 
+
+Tool menu (at most 4 tool calls per drug, plus a final answer turn): 
+
+Available structural retrieval tools (call one per turn): scaffold_search -- retrieve drugs sharing the same Bemis-Murcko scaffold fingerprint_search -- retrieve drugs with high ECFP4 Tanimoto similarity fragment_search -- retrieve drugs sharing BRICS retrosynthetic fragments fg_search -- retrieve drugs sharing pharmacophoric functional groups Each tool returns the top-K most similar known drugs with their targets and indications from MolBioKG. To call a tool, respond with JSON: {"action": "<tool_name>", "reasoning": "<why this tool>"} When you have enough evidence, provide your final answer (at most 5 targets, 5indications): {"action": "answer", "targets": ["protein1", ...], "indications": ["disease1", ...], "reasoning": "..."} 
+
+The four actions correspond to the fixed retrieval strategies reported in the main paper: Fingerprint, Scaffold, BRICS Fragment, and Functional Group. Adapt-KG determines which views to consult, their order, and when sufficient evi-dence has been gathered. Rankings from the selected views are combined using the same RRF procedure as the static method (Section 5). To keep evaluation comparable across strategies, every final answer is limited to five targets and five indications. 
+
+6.2 Complex Multi-Hop Reasoning 
+
+System prompt: 
+
+"You are a biomedical knowledge graph reasoning agent. Answer multi-hop questions by calling KG tools to gather evidence. Plan your traversal strategically -- only call tools that advance toward the answer. Stop as soon as you have sufficient evidence." 
+
+Tool menu (at most 6 turns total, including the final an-swer): 
+
+Available KG tools (call one per turn): hop_drug_disease(entity_id, direction) direction="reverse": disease → drugs that treat it direction="forward": drug → diseases it treats hop_drug_target(entity_id, direction) direction="reverse": target/protein 
+
+→ drugs acting on it direction="forward": drug → its protein targets hop_disease_phenotype(entity_id) disease → associated clinical phenotypes hop_ppi(entity_id) protein → protein-protein interaction partners hop_gene_disease(entity_id) gene/protein → diseases it is genetically associated with hop_mol_fg_of_drug(entity_id) drug → its pharmacophoric functional groups (top-10 by frequency) hop_mol_drugs_with_fg(entity_id) functional group ID/name → drugs containing it hop_moa_direction(entity_id, direction) direction="reverse": target → drugs that modulate it (with direction label) hop_fg_aggregate(entity_id) disease → top-10 most common functional groups across ALL drugs treating it (batch COUNT across all treating drugs -- use for "most prevalent FG" questions) To call a tool, respond with JSON: {"action": "<tool_name>", "entity_id": "<CURIE or name>", "direction": "<optional>", "reasoning": "<why>"} When you have enough evidence, respond with: {"action": "answer", "entities": ["name1", "name2", ...], "reasoning": "<1-2 sentences>"} 
+
+These nine actions implement the typed traversals de-scribed in the main paper’s Adaptive Retrieval and KG Traversal subsection. Each action corresponds to a defined transition in the molecular or biomedical layer. For example, 
+
+hop_ppi retrieves protein-interaction partners, whereas 
+
+hop_fg_aggregate identifies the most frequent func-tional groups across all drugs treating a disease. The model is instructed to preserve the entity names returned by the tools rather than paraphrasing them, ensuring that predicted enti-ties can be matched consistently to gold names and aliases. 
+
+## 7 Baseline Algorithms for Multi-Hop QA 
+
+The main paper compares six policies for using the same typed traversal actions on MolBioKG-KGQA. This con-trolled design isolates how each policy selects, organizes, and composes evidence: every method begins with only the question and a topic entity, and no method receives a pre-computed answer context. The five comparison policies are described below; Adapt-KG is specified in Section 6. Per-question inference cost is reported in Section 10. 
+
+Zero-shot. No tool access. The model receives only the question and answers directly from its parametric knowledge in a single call. 
+
+RAG (flat retrieval). This policy tests whether a small amount of unstructured retrieval is sufficient. It first selects one to three traversals from the question and starting entity, then executes them and presents up to 60 retrieved entities as flat text. A second model call answers from this context. 
+
+Graph-RAG. This policy uses the same plan-then-answer structure as RAG but preserves graph organization. The se-lected traversals are executed jointly, so aggregate operations remain grouped rather than being expanded into unrelated per-drug records. Retrieved entities are organized by type and accompanied by ranks or counts before the model pro-duces its answer. 
+
+Graph-CoT. This policy traverses the graph one step at a time. At each step, the model observes the current entity type, available transitions, and a short reasoning trace, then either selects one transition or stops. When more than 15 entities are returned, an additional selection step retains the most relevant candidates. The process continues for at most five hops before answering from the retained entities and accumulated trace. 
+
+Think-on-Graph. This policy performs beam search over candidate entities. At each of at most five iterations, the model scores the available transitions, executes the highest-scoring one, and ranks the resulting entities by relevance to the question. The five highest-ranked entities continue to the next iteration. A final model call answers from the traversal trace and the surviving candidates. 
+
+## 8 Inference Cost on Out-of-Graph Annotation 
+
+This analysis examines the computational trade-off between fixed retrieval and adaptive evidence gathering. Table S8 reports retrieval actions, cumulative token counts, per-drug elapsed time, and Rec llm for gpt-oss-120b. Fixed strategies perform one structural retrieval step followed by answer syn-thesis, whereas Adapt-KG may gather evidence over several turns. Retrieval actions, token counts, and Rec llm are reported as mean ±std over the same three runs on all 199 out-of-graph drugs used in the main paper. Elapsed time is derived from each strategy’s own wall-clock pass over all 199 drugs, recorded once per run and averaged over the three runs; because all strategies were measured under shared compu-tational conditions rather than in isolated runs, it indicates practical throughput but should not be interpreted as a con-trolled latency comparison. Among the single-anchor strategies, Scaffold uses the smallest mean input context, while RRF attains the high-est recall on both axes, ahead of every single-anchor view; among the single-anchor strategies alone, BRICS Fragment gives the highest target recall. These results show that static fusion provides a strong accuracy–cost trade-off for focused molecular annotation. Adapt-KG performs 1.89 retrieval actions on average and uses approximately 4.7× as many input tokens as RRF. On this single-hop task, the additional adaptive budget does not improve recall: indication recall remains below RRF, and target recall remains below both RRF and BRICS Frag-ment, though still above Scaffold, Fingerprint, and Functional Group. BRICS Fragment has the lowest observed per-drug elapsed time among the retrieval-based strategies, while RRF and Adapt-KG are the slowest; the timing differences should nevertheless be interpreted under the caveat above. 
+
+## 9 MolBioKG-KGQA Benchmark Details 
+
+MolBioKG-KGQA contains 460 questions instantiated from graph paths in the frozen MolBioKG snapshot. Table S9 summarizes the five template families. Gold answers are the terminal entities reached by the instantiated paths; the benchmark therefore measures access to and composition of graph-resident evidence rather than external biomedical validity. 
+
+9.1 Question Paraphrase Templates 
+
+For each instance, question text is sampled uniformly from five human-authored paraphrases of its template family, with placeholders replaced by the sampled anchor entity’s name. The target-modulation family uses separate paraphrase sets for mechanism-of-action relations annotated as decreased 
+
+and increased .
+
+Disease to target. Gold answers for this family are capped to the ten most frequent protein targets (TF-IDF-ranked over Table S8: Per-drug inference cost and recall on the 199-drug OOG benchmark, gpt-oss-120b. Bold : best mean per column among retrieval-based strategies.                                                                               
+
+> Method Retrieval actions Input tokens Output tokens Time/drug (s) Ind. Rec llm Tgt. Rec llm
+> Zero-shot 0336 ±0927 ±17 5.75 ±0.55 0.186 ±0.006 0.145 ±0.016 Fingerprint 11,111 ±0726 ±13 6.00 ±0.52 0.221 ±0.013 0.208 ±0.009 Scaffold 1438 ±0803 ±11 7.14 ±0.62 0.208 ±0.009 0.186 ±0.009 BRICS fragment 11,223 ±0790 ±55.65 ±0.76 0.215 ±0.006 0.219 ±0.010 Functional group 11,076 ±0696 ±11 6.32 ±1.93 0.223 ±0.003 0.212 ±0.012 RRF 11,145 ±0748 ±48.47 ±0.59 0.239 ±0.005 0.269 ±0.009
+> Adapt-KG 1.89 ±0.18 5,340 ±500 1,986 ±33 12.02 ±0.62 0.232 ±0.009 0.218 ±0.015
+
+Table S9: MolBioKG-KGQA template families. Arrows summarize the entity sequence used to instantiate each question family.                                             
+
+> Template family Instances Hops Path pattern Disease to target 100 2disease →drug →target Target to disease 100 2target →drug →disease Disease to functional group 100 2disease →drug →functional group Target modulation to functional group 100 2target →direction-specific drug →functional group Functional group to phenotype 60 5functional group →drug →target →interacting protein →disease →phenotype
+
+the disease’s associated drugs, downweighting hub targets) rather than the full target set, and question phrasing is worded accordingly. 1. What are the most common protein targets of drugs used to treat {disease}? 2. Which protein targets appear most frequently among ap-proved treatments for {disease}? 3. What are the dominant molecular targets of therapeutics for {disease}? 4. Which genes or proteins are most frequently bound by drugs indicated for {disease}? 5. If you surveyed the target profile of drugs for {disease}, which protein targets would dominate? 
+
+Target to disease. As with disease to target, gold answers are capped to the ten most frequent indications. 1. What are the most common diseases treated by drugs that target {gene}? 2. Which therapeutic indications appear most frequently among drugs known to interact with {gene}? 3. What are the dominant clinical conditions addressed by compounds that target the protein {gene}? 4. Which diseases most commonly have established drug treatments that act on {gene}? 5. If you surveyed drugs that modulate {gene} activity, which clinical indications would dominate? 
+
+Disease to functional group. Gold answers for this family are capped to the ten most frequent functional groups by raw occurrence count across the disease’s CHEBI-identified associated drugs. 1. What functional groups are most common in drugs used to treat {disease}? 2. Which structural motifs characterize the drugs approved for {disease}? 3. What chemical features are most prevalent among thera-peutics indicated for {disease}? 4. Which functional groups appear most frequently in the structures of {disease} treatments? 5. If you surveyed the chemical space of {disease} drugs, which functional groups would dominate? 
+
+Target modulation to functional group — decreased. As with disease to functional group, gold answers are capped to the ten most frequent functional groups by raw count, but here the underlying drug set is first restricted to those whose mechanism-of-action edge to {gene} is annotated as 
+
+decreased before functional groups are counted. 1. What structural features are shared by drugs that decrease the activity of {gene}? 2. Which functional groups are most common among com-pounds that inhibit {gene}? 3. What chemical motifs characterize known inhibitors of {gene}? 4. Which structural elements recur in drugs that downregu-late {gene} activity? 5. What are the dominant functional groups found in drugs that suppress {gene}? 
+
+Target modulation to functional group — increased. 
+
+Constructed identically to the decreased variant, but the un-derlying drug set is restricted to those whose mechanism-of-action edge to {gene} is annotated as increased .1. What structural features are shared by drugs that increase the activity of {gene}? 2. Which functional groups are most common among com-pounds that activate {gene}? 3. What chemical motifs characterize known activators of {gene}? 4. Which structural elements recur in drugs that upregulate {gene} activity? 5. What are the dominant functional groups found in drugs that enhance {gene} function? Table S10: Per-question inference cost on MolBioKG-KGQA (460 questions, gpt-oss-120b backbone).                      
+
+> Method Input tokens Output tokens Time/question (s) Zero-shot 195.6 497.7 1.8 RAG 1,483.5 907.6 5.7 Think-on-Graph 2,574.5 9,086.9 35.6 Graph-CoT 1,641.3 1,781.4 7.2 Graph-RAG 1,342.3 785.8 8.5 Adapt-KG 4,692.7 1,208.9 5.0
+
+Functional group to phenotype. Unlike the other four families, gold answers here are not frequency-ranked: they are the deduplicated union of all phenotypes reachable via the full 5-hop path (drugs containing the functional group →
+
+their gene targets → PPI partners of those genes → diseases associated with the partner genes → phenotypes of those diseases), capped at the first 30 encountered rather than the 30 most frequent. 1. What clinical phenotypes are linked to the protein inter-action network of targets of drugs containing {fg}? 2. Through network medicine, what symptoms manifest from the PPI neighborhood of {fg}-drug targets? 3. What phenotypic features are associated with diseases linked to PPI partners of {fg}-drug targets? 4. Which clinical features emerge from the disease network of PPI partners of {fg}-containing drug targets? 5. What observable phenotypes are genomically connected to the interaction partners of {fg}-drug targets? The main-paper comparison uses the same gpt-oss-120b backbone for all LLM-based methods and reports Hits@1, Hits@5, Hits@10, and entity-set macro-F1 (precision/recall over the predicted vs. gold entity sets per instance, aver-aged across all 460 instances). In the single-layer ablations, a method may access only the selected layer. Because this intervention changes both graph connectivity and the avail-able evidence, the resulting difference should be interpreted as a layer-restriction test rather than a pure structural causal ablation. 
+
+## 10 Inference Cost on MolBioKG-KGQA 
+
+This analysis compares the cost of different evidence-composition policies on the same multi-hop questions. Ta-ble S10 reports per-question token use and elapsed time for the methods in the main-paper comparison, all using gpt-oss-120b. Each retrieval-based method begins with only the question and a topic entity, then chooses its own traversal actions; token use therefore reflects the amount of evidence gathered and the number of intermediate decisions. Think-on-Graph’s beam search incurs the largest output-token cost because it evaluates intermediate candidates be-fore committing to a path; it also issues the most retrieval ac-tions on average (2.38 vs. Adapt-KG’s 1.98). Adapt-KG nev-ertheless consumes the most input context per question, re-flecting its practice of gathering broader evidence within each turn, yet it is the fastest tool-using method overall—faster even than flat RAG. Since elapsed time also reflects shared computational conditions beyond the number of model and retrieval steps, it should be read as an indicative efficiency measure rather than a controlled latency comparison. 
+
+## 11 Out-of-Graph Annotation Benchmark Details 
+
+This benchmark isolates the cold-start setting in which the query molecule provides no direct route to biomedical an-notations. Instead of sampling a synthetic holdout, it applies a temporal cutoff: both the molecular and biomedical layers of MolBioKG are restricted to ChEMBL release 10 (June 2011), and evaluation drugs are drawn from compounds first approved afterward. Because a drug approved after the cut-off cannot appear in the pre-cutoff KG by definition, every evaluation drug is confirmed absent from the 2011 snapshot at both the structural and biomedical level, and out-of-graph status is guaranteed by construction from approval chronol-ogy; the per-drug verification below serves as a confirmatory check rather than the primary basis for labeling. 
+
+11.1 Temporal-Cutoff Snapshot 
+
+The pre-cutoff molecular pool is built by parsing every com-pound in the ChEMBL release 10 chemical-representations file (999,881 records) with RDKit, computing its InChIKey, and matching that key against MolBioKG’s identifier index to recover the corresponding main-graph node ID; 949,869 compounds (95.0%) resolve to a node and form the pre-2011 structural pool. The pre-cutoff biomedical layer is then de-rived by retaining, in the drug–disease and drug–target sub-graphs, only edges whose subject drug node belongs to this pool: 208,325 of 421,939 drug–disease edges are retained (5,734 of 22,470 distinct drug subjects), and 468,814 of 1,127,690 drug–target edges are retained (11,420 of 42,252 distinct drug subjects). No other filtering, such as by evi-dence source, is applied at this stage; source-level filtering is instead applied at evaluation time, consistent with the mask-ing protocol used for the masked-edge tasks (Supplementary Section 2). 
+
+11.2 Candidate Selection and Out-of-Graph Verification 
+
+Candidate drugs are compounds with a first-approval date in 2012–2024, drawn from ChEMBL mechanism-of-action records, with simple-salt duplicates removed. Each candidate is tagged with an annotation-completeness tier reflecting how many independent indications its ChEMBL record carries: 183 candidates have multiple independent indications and 16 have a single indication and a single target, for 199 candidates in total. For every candidate, the canonical SMILES is converted to an InChIKey and checked against the pre-2011 structural pool and the pre-2011 drug–disease and drug–target edges retained above. A candidate that already carries a pre-2011 drug–disease edge would not be a genuine out-of-graph case under this snapshot and is dropped rather than kept and mis-labeled. Applying this check to all 199 candidates confirms that every candidate’s exact structure is absent from the pre-2011 structural pool, none carries a pre-2011 biomedical edge of either type, and none is dropped. Table S11: Out-of-graph annotation recall for gemma-4-31b-it, reported as mean ±std over 3 runs, using the same eval-uation protocol, thresholds, and Random Context control as the gpt-oss-120b table in the main paper. Bold : best mean per column among retrieval-based strategies.                                      
+
+> Exact Recall (Rec ex )LLM-Judge Recall (Rec llm )Strategy Ind. Tgt. Ind. Tgt. Zero-shot (no KG) 0.070 ±0.001 0.105 ±0.004 0.163 ±0.002 0.122 ±0.004 Random Context 0.057 ±0.000 0.081 ±0.000 0.161 ±0.004 0.086 ±0.000 Fingerprint (FP) 0.079 ±0.000 0.173 ±0.000 0.192 ±0.001 0.180 ±0.000 Scaffold 0.083 ±0.001 0.103 ±0.002 0.161 ±0.001 0.127 ±0.002 BRICS Fragment 0.077 ±0.001 0.224 ±0.003 0.199 ±0.004 0.258 ±0.003
+> Funct. Group (FG) 0.081 ±0.001 0.182 ±0.000 0.201 ±0.005 0.199 ±0.000 RRF 0.083 ±0.001 0.215 ±0.005 0.201 ±0.001 0.237 ±0.005 Adapt-KG 0.070 ±0.001 0.213 ±0.003 0.199 ±0.002 0.237 ±0.002
+
+Table S12: Out-of-graph annotation recall for Qwen3.6-35B-A3B, reported as mean ±std over 3 runs, using the same evaluation protocol, thresholds, and Random Context control as the gpt-oss-120b table in the main paper. Bold : best mean per column among retrieval-based strategies.                                      
+
+> Exact Recall (Rec ex )LLM-Judge Recall (Rec llm )Strategy Ind. Tgt. Ind. Tgt. Zero-shot (no KG) 0.048 ±0.008 0.101 ±0.028 0.052 ±0.010 0.101 ±0.028 Random Context 0.055 ±0.005 0.073 ±0.008 0.061 ±0.008 0.073 ±0.008 Fingerprint (FP) 0.084 ±0.004 0.175 ±0.007 0.096 ±0.005 0.176 ±0.005 Scaffold 0.076 ±0.006 0.149 ±0.008 0.086 ±0.011 0.154 ±0.008 BRICS Fragment 0.068 ±0.009 0.196 ±0.004 0.083 ±0.008 0.198 ±0.003 Funct. Group (FG) 0.064 ±0.005 0.133 ±0.010 0.066 ±0.006 0.133 ±0.010 RRF 0.089 ±0.010 0.232 ±0.010 0.102 ±0.008 0.233 ±0.011
+> Adapt-KG 0.085 ±0.009 0.177 ±0.004 0.096 ±0.006 0.177 ±0.004
+
+11.3 Reference Annotations and Metrics 
+
+Reference indications and targets for all 199 drugs are col-lected from ChEMBL mechanism-of-action records, inde-pendent of the KG. Raw ChEMBL target identifiers are re-solved to preferred names and HGNC gene symbols, so that exact-match scoring compares against readable names rather than opaque database identifiers. On average, each drug car-ries 4.0 reference indications and 1.3 reference targets. Exact recall (Rec ex ) uses normalized surface-form matching and is conservative under synonyms or paraphrases. LLM-judge recall (Rec llm ) accepts semantically equivalent annotations using a fixed gpt-oss-120b judge applied uniformly to all methods. Overall results are reported as the mean over all 199 out-of-graph drugs. 
+
+## 12 Out-of-Graph Annotation: Additional Backbones 
+
+These experiments test whether the out-of-graph findings persist across LLM backbones. Tables S11–S12 report re-sults for gemma-4-31b-it and Qwen3.6-35B-A3B on the same 199-drug benchmark, using the same recall definitions, retrieval thresholds, and Random Context control as the main paper. Because generation is stochastic under the sampling settings used here, all LLM-based results are reported as mean ±std over three runs. Across both additional backbones, most structural retrieval Table S13: MolBioKG-KGQA results across two additional backbones ( n = 460 ). Full-KG columns report H@10 and macro-F1. Layer-ablation columns report H@10 with access restricted to the molecular (M) or biomedical (B) layer. Bold :best non-Zero-shot result in each column.                                                             
+
+> Full KG (H@10 / F1) Layer-ablation H@10 gemma-4-31b-it Qwen3.6-35B-A3B gemma-4-31b-it Qwen3.6-35B-A3B Method H@10 F1 H@10 F1 MBMBZero-shot .135 .019 .111 .016 ————RAG .585 .420 .872 .641 .000 .420 .074 .415 Think-on-Graph .389 .158 .389 .158 .048 .183 .030 .183 Graph-CoT .526 .332 .607 .332 .054 .235 .161 .341 Graph-RAG .530 .245 .717 .473 .000 .400 .002 .383 Adapt-KG .870 .596 .872 .612 .000 .430 .120 .526
+
+strategies substantially exceed Zero-shot and Random Con-text under Rec llm , reproducing the main conclusion that the gains come from structurally relevant evidence rather than from merely adding a candidate list. The one exception is Scaffold’s indication recall on gemma-4-31b-it, which is roughly on par with both baselines even though its target recall still exceeds them. Random Context itself is inconsis-tent: it sometimes improves indication recall but does not reliably improve target recall. The strongest strategy varies with the prediction type and backbone. For Qwen3.6-35B-A3B, RRF gives the highest recall on every column. For gemma-4-31b-it, no single view dominates: Scaffold gives the highest exact indication recall, Funct. Group the highest LLM-judged indication recall, and BRICS Fragment the highest exact and LLM-judged target recall. Adapt-KG remains competitive but is not the best method for this single-hop annotation task on either back-bone. This pattern supports the division of labor observed in the main paper: static retrieval is well suited to focused molecular annotation, while adaptive traversal is most useful when the question requires compositional, multi-hop evi-dence. 
+
+## 13 MolBioKG-KGQA: Backbone Robustness 
+
+Table S13 evaluates the KGQA methods with two additional open-weight backbones, gemma-4-31b-it and Qwen3.6-35B-A3B—the same two backbones used for the out-of-graph annotation robustness check in Section 12. Dashes denote layer-ablation results that are not applicable to the Zero-shot baseline. The best H@10 method again depends on the backbone: Adapt-KG leads outright with gemma-4-31b-it (.870), while Adapt-KG and flat RAG are effectively tied for the best H@10 with Qwen3.6-35B-A3B (.872 each), though RAG attains the higher macro-F1 on that backbone (.641 vs. .612). Under Mol-only restriction, Graph-CoT is the most robust policy for both backbones (.054 and .161)—echoing the gpt-oss-120b result in the main paper, where Think-on-Graph rather than Adapt-KG led the Mol-only column. Under Bio-only restriction, Adapt-KG remains strongest for both backbones (.430 and .526). Taken together with the main-paper table, this indicates that Adapt-KG’s advantage is most reliable un-der full-graph and biomedical-only access, while single-layer (Mol-only) robustness is backbone- and context-dependent. 14 Out-of-Graph Annotation: Disease Synonym and Hierarchy Normalization 
+
+Exact surface-form matching can underestimate indication recall when a correct prediction uses a synonym or dif-fers in disease granularity from the gold label. This issue is more acute for the temporal-cutoff out-of-graph bench-mark than for a hand-curated one: its 342 distinct gold in-dication names come directly from ChEMBL mechanism-of-action records as free text, with no ontology identifier attached at all. Ontology-based normalization therefore first requires linking each name to a MONDO, EFO, or HP class before any synonym or hierarchy expansion is possible. We perform this linking and re-evaluate the existing RRF predic-tions from the three gpt-oss-120b runs reported in the main paper, without generating new model outputs. 
+
+Name linking. Each gold indication name is matched against every live MONDO class’s preferred label and ex-act synonyms; a name matching exactly one class is linked to it. Names with no MONDO match are then checked the same way against EFO and then HP. A name matching more than one class under this criterion is left unresolved rather than guessed, since an incorrect link would silently bias the downstream tiers. 
+
+Matching tiers. Once a gold name is linked, we construct cumulative matching tiers from its ontology class. The ex-act tier adds the class’s preferred label and exact synonyms, covering renamed terms such as the gold name “primary bil-iary cirrhosis” linking to MONDO’s current label “primary biliary cholangitis.” The related tier additionally accepts re-lated synonyms. The subtype tier accepts a more specific prediction when it lies within two descendant relations of a broader gold concept: for example, Adagrasib’s gold indi-cations “lung cancer” and “colorectal cancer” are credited because the model’s answer names the more specific “non-small cell lung carcinoma” and “colorectal carcinoma,” both within two descendant relations of the respective gold terms. Finally, the supertype tier also accepts ancestors within two relations: Vorasidenib’s gold indications “astrocytoma” and “low grade glioma” are credited because the model instead answers with the broader “glioma.” 
+
+Ontology alignment and safeguards. Of the 342 distinct gold indication names, 291 are linked through an exact label or exact-synonym match in MONDO and 33 more through EFO or HP; 5 match more than one class and are left un-resolved, and 13 have no exact match in any of the three ontologies, typically because ChEMBL records the name in an inverted “Term, Qualifier” order (e.g. “Hemoglobinuria, Paroxysmal”) that does not appear verbatim in any ontology label or synonym. To avoid giving excessive credit for broad disease concepts, subtype matching is disabled when a gold term has more than 50 descendants within two relations; this safeguard applies to 24 concepts, including “neoplasm,” “carcinoma,” and “cancer.” 
+
+Scope. We apply normalization only to indications. Target naming needs no such step here: all 264 gold target ref-erences in the benchmark already resolve to a real protein Table S14: RRF indication recall under cumulative synonym and hierarchy matching, gpt-oss-120b, mean ±std over the same 3 runs used throughout the paper. Original reproduces the main-paper Rec ex result; each subsequent tier includes the preceding tiers.       
+
+> Tier Overall Original (main paper) 0.125 ±0.003 + exact synonym 0.181 ±0.004 + related synonym 0.184 ±0.003 + subtype (headline) 0.210 ±0.003
+> + supertype 0.305 ±0.005
+
+Table S15: Attribution of RRF’s 135 indication-axis failures (of 199 out-of-graph drugs, one representative gpt-oss-120b run) to the first tier that correctly matches each case. Un-resolved cases are not explained by naming or granularity mismatch at any tier.        
+
+> Lowest rescuing tier Count Exact synonym 12 Related synonym 1Subtype 8Supertype 21 Unresolved (genuine miss) 93 Total failures 135
+
+name, and 248 (94%) additionally carry gene-symbol aliases (Section 11). Table S14 shows that exact-synonym and subtype match-ing raises RRF indication recall from 0.125 to 0.210, an increase of 8.5 points or 68% relative. We treat this cumula-tive tier as the primary normalized result because it credits a more specific correct answer without accepting a less spe-cific one. Adding supertype matching raises recall further to 0.305 but uses a more permissive criterion. Table S15 explains the 135 indication failures under the original exact-match evaluation, for one representative run; the other two runs show a consistent pattern (133 and 134 failures, with a similar tier split). Exact and related synonyms account for 13 cases, subtype granularity for 8, and super-type matching for 21 more — 42 failures in total, or 31%, are naming or granularity artifacts rather than retrieval or generation misses. The remaining 93 cases, or 69%, are not explained by naming or hierarchy differences at any tier. 
+
+## 15 Case Studies: Anchor-Family Complementarity 
+
+These cases illustrate why the four structural views are complementary. Each example follows the same evidence chain—query →structural anchor →retrieved analogue →KG relation →candidate answer—and identifies both the view that loses relevant information and the view that recovers it. Cases C–G come from the main out-of-graph benchmark. Cases A and B use a molecular collection restricted to records available before 2011, with queries standardized to their prin-cipal molecular component. This design prevents an appar-ently successful retrieval from being caused by an equivalent salt representation of the query itself. Table S16 provides the high-level pattern before the individual evidence paths are examined. 
+
+Case A: Scaffold identifies a close analogue (Binimetinib). 
+
+Scaffold retrieval identifies CHEBI:90227 (Selumetinib), which has the same Bemis–Murcko scaffold as the query (Figure S1). The two molecules are independently approved MEK1/2 inhibitors rather than different records of the same active ingredient; they differ in peripheral halogenation and have ECFP4 Tanimoto similarity of 0.84 . Selumetinib’s source relations match four of five gold indications and both gold targets, MAP2K1 and MAP2K2. Fingerprint and BRICS Fragment also identify Selumetinib, whereas Func-tional Group does not. 
+
+Case B: BRICS succeeds without a scaffold match (En-sartinib). Ensartinib has a distinct whole-ring-system scaf-fold, so whole-scaffold retrieval returns no anchor. BRICS in-stead isolates two substructures shared with CHEBI:64310 
+
+(Crizotinib): a 2-chloro-6-fluorophenyl ring and a chiral ether linkage associated with this ALK-inhibitor class (Figure S2). Although their overall ECFP4 Tanimoto similarity is only 
+
+0.42 , Crizotinib’s source relations match all three gold indi-cations and the gold target ALK. Ensartinib and Crizotinib are independently approved ALK inhibitors, not equivalent records of one compound. 
+
+Case C: Fingerprint succeeds when local views do not (Vanzacaftor). Scaffold and BRICS return no anchors, while the ten Functional Group candidates carry no cystic-fibrosis indication. A diagnostic, exhaustive ECFP4 com-parison across the 2.74 million molecules instead identi-fies PUBCHEM.COMPOUND:134587348 (Elexacaftor), a CFTR corrector in the same combination-therapy class, at Tanimoto similarity 0.32 (Figure S3). Elexacaftor has a dif-ferent scaffold, fragment set, and functional-group profile, showing that aggregate fingerprint similarity captures a re-lationship missed by the local views. Its own cystic-fibrosis relation matches gold. 
+
+Case D: Fingerprint succeeds when fragment matches are uninformative (Landiolol Hydrochloride). None of the ten BRICS candidates carries the gold atrial-fibrillation indication. Fingerprint retrieval instead identifies 
+
+CHEBI:10055 (Xamoterol), a β1-adrenoceptor partial ag-onist, at Tanimoto similarity 0.575 (Figure S4). This value exceeds the similarity threshold used in the experiments. Landiolol and Xamoterol share an aryloxypropanolamine pharmacophore and a morpholine-containing urea moiety but differ in their peripheral substituents. Their exact Bemis– Murcko scaffolds do not match, and Xamoterol is not recov-ered among the top BRICS candidates under our retrieval settings. Fingerprint retrieval therefore captures a broader structural similarity missed by BRICS fragment retrieval and recovers the relevant atrial-fibrillation association. However, this disease-level match does not imply mechanistic equiv-alence: Landiolol is a selective β1 antagonist used for rapid rate control, whereas Xamoterol is a β1 partial agonist stud-ied for heart-rate stabilization in chronic atrial fibrillation. This case illustrates both the value and the limitation of fingerprint-based evidence transfer. 
+
+Case E: BRICS and Fingerprint overcome non-specific functional groups (Gepirone Hydrochloride). 
+
+The highest-ranked Functional Group candidate is 
+
+PUBCHEM.COMPOUND:68748835 (Ubrogepant), a mi-graine drug that shares generic amide and piperazine groups with the query but is pharmacologically unrelated. Two more specific views independently identify relevant analogues (Figure S5). BRICS finds three of four query fragments in 
+
+PUBCHEM.COMPOUND:163925 (Zalospirone), while Fin-gerprint identifies CHEBI:3223 (Buspirone) at Tanimoto similarity 0.73 . Both are members of the azapirone family, and each carries a major-depressive-disorder relation that matches gold. 
+
+Case F: BRICS succeeds when relevant fingerprint matches rank low (Lazertinib Mesylate). Exhaustive ECFP4 comparison places the closest relevant ana-logues at ranks 90, 100, and 247, with Tanimoto similarities of 0.41 , 0.41 , and 0.37 . These positions fall outside the retrieval cutoff, indicating that whole-molecule similarity dilutes the critical shared feature. BRICS instead isolates the acrylamide group associated with covalent EGFR inhibition (Figure S6) and identi-fies PUBCHEM.COMPOUND:118607832 (Mobocertinib). This analogue carries a non-small-cell-lung-carcinoma rela-tion that matches gold. Here, local decomposition succeeds because the relevant substructure occupies only a small part of two otherwise different molecules. 
+
+Case G: Functional groups remain robust to a notation difference (Sulopenem Etzadroxil). Scaffold retrieval re-turns no anchor because the query represents its sulfox-ide in charge-separated form ( S+/O-), whereas an equiva-lent molecular record uses neutral S(=O) notation. Bemis– Murcko processing preserves this difference, preventing the scaffolds from matching. Functional Group is less sensi-tive to the notation and identifies two cephalosporins that share beta-lactam, thioether, and carboxylate groups with the query (Figure S7): PUBCHEM.COMPOUND:53024 (Ce-fotetan disodium) and PUBCHEM.COMPOUND:23675321 
+
+(Cephalothin Sodium). Their source relations recover the gold pneumonia indication and bacterial penicillin-binding-protein target. Together, these examples show that no anchor family is uniformly reliable. Scaffold is effective when a conserved core structure is informative, but it can miss a distinct chemo-type or become sensitive to molecular notation. BRICS cap-tures small, functionally important substructures that whole-molecule fingerprints may rank too low, whereas Finger-print can preserve broader similarity when no exact local substructure is shared. Functional Group is robust to some representation differences but can be too nonspecific. This pattern agrees with the anchor-family ablation in the main paper: fusion helps because different queries require differ-ent structural views, not because several views estimate the Table S16: Summary of the seven qualitative cases. Each row identifies the limitation exposed by one structural view and the complementary view that retrieves relevant biomedical evidence. 
+
+Case Query Limitation exposed Complementary evidence A Binimetinib Functional groups miss the close analogue Scaffold retrieves Selumetinib B Ensartinib No whole-scaffold match BRICS retrieves Crizotinib C Vanzacaftor Local substructure views find no useful anchor Fingerprint retrieves Elexacaftor D Landiolol Hydrochloride Fragment matches lack the gold indication Fingerprint retrieves Xamoterol E Gepirone Hydrochloride Functional groups are too nonspecific BRICS and Fingerprint retrieve azapirones F Lazertinib Mesylate Relevant analogues rank low by Fingerprint BRICS retrieves Mobocertinib G Sulopenem Etzadroxil Scaffold is sensitive to sulfoxide notation Functional Group retrieves cephalosporins shares retrieves 
+
+Query 
+
+Binimetinib 
+
+Shared BM scaffold Anchor – Scaffold 
+
+CHEBI:90227 (Selumetinib) 
+
+Figure S1: Case A — Scaffold identifies a close analogue. Binimetinib shares its Bemis–Murcko scaffold with CHEBI:90227 
+
+(Selumetinib), an independently approved MEK1/2 inhibitor with ECFP4 Tanimoto similarity of 0.84 . Selumetinib’s own KG relations match four of five gold indications and both gold targets. same signal with varying noise. retrieves shares 2/8 fragments  
+
+> Query
+> Ensartinib Shared BRICS fragment Anchor – BRICS fragment
+> CHEBI:64310 (Crizotinib) treats -> lung ca./melanoma
+
+Figure S2: Case B — BRICS succeeds without a scaffold match. Ensartinib has no matching Bemis–Murcko scaffold, but it shares two BRICS fragments with CHEBI:64310 (Crizotinib), an independently approved ALK inhibitor with ECFP4 Tanimoto similarity of 0.42 . Crizotinib’s own indication and ALK-target relations match gold. ECFP4 similarity=0.32 
+
+Figure S3: Case C — Fingerprint succeeds when local views failed to capture the common structure. Vanzacaftor has no useful Scaffold, BRICS, or Functional Group anchor shared with any anchor molecules. A diagnostic exhaustive ECFP4 comparison identifies PUBCHEM.COMPOUND:134587348 (Elexacaftor) at Tanimoto similarity 0.32 , which shares a huge common structure (highlighted in red) with Vanzacaftor that carries the gold cystic-fibrosis relation. ECFP4 similarity=0.58 Figure S4: Case D — Fingerprint succeeds when fragment matches are uninformative. Landiolol Hydrochloride’s BRICS candidates do not carry the gold indication. ECFP4 similarity identifies CHEBI:10055 (Xamoterol), which share a long common structure (highlighted in red), at Tanimoto similarity 0.575 ; its atrial-fibrillation relation matches gold, though the two drugs are pharmacologically distinct ( β1 antagonist vs. partial agonist), so the match is disease-level rather than mechanistic. shares 3/4 fragments ECFP4 similarity=0.73 
+
+Figure S5: Case E — BRICS and Fingerprint overcome nonspecific functional groups. Gepirone Hydrochloride’s highest-ranked Functional Group candidate is pharmacologically unrelated. BRICS identifies Zalospirone through three shared frag-ments, and Fingerprint identifies Buspirone at Tanimoto similarity 0.73 . Both relevant analogues carry the gold major-depressive-disorder relation. Figure S6: Case F — BRICS succeeds when relevant fingerprint matches rank low. Lazertinib Mesylate’s rel-evant analogues rank 90–247 by ECFP4 similarity. BRICS isolates the shared acrylamide group and identifies 
+
+PUBCHEM.COMPOUND:118607832 (Mobocertinib), whose non-small-cell-lung-carcinoma relation matches gold. shares beta-lactam / thioether / carboxylate FGs shares beta-lactam FGs 
+
+Figure S7: Case G — Functional groups remain robust to a notation difference. Sulopenem Etzadroxil’s charge-separated sulfoxide notation prevents Bemis–Murcko scaffold matching against an equivalent neutral representation. Functional Group identifies Cefotetan disodium and Cephalothin Sodium, whose source relations match the gold indication and target.

@@ -1,0 +1,868 @@
+Title: Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling
+
+URL Source: https://arxiv.org/pdf/2608.06824v1
+
+Published Time: Mon, 10 Aug 2026 00:29:10 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Control-Anchored Residual Flow Matching Conditioned on Gene Geometry for Virtual Cell Perturbation Modeling 
+
+## Quanquan Li 1, Yihe Chi 1, Liuyang Song 2, Hongbo Zhang 2, Jingyu Li 3, Xidong Xi 1,Conghua Wei 1, Yijie Sun 4, Yu Chen 1, Xin Liu 1, Qi Hu 1, Jing Ke 5, Guitao Cao 1∗
+
+> 1
+
+East China Normal University 
+
+> 2
+
+Peking University 
+
+> 3
+
+University of Science and Technology of China 
+
+> 4
+
+Nanjing University 
+
+> 5
+
+Shanghai Jiao Tong University 
+
+Abstract 
+
+A central task in virtual cell modeling is predicting single-cell transcriptional responses to unseen genetic perturbations and drug combinations, and biological networks provide valu-able priors on gene relationships. Existing graph-based mod-els commonly use the same network to structure gene rep-resentations and mediate intergene interactions, thereby im-plicitly treating stable associations as perturbation-response pathways. Gene Ontology and control-derived coexpression networks encode relatively stable relationships rather than intervention-specific response directions or magnitudes. We therefore propose GeneGeoFlow, which conditions a control-anchored residual flow on gene-wise geometry derived from biological networks to learn intervention-specific transcrip-tional responses. GeneGeoFlow derives multi-scale spectral coordinates from Gene Ontology and control-derived co-expression networks. A perturbation-conditioned, gene-wise gating module selects relevant structural scales and net-work sources, yielding intervention-specific gene geometry. The resulting geometry conditions a control-anchored resid-ual flow without explicitly propagating target-derived signals along the graph. Condition-wise optimal transport couples un-paired control and perturbed populations for training, while a Delta-correlation objective aligns the predicted and ob-served condition-level expression-shift directions. GeneGe-oFlow achieves Pearson Delta scores of 0.8979 on the Nor-man additive benchmark and 0.9088 on five held-out drug combinations in the fixed ComboSciPlex test split. These re-sults support perturbation-conditioned gene geometry as an effective structural prior for intervention-specific response prediction, without conflating stable gene relationships with response propagation. 
+
+## 1 Introduction 
+
+The space spanned by genetic perturbations and drug com-binations far exceeds what single-cell experiments can mea-sure (Norman et al. 2019; Lotfollahi et al. 2023). Moreover, destructive single-cell sequencing cannot provide paired pre-and post-intervention observations of the same cell, leav-ing available data sparse across conditions and unpaired across cells (Bunne et al. 2023). Virtual-cell models must therefore learn extrapolatable intervention responses from 
+
+> ∗
+
+Corresponding author. 
+
+limited population-level observations. Consider the held-out Panobinostat+SRT1720 combination in Figure 1: start-ing from a control-cell population, the model must use re-sponse patterns learned from other training conditions to predict the combination-specific response distribution and gene-expression shift. Thus, the central problem is to learn from sparse, unpaired populations a response mapping that generalizes to unseen interventions. To enable such cross-intervention extrapolation, existing virtual-cell models learn transferable perturbation represen-tations (Lotfollahi, Wolf, and Theis 2019; Lotfollahi et al. 2023), transport unpaired cell populations (Bunne et al. 2023; Driessen et al. 2026), or model response distributions with flow, bridge, or diffusion dynamics (Klein et al. 2025; Chi et al. 2026; Yu et al. 2026; Yuan et al. 2026). Graph-based predictors such as GEARS further introduce biological pri-ors, but use gene-relation graphs both to structure gene rep-resentations and to mediate intergene interactions (Roohani, Huang, and Leskovec 2024). Yet GO annotations encode cu-rated functional relations (Ashburner et al. 2000), whereas control-derived coexpression reflects statistical associations among unperturbed cells; neither specifies the direction or magnitude of transcriptional change under a particular inter-vention. Using the same relations as response paths therefore conflates stable association with intervention-specific prop-agation. Thus, the key question is not how to propagate per-turbations over a graph, but how to use biological networks as structural context while learning response dynamics from data. Answering this question requires what we term structure– dynamics separation: biological networks should provide gene-wise structural context, whereas intervention-specific response dynamics should be learned from data. This sepa-ration presents three technical challenges. First, a fixed graph source or spectral scale imposes the same structural view on every intervention, ignoring the condition-dependent roles of GO and control-derived coexpression. Second, control and perturbed cells have no one-to-one correspondence; arbi-trary pairing confounds intervention effects with differences in baseline cell state (Bunne et al. 2023; Chi et al. 2026). Finally, cell-wise learning objectives can fit plausible indi-arXiv:2608.06824v1 [q-bio.MN] 7 Aug 2026 vidual cells without preserving the direction of condition-level gene-expression changes (Ahlmann-Eltze, Huber, and Anders 2025; Viñas Torné et al. 2026). The model must therefore jointly support intervention-adaptive structure se-lection, training couplings between unpaired populations, and condition-level response alignment. Guided by this principle, we introduce GeneGeoFlow, which operationalizes structure–dynamics separation by using biological networks as gene-wise structural co-ordinates and an independent response field to learn intervention-specific transcriptional changes. The model first extracts multi-scale spectral coordinates from GO and control-derived coexpression graphs. Perturbation-conditioned Spectral Scale Router and Graph Source Router then select the relevant spectral scales and graph sources for each gene, yielding gene geometry. Next, condition-wise optimal transport constructs training couplings between un-paired control and perturbed populations, and a control-anchored gene-wise residual flow learns intervention-specific population transitions conditioned on gene geometry. Finally, a Delta-correlation objective aligns the directions of predicted and observed condition-level expression changes. We evaluate GeneGeoFlow primarily on the Norman strict genetic-perturbation holdout protocol and use the fixed Com-boSciPlex drug-combination split for cross-domain valida-tion. On Norman strict holdout, gene geometry improves the five-fold mean Pearson Delta from 0.1450 to 0.8153 and out-performs the graph-free model in every fold; perturbation-conditioned geometry further improves over static geometry in matched folds, whereas explicit graph propagation yields no stable gain. On the established Norman additive bench-mark, GeneGeoFlow achieves 0.8979 Pearson Delta. On five held-out ComboSciPlex drug combinations, GeneGeoFlow achieves 0.9088 Pearson Delta, compared with 0.8636 for the explicit-propagation variant and 0.5169 for the graph-free model. Within these matched comparisons, the dominant improvement arises from perturbation-conditioned gene ge-ometry, while the evaluated propagation operator provides no consistent additional gain. Our contributions are summarized as follows: 1. We identify a fundamental role entanglement in exist-ing graph-based perturbation models: biological networks are used both to represent gene organization and to me-diate intervention-response propagation. We introduce a structure–dynamics separation perspective, in which bio-logical networks define gene-wise structural context while intervention-specific response dynamics are learned from data. 2. We propose GeneGeoFlow, which constructs perturbation-conditioned gene geometry through multi-scale routing over Gene Ontology and control-derived coexpression graphs and uses this geometry to condition a control-anchored, gene-wise residual flow. Condition-wise optimal transport and a Delta-correlation objective address unpaired cell populations and condition-level response alignment, respectively. 3. Through matched comparisons with graph-free, static-geometry, and explicit-propagation controls on Norman and ComboSciPlex, we demonstrate that perturbation-conditioned gene geometry provides substantial improve-ments in predicting responses to unseen genetic perturba-tions and drug combinations. 
+
+## 2 Related Work 
+
+Perturbation-conditioned gene geometry. Graph-based perturbation modeling has evolved from explicit relation propagation to module-aware and graph-conditioned re-sponse prediction. GEARS propagates perturbation infor-mation over gene relations (Roohani, Huang, and Leskovec 2024), while scBIG organizes gene responses through module-inductive representations (Ruan et al. 2026). scDFM further incorporates a graph-aware backbone into distribu-tional flow matching (Yu et al. 2026). In parallel, scGen, CPA, chemCPA, biolord, AdaPert, and PerturbedVAE en-code interventions through transferable, compositional, dis-entangled, or adaptive representations (Lotfollahi, Wolf, and Theis 2019; Lotfollahi et al. 2023; Hetzel et al. 2022; Piran et al. 2024; Piao et al. 2026; Jiang et al. 2026). These meth-ods primarily use graph-derived relations within response computation or adapt cell- and condition-level representa-tions without modifying gene-wise structural coordinates. Spectral encoders such as SignNet provide global node coor-dinates but remain intervention agnostic (Lim et al. 2023). In contrast, GeneGeoFlow derives multi-scale spectral coordi-nates from GO (Ashburner et al. 2000) and control-derived coexpression, then uses perturbation-conditioned, gene-wise gates to select relevant scales and network sources. The resulting geometry provides intervention-specific structural context without propagating target signals. 
+
+Geometry-conditioned residual flow. Unpaired popula-tion modeling has developed along two main lines. Optimal-transport methods construct population couplings with-out cell-level correspondences: CellOT and CMonge learn conditional control-to-treatment maps, while CINEMA-OT reduces treatment-associated variation before match-ing (Bunne et al. 2023; Driessen et al. 2026; Dong et al. 2023). Flow-based methods instead represent population change through a generative velocity field. CellFlow com-bines OT coupling with conditional flow matching, whereas scDFM introduces graph-aware structure into distributional flow matching (Klein et al. 2025; Yu et al. 2026). Despite their different parameterizations, these methods primarily address how a control population should be transported to a perturbed distribution, without explicitly separating stable gene structure from intervention-specific response dynam-ics. GeneGeoFlow restricts OT to endpoint construction and conditions a separate control-anchored, gene-wise residual field on Zp. Delta-correlation further aligns the predicted and observed condition-level expression shifts. 
+
+## 3 Problem Formulation 
+
+We define unseen-perturbation prediction as conditional pop-ulation generation from unpaired single-cell observations. Let G be the number of modeled genes, xc ∼ Pc a con-trol cell, and yp ∼ Pp a cell observed after perturbation 
+
+p, all in RG. Training data consist of finite control samples Figure 1: Overview of GeneGeoFlow. (A) Condition-wise optimal transport couples unpaired control and perturbed populations to construct training endpoints. (B) Multi-scale spectral coordinates from the GO and control-derived coexpression graphs are selected by the Spectral Scale Router and fused by the perturbation-conditioned Graph Source Router, yielding gene-wise geometry Zp. (C) The control-anchored residual path interpolates between each coupled control–perturbed pair to form the intermediate state xt. (D) A shared local projection maps (xt, x c, s p, Z p) to gene-wise features; the condition context modulates three FiLM residual blocks, and the velocity head outputs one scalar velocity per gene. (E) Integrating the learned cell-wide velocity field predicts the perturbed population from control cells. Panobinostat+SRT1720 is shown only as a running illustration: its 0.9661 Pearson Delta is condition specific, whereas aggregate claims are evaluated across all held-out conditions. 
+
+Xc = {xci }Nc 
+
+> i=1
+
+and perturbed samples Yp = {ypj }Np 
+
+> j=1
+
+for 
+
+p ∈ P train ; destructive sequencing provides no cell-level cor-respondence between them. Each condition is described by a nonempty gene-aligned target mask sp ∈ { 0, 1}G, with Tp =
+
+{g : sp,g = 1 }. Let R = {GO , CE } and G = {W (r)}r∈R 
+
+denote the fixed GO and control-coexpression graph priors. Training and test conditions satisfy Ptrain ∩ P test = ∅. For an unseen p⋆ ∈ P test , the model receives only Xc, sp⋆ , and 
+
+G, with no sample from Pp⋆ available for fitting. We seek a conditional generator 
+
+ˆyp ∼ qθ ( · | xc, s p, G ),
+
+bPθ,p =
+
+Z
+
+qθ ( · | xc, s p, G ) dPc(xc), (1) where ˆyp is one generated cell and bPθ,p is the predicted pop-ulation after marginalizing over control cells. For an unseen condition, the target is bPθ,p ⋆ ≈ Pp⋆ . Only the marginalized population bPθ,p is identifiable from unpaired observations; the conditional coupling represented by qθ is a modeling choice and is not interpreted as an individual counterfactual map. The model must therefore infer the response distribu-tion of an unseen intervention from its target description and stable gene-structure priors, without assuming that those priors specify the response direction or magnitude. 
+
+## 4 Method 
+
+GeneGeoFlow separates stable gene structure from intervention-specific response dynamics. It constructs perturbation-conditioned gene geometry Zp by routing multi-scale coordinates from fixed GO and control-derived coexpression graphs. Condition-wise OT supplies train-ing endpoints, while a control-anchored gene-wise resid-ual field uses Zp and perturbation context to predict re-sponses; Delta correlation aligns condition-level shifts. The default model uses graph geometry only as structural context, whereas GeneGeoFlow-Prop adds target-signal propagation as a matched control. Figure 1 summarizes the workflow. 
+
+4.1 Perturbation-Conditioned Gene Geometry 
+
+Fixed biological coordinates. We construct two weighted graphs over the modeled genes: a GO graph from biological-process annotation overlap (Ashburner et al. 2000) and a coexpression graph from absolute Pearson correlation across training control cells. Let Ag be the GO term set of gene g
+
+and Xc the training-control expression matrix. Their edge weights are 
+
+wGO  
+
+> gh
+
+= |A g ∩ A h||A g ∪ A h| ,wCE  
+
+> gh
+
+= Pearson( Xc 
+
+> :,g
+
+, X c
+
+> :,h
+
+) ,
+
+(2) where g and h index genes. Both graphs are sparsified, sym-metrized, computed before training, and kept fixed; the exact sparsification rules are given in the supplementary mate-rial. Rather than treating raw graph edges as response path-ways, we use spectral coordinates to summarize each gene’s higher-order structural position within each fixed graph. For source r ∈ R = {GO , CE }, let W (r) be its adjacency and 
+
+D(r) = diag( W (r)1). We obtain degree-normalized spec-tral coordinates from 
+
+L(r)sym = I − (D(r))−1/2W (r)(D(r))−1/2,L(r)sym U (r) = U (r)Λ(r),
+
+Φ(r) = ( D(r))−1/2U (r),
+
+(3) where the columns of U (r) are Laplacian eigenvectors, 
+
+Λ(r) contains their eigenvalues, and Φ(r) gives the degree-normalized gene coordinates; we write λ(r) = diag(Λ (r))
+
+below. After discarding the first trivial mode, we retain the next 32 eigenpairs. We split them into low- and high-frequency blocks and apply separate SignNet-based Spectral Encoders (SPEs) (Lim et al. 2023), obtaining fixed gene-wise features b(r)lo ,g and b(r)hi ,g . The low-frequency block repre-sents coarse graph organization, whereas the high-frequency block retains finer structural variation; keeping both pro-vides candidate scales for perturbation-conditioned routing. Graph construction, isolated-node handling, and encoder di-mensions are specified in the supplementary material. 
+
+Perturbation-conditioned gene geometry. A fixed coor-dinate system cannot express that interventions may depend on different structural scales and graph sources. For the target set Tp, let ¯bg = [ b(r)lo ,g ; b(r)hi ,g ]r∈R and form the shared target-set embedding egeo  
+
+> p
+
+= |T p|−1 P 
+
+> h∈T p
+
+ϕgeo (¯bh). The Spectral Scale Router (SSR) mixes the two frequency blocks within each source, and the Graph Source Router (GSR) then fuses the sources: 
+
+α(r) 
+
+> p,g
+
+= sigmoid 
+
+
+
+f scale  
+
+> r
+
+([ b(r)lo ,g ; b(r)hi ,g ; egeo  
+
+> p
+
+]) 
+
+
+
+,z(r) 
+
+> p,g
+
+= Mr
+
+
+
+α(r) 
+
+> p,g
+
+b(r)lo ,g + (1 − α(r) 
+
+> p,g
+
+)b(r)hi ,g 
+
+
+
+,π(r) 
+
+> p,g
+
+= softmax r
+
+
+
+f src  
+
+> r
+
+([ z(r) 
+
+> p,g
+
+; egeo  
+
+> p
+
+]) 
+
+
+
+,zp,g = X
+
+> r∈R
+
+π(r) 
+
+> p,g
+
+z(r) 
+
+> p,g
+
+,
+
+(4) where ϕgeo is a shared target-gene encoder, f scale  
+
+> r
+
+and f src 
+
+> r
+
+are learned scalar scorers, and Mr maps each source to the common dz -dimensional space. In Equation (4), α(r) 
+
+> p,g
+
+selects scale within each source, π(r) 
+
+> p,g
+
+fuses sources, and stacking the outputs gives Zp = [ zp, 1, . . . , z p,G ]⊤ ∈ RG×dz . Thus, interventions share the same structural basis while selecting different structural scales and graph sources for each gene. The target mask conditions these selections and is not prop-agated along graph edges. 
+
+4.2 Geometry-Conditioned Gene-Wise Residual Flow Matching 
+
+Given the perturbation-conditioned geometry Zp, the re-maining task is to learn a conditional population transfor-mation from unpaired control and perturbed observations. 
+
+Condition-wise cell coupling and control-anchored path. 
+
+For condition p, equal-size control and perturbed mini-batches are coupled by discrete optimal transport (Dong et al. 2023; Klein et al. 2025; Chi et al. 2026): 
+
+ρ⋆p = arg min 
+
+> ρ∈SB
+> B
+
+X
+
+> i=1
+
+xci − ypρ(i)
+
+> 22
+
+,yi = ypρ⋆p(i),
+
+(5) where B is the condition-specific minibatch size, SB is the set of index permutations, and ρ⋆p is the minimum-cost one-to-one assignment. Compared with arbitrary pairing, this as-signment reduces baseline-state discrepancies between end-points so that residual targets are less dominated by cross-cell mismatch. For each coupled pair, we perturb the measured control locally and construct a straight residual path: 
+
+xi, 0 = xci + σϵ i, ϵi ∼ N (0 , I G),xi,t i = (1 − ti)xi, 0 + tiyi, ti ∼ U (0 , 1) ,ui = yi − xi, 0.
+
+(6) where σ is the fixed control-anchor noise scale, xi,t i is the sampled path state, and ui is the constant target velocity along the straight path. Perturbing the control anchor encourages a locally smooth velocity field, while independent noise draws provide sample diversity when generating populations. The coupling and path are training constructions rather than lin-eage or individual counterfactual assignments. 
+
+Condition context. The response backbone processes genes with shared parameters; within this backbone, the pooled Condition Context is the only channel through which information is shared across genes. It uses a separately pa-rameterized perturbation embedding. It summarizes routed target coordinates as ersp  
+
+> p
+
+= |T p|−1 P 
+
+> h∈T p
+
+ϕrsp (zp,h ). A context encoder first constructs gene tokens and pools them into a shared condition representation: 
+
+ηi,p,g = [ xci,g ; zp,g ; sp,g ; ersp  
+
+> p
+
+],τi,p,g = GeneTokenEncoder( ηi,p,g ),
+
+¯τi,p = AttnPool( {τi,p,g }Gg=1 ),ci,p,t i = [¯ τi,p ; TimeEmbed( ti); ersp  
+
+> p
+
+],
+
+(7) where ϕrsp is a response-specific shared target-gene encoder, GeneTokenEncoder maps each gene’s inputs to a token, At-tnPool forms a cell-level summary, and TimeEmbed applies a sinusoidal encoding followed by an MLP. Learned-query attention pooling permits gene tokens to contribute unequally to the cell-level summary, while the time embedding identi-fies the current position along the control-to-perturbed path. The resulting ci,p,t i is the Condition Context in Figure 1; it is shared across genes within cell i but remains control-, perturbation-, and time-dependent. 
+
+Local projection. For each gene, we concatenate the inter-polated expression, control anchor, perturbation-conditioned geometry, and target state: 
+
+ξi,p,t i,g = [ xi,t i,g ; xci,g ; zp,g ; sp,g ],ℓi,p,t i,g = Ploc (ξi,p,t i,g ) = SiLU( Wloc ξi,p,t i,g + bloc ).
+
+(8) The projection shares parameters across genes, while zp,g 
+
+retains gene-specific structural context. 
+
+FiLM residual field and velocity head. The condition context first enters through an additive projection and then modulates residual blocks k = 1 , . . . , K , with K = 3 . To simplify notation, write c = ci,p,t i and ℓg = ℓi,p,t i,g , and suppress the common indices (i, p, t i) inside the block re-currence. 
+
+h(0)  
+
+> g
+
+= ℓg + Pctx (c),
+
+eh(k) 
+
+> g
+
+= h(k−1)  
+
+> g
+
++ W (k)2 SiLU 
+
+
+
+W (k)1 LN( h(k−1)  
+
+> g
+
+)
+
+
+
+,
+
+[γ(k); β(k)] = A(k)c + a(k),h(k) 
+
+> g
+
+= (1 + γ(k)) ⊙ eh(k) 
+
+> g
+
++ β(k),vθ,i,g = w⊤
+
+> out
+
+h(K) 
+
+> g
+
++ bout ,
+
+(9) where Pctx , W (k)1 , W (k)2 , and A(k) are learned maps; LN 
+
+denotes layer normalization, ⊙ denotes element-wise multi-plication, and γ(k) and β(k) are condition-dependent FiLM scale and shift vectors. Here vθ,i,g abbreviates vθ,i,p,t i,g 
+
+for the current (p, t i), and stacking over genes gives vi =(vθ,i,g )Gg=1 . Bias terms in the residual maps are suppressed for readability. FiLM treats c as a shared control signal that adapts gene-local feature processing at each block through condition-dependent scale and shift parameters. All residual-field and head parameters are shared over genes; genes inter-act only through the pooled Condition Context, not through graph propagation. 
+
+Flow-matching and Delta-correlation objectives. The flow-matching term fits the OT-coupled residual velocity: 
+
+LFM = 1
+
+BG 
+
+> B
+
+X
+
+> i=1
+
+∥vi − ui∥22. (10) This cell-level objective does not directly constrain the direc-tion of the condition-level mean expression shift. We there-fore use the noise-free endpoint residual to impose a Delta-correlation objective across genes: 
+
+¯vp = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+vi, ¯dp = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+(yi − xci ),
+
+L∆ = 1 − corr κ(¯ vp, ¯dp).
+
+(11) where corr κ is a Pearson correlation computed across the 
+
+G genes with positive denominator floor κ. The complete objective is 
+
+L = LFM + λ∆L∆, (12) where λ∆ controls the strength of condition-level response alignment. The stabilized correlation operator and layer di-mensions are given in the supplementary material. 
+
+Explicit-propagation control. The default GeneGeoFlow uses graph spectra only as structural coordinates and never spreads the perturbation mask along graph edges. To iso-late whether target-signal propagation adds value beyond this geometric conditioning, GeneGeoFlow-Prop introduces a matched learned low-rank spectral operator over the coex-pression coordinates: 
+
+r(ℓ) 
+
+> p
+
+= Φ (CE) diag 
+
+
+
+gψ,ℓ (λ(CE) )
+
+
+
+(Φ (CE) )⊤sp. (13) where ℓ = 1 , . . . , C indexes the learned propagation chan-nels, gψ,ℓ is the filter for channel ℓ, λ(CE) is the coexpression eigenvalue vector, and r(ℓ) 
+
+> p
+
+∈ RG is the resulting gene-wise Table 1: Norman additive results. Bold and underlined values denote the best and second-best results, respectively.                                    
+
+> Model MSE ↓DE-Spearman ρ↑Pearson ∆↑
+> Control 0.0184 N.A. N.A. Additive 0.0045 0.5564 0.9024
+> Geneformer 0.0041 0.3741 0.7732 GEARS 0.0139 0.5624 0.7421 CPA 0.0344 0.0713 0.3845 STATE 0.3006 0.5288 −0.0108
+> CellFlow 0.0039 0.5503 0.8678 scDFM 0.0032 0.5705 0.8853 GeneGeoFlow 0.0030 0.5992 0.8979
+
+propagated channel. These channels are appended to the lo-cal input ξi,p,t i,g in Equation (8); all other components re-main unchanged. This is a learned low-rank projection and reconstruction rather than an assumed causal diffusion pro-cess. Accordingly, the comparison evaluates this particular propagation operator under matched conditions rather than excluding all possible graph-propagation designs. 
+
+Inference. Inference requires neither OT assignment nor perturbed cells. Given a control cell and an unseen target mask, the model constructs Zp and integrates 
+
+ϵ ∼ N (0 , I G),x(0) = xc + σϵ, 
+
+dx(t)dt = vθ (x(t), t, x c, s p, Z p) , t ∈ [0 , 1] .
+
+(14) Integrating Equation (14) from t = 0 to t = 1 yields the terminal state x(1) = ˆ yp, one generated perturbed cell. Re-peating this procedure over control cells and independent noise draws yields the predicted population bPθ,p .
+
+## 5 Experiments 
+
+5.1 Experimental Setup 
+
+We evaluated generalization to unseen interventions and used matched controls to isolate the effects of perturbation-conditioned gene geometry and explicit graph propagation. 
+
+Datasets and evaluation protocols. Norman, our primary benchmark, contains K562 CRISPRa single- and two-gene interventions (Norman et al. 2019). Its five-fold strict-holdout protocol removes selected genes and every condition con-taining them from training, providing the main evidence for unseen genetic perturbations. We also report the established additive and single/double holdout protocols for comparison with scDFM. For cross-domain validation, we used Com-boSciPlex, which contains A549 cells exposed to single agents and drug combinations (Lotfollahi et al. 2023). Its fixed split contains 24 training and seven held-out condi-tions; we focus on the five held-out drug–drug interventions and represent each combination by the union of its known targets. Complete preprocessing, split, and graph statistics are provided in the supplementary material. 
+
+Baselines. Control reuses the control population and predicts no intervention shift. Additive sums available Table 2: Norman single- and double-perturbation holdout re-sults. Bold and underlined values denote the best and second-best results within each setting, respectively.                                                                  
+
+> Setting Model MSE ↓DE-Spearman ρ↑Pearson ∆↑
+> Single Control 0.0095 N.A. N.A. scGPT 0.0080 −0.1139 0.4503 GEARS 0.0075 0.3569 0.6646 Geneformer 0.0036 0.3669 0.6955 CPA 0.0356 0.1168 0.2837 STATE 0.3333 0.6116 0.0004 CellFlow 0.0035 0.2860 0.7109 scDFM 0.0030 0.6957 0.7127 GeneGeoFlow 0.0029 0.7078 0.7421
+> Double Control 0.0207 N.A. N.A. scGPT 0.0153 −0.0665 0.5693 GEARS 0.0156 0.2543 0.7552 Geneformer 0.0050 0.3468 0.7361 CPA 0.0357 0.3652 0.4176 STATE 0.3404 0.4071 0.0061 CellFlow 0.0049 0.5074 0.8095 scDFM 0.0047 0.5676 0.8357 GeneGeoFlow 0.0044 0.5918 0.8464
+
+component-wise condition-mean residuals. Graph-free re-tains the same residual-flow backbone but removes spec-tral gene geometry, while GeneGeoFlow-Prop adds ex-plicit target-signal propagation to GeneGeoFlow. The ex-ternal tables additionally include scGPT (Cui et al. 2024), Geneformer (Theodoris et al. 2023), GEARS (Roohani, Huang, and Leskovec 2024), CPA (Lotfollahi et al. 2023), STATE (Adduri et al. 2025), CellFlow (Klein et al. 2025), and scDFM (Yu et al. 2026). For the Norman additive and single/double holdout comparisons, baseline values are tran-scribed from scDFM (Yu et al. 2026), while the GeneGe-oFlow rows are obtained from our runs under the corre-sponding protocols. Because we did not rerun these external methods, the benchmark tables provide cross-source context, whereas matched local controls support mechanism attribu-tion. 
+
+Metrics and implementation. Our primary metrics were Pearson Delta, the gene-wise correlation between predicted and observed condition-mean residuals, and MSE, their nu-merical discrepancy. Population fidelity was additionally measured by RBF maximum mean discrepancy (MMD) and the Pearson correlation between predicted and observed gene-wise variance vectors. We averaged Norman results over data-split folds and ComboSciPlex results over condi-tions in its fixed test split unless stated otherwise. All locally trained models used the same preprocessing, evaluation in-terface, and training budget. Additional implementation and evaluation details are provided in the supplementary mate-rial. 
+
+5.2 Quantitative Results on Norman 
+
+Table 2 provides benchmark context on the Norman single-and double-perturbation holdouts. GeneGeoFlow outper-formed scDFM in both settings, reaching Pearson Delta scores of 0.7421 and 0.8464 , with MSE values of 0.0029 
+
+and 0.0044 , on the single- and double-perturbation holdouts, respectively. Table 3: ComboSciPlex results. Bold and underlined values denote the best and second-best results, respectively.                        
+
+> Model MSE ↓DE-Spearman ρ↑Pearson ∆↑
+> Control 0.0324 N.A. N.A. scGPT 0.0031 −0.1261 0.8322 CPA 0.0029 0.7906 0.8150 scDFM 0.0028 0.8289 0.8933 GeneGeoFlow 0.0021 0.8305 0.9088
+
+On the primary five-fold strict-holdout protocol, target-set GeneGeoFlow improved over Graph-free in every fold, increasing mean Pearson Delta from 0.1450 to 0.8153 and reducing MSE from 0.0167 to 0.0039 .The three conditions in Figure 3 span different levels of prediction difficulty, from partial recovery to close distri-butional agreement. Geometry-conditioned predictions fol-low the observed density more closely in panels (b) and (c), whereas panel (a) shows partial recovery; Table 4 provides the quantitative population-level test. Table 1 reports results under the established Norman addi-tive protocol. GeneGeoFlow achieved 0.8979 Pearson Delta, compared with 0.9024 for Additive and 0.8853 for scDFM, while also reporting the lowest MSE and the highest DE-Spearman ρ.
+
+5.3 Quantitative Results on ComboSciPlex 
+
+Table 4: Population fidelity on held-out perturbations. Lower MMD and higher variance correlation are better; bold de-notes the best result within each dataset.                    
+
+> Dataset Variant MMD ↓Var. Corr. ↑
+> Norman Graph-free 0.1488 0.3114 GeneGeoFlow-Prop 0.0965 0.6043 GeneGeoFlow 0.0821 0.6728
+> ComboSciPlex Graph-free 0.1639 0.2862 GeneGeoFlow-Prop 0.1011 0.5811 GeneGeoFlow 0.0894 0.6435
+
+Table 3 places the ComboSciPlex result against reported baselines. GeneGeoFlow achieved the best results on all three reported metrics (MSE, DE-Spearman ρ, Pearson ∆), in-cluding the strongest Pearson Delta ( 0.9088 versus 0.8933 
+
+for scDFM). In the matched local comparison, GeneGe-oFlow improved Pearson Delta from 0.5169 to 0.9088 over Graph-free and reduced MSE from 0.0733 to 0.0021 ; explicit propagation reached 0.8636 and 0.0198 . GeneGeoFlow im-proved all five unseen combinations by 0.1900 –0.4800 , in-cluding 0.2700 to 0.7100 on SRT2104+Alvespimycin. Ge-neGeoFlow also achieved the lowest MMD and the highest variance correlation on both datasets (Table 4). 
+
+5.4 Ablation Study 
+
+Explicit-propagation control. Figure 2 separates struc-tural coordinates from explicit target-signal propagation. Be-cause the propagation analysis uses a dense full-mask re-sponse encoder, all conclusions in this panel are drawn within the same run family; its no-propagation reference therefore 0.0 0.4 0.8                 
+
+> Pearson Δ↑
+> Graph-free Gene ID Shuffled GeneGeoFlow
+> (a) Gene-coordinate alignment
+> GF ID Shuf. GGF
+> Geometry control
+> 0.00 0.01 0.02
+> Five-fold mean MSE  ↓ 0.0167 0.0091 0.0088 0.0039
+> (b) Residual prediction error
+> F1 F2 F3 F4 F5
+> Norman fold
+> 0.00 0.03 0.06
+> Conditioning gain in Pearson  Δ (c) Conditioning gain
+> −0.05 0.00 0.05
+> Change in Pearson Δ
+> F1 F2 F3 F4 F5 Combo
+> (d) Propagation effect
+
+Figure 2: Matched controls isolate the contributions of biological gene coordinates and perturbation conditioning from explicit graph propagation. Panels (a)–(b) compare Graph-free, learned gene IDs, shuffled coordinates, and aligned target-set Gene-GeoFlow on five Norman strict-holdout folds; in panel (a), hollow markers denote folds and filled diamonds denote five-fold means, while panel (b) reports mean MSE. Panel (c) reports Conditioned minus Static per Norman fold. Panel (d) reports GeneGeoFlow-Prop minus GeneGeoFlow for Norman folds and the ComboSciPlex mean. Each panel is a within-family com-parison: panels (a)–(b) use target-set pooling, panel (c) uses the matched router run family, and panel (d) uses the dense full-mask response-encoder run family. 8 10 12 14 16           
+
+> UMAP 1
+> 246810
+> UMAP 2
+> (a)
+> 810 12 14 16
+> UMAP 1
+> (b)
+> 810 12 14 16
+> UMAP 1
+> (c)
+> Observed GeneGeoFlow Graph-free
+
+Figure 3: Qualitative population-level comparison on three fold-1 Norman strict-holdout conditions: ZBTB10+PTPN12 (a), BAK1+control (b), and DUSP9+PRTG (c). PCA and UMAP are fitted to a fixed stratified sample of real cells and then used to project both predicted populations. Points and contours denote cells and density; enlarged markers denote centroids. Aggregate population fidelity is evaluated separately in Table 4. differs from the final target-set model. The evaluated low-rank operator produced mixed fold-wise effects on Norman, with a mean Pearson Delta change of +0 .0101 , while de-creasing ComboSciPlex performance by 0.0452 . It therefore provided no consistent benefit in this setting, without ruling out other propagation designs. 
+
+Perturbation-conditioned geometry. Static geometry preserves the biological coordinates and target mask but re-moves the perturbation input from both routers. Conditioning improved every matched Norman fold, with a mean Pearson Delta gain of 0.0357 (Figure 2(c)), isolating intervention-dependent scale and source selection. 
+
+Gene coordinate alignment. With the response backbone fixed, Learned Gene ID, Shuffled Geometry, aligned geom-etry, and Graph-free reached mean Pearson Delta values of 0.3981 , 0.4387 , 0.8153 , and 0.1450 , respectively (Fig-ure 2(a)). Their mean MSE values were 0.0091 , 0.0088 ,
+
+0.0039 , and 0.0167 (Figure 2(b)), indicating that the gain cannot be explained by gene identity, input dimensionality, or arbitrary coordinate assignment alone. 
+
+## 6 Conclusion 
+
+We introduced GeneGeoFlow to separate stable gene struc-ture from intervention-specific response dynamics. It con-structs perturbation-conditioned gene geometry from GO and control-derived coexpression networks to condition a control-anchored gene-wise residual flow; condition-wise OT and Delta correlation address unpaired populations and condition-level alignment. Matched comparisons on Norman and ComboSciPlex attributed the main gains to biologically aligned coordinates and perturbation-conditioned routing, whereas the evaluated low-rank propagation operator yielded no consistent benefit. These results support using biological networks as structural conditions for data-driven response fields. References 
+
+Adduri, A. K.; Gautam, D.; Bevilacqua, B.; Imran, A.; Shah, R.; Naghipourfar, M.; Teyssier, N.; Ilango, R.; Na-garaj, S.; Dong, M.; Ricci-Tam, C.; Carpenter, C.; Sub-ramanyam, V.; Winters, A.; Tirukkovular, S.; Sullivan, J.; Plosky, B. S.; Eraslan, B.; Youngblut, N. D.; Leskovec, J.; Gilbert, L. A.; Konermann, S.; Hsu, P. D.; Dobin, A.; Burke, D. P.; Goodarzi, H.; and Roohani, Y. H. 2025. Predicting Cellular Responses to Perturbation across Diverse Contexts with STATE. bioRxiv .Ahlmann-Eltze, C.; Huber, W.; and Anders, S. 2025. Deep-Learning-Based Gene Perturbation Effect Prediction Does Not Yet Outperform Simple Linear Baselines. Nature Meth-ods , 22(8): 1657–1661. Ashburner, M.; Ball, C. A.; Blake, J. A.; Botstein, D.; But-ler, H.; Cherry, J. M.; Davis, A. P.; Dolinski, K.; Dwight, S. S.; Eppig, J. T.; Harris, M. A.; Hill, D. P.; Issel-Tarver, L.; Kasarskis, A.; Lewis, S.; Matese, J. C.; Richardson, J. E.; Ringwald, M.; Rubin, G. M.; and Sherlock, G. 2000. Gene Ontology: Tool for the Unification of Biology. Nature Ge-netics , 25(1): 25–29. Bunne, C.; Stark, S. G.; Gut, G.; del Castillo, J. S.; Levesque, M.; Lehmann, K.-V.; Pelkmans, L.; Krause, A.; and Rätsch, G. 2023. Learning Single-Cell Perturbation Responses Using Neural Optimal Transport. Nature Methods , 20(11): 1759– 1768. Chi, C.; Huang, Y.; Xia, J.; Zheng, J.; Liu, Y.; Zang, Z.; and Li, S. Z. 2026. Departures: Distributional Transport for Single-Cell Perturbation Prediction with Neural Schrödinger Bridges. Proceedings of the AAAI Conference on Artificial Intelligence , 40(25): 20544–20552. Cui, H.; Wang, C.; Maan, H.; Pang, K.; Luo, F.; Duan, N.; and Wang, B. 2024. scGPT: Toward Building a Foundation Model for Single-Cell Multi-Omics Using Generative AI. 
+
+Nature Methods , 21(8): 1470–1480. Dong, M.; Wang, B.; Wei, J.; de O. Fonseca, A. H.; Perry, C. J.; Frey, A.; Ouerghi, F.; Foxman, E. F.; Ishizuka, J. J.; Dhodapkar, R. M.; and van Dijk, D. 2023. Causal Identifi-cation of Single-Cell Experimental Perturbation Effects with CINEMA-OT. Nature Methods , 20(11): 1769–1779. Driessen, A.; Rajwade, D. A.; Harsanyi, B.; Rapsomaniki, M.; and Born, J. 2026. Conditional Monge Gap Enables Generalizable Single-Cell Perturbation Modelling. Nature Machine Intelligence , 8(6): 984–996. Hetzel, L.; Boehm, S.; Kilbertus, N.; Günnemann, S.; Lotfol-lahi, M.; and Theis, F. J. 2022. Predicting Cellular Responses to Novel Drug Perturbations at a Single-Cell Resolution. In 
+
+Advances in Neural Information Processing Systems , vol-ume 35, 26711–26722. Jiang, W.; Liu, Y.; Cai, Y.; Gao, E.; Dong, J.; Abbasnejad, E.; Yao, L.; and Shi, J. Q. 2026. What Makes a Representation Good for Single-Cell Perturbation Prediction? In Forty-Third International Conference on Machine Learning .Klein, D.; Fleck, J. S.; Bobrovskiy, D.; Zimmermann, L.; Becker, S.; Palma, A.; Dony, L.; Tejada-Lapuerta, A.; Huguet, G.; Lin, H.-C.; Azbukina, N.; Sanchís-Calleja, F.; Uscidda, T.; Szalata, A.; Gander, M.; Regev, A.; Treutlein, B.; Camp, J. G.; and Theis, F. J. 2025. CellFlow Enables Gener-ative Single-Cell Phenotype Modeling with Flow Matching. 
+
+bioRxiv .Lim, D.; Robinson, J. D.; Zhao, L.; Smidt, T. E.; Sra, S.; Maron, H.; and Jegelka, S. 2023. Sign and Basis Invariant Networks for Spectral Graph Representation Learning. In 
+
+The Eleventh International Conference on Learning Repre-sentations .Lotfollahi, M.; Klimovskaia Susmelj, A.; De Donno, C.; Het-zel, L.; Ji, Y.; Ibarra, I. L.; Srivatsan, S. R.; Naghipourfar, M.; Daza, R. M.; Martin, B.; Shendure, J.; McFaline-Figueroa, J. L.; Boyeau, P.; Wolf, F. A.; Yakubova, N.; Günnemann, S.; Trapnell, C.; Lopez-Paz, D.; and Theis, F. J. 2023. Predict-ing Cellular Responses to Complex Perturbations in High-Throughput Screens. Molecular Systems Biology , 19(6): e11517. Lotfollahi, M.; Wolf, F. A.; and Theis, F. J. 2019. scGen Pre-dicts Single-Cell Perturbation Responses. Nature Methods ,16(8): 715–721. Norman, T. M.; Horlbeck, M. A.; Replogle, J. M.; Ge, A. Y.; Xu, A.; Jost, M.; Gilbert, L. A.; and Weissman, J. S. 2019. Exploring Genetic Interaction Manifolds Constructed from Rich Single-Cell Phenotypes. Science , 365(6455): 786–793. Piao, Y.; Kim, H.; Kim, S.; Oh, Y.; Jeon, J.; Hwang, S.-Y.; Lim, J.; Kim, W. Y.; Park, C.; and Ahn, S. 2026. Learn-ing Adaptive Perturbation-Conditioned Contexts for Robust Transcriptional Response Prediction. In Forty-Third Inter-national Conference on Machine Learning .Piran, Z.; Cohen, N.; Hoshen, Y.; and Nitzan, M. 2024. Disentanglement of Single-Cell Data with biolord. Nature Biotechnology , 42(11): 1678–1683. Roohani, Y.; Huang, K.; and Leskovec, J. 2024. Predicting Transcriptional Outcomes of Novel Multigene Perturbations with GEARS. Nature Biotechnology , 42(6): 927–935. Ruan, J.; Quan, R.; Xu, L.; Yang, Z.; and Yang, Y. 2026. Be-yond Independent Genes: Learning Module-Inductive Rep-resentations for Single-Cell Gene Perturbation Prediction. In 
+
+Forty-Third International Conference on Machine Learning .Theodoris, C. V.; Xiao, L.; Chopra, A.; Chaffin, M. D.; Al Sayed, Z. R.; Hill, M. C.; Mantineo, H.; Brydon, E. M.; Zeng, Z.; Liu, X. S.; and Ellinor, P. T. 2023. Transfer Learning Enables Predictions in Network Biology. Nature , 618(7965): 616–624. Viñas Torné, R.; Wiatrak, M.; Piran, Z.; Fan, S.; Jiang, L.; Teichmann, S. A.; Nitzan, M.; and Brbić, M. 2026. Systema: A Framework for Evaluating Genetic Perturbation Response Prediction beyond Systematic Variation. Nature Biotechnol-ogy , 44(6): 1050–1059. Yu, C.; Wang, C.; Liao, B.; and Wu, T. 2026. scDFM: Distributional Flow Matching Model for Robust Single-Cell Perturbation Prediction. In The Fourteenth International Conference on Learning Representations .Yuan, X.; Liu, X.; Zhang, Y. S.; Zhang, Z.; Guo, H.; and Tang, J. 2026. PerturbDiff: Functional Diffusion for Single-Cell Perturbation Modeling. In Forty-Third International Conference on Machine Learning .Supplementary Material A Additional Method Details 
+
+This supplement records the construction and implementa-tion details omitted from the condensed method in the main paper. It uses the same notation as the main paper and intro-duces no additional model component. 
+
+Graph Construction and Spectral Coordinates 
+
+Fixed graph priors. Let the training control population be 
+
+Xc = [ xc
+
+> 1
+
+, . . . , x cNc ]⊤ ∈ RNc×G, and let Ag be the set of GO biological-process terms assigned to gene g. The two graph weights are 
+
+wGO  
+
+> gh
+
+= |A g ∩ A h||A g ∪ A h| ,wCE  
+
+> gh
+
+= Pearson( Xc 
+
+> :,g
+
+, X c
+
+> :,h
+
+) .
+
+(S1) Equation (S1) is evaluated using training controls only. For GO, we retain the 20 highest-weight neighbors of each gene. For coexpression, we retain edges with absolute correlation at least 0.3 and augment them with the top 20 neighbors of each gene. The directed top-k matrices are symmetrized by arithmetic averaging, W ← (W + W ⊤)/2, and fixed before model training. Perturbed cells are not used to con-struct either graph. GO annotations are read from the GAF 2.2 biological-process namespace using gene symbols; an-notations with the NOT qualifier are excluded. The archived annotation file was generated on March 28, 2026 from the March 1, 2026 GO release. 
+
+Spectral data. For r ∈ {GO , CE }, define D(r) =diag( W (r)1). The complete fixed spectral construction is 
+
+L(r)sym = I − (D(r))−1/2W (r)(D(r))−1/2,L(r)sym U (r) = U (r)Λ(r), (U (r))⊤U (r) = I, 
+
+Φ(r) = ( D(r))−1/2U (r),
+
+S = {(Φ (r), λ (r))}r∈{ GO ,CE }.
+
+(S2) Equation (S2) is computed once for each graph source and cached. For isolated genes, the corresponding entry of 
+
+(D(r))−1/2 is set to zero. We discard the first trivial mode and retain the next 32 eigenpairs, ordered by increasing eigen-value. The first 16 retained modes form the low-frequency block and the remaining 16 form the high-frequency block. Separate SignNet encoders resolve eigenvector sign ambi-guity in the two blocks and produce b(r)lo ,g and b(r)hi ,g . The eigendecompositions are performed once and cached. 
+
+Perturbation-Conditioned Routing 
+
+Let the nonempty target set be Tp = {g : sp,g = 1 }, and let ¯bg = [ b(r)lo ,g ; b(r)hi ,g ]r∈{ GO ,CE } collect the fixed multi-scale coordinates of gene g. The geometry embedding and source-specific routing variables are 
+
+egeo  
+
+> p
+
+= 1
+
+|T p|
+
+X
+
+> h∈T p
+
+ϕgeo (¯bh),q(r) 
+
+> p,g
+
+= [ b(r)lo ,g ; b(r)hi ,g ; egeo  
+
+> p
+
+],α(r) 
+
+> p,g
+
+= sigmoid 
+
+
+
+f scale  
+
+> r
+
+(q(r) 
+
+> p,g
+
+)
+
+
+
+,
+
+ez(r) 
+
+> p,g
+
+= α(r) 
+
+> p,g
+
+b(r)lo ,g + (1 − α(r) 
+
+> p,g
+
+)b(r)hi ,g ,z(r) 
+
+> p,g
+
+= Mr ez(r) 
+
+> p,g
+
+.
+
+(S3) After aligning the source-specific spaces, the Graph Source Router computes 
+
+a(r) 
+
+> p,g
+
+= f src  
+
+> r
+
+([ z(r) 
+
+> p,g
+
+; egeo  
+
+> p
+
+]) ,π(r) 
+
+> p,g
+
+= exp( a(r) 
+
+> p,g
+
+)
+
+P 
+
+> r′
+
+exp( a(r′) 
+
+> p,g
+
+) ,zp,g = X
+
+> r
+
+π(r) 
+
+> p,g
+
+z(r) 
+
+> p,g
+
+,Zp = [ zp, 1, . . . , z p,G ]⊤.
+
+(S4) Equations (S3) and (S4) define the two-stage routing op-eration. The target set affects both gates through a shared coordinate encoder and mean pooling in egeo  
+
+> p
+
+. It does not alter the graph eigensystems or diffuse along graph edges. 
+
+Residual Velocity Backbone 
+
+Shared condition context. The geometry and response target-set encoders use separate parameters. For sample i,the response branch constructs 
+
+ersp  
+
+> p
+
+= 1
+
+|T p|
+
+X
+
+> h∈T p
+
+ϕrsp (zp,h ),ηi,p,g = [ xci,g ; zp,g ; sp,g ; ersp  
+
+> p
+
+],τi,p,g = GeneTokenEncoder( ηi,p,g ),
+
+¯τi,p = AttnPool( {τi,p,g }Gg=1 ),ci,p,t i = [¯ τi,p ; TimeEmbed( ti); ersp  
+
+> p
+
+].
+
+(S5) Equation (S5) defines the shared condition context. The GeneTokenEncoder contains two linear–normalization– GELU layers. Attention pooling supplies a shared cell-level context, while gene identity remains explicit in the local branch. Because ϕgeo and ϕrsp are shared across genes, these embeddings remain defined for target genes that are absent as intervention targets during training. 
+
+Local projection and FiLM residual field. For every gene, 
+
+ℓi,p,t i,g = Ploc ([ xi,t i,g ; xci,g ; zp,g ; sp,g ]) ,vθ,i,g = VelocityHead (FiLMRes( ℓi,p,t i,g ; ci,p,t i )) ,vi = [ vθ,i, 1, . . . , v θ,i,G ]⊤.
+
+(S6) Here vθ,i,g abbreviates vθ,i,p,t i,g for the current condition and sampled time. The implemented backbone uses three residual blocks of width 256 and outputs one scalar velocity per gene. The default model contains no graph message-passing layer. Training Objective and Numerical Stabilization 
+
+Within each condition, we form the squared-Euclidean cost matrix between sampled control and perturbed cells and solve an exact balanced linear assignment with the Hungarian al-gorithm. No entropic regularization or Sinkhorn approxima-tion is used. For the resulting OT-coupled minibatch, the flow-matching term is 
+
+LFM = 1
+
+BG 
+
+> B
+
+X
+
+> i=1
+
+∥vi − ui∥22, ui = yi − (xci + σϵ i).
+
+(S7) Equation (S7) uses the noise-perturbed source only in the flow target. The Delta target excludes source noise: 
+
+¯vp = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+vi, ¯dp = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+(yi − xci ). (S8) Equation (S8) instead forms the condition-level target from noise-free residuals. For a, b ∈ RG, define 
+
+C(a) = a − 1
+
+G (1⊤a)1,dκ(a, b ) = max ( ∥C(a)∥2∥C(b)∥2, κ ) ,
+
+corr κ(a, b ) = ⟨C(a), C(b)⟩
+
+dκ(a, b ) ,
+
+L∆ = 1 − corr κ(¯ vp, ¯dp),
+
+L = LFM + λ∆L∆.
+
+(S9) Equation (S9) combines stabilized Delta correlation with flow matching. We use κ = 10 −8; the denominator floor affects only numerically degenerate batches. 
+
+Explicit-Propagation Control 
+
+The default model uses the graph spectra only to form Zp. The matched GeneGeoFlow-Prop control additionally constructs 
+
+C learned channels over the coexpression coordinates: 
+
+r(ℓ) 
+
+> p
+
+= Φ (CE) diag 
+
+
+
+gψ,ℓ (λ(CE) )
+
+
+
+· (Φ (CE) )⊤sp, ℓ = 1 , . . . , C. 
+
+(S10) The channels in Equation (S10) are appended to the lo-cal features in Equation (S6); the geometry routers, context encoder, velocity backbone, training coupling, and objec-tives remain unchanged. Because Φ(CE) contains degree-normalized random-walk coordinates rather than an or-thonormal Euclidean basis, this operator is a learned low-rank projection and reconstruction, not an exact causal dif-fusion process. 
+
+Implementation and Evaluation Settings 
+
+Datasets and preprocessing. We remove empty cells and genes, total-count normalize non-log-transformed matrices to 10 4 counts per cell, and apply log1p . The modeled space contains the 5,000 highly variable genes selected with the Scanpy seurat procedure together with every perturbation target present in the dataset. Genetic interventions are repre-sented by multi-hot target masks, while a drug combination uses the union of the mapped targets of its components. Ta-ble S1 reports the resulting modeled spaces and fixed graph sizes. Table S1: Dataset and fixed-graph statistics used in the re-ported runs. Edge counts refer to undirected edges after sym-metrization.                
+
+> Dataset Genes Controls Cond. GO edges CE edges Norman 5,029 7,275 226 63,755 66,406 ComboSciPlex 5,028 1,451 31 30,365 50,818
+
+Evaluation splits. Table S2 gives the condition counts used for optimization and evaluation. For the Norman strict holdout, each fold withholds 12 genes and as-signs every condition containing at least one withheld gene to the test set; fold construction uses seed 42 + 
+
+fold index. For ComboSciPlex, the released fixed split contains 24 training and seven test conditions, and one training condition is reserved for validation. The five re-ported drug–drug conditions are Panobinostat+Crizotinib, Panobinostat+Curcumin, Panobinostat+SRT1720, Panobi-nostat+Sorafenib, and SRT2104+Alvespimycin. The other two fixed-split test conditions are control+Alvespimycin and control+Dacinostat. Table S2: Numbers of training, validation, and test conditions after validation construction. The Norman additive counts apply to each of its five folds.                             
+
+> Protocol Fold Train Val. Test Norman additive 1–5 180 937 Norman strict 1172 945 2180 10 36 3185 10 31 4179 938 5166 951 ComboSciPlex fixed –23 17
+
+Table S3: Architecture settings used in the reported runs.            
+
+> Component Setting GO graph Biological process; top 20 Coexpression graph Control only; top 20; threshold 0.3 Retained spectra 32 per graph after first mode Frequency split 16 low / 16 high Target-set embeddings 32 / 32; mean pool; separate parameters Geometry width dz64 Gene-token width 128 Velocity backbone Width 256; 3 residual blocks Propagation channels 0 default; 8 in GeneGeoFlow-Prop
+
+Hyperparameter exploration. On Norman fold 1 with seed 42, we evaluated λ∆ ∈ {0.01 , 0.03 , 0.05 }, σ ∈{0.15 , 0.20 , 0.25 }, propagation channel counts in {4, 8, 16 },propagation scales in {0, 0.25 , 0.5, 1.0}, and inference con-trol counts in {128 , 256 }. We selected the final settings by validation Pearson Delta and then fixed them for the reported runs. Table S4: Optimization and sampling settings used in the reported runs.                      
+
+> Component Setting Control noise σ0.2 Optimizer AdamW; weight decay 10 −5
+> Learning rate 3×10 −4
+> Schedule 2,000-step warmup; cosine decay Maximum steps 200,000 Per-condition sampling 256 cells Maximum batch size 512, grouped by condition Gradient clipping 1.0 Delta weight λ∆0.03 EMA decay 0.999 Validation interval 5,000 steps Model selection Best validation Pearson Delta Inference solver Euler; 30 steps Benchmark export 128 controls; one draw per control Population evaluation 128 controls; 10 draws per control
+
+Reproducibility. We use seed 42 for Python, NumPy, and PyTorch, including condition splitting, control-cell sam-pling, and evaluation. The validation set is drawn from the training conditions only, and model selection uses the exponential-moving-average parameters at the checkpoint with the highest validation Pearson Delta. Because determin-istic CUDA algorithms are not forced, exact bitwise equality can depend on the hardware and software stack. 
+
+Computing environment. The primary experiments were executed on an Ubuntu 20.04.6 server with eight NVIDIA H20 GPUs (96 GB memory per GPU), two Intel Xeon Plat-inum 8480+ processors (224 logical CPU threads in to-tal), and 1.8 TiB system memory. Each training process was bound to one H20 GPU, while independent folds and abla-tions were distributed across the eight devices. The software environment used Python 3.10.20, PyTorch 2.7.1 with CUDA 11.8 and cuDNN 9.1, NumPy 1.26.4, SciPy 1.15.3, AnnData 0.11.4, Scanpy 1.11.5, pandas 2.3.3, and scikit-learn 1.7.2; the server used NVIDIA driver 570.124.06. 
+
+Evaluation scope and aggregation. The benchmark ta-bles use the same 1,000-gene evaluation interface as their corresponding external protocols. Norman values are un-weighted means over data-split folds, whereas ComboSci-Plex values are fixed-split point estimates unless stated oth-erwise. Within an evaluation, condition-level metrics are first computed separately and then averaged with equal weight across conditions. Population MMD uses the bi-ased estimator, including diagonal terms, with the summed RBF kernel k(x, y ) = P 
+
+> h∈H
+
+exp( −∥ x − y∥22/(2 h2)) and 
+
+H = {0.1, 0.5, 1.0, 5.0}. Variance correlation compares pre-dicted and observed gene-wise variances. 
+
+Inference. OT assignments and perturbed cells are used only during training. At inference, each sampled control is initialized as x(0) = xc + σϵ and advanced through the learned velocity field for 30 Euler steps; independent controls and noise draws form the generated population. Table S5: Comparison of reconstruction, differential-expression, and response-shift metrics on the Norman additive split. Bold and underlined values denote the best and second-best results, respectively. 
+
+Model L2 ↓ MSE ↓ MAE ↓ DE-Spear. ρ ↑ Pearson ∆ ↑ DS ↑ Pearson b∆ ↑ Pearson b∆20 ↑
+
+Control 3.9937 0.01839 0.03953 N.A. N.A. 0.5135 −0.1695 −0.1297 
+
+Additive 1.9395 0.00448 0.02276 0.5564 0.9024 0.9686 0.8584 0.9244 scGPT 3.4112 0.01349 0.03796 1.07 ×10 −5 0.5304 0.5404 0.2165 0.2414 Geneformer 1.9132 0.00410 0.02360 0.3741 0.7732 0.8241 −0.0078 0.2239 GEARS 3.5531 0.01387 0.06624 0.5624 0.7421 0.8601 −0.0089 0.2032 CPA 5.7629 0.03435 0.07894 0.0713 0.3845 0.6021 −0.0039 0.2254 STATE 17.3330 0.30059 0.24705 0.5288 −0.0108 0.5135 −0.0069 0.2515 CellFlow 1.7064 0.00392 0.02207 0.5503 0.8678 0.9321 0.8395 0.8988 scDFM 1.7043 0.00315 0.02155 0.5705 0.8853 0.9737 0.8468 0.9260 
+
+GeneGeoFlow 1.6923 0.00303 0.02070 0.5992 0.8979 0.9775 0.8601 0.9260 
+
+Table S6: Comparison of reconstruction, differential-expression, and response-shift metrics on the Norman single- and double-perturbation holdout splits. Bold and underlined values denote the best and second-best results within each setting, respectively. 
+
+Setting Model L2 ↓ MSE ↓ MAE ↓ DE-Spear. ρ ↑ Pearson ∆ ↑ DS ↑ Pearson b∆ ↑ Pearson b∆20 ↑
+
+Single Control 2.6834 0.0095 0.0263 N.A. N.A. 0.5217 0.1618 0.1982 scGPT 2.5007 0.0080 0.0259 −0.1139 0.4503 0.5680 0.0747 0.0798 GEARS 2.5641 0.0075 0.0466 0.3569 0.6646 0.8271 0.6356 0.7914 Geneformer 1.6962 0.0036 0.0191 0.3669 0.6955 0.8070 0.5620 0.6513 CPA 5.8060 0.0356 0.0853 0.1168 0.2837 0.5796 −0.0028 0.0802 STATE 18.2543 0.3333 0.2693 0.6116 0.0004 0.5236 0.0154 0.2386 CellFlow 1.6758 0.0035 0.0191 0.2860 0.7109 0.8072 0.6138 0.6753 scDFM 1.6186 0.0030 0.0190 0.6957 0.7127 0.8914 0.6659 0.8116 GeneGeoFlow 1.5487 0.00291 0.01812 0.7078 0.7421 0.8956 0.6914 0.8197 
+
+Double Control 4.1882 0.0207 0.0423 N.A. N.A. 0.5322 −0.1303 −0.0265 
+
+scGPT 3.5171 0.0153 0.0362 −0.0665 0.5693 0.5578 0.2814 0.2652 GEARS 3.7458 0.0156 0.0708 0.2543 0.7552 0.8766 0.6407 0.8413 Geneformer 2.0819 0.0050 0.0237 0.3468 0.7361 0.8067 0.6245 0.7261 CPA 5.7891 0.0357 0.0796 0.3652 0.4176 0.6311 0.2432 0.2870 STATE 18.4458 0.3404 0.2733 0.4071 0.0061 0.5289 −0.0023 0.2580 CellFlow 2.1042 0.0049 0.0236 0.5074 0.8095 0.8622 0.6780 0.7155 scDFM 2.0309 0.0047 0.0235 0.5676 0.8357 0.9189 0.7769 0.8688 GeneGeoFlow 1.9732 0.00437 0.02306 0.5918 0.8464 0.9321 0.7867 0.8875 
+
+Table S7: Comparison of reconstruction, differential-expression, and response-shift metrics on the five held-out drug–drug conditions in the fixed ComboSciPlex split. Bold and underlined values denote the best and second-best available results, respectively; dashes indicate unavailable metrics. 
+
+Model L2 ↓ MSE ↓ MAE ↓ DE-Spear. ρ ↑ Pearson ∆ ↑ DS ↑
+
+Control 5.3716 0.0324 0.0698 N.A. N.A. 0.5714 scGPT 1.6934 0.0031 0.0251 −0.1261 0.8322 0.8571 CPA 1.6592 0.0029 0.0240 0.7906 0.8150 0.8980 
+
+scDFM 1.6567 0.0028 0.0220 0.8289 0.8933 0.8776 GeneGeoFlow 1.6491 0.0021 0.0213 0.8305 0.9088 0.8772 
+
+Baseline rows follow the same external benchmark sources as the condensed tables in the main paper, while the Ge-neGeoFlow rows report our runs under the corresponding protocols.
